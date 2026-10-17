@@ -1,0 +1,1 @@
+Rimor es una app web, local y privada, para técnicos e investigadores: pegas cualquier cosa (un log, un error, unas mediciones, un enlace, un prompt, un plan en Markdown, una idea) y Rimor entiende qué es, lo analiza, lo ordena con lo demás y te ayuda a convertirlo en conclusiones, decisiones, informes y minipapers.
