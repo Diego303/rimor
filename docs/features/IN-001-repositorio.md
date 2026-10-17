@@ -124,3 +124,10 @@ Una línea puede eximirse con el comentario `rimor-permitir-color` (por ejemplo,
 - Cubre todas las tareas de la ficha salvo la licencia (D5) y la vista previa por rama, ambas justificadas.
 - No contradice ADR-0001 ni ADR-0002.
 - Lo más simple: sin herramientas extra (ni Turborepo ni Storybook).
+
+## Cambios durante la implementación
+
+- **Proyectos de Vitest en el archivo raíz.** Los proyectos anidados en un archivo aparte no se respetaban (la app corría en Node y los paquetes, dos veces). `vitest.config.ts` usa `getViteConfig` y declara en línea `app` (Node), `app-dom` (happy-dom) y los paquetes.
+- **`enableGlobalVirtualStore: true`** en `pnpm-workspace.yaml`: `node_modules` solo enlaza el almacén global de pnpm. En esta máquina, además, el almacén está en el disco Linux (`pnpm config set store-dir … --location global`, ajuste local, no del repositorio): `tsc` pasa de 80 s a 5 s y `pnpm verificar` completo tarda unos 30 s.
+- Se borran también `public/favicon.*` de la plantilla (logotipo de Astro); IN-089 trae los de Rimor.
+- `site` solo se pasa a Astro si `SITIO` existe (`exactOptionalPropertyTypes`).

@@ -1,5 +1,8 @@
 packages:
   - paquetes/*
+# Las dependencias viven en el almacén global de pnpm y node_modules solo las enlaza: en discos lentos
+# (por ejemplo /mnt/* en WSL) las comprobaciones pasan de minutos a segundos.
+enableGlobalVirtualStore: true
 allowBuilds:
   esbuild: false
   sharp: false

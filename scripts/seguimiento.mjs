@@ -32,7 +32,10 @@ function commitsDe(id) {
 }
 
 function celdas(linea) {
-  return linea.split('|').slice(1, -1).map((c) => c.trim());
+  return linea
+    .split('|')
+    .slice(1, -1)
+    .map((c) => c.trim());
 }
 
 function fila(c) {
