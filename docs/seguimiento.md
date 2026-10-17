@@ -1,15 +1,15 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 10:00
-**Ahora:** arranque del proyecto
-**Siguiente:** F0-1 · OPFS a escala
-**Progreso:** F0 0/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 0/99
+**Última actualización:** 2026-10-18 00:46
+**Ahora:** F0-2 · ZIP de ida y vuelta
+**Siguiente:** F0-3 · pandoc-wasm
+**Progreso:** F0 1/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 1/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
 |---|---|---|---|---|---|---|
-| F0-1 | OPFS a escala | F0 | — | pendiente | — | — |
+| F0-1 | OPFS a escala | F0 | — | hecha | — | docs/f0/F0-1.md |
 | F0-2 | ZIP de ida y vuelta | F0 | — | pendiente | — | — |
 | F0-3 | pandoc-wasm | F0 | — | pendiente | — | — |
 | F0-4 | typst.ts a PDF | F0 | — | pendiente | — | — |
@@ -129,6 +129,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Pendientes de validación humana
 - **Licencia (D5):** no se ha añadido archivo de licencia. La propuesta del plan es «la misma que Struo».
 - **Pruebas en navegador real** (Playwright en Chromium, Firefox y WebKit, capturas en claro, oscuro y 400 px, axe y fidelidad de animaciones): aplazadas por instrucción del autor hasta el final.
+- **F0-1 (OPFS):** ejecutar el script del anexo de `docs/f0/F0-1.md` en Chrome, Firefox y Safari, con y sin la PWA instalada, y anotar tiempos y resultado de `persist()`.
 
 ## Bloqueos
 (ninguno)
@@ -136,8 +137,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
+| 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | … |
 
 ## Cómo retomar
-- Estado: arranque en curso (CLAUDE.md, seguimiento, CHANGELOG y ADR 0001–0003).
-- Siguiente paso: Fase 0, empezando por F0-1.
+- F0-1 cerrada con informe parcial. Siguiente: F0-2 (prototipo en f0/zip/, informe en docs/f0/F0-2.md).
 - Último `pnpm verificar`: aún no existe (lo crea IN-001).
