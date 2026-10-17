@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 01:12
-**Ahora:** IN-001 · Repositorio, herramientas e integración continua · fase análisis y diseño
+**Última actualización:** 2026-10-18 01:14
+**Ahora:** IN-001 · Repositorio, herramientas e integración continua · fase implementación
 **Siguiente:** IN-002 · Tema Instrumento y componentes base
 **Progreso:** F0 9/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 9/99
 
@@ -17,8 +17,8 @@
 | F0-6 | Logs grandes | F0 | — | hecha | 1b0d2b2 | docs/f0/F0-6.md |
 | F0-7 | CORS de APIs | F0 | — | hecha | f42735a | docs/f0/F0-7.md |
 | F0-8 | MiniSearch | F0 | — | hecha | 7eacd39 | docs/f0/F0-8.md |
-| F0-9 | Fuentes empaquetadas | F0 | — | hecha | — | docs/f0/F0-9.md |
-| IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | pendiente | — | — |
+| F0-9 | Fuentes empaquetadas | F0 | — | hecha | f529c42 | docs/f0/F0-9.md |
+| IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | en análisis y diseño | — | docs/features/IN-001-repositorio.md |
 | IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | pendiente | — | — |
 | IN-003 | Textos, idiomas y formatos | v0.1 | 0 | pendiente | — | — |
 | IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | pendiente | — | — |
@@ -125,6 +125,13 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **Sin Playwright por ahora** (instrucción del autor del 2026-10-18: «por ahora no testees con Playwright, cuando esté todo hecho ya vemos»). `pnpm verificar` ejecuta tipos, lint, unidades y construcción. Las pruebas de extremo a extremo, visuales, de axe y de fidelidad de animaciones del plan se sustituyen, mientras tanto, por pruebas de componentes con Vitest y happy-dom donde aportan, y quedan apuntadas en «Pendientes de validación humana».
 - **`docs/olas/`** no se crea: el estado de cada funcionalidad vive en el tablero de este archivo.
 - **Símbolo:** `Pantallas de Rimor.html` dibuja el símbolo antiguo; se usa «Señal» (paquete `rimor-icono`).
+- **Fichas que cambia la Fase 0** (`docs/referencias/` es de solo lectura, así que el cambio se anota aquí y en la ficha de cada IN):
+  - IN-036: la importación lee el directorio central del ZIP en vez de usar `Unzip` en streaming (F0-2).
+  - IN-044: perfil completo hasta 50 MB y por muestra por encima (F0-5).
+  - IN-041: arXiv sin CORS, se enriquece por DataCite; Maven solo por deps.dev (F0-7).
+  - IN-032: índice comprimido en IndexedDB y carga asíncrona en el Worker (F0-8).
+  - IN-085: se hace (F0-4 positiva).
+- **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
 
 ## Pendientes de validación humana
 - **Licencia (D5):** no se ha añadido archivo de licencia. La propuesta del plan es «la misma que Struo». Ojo: pandoc-wasm (IN-084) es GPL-2.0-or-later (F0-3).
@@ -144,7 +151,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | F0-9 | informe | 182 KB sin peticiones externas | … |
+| 2026-10-18 | IN-001 | análisis y diseño | diseño escrito y autorrevisado | … |
+| 2026-10-18 | F0-9 | informe | 182 KB sin peticiones externas | f529c42 |
 | 2026-10-18 | F0-8 | informe | 29 ms realista; índice 4,4 MB comprimido | 7eacd39 |
 | 2026-10-18 | F0-7 | informe | todo con CORS salvo arXiv y Maven (alternativas) | f42735a |
 | 2026-10-18 | F0-6 | informe | 50.000 líneas en 0,43–0,53 s | 1b0d2b2 |
@@ -155,5 +163,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- Fase 0 terminada (9/9). Siguiente: IN-001, fase de análisis y diseño.
-- Último `pnpm verificar`: aún no existe (lo crea IN-001).
+- IN-001: diseño hecho (docs/features/IN-001-repositorio.md). Falta implementar.
+- Último `pnpm verificar`: aún no existe.
