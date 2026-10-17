@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 01:01
-**Ahora:** F0-6 · Logs grandes
-**Siguiente:** F0-7 · CORS de APIs
-**Progreso:** F0 5/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 5/99
+**Última actualización:** 2026-10-18 01:02
+**Ahora:** F0-7 · CORS de APIs
+**Siguiente:** F0-8 · MiniSearch
+**Progreso:** F0 6/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 6/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -13,8 +13,8 @@
 | F0-2 | ZIP de ida y vuelta | F0 | — | hecha | f501d1a | docs/f0/F0-2.md |
 | F0-3 | pandoc-wasm | F0 | — | hecha | 23b903b | docs/f0/F0-3.md |
 | F0-4 | typst.ts a PDF | F0 | — | hecha | fe9ad6a | docs/f0/F0-4.md |
-| F0-5 | DuckDB-WASM | F0 | — | hecha | — | docs/f0/F0-5.md |
-| F0-6 | Logs grandes | F0 | — | pendiente | — | — |
+| F0-5 | DuckDB-WASM | F0 | — | hecha | 7992596 | docs/f0/F0-5.md |
+| F0-6 | Logs grandes | F0 | — | hecha | — | docs/f0/F0-6.md |
 | F0-7 | CORS de APIs | F0 | — | pendiente | — | — |
 | F0-8 | MiniSearch | F0 | — | pendiente | — | — |
 | F0-9 | Fuentes empaquetadas | F0 | — | pendiente | — | — |
@@ -141,12 +141,13 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | F0-5 | informe | 100 MB en 8,6 s (no cumple); límite de 50 MB y muestra | … |
+| 2026-10-18 | F0-6 | informe | 50.000 líneas en 0,43–0,53 s | … |
+| 2026-10-18 | F0-5 | informe | 100 MB en 8,6 s (no cumple); límite de 50 MB y muestra | 7992596 |
 | 2026-10-18 | F0-4 | informe | PDF sin red correcto; IN-085 se hace | fe9ad6a |
 | 2026-10-18 | F0-3 | informe | tres salidas correctas; 15,5 MB gzip; carga diferida | 23b903b |
 | 2026-10-18 | F0-2 | informe | 5.030/5.030 idénticos; importar por directorio central | f501d1a |
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- F0-5 hecha. Siguiente: F0-6 (prototipo en f0/logs/).
+- F0-6 hecha. Siguiente: F0-7 (comprobación de cabeceras CORS con curl).
 - Último `pnpm verificar`: aún no existe (lo crea IN-001).
