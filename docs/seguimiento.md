@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 00:55
-**Ahora:** F0-5 · DuckDB-WASM
-**Siguiente:** F0-6 · Logs grandes
-**Progreso:** F0 4/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 4/99
+**Última actualización:** 2026-10-18 01:01
+**Ahora:** F0-6 · Logs grandes
+**Siguiente:** F0-7 · CORS de APIs
+**Progreso:** F0 5/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 5/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -12,8 +12,8 @@
 | F0-1 | OPFS a escala | F0 | — | hecha | 589ad61 | docs/f0/F0-1.md |
 | F0-2 | ZIP de ida y vuelta | F0 | — | hecha | f501d1a | docs/f0/F0-2.md |
 | F0-3 | pandoc-wasm | F0 | — | hecha | 23b903b | docs/f0/F0-3.md |
-| F0-4 | typst.ts a PDF | F0 | — | hecha | — | docs/f0/F0-4.md |
-| F0-5 | DuckDB-WASM | F0 | — | pendiente | — | — |
+| F0-4 | typst.ts a PDF | F0 | — | hecha | fe9ad6a | docs/f0/F0-4.md |
+| F0-5 | DuckDB-WASM | F0 | — | hecha | — | docs/f0/F0-5.md |
 | F0-6 | Logs grandes | F0 | — | pendiente | — | — |
 | F0-7 | CORS de APIs | F0 | — | pendiente | — | — |
 | F0-8 | MiniSearch | F0 | — | pendiente | — | — |
@@ -133,6 +133,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **F0-2 (ZIP):** exportar 200 MB en la app publicada con el panel de rendimiento abierto y comprobar que no hay tareas largas en el hilo principal.
 - **F0-3 (Pandoc):** medir descarga y compilación de `pandoc.wasm` en los tres navegadores; abrir el `.docx` en Word y compilar el `.tex` en Overleaf.
 - **F0-4 (Typst):** abrir en un lector de PDF el PDF que genere la app publicada.
+- **F0-5 (DuckDB):** medir en los tres navegadores la instanciación y el perfil de un CSV de 50 MB.
 
 ## Bloqueos
 (ninguno)
@@ -140,11 +141,12 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | F0-4 | informe | PDF sin red correcto; IN-085 se hace | … |
+| 2026-10-18 | F0-5 | informe | 100 MB en 8,6 s (no cumple); límite de 50 MB y muestra | … |
+| 2026-10-18 | F0-4 | informe | PDF sin red correcto; IN-085 se hace | fe9ad6a |
 | 2026-10-18 | F0-3 | informe | tres salidas correctas; 15,5 MB gzip; carga diferida | 23b903b |
 | 2026-10-18 | F0-2 | informe | 5.030/5.030 idénticos; importar por directorio central | f501d1a |
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- F0-4 hecha. Siguiente: F0-5 (prototipo en f0/duckdb/).
+- F0-5 hecha. Siguiente: F0-6 (prototipo en f0/logs/).
 - Último `pnpm verificar`: aún no existe (lo crea IN-001).
