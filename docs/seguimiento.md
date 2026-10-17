@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 01:49
-**Ahora:** IN-002 · Tema Instrumento y componentes base · fase análisis y diseño
+**Última actualización:** 2026-10-18 01:50
+**Ahora:** IN-002 · Tema Instrumento y componentes base · fase implementación
 **Siguiente:** IN-003 · Textos, idiomas y formatos
 **Progreso:** F0 9/9 · v0.1 1/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 10/99
 
@@ -18,8 +18,8 @@
 | F0-7 | CORS de APIs | F0 | — | hecha | f42735a | docs/f0/F0-7.md |
 | F0-8 | MiniSearch | F0 | — | hecha | 7eacd39 | docs/f0/F0-8.md |
 | F0-9 | Fuentes empaquetadas | F0 | — | hecha | f529c42 | docs/f0/F0-9.md |
-| IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | hecha | 4088155 b31670c | docs/features/IN-001-repositorio.md |
-| IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | pendiente | — | — |
+| IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | hecha | 4088155 b31670c d8ece75 | docs/features/IN-001-repositorio.md |
+| IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | en análisis y diseño | — | docs/features/IN-002-tema-y-componentes.md |
 | IN-003 | Textos, idiomas y formatos | v0.1 | 0 | pendiente | — | — |
 | IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | pendiente | — | — |
 | IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | pendiente | — | — |
@@ -116,6 +116,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 |---|---|---|
 | 2026-10-18 | Monorepo pnpm: la web Astro es la app en la raíz; `paquetes/*` y `cli/` son paquetes del workspace | [ADR-0001](adr/0001-estructura-del-repositorio.md) |
 | 2026-10-18 | Rimor es una sola isla React (`client:only`) en `/`, con salida estática, enrutado por hash y despliegue en GitHub Pages | [ADR-0002](adr/0002-la-app-dentro-de-astro.md) |
+| 2026-10-18 | Lo visual (medidas, clases e iconos) sigue el CSS de las pantallas; símbolo «Señal» | [ADR-0004](adr/0004-referencia-visual.md) |
 | 2026-10-18 | Decisiones abiertas del plan adoptadas con su propuesta (D6, D13–D18); D5 queda para el autor | [ADR-0003](adr/0003-decisiones-abiertas-adoptadas.md) |
 
 ## Desviaciones del plan
@@ -131,6 +132,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
   - IN-041: arXiv sin CORS, se enriquece por DataCite; Maven solo por deps.dev (F0-7).
   - IN-032: índice comprimido en IndexedDB y carga asíncrona en el Worker (F0-8).
   - IN-085: se hace (F0-4 positiva).
+- **Iconos:** los trazados propios de las pantallas en vez de `lucide-react` (mismo estilo: retícula 24 px, trazo 1,8), para que la web sea igual al HTML de referencia (ADR-0004).
 - **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
 
 ## Pendientes de validación humana
@@ -151,7 +153,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-001 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | … |
+| 2026-10-18 | IN-002 | análisis y diseño | diseño y ADR-0004 | … |
+| 2026-10-18 | IN-001 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | d8ece75 |
 | 2026-10-18 | IN-001 | implementación | pnpm verificar OK (31 s, carga inicial 68,6 KB) | b31670c |
 | 2026-10-18 | IN-001 | análisis y diseño | diseño escrito y autorrevisado | 4088155 |
 | 2026-10-18 | F0-9 | informe | 182 KB sin peticiones externas | f529c42 |
