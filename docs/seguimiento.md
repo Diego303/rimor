@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 01:06
-**Ahora:** F0-8 · MiniSearch
-**Siguiente:** F0-9 · Fuentes empaquetadas
-**Progreso:** F0 7/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 7/99
+**Última actualización:** 2026-10-18 01:10
+**Ahora:** F0-9 · Fuentes empaquetadas
+**Siguiente:** IN-001 · Repositorio, herramientas e integración continua
+**Progreso:** F0 8/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 8/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -15,8 +15,8 @@
 | F0-4 | typst.ts a PDF | F0 | — | hecha | fe9ad6a | docs/f0/F0-4.md |
 | F0-5 | DuckDB-WASM | F0 | — | hecha | 7992596 | docs/f0/F0-5.md |
 | F0-6 | Logs grandes | F0 | — | hecha | 1b0d2b2 | docs/f0/F0-6.md |
-| F0-7 | CORS de APIs | F0 | — | hecha | — | docs/f0/F0-7.md |
-| F0-8 | MiniSearch | F0 | — | pendiente | — | — |
+| F0-7 | CORS de APIs | F0 | — | hecha | f42735a | docs/f0/F0-7.md |
+| F0-8 | MiniSearch | F0 | — | hecha | — | docs/f0/F0-8.md |
 | F0-9 | Fuentes empaquetadas | F0 | — | pendiente | — | — |
 | IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | pendiente | — | — |
 | IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | pendiente | — | — |
@@ -135,6 +135,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **F0-4 (Typst):** abrir en un lector de PDF el PDF que genere la app publicada.
 - **F0-5 (DuckDB):** medir en los tres navegadores la instanciación y el perfil de un CSV de 50 MB.
 - **F0-7 (CORS):** confirmar en la app publicada que el enriquecimiento de IN-041 no lo bloquea el navegador.
+- **F0-8 (MiniSearch):** medir en el navegador la búsqueda por pulsación y la carga del índice con un espacio real grande.
 
 ## Bloqueos
 (ninguno)
@@ -142,7 +143,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | F0-7 | informe | todo con CORS salvo arXiv y Maven (alternativas) | … |
+| 2026-10-18 | F0-8 | informe | 29 ms realista; índice 4,4 MB comprimido | … |
+| 2026-10-18 | F0-7 | informe | todo con CORS salvo arXiv y Maven (alternativas) | f42735a |
 | 2026-10-18 | F0-6 | informe | 50.000 líneas en 0,43–0,53 s | 1b0d2b2 |
 | 2026-10-18 | F0-5 | informe | 100 MB en 8,6 s (no cumple); límite de 50 MB y muestra | 7992596 |
 | 2026-10-18 | F0-4 | informe | PDF sin red correcto; IN-085 se hace | fe9ad6a |
@@ -151,5 +153,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- F0-7 hecha. Siguiente: F0-8 (prototipo en f0/minisearch/).
+- F0-8 hecha. Siguiente: F0-9 (fuentes @fontsource, tamaños y build sin peticiones externas).
 - Último `pnpm verificar`: aún no existe (lo crea IN-001).
