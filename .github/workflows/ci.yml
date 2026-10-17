@@ -19,6 +19,6 @@ jobs:
       - name: Vista previa de la rama
         uses: actions/upload-artifact@v4
         with:
-          name: rimor-${{ github.ref_name }}
+          name: rimor-${{ github.sha }}
           path: dist/
           retention-days: 14

@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 01:42
-**Ahora:** IN-001 · Repositorio, herramientas e integración continua · fase verificación
-**Siguiente:** IN-002 · Tema Instrumento y componentes base
-**Progreso:** F0 9/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 9/99
+**Última actualización:** 2026-10-18 01:49
+**Ahora:** IN-002 · Tema Instrumento y componentes base · fase análisis y diseño
+**Siguiente:** IN-003 · Textos, idiomas y formatos
+**Progreso:** F0 9/9 · v0.1 1/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 10/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -18,7 +18,7 @@
 | F0-7 | CORS de APIs | F0 | — | hecha | f42735a | docs/f0/F0-7.md |
 | F0-8 | MiniSearch | F0 | — | hecha | 7eacd39 | docs/f0/F0-8.md |
 | F0-9 | Fuentes empaquetadas | F0 | — | hecha | f529c42 | docs/f0/F0-9.md |
-| IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | en implementación | 4088155 | docs/features/IN-001-repositorio.md |
+| IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | hecha | 4088155 b31670c | docs/features/IN-001-repositorio.md |
 | IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | pendiente | — | — |
 | IN-003 | Textos, idiomas y formatos | v0.1 | 0 | pendiente | — | — |
 | IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | pendiente | — | — |
@@ -151,7 +151,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-001 | implementación | pnpm verificar OK (31 s, carga inicial 68,6 KB) | … |
+| 2026-10-18 | IN-001 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | … |
+| 2026-10-18 | IN-001 | implementación | pnpm verificar OK (31 s, carga inicial 68,6 KB) | b31670c |
 | 2026-10-18 | IN-001 | análisis y diseño | diseño escrito y autorrevisado | 4088155 |
 | 2026-10-18 | F0-9 | informe | 182 KB sin peticiones externas | f529c42 |
 | 2026-10-18 | F0-8 | informe | 29 ms realista; índice 4,4 MB comprimido | 7eacd39 |
@@ -164,6 +165,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-001: implementado. Falta la fase de verificación (criterios, revisión independiente).
-- Entorno: el almacén de pnpm está en /home/diego/.local/share/pnpm/store (ajuste global) y el repo usa enableGlobalVirtualStore.
-- Último `pnpm verificar`: OK (2026-10-18 01:41).
+- IN-001 hecha. Siguiente: IN-002 (diseño ya escrito en docs/features/IN-002-tema-y-componentes.md y ADR-0004; hay archivos de implementación adelantados sin commit en src/ui/).
+- Último `pnpm verificar`: OK (2026-10-18 02:00).

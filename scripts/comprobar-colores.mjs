@@ -1,27 +1,32 @@
 #!/usr/bin/env node
 // Rechaza colores literales fuera de src/ui/tema/tokens.css (rimor-diseno.md §14.3).
+// Uso: node scripts/comprobar-colores.mjs [carpeta]   (por defecto, src/)
 // Una línea se exime con el comentario «rimor-permitir-color».
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const RAIZ = fileURLToPath(new URL('..', import.meta.url));
-const TOKENS = ['src', 'ui', 'tema', 'tokens.css'].join(sep);
 const EXTENSIONES = /\.(ts|tsx|css|astro|mjs)$/;
+const PRUEBAS = /\.test\.(ts|tsx|mjs)$/;
 const EXIMIR = 'rimor-permitir-color';
-const PALETA_TAILWIND =
+const PALETA =
   'slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose';
+const UTILIDADES =
+  'bg|text|border|divide|fill|stroke|ring|outline|from|to|via|decoration|shadow|accent|caret|placeholder';
+const NOMBRES =
+  'black|white|red|orange|yellow|green|blue|purple|pink|gray|grey|brown|cyan|magenta|navy|teal|maroon|olive|silver|gold|lime|aqua|fuchsia|crimson|coral|salmon|tomato|orchid|plum|khaki|indigo|violet|beige|ivory';
+const PROPIEDADES =
+  'color|background|background-color|backgroundColor|border-color|borderColor|fill|stroke|outline-color';
 
 const REGLAS = [
-  { nombre: 'hexadecimal', re: /(?<![\w&])#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})(?![\w-])/gi },
-  { nombre: 'función de color', re: /\b(?:rgba?|hsla?)\(\s*[\d.]/gi },
+  // Hexadecimal de color. No cuenta tras «href=», donde «#add» es un ancla.
+  { nombre: 'hexadecimal', re: /(?<![\w&]|href=["'{`]{1,2})#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})(?![\w-])/gi },
+  { nombre: 'función de color', re: /\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(\s*[\d.a-z-]/gi },
   {
     nombre: 'paleta de Tailwind',
-    re: new RegExp(
-      `\\b(?:bg|text|border|fill|stroke|ring|outline|from|to|via|decoration|shadow)-(?:${PALETA_TAILWIND})-\\d{2,3}\\b`,
-      'g',
-    ),
+    re: new RegExp(`\\b(?:${UTILIDADES})-(?:(?:${PALETA})-\\d{2,3}|white|black)\\b`, 'g'),
   },
+  { nombre: 'color con nombre', re: new RegExp(`\\b(?:${PROPIEDADES})\\s*:\\s*['"]?(?:${NOMBRES})\\b`, 'gi') },
 ];
 
 /**
@@ -48,21 +53,28 @@ function* recorrer(dir) {
   }
 }
 
-function principal() {
-  let errores = 0;
-  for (const ruta of recorrer(join(RAIZ, 'src'))) {
-    const rel = relative(RAIZ, ruta);
-    if (rel === TOKENS || /\.test\.(ts|tsx|mjs)$/.test(rel)) continue;
-    for (const h of buscarColores(readFileSync(ruta, 'utf8'))) {
-      console.error(`${rel}:${h.linea}  ${h.regla} «${h.valor}» fuera de tokens.css`);
-      errores++;
-    }
+/**
+ * Recorre una carpeta y devuelve los colores literales de cada archivo, salvo `ui/tema/tokens.css` y las pruebas.
+ * @param {string} carpeta
+ */
+export function comprobarCarpeta(carpeta) {
+  const tokens = ['ui', 'tema', 'tokens.css'].join(sep);
+  const hallados = [];
+  for (const ruta of recorrer(carpeta)) {
+    const rel = relative(carpeta, ruta);
+    if (rel === tokens || PRUEBAS.test(rel)) continue;
+    for (const h of buscarColores(readFileSync(ruta, 'utf8'))) hallados.push({ archivo: rel, ...h });
   }
-  if (errores) {
-    console.error(`\n${errores} color(es) literal(es). Usa los tokens de src/ui/tema/tokens.css.`);
+  return hallados;
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const carpeta = process.argv[2] ?? fileURLToPath(new URL('../src', import.meta.url));
+  const hallados = comprobarCarpeta(carpeta);
+  for (const h of hallados) console.error(`${h.archivo}:${h.linea}  ${h.regla} «${h.valor}» fuera de tokens.css`);
+  if (hallados.length) {
+    console.error(`\n${hallados.length} color(es) literal(es). Usa los tokens de src/ui/tema/tokens.css.`);
     process.exit(1);
   }
   console.log('Colores: solo tokens.');
 }
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) principal();

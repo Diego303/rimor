@@ -131,3 +131,28 @@ Una línea puede eximirse con el comentario `rimor-permitir-color` (por ejemplo,
 - **`enableGlobalVirtualStore: true`** en `pnpm-workspace.yaml`: `node_modules` solo enlaza el almacén global de pnpm. En esta máquina, además, el almacén está en el disco Linux (`pnpm config set store-dir … --location global`, ajuste local, no del repositorio): `tsc` pasa de 80 s a 5 s y `pnpm verificar` completo tarda unos 30 s.
 - Se borran también `public/favicon.*` de la plantilla (logotipo de Astro); IN-089 trae los de Rimor.
 - `site` solo se pasa a Astro si `SITIO` existe (`exactOptionalPropertyTypes`).
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 02:00): `astro check` 0 errores; tipos de los dos paquetes, OK; Biome y comprobación de colores, OK; Vitest 4 archivos y 9 pruebas, OK; construcción, OK; carga inicial **70,3 KB** comprimidos en 3 archivos (límite 300 KB). Tarda unos 30 s.
+
+| Criterio | Evidencia |
+|---|---|
+| Un PR vacío pasa todos los pasos | `pnpm verificar` en verde, que es lo que ejecuta `ci.yml`. El nombre del artefacto usa `github.sha`, válido en PR y en ramas con `/` |
+| Un hexadecimal en un componente hace fallar `pnpm lint` | `scripts/comprobar-colores.test.mjs`: la orden sobre una carpeta con `Boton.tsx` que contiene `'#191919'` termina con código 1 y cita `Boton.tsx:1`; `tokens.css` y las pruebas quedan exentos |
+| Prueba de humo «la app arranca y muestra el raíl» | `src/app/App.test.tsx` (happy-dom) |
+| TypeScript estricto (§6.2) | `tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` |
+| Vitest con fast-check | `paquetes/estadistica/src/index.test.ts` usa una propiedad |
+| Carga inicial < 300 KB | `scripts/tamano-carga.mjs`: 70,3 KB; falla si falta un archivo o la BASE no cuadra (comprobado construyendo con `BASE=/rimor/` y midiendo sin ella: código 1) |
+| Despliegue en GitHub Pages | `pages.yml`: construye con `SITIO` y `BASE=/<repositorio>/`; comprobado localmente que con `BASE=/rimor/` las URL de la isla salen prefijadas |
+| Licencia | Pendiente del autor (D5) |
+| Chromium, Firefox y WebKit | Aplazado por instrucción del autor |
+
+### Revisión independiente
+
+Un revisor con contexto limpio encontró cuatro huecos, todos corregidos:
+
+1. El nombre del artefacto de la CI (`rimor-${{ github.ref_name }}`) no es válido en un PR (`<n>/merge`): ahora usa el SHA.
+2. `tamano-carga.mjs` aprobaba con 0 archivos si la BASE no cuadraba y no contaba el `index.html` (estilos y scripts en línea): ahora falla y lo cuenta.
+3. La regla de colores dejaba pasar `oklch()`, `lab()`, colores con nombre (`color: 'red'`) y clases `divide-*`, `accent-*`, `caret-*`, `bg-white`; y rechazaba anclas como `href="#add"`: corregido, con casos en la prueba.
+4. No había prueba de extremo a extremo de la orden: ahora la hay (carpeta temporal y código de salida).

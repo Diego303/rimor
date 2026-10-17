@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Suma, comprimido con gzip, el JavaScript y el CSS que carga la portada al abrir (presupuesto: 300 KB).
+// Suma, comprimido con gzip, el HTML, el JavaScript y el CSS que carga la portada al abrir (presupuesto: 300 KB).
 // Sigue los import estáticos desde dist/index.html; los dinámicos son carga diferida y no cuentan.
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, normalize } from 'node:path';
@@ -17,11 +17,26 @@ for (const m of html.matchAll(/(?:src|href|component-url|renderer-url)="([^"]+\.
 /** Convierte una URL del sitio en una ruta de dist/. */
 const aRuta = (url) => join(DIST, normalize(url.startsWith(base) ? url.slice(base.length) : url.replace(/^\//, '')));
 
-const vistos = new Map();
+const faltan = [...inicio].filter((url) => !existsSync(aRuta(url)));
+if (!inicio.size || faltan.length) {
+  console.error(
+    inicio.size
+      ? `No se encuentran en dist/: ${faltan.join(', ')}. ¿Se construyó con otra BASE (ahora «${base}»)?`
+      : 'dist/index.html no carga ningún módulo: la isla no está montada.',
+  );
+  process.exit(1);
+}
+
+// El propio index.html cuenta: lleva en línea los estilos y scripts pequeños.
+const vistos = new Map([[join(DIST, 'index.html'), gzipSync(html).length]]);
 const pendientes = [...inicio].map(aRuta);
 while (pendientes.length) {
   const ruta = pendientes.pop();
-  if (vistos.has(ruta) || !existsSync(ruta)) continue;
+  if (vistos.has(ruta)) continue;
+  if (!existsSync(ruta)) {
+    console.error(`Import estático sin archivo: ${ruta.slice(DIST.length)}`);
+    process.exit(1);
+  }
   const datos = readFileSync(ruta);
   vistos.set(ruta, gzipSync(datos).length);
   if (!ruta.endsWith('.js')) continue;
