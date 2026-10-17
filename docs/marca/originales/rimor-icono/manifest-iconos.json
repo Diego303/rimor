@@ -1,0 +1,31 @@
+{
+  "icons": [
+    {
+      "src": "png/rimor-app-claro-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "png/rimor-app-claro-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "png/rimor-maskable-claro-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "png/rimor-maskable-claro-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

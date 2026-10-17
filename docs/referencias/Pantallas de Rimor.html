@@ -1,0 +1,1224 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Pantallas de Rimor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: página de referencia con un marco de app (raíl + una columna de lectura). Inicio funciona como un chat.
+   Estilo Instrumento: diseño industrial, «menos, pero mejor». Neutros cálidos, tinta casi negra y un solo naranja
+   (--key) para lo que importa: enviar, la serie destacada de una gráfica y los pilotos. Archivo + Roboto Mono.
+   Fuente de verdad de estos tokens: rimor-diseno.md. */
+:root{
+  --page:#DCD9D2; --app:#E8E6E1; --panel:#F6F5F1; --panel-2:#E3E0D9; --ink:#191919; --muted:#67645E; --faint:#737068; --line:#CCC8BF; --line-2:#DDD9D1;
+  --accent:#191919; --accent-ink:#F6F5F1; --accent-soft:#E3E0D9;
+  --key:#EE4F1F; --key-ink:#191919; --key-text:#C9401A; --key-soft:#F8D9CD;
+  --ok:#336E45; --ok-soft:#DCEBDF; --warn:#8A570B; --warn-soft:#F3E6CF; --bad:#B32F27; --bad-soft:#F5DAD6;
+  --heat-1:#EAD9CC; --heat-2:#F0B79E; --heat-3:#EE8A60; --heat-4:#EE4F1F;
+  --grille:rgba(25,25,25,.16); --shadow:0 1px 2px rgba(0,0,0,.07);
+  --k-x:#45433F; --k-x-bg:#E3E0D9; --k-err:#B32F27; --k-err-bg:#F5DAD6;
+  --k-log:var(--k-x); --k-log-bg:var(--k-x-bg); --k-med:var(--k-x); --k-med-bg:var(--k-x-bg); --k-prm:var(--k-x); --k-prm-bg:var(--k-x-bg); --k-md:var(--k-x); --k-md-bg:var(--k-x-bg); --k-url:var(--k-x); --k-url-bg:var(--k-x-bg); --k-idea:var(--k-x); --k-idea-bg:var(--k-x-bg); --k-dat:var(--k-x); --k-dat-bg:var(--k-x-bg); --k-cod:var(--k-x); --k-cod-bg:var(--k-x-bg); --k-cmp:var(--k-x); --k-cmp-bg:var(--k-x-bg); --k-inv:var(--k-x); --k-inv-bg:var(--k-x-bg); --k-doc:var(--k-x); --k-doc-bg:var(--k-x-bg);
+  --f-d:"Archivo","Helvetica Neue",Arial,system-ui,sans-serif;
+  --f-b:"Archivo","Helvetica Neue",Arial,system-ui,sans-serif;
+  --f-m:"Roboto Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page:#121211; --app:#1A1A19; --panel:#242422; --panel-2:#2E2D2B; --ink:#EDEBE6; --muted:#9D998F; --faint:#8F8B83; --line:#3A3936; --line-2:#2F2E2B;
+  --accent:#EDEBE6; --accent-ink:#1A1A19; --accent-soft:#34332F;
+  --key:#FF6A3D; --key-ink:#1A1A19; --key-text:#FF7E55; --key-soft:#40291F;
+  --ok:#7DC48F; --ok-soft:#1F3125; --warn:#E2A84C; --warn-soft:#3A2D16; --bad:#FF7A6B; --bad-soft:#3F201D;
+  --heat-1:#3A2A22; --heat-2:#6A3A26; --heat-3:#B5502E; --heat-4:#FF6A3D;
+  --grille:rgba(255,255,255,.10); --shadow:none;
+  --k-x:#CFCBC2; --k-x-bg:#2E2D2B; --k-err:#FF7A6B; --k-err-bg:#3F201D;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --page:#121211; --app:#1A1A19; --panel:#242422; --panel-2:#2E2D2B; --ink:#EDEBE6; --muted:#9D998F; --faint:#8F8B83; --line:#3A3936; --line-2:#2F2E2B;
+  --accent:#EDEBE6; --accent-ink:#1A1A19; --accent-soft:#34332F;
+  --key:#FF6A3D; --key-ink:#1A1A19; --key-text:#FF7E55; --key-soft:#40291F;
+  --ok:#7DC48F; --ok-soft:#1F3125; --warn:#E2A84C; --warn-soft:#3A2D16; --bad:#FF7A6B; --bad-soft:#3F201D;
+  --heat-1:#3A2A22; --heat-2:#6A3A26; --heat-3:#B5502E; --heat-4:#FF6A3D;
+  --grille:rgba(255,255,255,.10); --shadow:none;
+  --k-x:#CFCBC2; --k-x-bg:#2E2D2B; --k-err:#FF7A6B; --k-err-bg:#3F201D;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--f-b);font-size:14px;line-height:1.5}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+h1,h2,h3,h4{font-family:var(--f-d);margin:0;letter-spacing:-.01em;text-wrap:balance}
+p{margin:0}
+svg.i{flex:none;display:block}
+.mono{font-family:var(--f-m);font-size:.9em}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .faint{color:var(--faint)} .sm{font-size:13px} .xs{font-size:12px}
+.lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+
+/* ---------- Página de referencia ---------- */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:9px;color:var(--accent)}
+.brand b{font-family:var(--f-d);font-size:21px;font-weight:700;color:var(--ink);letter-spacing:-.02em}
+.brand span{color:var(--muted);font-size:12.5px}
+.top .ctl{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto;align-items:center}
+.seg{display:inline-flex;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12.5px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+#sel{display:none;border:1px solid var(--line);background:var(--panel-2);border-radius:8px;padding:5px 8px;max-width:100%}
+.page{display:grid;grid-template-columns:232px minmax(0,1fr)}
+.specnav{border-right:1px solid var(--line);background:var(--panel);padding-block:14px 40px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:10px;display:flex;flex-direction:column;gap:1px}
+.specnav .g{margin:14px 8px 4px}
+.specnav .g:first-child{margin-top:2px}
+.specnav button{display:flex;justify-content:space-between;align-items:center;gap:8px;border:0;background:transparent;text-align:left;padding:6px 8px;border-radius:7px;cursor:pointer;font-size:13.5px}
+.specnav button:hover{background:var(--panel-2)}
+.specnav button[aria-current="page"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.new{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.fase{font-family:var(--f-m);font-size:10.5px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 5px;white-space:nowrap;font-weight:500}
+.content{padding-block:18px 64px;padding-left:clamp(16px,2.4vw,28px);padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0;display:flex;flex-direction:column;gap:14px}
+.shead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.shead h1{font-size:22px;font-weight:700}
+.shead p{color:var(--muted);flex-basis:100%;max-width:80ch}
+.frame-wrap{display:flex;justify-content:center}
+.frame{position:relative;width:100%;max-width:1240px;background:var(--app);border:1px solid var(--line);border-radius:12px;container-type:inline-size;container-name:app;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.is-mobile .frame{max-width:390px}
+.devnotes{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.devnotes summary{cursor:pointer;font-weight:600;font-size:13.5px}
+.devgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:10px}
+.devgrid ul{margin:4px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.idl{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.idc{font-family:var(--f-m);font-size:11px;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 6px}
+.idc.prop{background:var(--warn-soft);color:var(--warn)}
+@media (max-width:1150px){.devgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.page{grid-template-columns:minmax(0,1fr)}.specnav{display:none}#sel{display:block}.devgrid{grid-template-columns:minmax(0,1fr)}.top .ctl{margin-left:0}}
+
+/* ---------- Carcasa de la app ---------- */
+.shell{display:grid;grid-template-columns:212px minmax(0,1fr);min-height:720px}
+.rail{grid-column:1;grid-row:1;background:var(--panel);border-right:1px solid var(--line);border-radius:12px 0 0 12px;padding:14px 10px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.rail .rbrand{display:flex;align-items:center;gap:8px;padding:2px 8px 14px;color:var(--accent)}
+.rail .rbrand b{font-family:var(--f-d);font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-.02em}
+.rb{display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:7px 9px;border-radius:7px;cursor:pointer;font-size:13.5px;text-align:left;width:100%;min-width:0;color:var(--ink)}
+.rb span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rb:hover{background:var(--panel-2)}
+.rb[aria-current="page"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.rb .n{margin-left:auto;font-family:var(--f-m);font-size:11px;color:var(--muted)}
+.rb[aria-current="page"] .n{color:var(--accent)}
+.rail .sec{margin:14px 9px 3px}
+.rail .space{margin-top:auto;border:0;border-top:1px solid var(--line);padding:10px 9px 2px;display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted);cursor:pointer;background:transparent;text-align:left;width:100%}
+.rail .space b{color:var(--ink);font-size:13px;font-weight:600}
+.amain{grid-column:2;grid-row:1;padding:22px 24px 0;min-width:0;display:flex;flex-direction:column}
+.col{width:100%;max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:16px;padding-bottom:28px;flex:1}
+.col.wide{max-width:none}
+@container app (max-width:720px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .rail{grid-column:1;grid-row:2;flex-direction:row;overflow-x:auto;border-right:0;border-top:1px solid var(--line);border-radius:0 0 12px 12px;padding:6px;gap:2px;position:sticky;bottom:0;z-index:4}
+  .rail .sec,.rail .space,.rail .rb.sub,.rail .rbrand{display:none}
+  .rb{width:auto;flex:none;white-space:nowrap}
+  .amain{grid-column:1;grid-row:1;padding:16px 14px 0}
+  .g2,.g3,.g4,.split{grid-template-columns:minmax(0,1fr)!important}
+  .hide-m{display:none!important}
+  .ccol{bottom:52px}
+}
+
+/* ---------- Componentes ---------- */
+.card{background:var(--panel);border:1px solid var(--line-2);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h3{font-size:14.5px;font-weight:600}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.ah{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;justify-content:space-between}
+.ah .tl{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ah h2{font-size:22px;font-weight:700;line-height:1.25}
+.meta{font-size:12.5px;color:var(--muted)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.kchip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:2px 8px 2px 6px;border-radius:999px;white-space:nowrap}
+.k-log{background:var(--k-log-bg);color:var(--k-log)} .k-err{background:var(--k-err-bg);color:var(--k-err)} .k-med{background:var(--k-med-bg);color:var(--k-med)}
+.k-prm{background:var(--k-prm-bg);color:var(--k-prm)} .k-md{background:var(--k-md-bg);color:var(--k-md)} .k-url{background:var(--k-url-bg);color:var(--k-url)}
+.k-idea{background:var(--k-idea-bg);color:var(--k-idea)} .k-dat{background:var(--k-dat-bg);color:var(--k-dat)} .k-cod{background:var(--k-cod-bg);color:var(--k-cod)}
+.k-cmp{background:var(--k-cmp-bg);color:var(--k-cmp)} .k-inv{background:var(--k-inv-bg);color:var(--k-inv)} .k-doc{background:var(--k-doc-bg);color:var(--k-doc)}
+.ref{font-family:var(--f-m);font-size:11.5px;font-weight:500;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:5px;border:0;cursor:pointer;white-space:nowrap}
+.st{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap;background:var(--panel-2);color:var(--muted)}
+.st.acc{background:var(--accent-soft);color:var(--accent)} .st.ok{background:var(--ok-soft);color:var(--ok)} .st.warn{background:var(--warn-soft);color:var(--warn)} .st.bad{background:var(--bad-soft);color:var(--bad)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:500;font-size:13px;white-space:nowrap}
+.btn:hover{background:var(--panel-2)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.gh{border-color:transparent;background:transparent;color:var(--accent);padding-inline:6px}
+.btn.dan{color:var(--bad)}
+.btn.sm{padding:3px 10px;font-size:12.5px}
+.pill{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+.kbd{font-family:var(--f-m);font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--panel);color:var(--muted);white-space:nowrap}
+.list{display:flex;flex-direction:column;gap:2px}
+.it{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:1px 12px;align-items:center;padding:8px 10px;border-radius:9px;border:0;cursor:pointer;text-align:left;background:transparent;width:100%}
+.it:hover{background:var(--panel-2)}
+.it .ic{grid-column:1;grid-row:1/span 2}
+.it .tt{grid-column:2;grid-row:1;font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it .mm{grid-column:2;grid-row:2;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it .rt{grid-column:3;grid-row:1/span 2;font-size:12px;color:var(--faint);white-space:nowrap}
+.ti{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none}
+.stats{display:flex;flex-wrap:wrap;gap:12px 32px}
+.stat{display:flex;flex-direction:column;gap:1px;min-width:0}
+.stat .v{font-family:var(--f-d);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
+.hb{display:grid;grid-template-columns:minmax(80px,140px) minmax(0,1fr) 40px;gap:10px;align-items:center;font-size:13px}
+.hb .tr{height:8px;background:var(--panel-2);border-radius:4px;overflow:hidden}
+.hb .fi{display:block;height:100%;border-radius:4px;background:var(--accent)}
+.hb .v{font-family:var(--f-m);font-size:11.5px;text-align:right;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 9px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+td.n{font-family:var(--f-m);font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--panel-2)} tr.on td{background:var(--accent-soft)}
+.code{font-family:var(--f-m);font-size:12px;line-height:1.6;background:var(--panel-2);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre;margin:0;min-width:0}
+.ph{color:var(--accent);background:var(--accent-soft);border-radius:3px;padding:0 3px}
+.var{color:var(--k-prm);background:var(--k-prm-bg);border-radius:3px;padding:0 3px;font-weight:500}
+.lv-ERROR{color:var(--bad);font-weight:600} .lv-WARN{color:var(--warn);font-weight:600} .lv-DEBUG{color:var(--muted)}
+.ln{color:var(--faint);user-select:none;display:inline-block;min-width:3.2em}
+.oc{background:var(--warn-soft);color:var(--warn);border-radius:3px;padding:0 3px;font-weight:600}
+mark{background:var(--warn-soft);color:inherit;border-radius:2px;padding:0 1px}
+details.more{border-top:1px solid var(--line-2);padding-top:10px}
+details.more>summary{cursor:pointer;font-size:13px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:6px}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:"›";display:inline-block;transition:transform .15s;font-weight:700}
+details.more[open]>summary::before{transform:rotate(90deg)}
+details.more>div{margin-top:10px;display:flex;flex-direction:column;gap:10px}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 18px;font-size:13px;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0}
+.verdict{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.verdict .big{font-family:var(--f-d);font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.verdict.ok .big{color:var(--ok)} .verdict.warn .big{color:var(--warn)} .verdict.bad .big{color:var(--bad)}
+.verdict .txt{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1;min-width:200px}
+.gaps{display:flex;flex-direction:column;gap:6px}
+.gap{display:flex;gap:9px;align-items:flex-start;font-size:13px;padding:8px 10px;border-radius:8px;background:var(--panel-2)}
+.gap .dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none;background:var(--warn)}
+.gap.hi .dot{background:var(--bad)} .gap.okk .dot{background:var(--ok)} .gap.acc .dot{background:var(--accent)}
+.gap .gbody{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.banner{display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--ink);font-size:13px;flex-wrap:wrap}
+.banner b{color:var(--warn)}
+.meter{height:7px;background:var(--panel-2);border-radius:4px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent)}
+textarea,input[type=text]{width:100%;border:1px solid var(--line);background:var(--panel-2);border-radius:8px;padding:9px 11px}
+textarea{font-family:var(--f-m);font-size:12.5px;line-height:1.55;resize:vertical}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+select,input[type=number]{border:1px solid var(--line);background:var(--panel-2);border-radius:6px;padding:3px 6px}
+input[type=number]{width:54px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:3px;display:block}
+svg text{font-family:var(--f-m);font-size:10.5px}
+
+/* ---------- Chat de captura ---------- */
+.feed{display:flex;flex-direction:column;gap:12px}
+.day{display:flex;align-items:center;gap:10px;color:var(--faint);font-size:12px;margin:6px 0 2px}
+.day::before,.day::after{content:"";flex:1;height:1px;background:var(--line)}
+.msg{display:flex;flex-direction:column;gap:9px;padding:12px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line-2)}
+.msg.fresh{border-color:var(--accent)}
+.mhead{display:flex;align-items:center;gap:10px;min-width:0}
+.mhead .tt{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;background:none;border:0;padding:0;text-align:left;cursor:pointer}
+.mhead .tt:hover{color:var(--accent)}
+.mhead .time{font-size:12px;color:var(--faint);white-space:nowrap}
+.mprev{font-family:var(--f-m);font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:40px}
+.rimor{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:10px;background:var(--panel-2);font-size:13.5px}
+.rimor .av{flex:none;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);margin-top:1px}
+.rimor p{min-width:0}
+.mact{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-left:40px}
+.mact .sp{flex:1}
+.ibtn{border:0;background:transparent;color:var(--muted);padding:4px 7px;border-radius:6px;cursor:pointer;font-size:12.5px;display:inline-flex;gap:5px;align-items:center}
+.ibtn:hover{background:var(--panel-2);color:var(--ink)}
+.sess{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1px dashed var(--line);flex-wrap:wrap}
+.ccol{position:sticky;bottom:0;z-index:3}
+.composer{padding:14px 0 calc(16px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,transparent,var(--app) 26%);z-index:3}
+.cbox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px;box-shadow:0 6px 24px rgba(10,20,40,.08)}
+.cbox:focus-within{border-color:var(--accent)}
+.cbox textarea{border:0;background:transparent;padding:4px 2px;resize:none;font-family:var(--f-b);font-size:14px;min-height:44px;max-height:220px}
+.cbox textarea:focus{box-shadow:none}
+.crow{display:flex;align-items:center;gap:8px}
+.crow .hint{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.send{width:32px;height:32px;border-radius:9px;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;cursor:pointer;flex:none}
+.cprev{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}
+.cprev:empty{display:none}
+.replying{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);padding:0 4px 6px}
+
+/* ---------- Lienzo ---------- */
+.canvas-wrap{overflow:auto;border-radius:12px;border:1px solid var(--line-2);background-color:var(--panel);background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:18px 18px}
+.canvas{position:relative;width:860px;height:520px}
+.canvas svg{position:absolute;inset:0;pointer-events:none}
+.ccard{position:absolute;width:220px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;cursor:grab;touch-action:none;user-select:none;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.ccard:active{cursor:grabbing}
+.ccard.q{border-color:var(--accent);background:var(--accent-soft)}
+.ccard.nota{background:var(--warn-soft);border-color:transparent}
+.ccard b{font-size:13px}
+.ccard p{font-size:12.5px;color:var(--muted)}
+
+/* ---------- Documento ---------- */
+.dp{font-size:14px;line-height:1.65;display:flex;flex-direction:column;gap:10px;min-width:0}
+.dp h1{font-size:20px;font-weight:700}
+.dp h2{font-size:15.5px;font-weight:600;margin-top:4px}
+.dp ul{margin:0;padding-left:20px}
+.cifra{background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 4px;font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap}
+.cifra.old{background:var(--warn-soft);color:var(--warn)}
+.cifra.bad{background:var(--bad-soft);color:var(--bad)}
+.fig{border:1px solid var(--line-2);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;margin:0}
+.fig figcaption{font-size:12px;color:var(--muted)}
+.diff{font-family:var(--f-m);font-size:12px;line-height:1.6;border-radius:8px;overflow:hidden;background:var(--panel-2)}
+.diff div{padding:0 10px;white-space:pre-wrap}
+.diff .a{background:var(--ok-soft);color:var(--ok)} .diff .r{background:var(--bad-soft);color:var(--bad);text-decoration:line-through;text-decoration-thickness:1px}
+.diff .s{color:var(--muted)}
+.tree{font-family:var(--f-m);font-size:11.5px;line-height:1.6;white-space:pre;overflow-x:auto;margin:0;color:var(--muted)}
+.swatch{width:100%;height:34px;border-radius:7px;border:1px solid var(--line)}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:26px 16px;border:1.5px dashed var(--line);border-radius:12px;color:var(--muted)}
+.loading{height:6px;border-radius:3px;background:var(--panel-2);overflow:hidden;position:relative}
+.loading i{position:absolute;inset:0;width:40%;background:var(--accent);border-radius:3px;animation:ld 1.4s ease-in-out infinite}
+@keyframes ld{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+.radio{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.radio.on{border-color:var(--accent);background:var(--accent-soft)}
+.radio input{margin-top:3px;accent-color:var(--accent)}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.chk .m{flex:none;width:16px;text-align:center;font-weight:700}
+.chk .m.ok{color:var(--ok)} .chk .m.warn{color:var(--warn)}
+.frame.ids-on [data-ids]:not([data-ids=""]){position:relative;outline:1.5px dashed var(--accent);outline-offset:3px}
+.frame.ids-on [data-ids]:not([data-ids=""])::after{content:attr(data-ids);position:absolute;top:-10px;right:6px;font-family:var(--f-m);font-size:10px;font-weight:500;background:var(--accent);color:var(--accent-ink);padding:1px 6px;border-radius:4px;z-index:6;white-space:nowrap;pointer-events:none}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:9px 16px;border-radius:8px;font-size:13px;z-index:40;max-width:calc(100% - 32px)}
+/* ---------- Estilo Instrumento ---------- */
+h1,h2,h3,h4{letter-spacing:-.02em}
+.card,.msg{border-color:transparent;box-shadow:var(--shadow);border-radius:14px}
+.msg.fresh{border-color:var(--key)}
+.btn.key{background:var(--key);border-color:var(--key);color:var(--key-ink)}
+.btn,.pill,.seg,.seg button,.cprev .st{border-radius:999px}
+.seg{box-shadow:inset 0 1px 2px var(--grille)}
+.ti,.send,.rimor .av{border-radius:50%}
+.rimor .av{background:var(--panel);color:var(--ink)}
+.send{background:var(--key);color:var(--key-ink);width:34px;height:34px}
+.cbox{border-radius:20px;border-color:transparent;box-shadow:var(--shadow),0 8px 28px rgba(0,0,0,.08)}
+.cbox:focus-within{border-color:var(--ink)}
+.verdict .big,.stat .v{font-weight:800;letter-spacing:-.035em}
+.brand,.rail .rbrand{color:var(--key)}
+.rb[aria-current="page"] .n{color:var(--key-text)}
+.new{color:var(--key-text)}
+:focus-visible{outline-color:var(--key)}
+.rail .space::before{content:"";display:block;height:38px;margin-bottom:10px;border-radius:10px;background:radial-gradient(circle,var(--grille) 1.5px,transparent 2px) 0 0/8px 8px}
+.rail .space b{display:flex;align-items:center;gap:7px}
+.rail .space b::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.frame{border-radius:16px}
+.rail{border-radius:16px 0 0 16px}
+@container app (max-width:720px){.rail{border-radius:0 0 16px 16px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="brand"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 6.5l3 5-2.2 2 3.4 4"/></svg><b>Rimor</b><span>Pantallas de referencia · v3 · estilo Instrumento</span></div>
+  <select id="sel" aria-label="Pantalla"></select>
+  <div class="ctl">
+    <div class="seg" role="group" aria-label="Marcas de funcionalidad"><button id="t-ids" aria-pressed="false">Mostrar IDs</button></div>
+    <div class="seg" role="group" aria-label="Ancho del marco"><button data-w="d" aria-pressed="true">Escritorio</button><button data-w="m" aria-pressed="false">Móvil</button></div>
+    <div class="seg" role="group" aria-label="Tema"><button data-th="" aria-pressed="true">Sistema</button><button data-th="light" aria-pressed="false">Claro</button><button data-th="dark" aria-pressed="false">Oscuro</button></div>
+  </div>
+</header>
+<div class="page">
+  <nav class="specnav" id="specnav" aria-label="Pantallas"></nav>
+  <main class="content" id="content"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* =========================================================
+   Utilidades
+   ========================================================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=(n,d=1)=>Number(n).toLocaleString('es-ES',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtI=n=>Number(n).toLocaleString('es-ES');
+const noacc=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function fnv(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,'0')}
+function nice(x){const e=Math.pow(10,Math.floor(Math.log10(x)));const f=x/e;return (f<1.5?1:f<3?2:f<7?5:10)*e}
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+const IC={
+ inicio:'<path d="M4 6h16v10H9l-5 4z"/>',
+ buscar:'<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/>',
+ col:'<path d="M12 4l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4M4 16l8 4 8-4"/>',
+ inv:'<circle cx="10" cy="10" r="5.5"/><path d="M14 14l6 6M10 7.5v5M7.5 10h5"/>',
+ doc:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+ metricas:'<path d="M4 19V5M4 19h16"/><path d="M7 15l4-5 3 3 5-6"/>',
+ lienzo:'<rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="14" width="7" height="6" rx="1.5"/><path d="M10 7h4a3 3 0 0 1 3 3v4"/>',
+ tiempo:'<path d="M3 12h18M7 8v8M12 6v12M17 9v6"/>',
+ hilo:'<path d="M6 4v10a4 4 0 0 0 4 4h8"/><path d="M15 15l3 3-3 3"/><circle cx="6" cy="4" r="1.5"/>',
+ send:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+ clip:'<path d="M20 11l-8.5 8.5a5 5 0 0 1-7-7L13 4a3.3 3.3 0 0 1 4.7 4.7L9.2 17.2a1.7 1.7 0 0 1-2.4-2.4L14 7.6"/>',
+ reply:'<path d="M10 8L5 12l5 4"/><path d="M5 12h9a5 5 0 0 1 5 5v1"/>',
+ archive:'<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/>',
+ log:'<path d="M5 6h9M5 10h14M5 14h11M5 18h7"/>',
+ err:'<path d="M12 3.5l9 15.5H3z"/><path d="M12 10v4M12 16.8v.2"/>',
+ med:'<path d="M4 20V11M10 20V5M16 20v-6M2 20h20"/>',
+ prm:'<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
+ md:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M6 15V9l3 3 3-3v6M16 9v6M14 13l2 2 2-2"/>',
+ url:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+ idea:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/>',
+ dat:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M9 10v9M15 10v9"/>',
+ cod:'<path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 6l-3 12"/>',
+ cmd:'<path d="M5 8l4 4-4 4M11 16h8"/>',
+ jsn:'<path d="M9 4c-2 0-3 1-3 3v2c0 1-1 2-2 3 1 1 2 2 2 3v2c0 2 1 3 3 3M15 4c2 0 3 1 3 3v2c0 1 1 2 2 3-1 1-2 2-2 3v2c0 2-1 3-3 3"/>',
+ txt:'<path d="M5 6h14M5 10h14M5 14h14M5 18h8"/>',
+ cmp:'<path d="M7 7h12l-3-3M17 17H5l3 3"/>',
+ htp:'<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/>',
+ docf:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/>'
+};
+const ico=(n,s=16)=>`<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]||''}</svg>`;
+const GLYPH=(s=14)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 6.5l3 5-2.2 2 3.4 4"/></svg>`;
+
+const TIPOS={
+ log:{n:'Log',p:'LOG',k:'log'}, err:{n:'Error',p:'ERR',k:'err'}, med:{n:'Mediciones',p:'MED',k:'med'},
+ prm:{n:'Prompt',p:'PRM',k:'prm'}, md:{n:'Documento MD',p:'DOC-MD',k:'md'}, url:{n:'Enlace',p:'URL',k:'url'},
+ idea:{n:'Idea',p:'IDE',k:'idea'}, dat:{n:'Datos',p:'DAT',k:'dat'}, cod:{n:'Código',p:'COD',k:'cod'},
+ cmd:{n:'Comando',p:'CMD',k:'cod'}, jsn:{n:'JSON / TOML',p:'JSN',k:'cod'}, txt:{n:'Texto',p:'TXT',k:'cod'},
+ htp:{n:'Petición HTTP',p:'HTP',k:'url'}, cmp:{n:'Comparación',p:'CMP',k:'cmp'}, inv:{n:'Investigación',p:'INV',k:'inv'},
+ doc:{n:'Documento',p:'DOC',k:'doc'}
+};
+const icoT=t=>t==='doc'?'docf':t;
+const chip=t=>`<span class="kchip k-${TIPOS[t].k}">${ico(icoT(t),13)}${TIPOS[t].n}</span>`;
+const tico=t=>`<span class="ti k-${TIPOS[t].k}" title="${TIPOS[t].n}">${ico(icoT(t),16)}</span>`;
+const refb=r=>`<button class="ref" data-go="${r}">${r}</button>`;
+const TODAY='2026-10-17';
+const fdia=d=>d===TODAY?'hoy':d==='2026-10-16'?'ayer':(()=>{const [y,m,dd]=d.split('-').map(Number);return `${dd} ${MES[m-1]}`})();
+const ST={'nuevo':'acc','resuelto':'ok','abierta':'warn','abierto':'warn','semilla':'warn','borrador':'warn'};
+const stChip=e=>e?`<span class="st ${ST[e]||''}">${esc(e)}</span>`:'';
+
+/* =========================================================
+   Datos de ejemplo (coherentes con el plan)
+   ========================================================= */
+const BENCH_A=`# reqwest · 20 peticiones de 64 KB contra Ollama local
+38.41 ms
+39.02 ms
+37.88 ms
+38.76 ms
+40.12 ms
+38.15 ms
+37.94 ms
+38.60 ms
+39.35 ms
+38.02 ms
+38.88 ms
+41.70 ms
+38.27 ms
+38.49 ms
+37.71 ms
+39.10 ms
+38.33 ms
+38.95 ms
+38.11 ms
+38.58 ms`;
+const BENCH_B=`# ureq · 20 peticiones de 64 KB contra Ollama local
+36.92 ms
+37.40 ms
+35.88 ms
+36.51 ms
+38.95 ms
+36.20 ms
+37.11 ms
+36.74 ms
+35.97 ms
+37.66 ms
+36.38 ms
+40.21 ms
+36.85 ms
+36.03 ms
+37.29 ms
+36.60 ms
+35.79 ms
+37.02 ms
+36.47 ms
+36.99 ms`;
+const LOG_G=`2026-10-16T16:40:03.114Z INFO  gateway: request id=7f3a9c21-4b0e-4d8a-9a51-1c2f0e6b7d10 model=llama3.1:8b
+2026-10-16T16:40:03.120Z DEBUG http: connect 127.0.0.1:11434 in 4ms
+2026-10-16T16:40:03.121Z DEBUG http: POST /v1/chat/completions stream=true
+2026-10-16T16:40:03.402Z DEBUG stream: chunk 1 bytes=212
+2026-10-16T16:40:03.455Z DEBUG stream: chunk 2 bytes=198
+2026-10-16T16:40:03.507Z DEBUG stream: chunk 3 bytes=205
+2026-10-16T16:40:03.560Z DEBUG stream: chunk 4 bytes=187
+2026-10-16T16:40:03.611Z DEBUG stream: done reason=stop tokens=96
+2026-10-16T16:40:03.612Z INFO  gateway: response id=7f3a9c21-4b0e-4d8a-9a51-1c2f0e6b7d10 status=200 in 498ms
+2026-10-16T16:40:03.613Z INFO  ai-log: appended entry 0x3fa2`;
+const LOG_B=`2026-10-16T16:44:51.007Z INFO  gateway: request id=c19e0b77-2a41-4f6c-8d3e-5b9a7e214f08 model=llama3.1:8b
+2026-10-16T16:44:51.011Z DEBUG http: connect 127.0.0.1:11434 in 3ms
+2026-10-16T16:44:51.012Z DEBUG http: POST /v1/chat/completions stream=true
+2026-10-16T16:44:51.013Z WARN  http: response has no content-length, reading body to end
+2026-10-16T16:45:21.014Z ERROR stream: read timeout after 30000ms
+2026-10-16T16:45:21.015Z WARN  gateway: retry 1/2 id=c19e0b77-2a41-4f6c-8d3e-5b9a7e214f08
+2026-10-16T16:45:21.019Z DEBUG http: connect 127.0.0.1:11434 in 4ms
+2026-10-16T16:45:21.020Z DEBUG http: POST /v1/chat/completions stream=true
+2026-10-16T16:45:21.021Z WARN  http: response has no content-length, reading body to end
+2026-10-16T16:45:51.022Z ERROR stream: read timeout after 30000ms
+2026-10-16T16:45:51.023Z ERROR gateway: response id=c19e0b77-2a41-4f6c-8d3e-5b9a7e214f08 failed: timeout`;
+const TRACE=["thread 'tokio-runtime-worker' panicked at src/gateway/stream.rs:142:17:",
+"called `Result::unwrap()` on an `Err` value: Timeout(ReadTimeout { after: 30s })",
+"stack backtrace:",
+"   0: rust_begin_unwind",
+"             at /rustc/90b35a6239c3d8bdabc530a6a0816f7ff89a0aaf/library/std/src/panicking.rs:665:5",
+"   1: core::panicking::panic_fmt",
+"             at /rustc/90b35a6239c3d8bdabc530a6a0816f7ff89a0aaf/library/core/src/panicking.rs:74:14",
+"   2: core::result::unwrap_failed",
+"             at /rustc/90b35a6239c3d8bdabc530a6a0816f7ff89a0aaf/library/core/src/result.rs:1700:5",
+"   3: struo_gateway::stream::next_chunk",
+"             at ./src/gateway/stream.rs:142:17",
+"   4: struo_gateway::stream::forward",
+"             at ./src/gateway/stream.rs:88:9",
+"   5: ureq::body::BodyReader::read",
+"             at /home/diego/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ureq-3.1.2/src/body.rs:311:5",
+"   6: tokio::runtime::task::harness::poll",
+"             at /home/diego/.cargo/registry/src/index.crates.io-6f17d22bba15001f/tokio-1.47.1/src/runtime/task/harness.rs:154:15"].join('\n');
+const PROMPT_V1=`Revisa el ADR {{adr}}.
+Dime si la decisión está bien justificada y qué falta.`;
+const PROMPT_V2=`Actúa como revisor de decisiones de arquitectura.
+
+Lee el ADR {{adr}} en el contexto de {{contexto}}.
+Evalúa la decisión con estos criterios: {{criterios}}.
+
+Responde en tres partes:
+1. Lo que está bien justificado.
+2. Lo que falta: consecuencias negativas, alternativas sin evaluar, supuestos ocultos.
+3. Tres preguntas que haría un revisor escéptico.
+
+No reescribas el ADR.`;
+
+/* ---------- Log generado (LOG-0047) ---------- */
+function genLog(){
+  const R=mulberry32(7),L=[];
+  const hex=n=>Array.from({length:n},()=>Math.floor(R()*16).toString(16)).join('');
+  const uuid=()=>`${hex(8)}-${hex(4)}-4${hex(3)}-${'89ab'[Math.floor(R()*4)]}${hex(3)}-${hex(12)}`;
+  for(let m=0;m<30;m++){
+    let t=Date.UTC(2026,9,17,15,22+m,0)+Math.floor(R()*3000);const n=3+Math.floor(R()*3);
+    for(let k=0;k<n;k++){
+      const id=uuid(),fail=m>=18&&m<=21&&R()<0.6;
+      const push=(lvl,msg,dt)=>{t+=dt;L.push(`${new Date(t).toISOString()} ${lvl.padEnd(5)} ${msg}`)};
+      push('INFO',`gateway: request id=${id} model=qwen2.5:7b`,Math.floor(R()*4000)+200);
+      push('DEBUG',`http: connect 10.0.4.17:11434 in ${2+Math.floor(R()*5)}ms`,5);
+      push('DEBUG','http: POST /v1/chat/completions stream=true',1);
+      if(fail){push('WARN','http: response has no content-length, reading body to end',1);push('ERROR','stream: read timeout after 30000ms',900);push('WARN',`gateway: retry 1/2 id=${id}`,1);push('ERROR',`gateway: response id=${id} failed: timeout`,2)}
+      else{const ch=3+Math.floor(R()*3);for(let c=1;c<=ch;c++)push('DEBUG',`stream: chunk ${c} bytes=${180+Math.floor(R()*60)}`,40+Math.floor(R()*30));push('DEBUG',`stream: done reason=stop tokens=${60+Math.floor(R()*80)}`,2);push('INFO',`gateway: response id=${id} status=200 in ${300+Math.floor(R()*400)}ms`,1)}
+    }
+  }
+  return L;
+}
+function norm(line){
+  return line.replace(/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[.,]\d+)?(?:Z|[+-]\d{2}:?\d{2})?/g,'')
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,'<ID>')
+    .replace(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g,'<IP>')
+    .replace(/\b0x[0-9a-f]+\b/gi,'<HEX>').replace(/\b[0-9a-f]{12,}\b/gi,'<HEX>')
+    .replace(/\b\d+(?:\.\d+)?/g,'<N>').replace(/\s+/g,' ').trim();
+}
+const lvlOf=l=>(l.match(/\b(TRACE|DEBUG|INFO|WARN|ERROR|FATAL)\b/)||[])[1]||'INFO';
+const tplHTML=t=>esc(t).replace(/&lt;(N|ID|IP|HEX)&gt;/g,'<span class="ph">$1</span>').replace(/\b(ERROR|WARN)\b/,'<span class="lv-$1">$1</span>');
+const LOG47=(()=>{
+  const lines=genLog(),start=Date.UTC(2026,9,17,15,22,0),tpl={},mins=Array.from({length:30},()=>({o:0,w:0,e:0}));
+  lines.forEach(l=>{const t=norm(l),lv=lvlOf(l);(tpl[t]=tpl[t]||{t,n:0,lv}).n++;
+    const m=Math.min(29,Math.max(0,Math.floor((Date.parse(l.slice(0,24))-start)/60000)));
+    if(lv==='ERROR')mins[m].e++;else if(lv==='WARN')mins[m].w++;else mins[m].o++});
+  return {lines,tpls:Object.values(tpl).sort((a,b)=>b.n-a.n),mins,errs:lines.filter(l=>lvlOf(l)==='ERROR').length,warns:lines.filter(l=>lvlOf(l)==='WARN').length};
+})();
+
+/* ---------- Traza y huella ---------- */
+function parseTrace(t){
+  const L=t.split('\n'),bt=L.findIndex(l=>/^stack backtrace:/.test(l)),head=L.slice(0,bt<0?2:bt),frames=[];
+  for(let i=bt+1;bt>=0&&i<L.length;i++){const m=L[i].match(/^\s*(\d+): (.+)$/);if(m){const nx=(L[i+1]||'').match(/^\s+at (.+)$/);const path=nx?nx[1]:'';frames.push({i:+m[1],fn:m[2],path,user:/^\.?\/?src\//.test(path)});if(nx)i++}}
+  const where=(head[0].match(/panicked at (.+?):?$/)||[])[1]||'',msg=head.slice(1).join(' ');
+  const top=frames.filter(f=>f.user).slice(0,2).map(f=>f.fn);
+  return {where,msg,frames,huella:fnv('rust|'+msg.replace(/\d+/g,'<N>')+'|'+top.join('|')),lang:'Rust'};
+}
+const TR=parseTrace(TRACE);
+
+/* ---------- Estadística ---------- */
+const UNIT={ns:1e-6,us:1e-3,'µs':1e-3,ms:1,s:1000};
+function parseSample(text){let label=null;const cm=text.match(/^#\s*(.+)$/m);if(cm)label=cm[1].split('·')[0].trim();const vals=[];
+  for(const line of text.split(/\r?\n/)){if(!line.trim()||line.trim().startsWith('#'))continue;const m=line.match(/(\d+(?:[.,]\d+)?)\s*(ns|µs|us|ms|s)\b/)||line.match(/^\s*(\d+(?:[.,]\d+)?)\s*$/);if(m)vals.push(parseFloat(m[1].replace(',','.'))*(UNIT[m[2]||'ms']))}
+  return {label,values:vals}}
+function stats(v){const a=[...v].sort((x,y)=>x-y),n=a.length;const med=n%2?a[(n-1)/2]:(a[n/2-1]+a[n/2])/2;const z=1.96;const lo=Math.max(1,Math.floor(n/2-z*Math.sqrt(n)/2)),hi=Math.min(n,Math.ceil(1+n/2+z*Math.sqrt(n)/2));
+  const mean=a.reduce((s,x)=>s+x,0)/n,sd=Math.sqrt(a.reduce((s,x)=>s+(x-mean)**2,0)/Math.max(1,n-1));return {n,med,lo:a[lo-1],hi:a[hi-1],mean,sd,cv:sd/mean,min:a[0],max:a[n-1]}}
+function erf(x){const s=Math.sign(x);x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y}
+const Phi=z=>0.5*(1+erf(z/Math.SQRT2));
+function mannWhitney(a,b){const all=[...a.map(v=>[v,0]),...b.map(v=>[v,1])].sort((x,y)=>x[0]-y[0]);const n1=a.length,n2=b.length,N=n1+n2,r=new Array(N);let tie=0;
+  for(let i=0;i<N;){let j=i;while(j+1<N&&all[j+1][0]===all[i][0])j++;const rk=(i+j)/2+1;for(let k=i;k<=j;k++)r[k]=rk;const t=j-i+1;if(t>1)tie+=t**3-t;i=j+1}
+  let R1=0;for(let i=0;i<N;i++)if(all[i][1]===0)R1+=r[i];const U1=R1-n1*(n1+1)/2,U=Math.min(U1,n1*n2-U1),mu=n1*n2/2,sig=Math.sqrt(n1*n2/12*((N+1)-tie/(N*(N-1))));
+  if(!sig)return 1;return Math.min(1,2*Phi((U-mu+0.5)/sig))}
+const pTxt=p=>p<0.001?'p < 0,001':'p = '+fmt(p,3);
+const BENCH=(()=>{const A=parseSample(BENCH_A),B=parseSample(BENCH_B),sa=stats(A.values),sb=stats(B.values),p=mannWhitney(A.values,B.values);return {A,B,sa,sb,p,ch:(sb.med-sa.med)/sa.med*100,sig:p<0.05,la:A.label,lb:B.label}})();
+const cambioTxt=`${BENCH.ch<0?'−':'+'}${fmt(Math.abs(BENCH.ch),1)} %`;
+function benchSVG(h=160){
+  const {A,B,sa,sb,la,lb}=BENCH,all=[...A.values,...B.values];let mn=Math.min(...all),mx=Math.max(...all);const pad=(mx-mn)*0.08;mn-=pad;mx+=pad;
+  const W=720,L=70,R=18,X=v=>L+(v-mn)/(mx-mn)*(W-L-R),y1=h*0.32,y2=h*0.64,step=nice((mx-mn)/5);let ticks='';
+  for(let t=Math.ceil(mn/step)*step;t<=mx;t+=step)ticks+=`<line x1="${X(t)}" x2="${X(t)}" y1="12" y2="${h-26}" stroke="var(--line-2)"/><text x="${X(t)}" y="${h-9}" text-anchor="middle" fill="var(--muted)">${fmt(t,0)}</text>`;
+  const row=(vals,s,y,col)=>`<rect x="${X(s.lo)}" y="${y-15}" width="${Math.max(2,X(s.hi)-X(s.lo))}" height="30" rx="4" fill="${col}" opacity=".14"/>`+vals.map((v,i)=>`<circle cx="${X(v)}" cy="${y+(((i*37)%13)/13-0.5)*16}" r="3.4" fill="${col}"/>`).join('')+`<line x1="${X(s.med)}" x2="${X(s.med)}" y1="${y-19}" y2="${y+19}" stroke="${col}" stroke-width="2.5"/>`;
+  return `<svg viewBox="0 0 ${W} ${h}" width="100%" style="min-width:420px" role="img" aria-label="Distribución de ${esc(la)} y ${esc(lb)}">${ticks}<text x="${L-10}" y="${y1+4}" text-anchor="end" fill="var(--ink)">${esc(la)}</text><text x="${L-10}" y="${y2+4}" text-anchor="end" fill="var(--ink)">${esc(lb)}</text>${row(A.values,sa,y1,'var(--muted)')}${row(B.values,sb,y2,'var(--key)')}<text x="${W-R}" y="10" text-anchor="end" fill="var(--muted)">ms</text></svg>`;
+}
+
+/* ---------- Comparación de logs ---------- */
+const CLOG=(()=>{const G=LOG_G.split('\n'),B=LOG_B.split('\n'),tg=G.map(norm),tb=B.map(norm),cg={},cb={};
+  tg.forEach(t=>cg[t]=(cg[t]||0)+1);tb.forEach(t=>cb[t]=(cb[t]||0)+1);let i=0;while(i<Math.min(tg.length,tb.length)&&tg[i]===tb[i])i++;
+  return {G,B,cg,cb,onlyB:Object.keys(cb).filter(t=>!cg[t]),onlyG:Object.keys(cg).filter(t=>!cb[t]),changed:Object.keys(cb).filter(t=>cg[t]&&(cb[t]/cg[t]>=2||cb[t]/cg[t]<=0.5)),div:i}})();
+
+/* ---------- Datos tabulares ---------- */
+const CSV=(()=>{const R=mulberry32(42),rows=[];let t=Date.UTC(2026,9,17,6,0,0);
+  for(let i=0;i<2400;i++){t+=9000+Math.floor(R()*7000);const emb=R()<0.15,cli=R()<0.5?'reqwest':'ureq',bytes=emb?Math.floor(2000+R()*6000):Math.floor(Math.exp(8.3+R()*2.6)),nul=R()<0.012;
+    let lat=(cli==='reqwest'?38.5:36.8)+(bytes/4000)+(R()+R()+R()-1.5)*2.2,st=200;if(cli==='ureq'&&!emb&&R()<0.02){st=504;lat=30000+R()*40}
+    rows.push({ts:new Date(t).toISOString().slice(0,19).replace('T',' '),endpoint:emb?'/v1/embeddings':'/v1/chat/completions',cliente:cli,bytes:nul?null:bytes,latencia_ms:Math.round(lat*100)/100,status:st})}
+  const cols=[['ts','TIMESTAMP'],['endpoint','VARCHAR'],['cliente','VARCHAR'],['bytes','INTEGER'],['latencia_ms','DOUBLE'],['status','INTEGER']];
+  const prof=cols.map(([c,ty])=>{const v=rows.map(r=>r[c]),nn=v.filter(x=>x!==null),p={c,ty,nulls:v.length-nn.length,u:new Set(nn).size};
+    if(ty==='INTEGER'||ty==='DOUBLE'){p.min=Math.min(...nn);p.max=Math.max(...nn);p.mean=nn.reduce((s,x)=>s+x,0)/nn.length;const clip=c==='latencia_ms'?nn.filter(x=>x<1000):c==='bytes'?nn.filter(x=>x<60000):nn;p.out=c==='latencia_ms'?nn.length-clip.length:0;
+      const lo=Math.min(...clip),hi=Math.max(...clip),bins=new Array(18).fill(0);clip.forEach(x=>bins[Math.min(17,Math.floor((x-lo)/((hi-lo)||1)*18))]++);p.bins=bins}
+    else if(ty==='VARCHAR'){const cnt={};nn.forEach(x=>cnt[x]=(cnt[x]||0)+1);p.top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3)}
+    else{p.min=nn[0];p.max=nn[nn.length-1]}return p});
+  const by={};rows.forEach(r=>{(by[r.cliente]=by[r.cliente]||[]).push(r)});const med=a=>{const s=[...a].sort((x,y)=>x-y),n=s.length;return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2};
+  const res=Object.entries(by).map(([k,a])=>({cliente:k,n:a.length,mediana:med(a.map(r=>r.latencia_ms)),timeouts:a.filter(r=>r.status===504).length})).sort((a,b)=>a.mediana-b.mediana);
+  return {rows,prof,res,timeouts:rows.filter(r=>r.status===504).length,nulls:rows.filter(r=>r.bytes===null).length}})();
+
+/* ---------- Elementos del espacio ---------- */
+const ITEMS=[
+ {ref:'LOG-0047',t:'log',titulo:'Gateway en staging: 30 minutos de tráfico',dia:TODAY,hora:'17:52',cols:['gateway'],tags:['ureq','staging'],estado:'nuevo',band:true,res:`${fmtI(LOG47.lines.length)} líneas · ${LOG47.errs} errores`,idx:'read timeout after 30000ms retry response has no content-length',prev:LOG47.lines[0]},
+ {ref:'ERR-0015',t:'err',titulo:'read timeout en stream::next_chunk',dia:TODAY,hora:'17:49',cols:['gateway'],tags:['ureq','rust'],estado:'nuevo',band:true,res:'Tercera vez con la misma huella',idx:'Timeout ReadTimeout unwrap struo_gateway',huella:TR.huella,prev:TRACE.split('\n')[0]},
+ {ref:'CMD-0009',t:'cmd',titulo:'cargo bench --bench http -- --save-baseline {{baseline}}',dia:TODAY,hora:'17:40',cols:['gateway'],tags:['cargo','bench'],estado:'nuevo',band:true,res:'Comando con un hueco'},
+ {ref:'URL-0108',t:'url',titulo:'docs.rs · ureq · Body::into_reader',dia:TODAY,hora:'17:31',cols:[],tags:['ureq','docs.rs'],estado:'nuevo',band:true,res:'Documentación · consultada hoy',prev:'https://docs.rs/ureq/latest/ureq/struct.Body.html#method.into_reader'},
+ {ref:'IDE-0033',t:'idea',titulo:'Medir el gateway con respuestas de 1 MB',dia:TODAY,hora:'16:58',cols:[],tags:['bench'],estado:'semilla',band:true,res:'Idea'},
+ {ref:'PRM-0012',t:'prm',titulo:'Revisor de ADR',dia:TODAY,hora:'16:41',cols:['prompts-revision'],tags:['adr','claude'],estado:'',res:'Versión 2 · 3 variables',prev:'Actúa como revisor de decisiones de arquitectura.'},
+ {ref:'TXT-0021',t:'txt',titulo:'Reunión con Ana: priorizar el streaming',dia:TODAY,hora:'12:20',cols:[],tags:['reunion'],estado:'nuevo',band:true,res:'Texto · 6 líneas',prev:'Ana prefiere arreglar el streaming antes de tocar dependencias.'},
+ {ref:'JSN-0006',t:'jsn',titulo:'config.gateway.toml (staging)',dia:TODAY,hora:'11:05',cols:['gateway'],tags:['config','staging'],estado:'nuevo',band:true,res:'TOML · 34 claves',prev:'[gateway]  client = "ureq"  stream_timeout_ms = 30000'},
+ {ref:'DAT-0004',t:'dat',titulo:'latencias-gateway.csv',dia:TODAY,hora:'10:40',cols:['gateway'],tags:['latencia'],estado:'',res:'2.400 filas · 6 columnas'},
+ {ref:'DOC-0002',t:'doc',titulo:'ADR-0012: Cliente HTTP del gateway de IA',dia:TODAY,hora:'09:50',cols:['gateway'],tags:['adr'],estado:'borrador',res:'ADR · 1 cifra desfasada'},
+ {ref:'CMP-0005',t:'cmp',titulo:'Logs: ejecución buena frente a mala',dia:'2026-10-16',hora:'18:51',cols:['gateway'],tags:['ureq','streaming'],estado:'',res:`Diverge en la línea ${CLOG.div+1}`},
+ {ref:'LOG-0042',t:'log',titulo:'Timeout en streaming con ureq',dia:'2026-10-16',hora:'18:44',cols:['gateway'],tags:['ureq','streaming'],estado:'resuelto',res:'11 líneas · 3 errores',idx:'read timeout no content-length'},
+ {ref:'LOG-0041',t:'log',titulo:'Streaming correcto con reqwest',dia:'2026-10-16',hora:'18:40',cols:['gateway'],tags:['reqwest','streaming'],estado:'resuelto',res:'10 líneas · 0 errores'},
+ {ref:'CMP-0004',t:'cmp',titulo:'Mediciones: reqwest frente a ureq (64 KB)',dia:'2026-10-16',hora:'18:21',cols:['gateway'],tags:['bench'],estado:'',res:`ureq ${cambioTxt}`},
+ {ref:'MED-0008',t:'med',titulo:'ureq · 20 peticiones de 64 KB',dia:'2026-10-16',hora:'18:15',cols:['gateway'],tags:['ureq','bench'],estado:'resuelto',res:`Mediana ${fmt(BENCH.sb.med,1)} ms`},
+ {ref:'MED-0007',t:'med',titulo:'reqwest · 20 peticiones de 64 KB',dia:'2026-10-16',hora:'18:10',cols:['gateway'],tags:['reqwest','bench'],estado:'resuelto',res:`Mediana ${fmt(BENCH.sa.med,1)} ms`},
+ {ref:'URL-0102',t:'url',titulo:'github.com/seanmonstar/reqwest',dia:'2026-10-16',hora:'17:03',cols:['gateway'],tags:['reqwest','github'],estado:'resuelto',res:'Repositorio'},
+ {ref:'URL-0101',t:'url',titulo:'github.com/algesten/ureq',dia:'2026-10-16',hora:'17:02',cols:['gateway'],tags:['ureq','github'],estado:'resuelto',res:'Repositorio'},
+ {ref:'INV-0003',t:'inv',titulo:'Cliente HTTP del gateway de IA',dia:'2026-10-16',hora:'17:00',cols:['gateway'],tags:['decision'],estado:'abierta',res:'4 evidencias'},
+ {ref:'DOC-MD-0004',t:'md',titulo:'Plan del gateway de IA',dia:'2026-10-16',hora:'16:30',cols:['gateway'],tags:['plan'],estado:'',res:'Versión 3 · 7 de 18 tareas'},
+ {ref:'ERR-0013',t:'err',titulo:'read timeout en stream::next_chunk',dia:'2026-10-15',hora:'19:12',cols:['gateway'],tags:['ureq','rust'],estado:'resuelto',res:'Con nota de solución',huella:TR.huella},
+ {ref:'PRM-0010',t:'prm',titulo:'Casos de prueba a partir de un ADR',dia:'2026-10-15',hora:'11:30',cols:['prompts-revision'],tags:['adr','tests'],estado:'',res:'Versión 1'},
+ {ref:'URL-0097',t:'url',titulo:'Paper: Drain, análisis de logs en línea (ICWS 2017)',dia:'2026-10-15',hora:'10:05',cols:['lecturas'],tags:['logs','paper'],estado:'resuelto',res:'Paper · BibTeX'},
+ {ref:'IDE-0031',t:'idea',titulo:'Caché de embeddings para la búsqueda',dia:'2026-10-14',hora:'23:04',cols:[],tags:['busqueda'],estado:'aparcada',res:'Idea'},
+ {ref:'MED-0004',t:'med',titulo:'reqwest · 20 peticiones de 64 KB',dia:'2026-10-09',hora:'12:30',cols:['gateway'],tags:['reqwest','bench'],estado:'resuelto',res:'Mediana 39,6 ms'},
+ {ref:'LOG-0035',t:'log',titulo:'Arranque lento del índice con 9.000 notas',dia:'2026-10-09',hora:'16:20',cols:['struo-indice'],tags:['sqlite','indice'],estado:'resuelto',res:'2.310 líneas'},
+ {ref:'MED-0005',t:'med',titulo:'Indexación de 9.000 notas',dia:'2026-10-09',hora:'16:45',cols:['struo-indice'],tags:['sqlite','bench'],estado:'resuelto',res:'Mediana 41,2 s'},
+ {ref:'COD-0011',t:'cod',titulo:'Normalizador de logs (TypeScript)',dia:'2026-10-08',hora:'12:44',cols:[],tags:['ts','logs'],estado:'',res:'48 líneas'},
+ {ref:'PRM-0008',t:'prm',titulo:'Skill: revisión de PR',dia:'2026-10-03',hora:'10:12',cols:['prompts-revision'],tags:['skill','claude'],estado:'',res:'Skill'},
+ {ref:'MED-0002',t:'med',titulo:'reqwest · 20 peticiones de 64 KB',dia:'2026-10-02',hora:'11:15',cols:['gateway'],tags:['reqwest','bench'],estado:'resuelto',res:'Mediana 40,3 ms'},
+ {ref:'ERR-0009',t:'err',titulo:'read timeout en stream::next_chunk',dia:'2026-10-02',hora:'13:40',cols:['gateway'],tags:['ureq','rust'],estado:'resuelto',res:'Primera aparición',huella:TR.huella},
+ {ref:'IDE-0028',t:'idea',titulo:'Exportar minipapers con Typst',dia:'2026-10-01',hora:'22:15',cols:[],tags:['typst','docs'],estado:'semilla',res:'Idea'},
+ {ref:'URL-0090',t:'url',titulo:'github.com/pandoc/pandoc-wasm',dia:'2026-10-01',hora:'22:20',cols:['lecturas'],tags:['pandoc','wasm'],estado:'resuelto',res:'Repositorio'}
+];
+const COLS=['gateway','struo-indice','prompts-revision','lecturas'];
+const colCount=c=>ITEMS.filter(i=>i.cols.includes(c)).length;
+const REFMAP={'LOG-0047':'log','LOG-0042':'clogs','LOG-0041':'clogs','ERR-0015':'error','ERR-0013':'hilo','ERR-0009':'hilo','CMP-0004':'medic','MED-0007':'medic','MED-0008':'medic','CMP-0005':'clogs','PRM-0012':'prompt','DOC-MD-0004':'md','DAT-0004':'tabla','INV-0003':'inv','DOC-0002':'doc','MED-0002':'metricas','MED-0004':'metricas'};
+
+/* ---------- Respuestas de Rimor (deterministas) ---------- */
+const RIMOR={
+ 'DAT-0004':{t:`Datos con ${fmtI(CSV.rows.length)} filas y 6 columnas. Hay ${CSV.timeouts} latencias de 30 s (timeouts) y ${CSV.nulls} valores nulos en <span class="mono">bytes</span>.`,a:[['Ver perfil','s:tabla']]},
+ 'JSN-0006':{t:'TOML con 34 claves. Frente a la versión del 9 oct cambian 2: <span class="mono">stream_timeout_ms</span> y <span class="mono">client</span>.',a:[['Ver cambios','t:En la app: comparación estructural (CMP-03)']]},
+ 'TXT-0021':{t:'Texto. Menciona «streaming» y «gateway». ¿Lo añado a la colección gateway?',a:[['Sí, a gateway','arch'],['No','t:Se queda sin colección']]},
+ 'PRM-0012':{t:'Se parece mucho a <b>Revisor de ADR</b>. Lo he guardado como su versión 2: cambian 9 líneas.',a:[['Ver cambios','s:prompt']]},
+ 'IDE-0033':{t:'Idea. Encaja con una tarea pendiente de DOC-MD-0004 («Medir respuestas de 1 MB»). Volverá dentro de 7 días si no haces nada con ella.',a:[['Enlazar a la tarea','t:Enlazada a DOC-MD-0004']]},
+ 'URL-0108':{t:'Documentación de ureq en docs.rs, consultada hoy. La citan DOC-MD-0004 y DOC-0002.',a:[]},
+ 'CMD-0009':{t:'Comando con un hueco: <span class="var">{{baseline}}</span>. Puedes copiarlo con el valor rellenado.',a:[['Copiar con valores','t:En la app: rellenar {{baseline}} y copiar']]},
+ 'ERR-0015':{t:`Error de Rust. Es la <b>tercera vez</b> que aparece (huella <span class="mono">${TR.huella}</span>). El 15 oct escribiste: «Pasa cuando la respuesta no trae content-length; ureq lee el cuerpo entero».`,a:[['Ver hilo','s:hilo']]},
+ 'LOG-0047':{t:`Log de ${fmtI(LOG47.lines.length)} líneas. ${LOG47.errs} errores entre 17:40 y 17:43, a la vez que ERR-0015. ¿Lo añado a su hilo?`,a:[['Sí, al hilo','t:Añadido al hilo de ERR-0015'],['Ver log','s:log']]}
+};
+
+/* =========================================================
+   Estado
+   ========================================================= */
+const S={
+  screen:'inicio',ids:false,mobile:false,ff:'todo',archived:new Set(),created:[],replyTo:null,comp:'',thread:[],
+  q:'timeout tipo:log,error en:gateway',logTpl:null,interp:'',impMode:'fusionar',pv:'v2',showAllTpl:false,
+  vals:{adr:'docs/adr/0012-cliente-http.md',contexto:'el gateway de IA de Struo',criterios:'fiabilidad del streaming y dependencias'},
+  opts:['reqwest','ureq'],
+  crit:[{name:'Streaming fiable',w:4,s:[5,2],ev:'CMP-0005'},{name:'Dependencias y compilación',w:3,s:[2,5],ev:'URL-0101'},{name:'Rendimiento',w:3,s:[3,4],ev:'CMP-0004'},{name:'Mantenimiento',w:2,s:[5,3],ev:'URL-0102'},{name:'Ergonomía de la API',w:1,s:[4,4],ev:null}],
+  canvas:{q:[300,24],'URL-0101':[24,170],'CMP-0004':[300,190],'CMP-0005':[600,170],h1:[440,360],'URL-0108':[620,380],dec:[24,380]},
+  doc:`# ADR-0012: Cliente HTTP del gateway de IA
+
+- Estado: propuesta
+- Investigación: [[INV-0003]]
+
+## Contexto
+
+El gateway de IA usa reqwest. Queremos reducir dependencias y tiempo de compilación sin perder fiabilidad en el streaming.
+
+## Evidencias
+
+En peticiones de 64 KB, ureq cambia la latencia un {{CMP-0004.cambio}} ({{CMP-0004.p}}; @fig:latencia).
+
+![[CMP-0004|grafico]]{#fig:latencia}
+
+Con ureq, el streaming falla cuando la respuesta no trae content-length: la ejecución mala diverge en la línea {{CMP-0005.divergencia}} [[CMP-0005]].
+
+## Decisión
+
+Se mantiene **reqwest** mientras el streaming con ureq no sea fiable.
+
+## Consecuencias
+
+- Seguimos con 87 dependencias transitivas.
+- Revisar cuando ureq lea el cuerpo como flujo [[URL-0108]].`
+};
+const byRef=r=>ITEMS.find(i=>i.ref===r)||S.created.find(i=>i.ref===r);
+
+/* ---------- Decisión y «Qué falta» ---------- */
+function decision(){const tot=S.opts.map((_,j)=>S.crit.reduce((s,c)=>s+c.w*c.s[j],0)),lead=tot[0]>=tot[1]?0:1,other=1-lead,D=tot[lead]-tot[other],flips=[];
+  S.crit.forEach(c=>{const d=c.s[lead]-c.s[other];if(!d)return;const w2=c.w-D/d;if(w2>=0&&w2<=10&&Math.abs(w2-c.w)>1e-9)flips.push({name:c.name,from:c.w,to:w2,rel:Math.abs(w2-c.w)/Math.max(c.w,1)})});
+  flips.sort((a,b)=>a.rel-b.rel);return {tot,lead,other,D,flips}}
+function gaps(){const g=[],d=decision();
+  if(!S.interp.trim())g.push({hi:true,text:'CMP-0005 contradice y no tiene interpretación.',cta:'Interpretar',go:'inv'});
+  if(d.flips.length&&d.flips[0].rel<0.5){const f=d.flips[0];g.push({hi:true,text:`Decisión frágil: si «${f.name}» pasa de ${fmt(f.from,0)} a ${fmt(f.to,1)}, gana ${S.opts[d.other]}.`,cta:'Ver',go:'dec'})}
+  g.push({hi:false,text:'El rendimiento se apoya en una sola comparación, en una sola máquina.',cta:'Medir otra vez',go:'medic'});
+  S.crit.filter(c=>!c.ev).forEach(c=>g.push({hi:false,text:`«${c.name}» no tiene evidencia.`,cta:'Ver matriz',go:'dec'}));
+  return g}
+const gapsHTML=()=>{const g=gaps();return g.length?`<div class="gaps">${g.map(x=>`<div class="gap ${x.hi?'hi':''}"><span class="dot"></span><span style="flex:1">${esc(x.text)}</span><button class="btn gh sm" data-screen="${x.go}">${x.cta}</button></div>`).join('')}</div>`:'<p class="sm muted">No falta nada de lo que Rimor sabe comprobar.</p>'};
+
+/* =========================================================
+   Detección, secretos e indicaciones del compositor
+   ========================================================= */
+function detect(raw){
+  const t=raw.trim();if(!t)return[];const lines=t.split(/\r?\n/).filter(l=>l.trim()),n=lines.length,sc={},add=(k,v)=>{sc[k]=Math.max(sc[k]||0,v)};
+  if(/^https?:\/\/\S+$/.test(t)||/^10\.\d{4,9}\/\S+$/.test(t))add('url',.98);
+  if(/^\s*(thread '.+' panicked at|Traceback \(most recent call last\)|Exception in thread|goroutine \d+ \[)/m.test(t)||/^\s+at .+\(.+:\d+:\d+\)/m.test(t))add('err',.95);
+  const lv=lines.filter(l=>/\b(TRACE|DEBUG|INFO|WARN|ERROR|FATAL)\b/.test(l)||/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(l)).length;if(n>=2&&lv/n>=.5)add('log',.6+.36*lv/n);
+  const data=lines.filter(l=>!l.trim().startsWith('#')),nums=data.filter(l=>/^\s*[\d.,]+\s*(ns|µs|us|ms|s)?\s*$/.test(l)).length;
+  if(/^Benchmark\S+\s+\d+\s+[\d.]+\s+ns\/op/m.test(t))add('med',.96);else if(nums>=3&&nums/data.length>=.8)add('med',.92);
+  if(/^[\[{]/.test(t)){try{JSON.parse(t);add('jsn',.97)}catch(e){}}
+  if(/^curl\s/.test(t))add('htp',.9);
+  if(/\{\{\s*\w+\s*\}\}/.test(t)&&n>1)add('prm',.86);if(/^(actúa|eres|you are|act as|tu tarea|your task)\b/im.test(t))add('prm',.82);
+  const hd=lines.filter(l=>/^#{1,6}\s/.test(l)).length,tk=lines.filter(l=>/^\s*[-*] \[[ xX]\]/.test(l)).length;if(hd>=2||tk>=2)add('md',.7+Math.min(.25,(hd+tk)*.03));
+  if(n===1&&/^\$?\s*(cargo|git|npm|pnpm|docker|kubectl|duckdb|python3?|ls|grep|rg|make|go)\b/.test(t))add('cmd',.9);
+  if(n<=3&&t.length<=280&&!sc.url&&!sc.cmd&&!sc.med)add('idea',.56);
+  add('txt',.2);return Object.entries(sc).sort((a,b)=>b[1]-a[1]).slice(0,3)}
+const SECRETS=[
+ ['token de GitHub','token-github',/\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36}\b|\bgithub_pat_[A-Za-z0-9_]{60,}\b/g],
+ ['clave de Anthropic','clave-anthropic',/\bsk-ant-[A-Za-z0-9_-]{20,}/g],
+ ['clave de API','clave-api',/\bsk-(?:or-v1-|proj-)?[A-Za-z0-9_-]{20,}/g],
+ ['clave de AWS','clave-aws',/\bAKIA[0-9A-Z]{16}\b/g],
+ ['token de Slack','token-slack',/\bxox[baprs]-[A-Za-z0-9-]{10,}/g],
+ ['clave privada','clave-privada',/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g],
+ ['token de Authorization','token',/(Authorization:\s*Bearer\s+)(?!‹)[A-Za-z0-9._~+\/-]{16,}/gi],
+ ['contraseña en una URL','contraseña',/(\w+:\/\/[^:\s\/]+:)[^@\s]{3,}(@)/g]];
+function redact(t){const found=[];let out=t;for(const [name,slug,re] of SECRETS){out=out.replace(re,(m,g1,g2)=>{found.push(name);if(slug==='token'&&typeof g1==='string')return g1+'‹oculto:token›';if(slug==='contraseña'&&typeof g1==='string')return g1+'‹oculto:contraseña›'+g2;return `‹oculto:${slug}›`})}return {out,found}}
+const TYPE_WORDS={log:'log',error:'err',err:'err',med:'med',mediciones:'med',prompt:'prm',md:'md',doc:'md',enlace:'url',url:'url',idea:'idea',datos:'dat',codigo:'cod',code:'cod',comando:'cmd',cmd:'cmd',json:'jsn',texto:'txt',nota:'txt'};
+function parseComp(raw){
+  let text=raw.replace(/\s+$/,'');const out={search:null,type:null,cols:[],tags:[],body:text};
+  if(/^\?/.test(text.trim())){out.search=text.trim().slice(1).trim();return out}
+  const m=text.match(/^\/(\w+)\s+/);if(m&&TYPE_WORDS[m[1].toLowerCase()]){out.type=TYPE_WORDS[m[1].toLowerCase()];text=text.slice(m[0].length)}
+  const lines=text.split('\n'),last=lines[lines.length-1];const dirRe=/^(\s*[@#][\p{L}\w-]+)+\s*$/u;
+  let dirs='';if(lines.length>1&&dirRe.test(last)){dirs=last;lines.pop();text=lines.join('\n')}
+  else if(lines.length===1){const tm=text.match(/((?:\s+[@#][\p{L}\w-]+)+)\s*$/u);if(tm){dirs=tm[1];text=text.slice(0,tm.index)}}
+  (dirs.match(/[@#][\p{L}\w-]+/gu)||[]).forEach(d=>{if(d[0]==='@')out.cols.push(d.slice(1));else out.tags.push(d.slice(1))});
+  out.body=text;return out}
+function nextRef(t){const p=TIPOS[t].p,all=[...ITEMS,...S.created].filter(i=>i.ref&&i.ref.startsWith(p+'-')&&!(p==='DOC'&&i.ref.startsWith('DOC-MD'))).map(i=>parseInt(i.ref.slice(p.length+1))||0);return `${p}-${String(Math.max(0,...all)+1).padStart(4,'0')}`}
+function titleFor(t,b){const f=(b.split('\n').find(l=>l.trim())||'').trim();
+  if(t==='url'){try{const u=new URL(f);return u.hostname.replace(/^www\./,'')+u.pathname.replace(/\/$/,'')}catch(e){return f}}
+  if(t==='log')return `Log de ${b.split('\n').filter(l=>l.trim()).length} líneas`;
+  if(t==='err'){const p=parseTrace(b);return (p.msg||f).slice(0,90)}
+  if(t==='med'){const s=parseSample(b);return s.label||`Mediciones (${s.values.length})`}
+  if(t==='md'){const h=b.match(/^#{1,6}\s+(.+)$/m);return h?h[1]:f.slice(0,80)}
+  return f.replace(/^#\s*/,'').slice(0,90)}
+function replyFor(t,b){
+  const lines=b.split('\n').filter(l=>l.trim());
+  if(t==='log'){const tp=new Set(lines.map(norm)).size,er=lines.map((l,i)=>[l,i]).filter(([l])=>lvlOf(l)==='ERROR');return `Log de ${lines.length} líneas, ${tp} plantillas${er.length?` y ${er.length} errores; el primero en la línea ${er[0][1]+1}`:' y ningún error'}.`}
+  if(t==='err'){if(/stack backtrace:/.test(b)){const p=parseTrace(b);const prev=ITEMS.filter(i=>i.huella===p.huella).length;return prev?`Error de Rust con la misma huella que ${prev} errores anteriores (<span class="mono">${p.huella}</span>). El 15 oct escribiste cómo lo resolviste.`:`Error de Rust nuevo. Huella <span class="mono">${p.huella}</span>; ${(n=>n===1?"1 marco":n+" marcos")(p.frames.filter(f=>f.user).length)} de tu código.`}return 'Error guardado. No reconozco el lenguaje de la traza: se guarda como texto.'}
+  if(t==='med'){const s=parseSample(b);if(s.values.length<2)return 'Mediciones guardadas.';const st=stats(s.values);return `${st.n} mediciones · mediana ${fmt(st.med,2)} ms (IC 95 %: ${fmt(st.lo,2)} – ${fmt(st.hi,2)}).${st.n<10?' Son pocas: lo recomendable son al menos 10.':''}`}
+  if(t==='prm'){const v=[...new Set([...b.matchAll(/\{\{(\w+)\}\}/g)].map(m=>m[1]))];return `Prompt${v.length?` con ${v.length} variable${v.length>1?'s':''}: ${v.map(x=>`<span class="var">{{${x}}}</span>`).join(' ')}`:''}. Lo puedes copiar con valores.`}
+  if(t==='url'){try{return `Enlace a ${new URL(b.trim()).hostname}. Si la API lo permite, completo título y fecha.`}catch(e){return 'Enlace guardado.'}}
+  if(t==='idea')return 'Idea guardada. Volverá dentro de 7 días si no haces nada con ella.';
+  if(t==='cmd'){const h=(b.match(/\{\{\w+\}\}/g)||[]).length;return `Comando${h?` con ${h} hueco${h>1?'s':''}`:''}.`}
+  if(t==='jsn'){try{return `JSON válido con ${Object.keys(JSON.parse(b)).length} claves de primer nivel.`}catch(e){return 'Configuración guardada.'}}
+  if(t==='md'){const hd=lines.filter(l=>/^#{1,6}\s/.test(l)).length,tk=lines.filter(l=>/^\s*[-*] \[[ xX]\]/.test(l)),dn=tk.filter(l=>/\[[xX]\]/.test(l)).length;return `Documento con ${hd} secciones${tk.length?` y ${tk.length} tareas (${dn} hechas)`:''}.`}
+  return 'Texto guardado.'}
+
+/* =========================================================
+   Carcasa
+   ========================================================= */
+const bandejaCount=()=>ITEMS.filter(i=>i.band&&!S.archived.has(i.ref)).length;
+function rail(active){
+  const rb=(key,label,icon,n,cls='')=>`<button class="rb ${cls}" data-screen="${key}" ${active===key?'aria-current="page"':''}>${ico(icon,17)}<span class="t">${label}</span>${n!=null?`<span class="n">${n}</span>`:''}</button>`;
+  return `<nav class="rail" aria-label="Rimor">
+    <div class="rbrand">${GLYPH(20)}<b>Rimor</b></div>
+    ${rb('inicio','Inicio','inicio',bandejaCount())}${rb('buscar','Buscar','buscar')}${rb('metricas','Métricas','metricas')}
+    <span class="lbl sec">Colecciones</span>
+    ${COLS.map(c=>rb(c==='gateway'?'coleccion':'col:'+c,c,'col',colCount(c),'sub')).join('')}
+    <span class="lbl sec">Investigaciones</span>
+    ${rb('inv','Cliente HTTP del gateway','inv',null,'sub')}
+    ${rb('doc','Documentos','doc',null,'sub')}
+    <button class="space" data-screen="copias"><b>Trabajo</b><span>Última copia hace 2 días</span></button>
+  </nav>`}
+
+const itemRow=it=>`<button class="it" data-go="${it.ref}"><span class="ic">${tico(it.t)}</span><span class="tt">${esc(it.titulo)}</span><span class="mm">${esc(it.res)}</span><span class="rt">${fdia(it.dia)} ${it.hora}</span></button>`;
+const head=(it,sub,right='')=>`<div class="ah"><div class="tl"><div class="row">${chip(it.t)}${stChip(it.estado)}</div><h2>${esc(it.titulo)}</h2><p class="meta">${sub}</p></div>${right}</div>`;
+const details=(title,body,ids)=>`<details class="more" ${ids?`data-ids="${ids}"`:''}><summary>${title}</summary><div>${body}</div></details>`;
+const kv=rows=>`<dl class="kv">${rows.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('')}</dl>`;
+const cifras=list=>`<p class="xs muted">Cifras que puedes citar en un documento con <span class="mono">{{REF.nombre}}</span>:</p><div class="row">${list.map(([k,v])=>`<span class="st"><span class="mono">${k}</span> ${v}</span>`).join('')}</div>`;
+
+/* =========================================================
+   Pantallas
+   ========================================================= */
+const SC={};
+
+/* ---------- Inicio (chat de captura) ---------- */
+function msgHTML(it,isNew){
+  const r=it.reply?{t:it.reply,a:it.acts||[]}:RIMOR[it.ref]||{t:esc(it.res),a:[]};
+  const acts=(r.a||[]).map(([l,a])=>a.startsWith('s:')?`<button class="btn sm" data-screen="${a.slice(2)}">${l}</button>`:a.startsWith('t:')?`<button class="btn sm" data-toast="${esc(a.slice(2))}">${l}</button>`:`<button class="btn sm" data-act="${a}" data-ref="${it.ref}">${l}</button>`).join('');
+  return `<article class="msg ${isNew?'fresh':''}" data-ids="${isNew?'CAP-01 · CAP-04':''}">
+    <div class="mhead">${tico(it.t)}<button class="tt" data-go="${it.ref}">${esc(it.titulo)}</button><span class="time">${it.hora}</span></div>
+    ${it.prev?`<div class="mprev">${esc(it.prev)}</div>`:''}
+    <div class="rimor"><span class="av">${GLYPH(13)}</span><p>${r.t}${it.dirs?` <span class="muted">· ${esc(it.dirs)}</span>`:''}</p></div>
+    <div class="mact">${acts}<span class="sp"></span><button class="ibtn" data-act="reply" data-ref="${it.ref}">${ico('reply',14)}Responder</button><button class="ibtn" data-act="arch" data-ref="${it.ref}">${ico('archive',14)}Archivar</button></div>
+  </article>`}
+function feedHTML(){
+  const today=ITEMS.filter(i=>i.dia===TODAY&&i.t!=='doc'&&!S.archived.has(i.ref)).sort((a,b)=>a.hora.localeCompare(b.hora));
+  const show=S.ff==='sin'?today.filter(i=>i.band):today;
+  let h='';
+  if(S.ff==='todo'){
+    h+=`<div class="day">Ayer</div><div class="sess" data-ids="ORG-08">${ico('tiempo',16)}<div style="flex:1;min-width:200px"><b class="sm">Sesión «Evaluación de clientes HTTP»</b><p class="xs muted">10 elementos de 16:30 a 18:51 · 2 comparaciones · 1 investigación</p></div><button class="btn sm" data-screen="tiempo">Ver en la línea de tiempo</button></div>`;
+  }
+  h+=`<div class="day">Hoy</div>`;
+  if(S.ff==='todo')h+=`<article class="msg" data-ids="ORG-13"><div class="rimor"><span class="av">${GLYPH(13)}</span><p>Hace 16 días guardaste una idea: <b>Exportar minipapers con Typst</b>. ¿Sigue en pie?</p></div><div class="mact"><button class="btn sm" data-toast="Volverá dentro de 30 días">Más adelante</button><button class="btn sm" data-toast="Idea descartada">Descartar</button><button class="btn sm" data-toast="Creada INV-0004 a partir de IDE-0028">Convertir en investigación</button></div></article>`;
+  h+=show.map(i=>msgHTML(i)).join('');
+  h+=S.created.map(i=>i.search!=null?searchMsg(i):msgHTML(i,true)).join('');
+  if(!show.length&&!S.created.length)h+=`<div class="empty"><b>Nada sin clasificar</b><span class="sm">Lo que pegues aparecerá aquí con lo que Rimor haya entendido.</span></div>`;
+  return h}
+function searchMsg(s){const all=search(s.search),R=all.slice(0,5);return `<article class="msg fresh" data-ids="BUS-01"><div class="mhead"><span class="ti k-cod">${ico('buscar',16)}</span><span class="tt">?${esc(s.search)}</span><span class="time">${s.hora}</span></div>
+  <div class="rimor"><span class="av">${GLYPH(13)}</span><div style="min-width:0;flex:1"><p>${R.length?`${all.length} resultado${all.length>1?'s':''}:`:'No encuentro nada con eso.'}</p>${R.length?`<div class="list" style="margin-top:4px">${R.map(({it})=>itemRow(it)).join('')}</div>`:''}</div></div>
+  <div class="mact"><button class="btn sm" data-qset="${esc(s.search)}">Abrir en Buscar</button></div></article>`}
+function composer(ph){
+  return `<div class="composer" data-ids="CAP-01 · CAP-03 · CAP-13 · CAP-14"><div class="cbox">
+    ${S.replyTo?`<div class="replying">${ico('reply',14)} Respondiendo a ${refb(S.replyTo)}: irá a su hilo <button class="ibtn" data-act="noreply" aria-label="No responder">×</button></div>`:''}
+    <textarea id="comp" rows="2" placeholder="${ph}" aria-label="Capturar">${esc(S.comp)}</textarea>
+    <div class="cprev" id="cprev">${compPreview()}</div>
+    <div class="crow"><button class="ibtn" data-toast="En la app: elegir archivos (también puedes soltarlos aquí)" aria-label="Adjuntar">${ico('clip',16)}</button>
+      <span class="hint xs faint"><span class="mono">@colección</span> · <span class="mono">#etiqueta</span> · <span class="mono">/tipo</span> · <span class="mono">?buscar</span> · Mayús+Enter: nueva línea</span>
+      <button class="send" data-act="send" aria-label="Guardar">${ico('send',16)}</button></div></div></div>`}
+function compPreview(){
+  if(!S.comp.trim())return '';const p=parseComp(S.comp);
+  if(p.search!=null)return `${ico('buscar',13)}<span>Buscar «${esc(p.search)}»: ${search(p.search).length} resultados. Enter para verlos aquí.</span>`;
+  const {out,found}=redact(p.body),det=detect(out),t=p.type||(det[0]||['txt'])[0],conf=p.type?null:(det[0]||[0,0])[1];
+  const alt=!p.type&&det[1]&&det[0][1]-det[1][1]<0.15?det[1][0]:null;
+  return `<span class="xs muted">Se guardará como</span>${chip(t)}${conf!=null?`<span class="mono xs faint">${fmt(conf,2)}</span>`:'<span class="xs faint">elegido con /</span>'}${p.cols.map(c=>`<span class="st acc">@${esc(c)}</span>`).join('')}${p.tags.map(c=>`<span class="st">#${esc(c)}</span>`).join('')}${found.length?`<span class="st warn">${found.length} secreto${found.length>1?'s':''} se ocultará${found.length>1?'n':''}</span>`:''}${alt?`<span class="xs" style="color:var(--warn)">¿o ${TIPOS[alt].n}? Escribe /${Object.keys(TYPE_WORDS).find(k=>TYPE_WORDS[k]===alt)} al principio</span>`:''}`}
+function sendComp(){
+  const raw=S.comp;if(!raw.trim())return;const p=parseComp(raw);const hora=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  if(p.search!=null){S.created.push({search:p.search,hora});S.comp='';renderFeed();return}
+  const {out,found}=redact(p.body),det=detect(out),t=p.type||(det[0]||['txt'])[0],ref=nextRef(t);
+  let reply=replyFor(t,out);if(found.length)reply+=` He ocultado ${found.length===1?'un secreto':found.length+' secretos'} (${[...new Set(found)].join(', ')}) antes de guardar.`;
+  const dirs=[p.cols.length?'en '+p.cols.map(c=>'@'+c).join(', '):'',p.tags.length?p.tags.map(c=>'#'+c).join(' '):'',S.replyTo?`en el hilo de ${S.replyTo}`:''].filter(Boolean).join(' · ');
+  const first=(out.split('\n').find(l=>l.trim())||'');
+  const it={ref,t,titulo:titleFor(t,out),dia:TODAY,hora,cols:p.cols,tags:p.tags,estado:'nuevo',res:TIPOS[t].n,prev:out.split('\n').length>1&&first!==titleFor(t,out)?first:'',reply,dirs,acts:[]};
+  S.comp='';S.replyTo=null;
+  if(S.screen==='hilo'){S.thread.push(it);S.created.push(it);render();return}
+  S.created.push(it);S.ff='todo';renderFeed()}
+function renderFeed(){if(S.screen!=='inicio'){render();return}$('#feed').innerHTML=feedHTML();const c=$('#comp');if(c){c.value=S.comp;c.style.height='';$('#cprev').innerHTML=compPreview()}
+  const ms=document.querySelectorAll('#feed .msg');if(ms.length)ms[ms.length-1].scrollIntoView({block:'nearest'})}
+
+SC.inicio={name:'Inicio',group:'Principal',fase:'v0.1',nav:'inicio',
+ desc:'La captura funciona como un chat: escribes o pegas abajo y Rimor contesta con lo que ha entendido, sin formularios. Indicaciones opcionales en la última línea: @colección y #etiqueta; /tipo al principio para forzar el tipo; ?buscar para preguntar. Pruébalo: pega un log, una traza, una URL o escribe una idea.',
+ render(){return {main:`<div class="ah"><div class="tl"><h2>Inicio</h2><p class="meta">Sábado, 17 de octubre</p></div>
+   <div class="seg" data-ids="ORG-01">${[['todo','Todo'],['sin',`Sin clasificar · ${bandejaCount()}`]].map(([k,l])=>`<button data-ff="${k}" aria-pressed="${S.ff===k}">${l}</button>`).join('')}</div></div>
+   <div class="feed" id="feed">${feedHTML()}</div>`,composer:composer('Pega, escribe o suelta algo…')}}};
+
+/* ---------- Hilo ---------- */
+const THREAD=[
+ {ref:'ERR-0009',when:'2 oct, 13:40',r:`Error de Rust nuevo. Huella <span class="mono">${TR.huella}</span>.`},
+ {ref:'ERR-0013',when:'15 oct, 19:12',r:'Es la segunda vez.',note:'Pasa cuando la respuesta no trae content-length; ureq lee el cuerpo entero.'},
+ {ref:'CMP-0005',when:'16 oct, 18:51',r:`La ejecución mala diverge en la línea ${CLOG.div+1}: «response has no content-length».`},
+ {ref:'ERR-0015',when:'hoy, 17:49',r:'Tercera vez. Te enseño la nota del 15 oct.'},
+ {ref:'LOG-0047',when:'hoy, 17:52',r:`Añadido al hilo: ${LOG47.errs} errores entre 17:40 y 17:43.`}];
+SC.hilo={name:'Hilo',group:'Principal',fase:'v0.1',nav:'inicio',
+ desc:'Un hilo encadena lo que va junto sin crear nada formal: se forma solo con los errores de la misma huella o cuando respondes a algo. Si crece, se convierte en investigación con un clic.',
+ render(){return {main:`<div class="ah"><div class="tl"><div class="row"><span class="kchip k-err">${ico('hilo',13)}Hilo</span><span class="st warn">abierto</span></div><h2>read timeout en stream::next_chunk</h2><p class="meta">${THREAD.length+S.thread.length} elementos · desde el 2 oct · colección gateway</p></div>
+   <div class="row"><button class="btn sm" data-toast="Hilo marcado como resuelto con la nota del 15 oct">Marcar resuelto</button><button class="btn sm pri" data-toast="Creada INV-0004 con los elementos del hilo">Convertir en investigación</button></div></div>
+   <div class="feed" id="feed" data-ids="ORG-15">${THREAD.map(e=>{const it=byRef(e.ref);return `<article class="msg"><div class="mhead">${tico(it.t)}<button class="tt" data-go="${it.ref}">${esc(it.titulo)}</button><span class="time">${e.when}</span></div>
+     <div class="rimor"><span class="av">${GLYPH(13)}</span><p>${e.r}</p></div>${e.note?`<div class="gap okk" style="margin-left:40px"><span class="dot"></span><div class="gbody"><b class="sm">Así lo resolviste</b><span class="sm">${esc(e.note)}</span></div></div>`:''}</article>`}).join('')}
+     ${S.thread.map(it=>msgHTML(it,true)).join('')}</div>`,composer:composer('Responder en este hilo: una nota, un log, cómo lo resolviste…')}}};
+
+/* ---------- Log ---------- */
+SC.log={name:'Log',group:'Lectores',fase:'v0.1',nav:'inicio',
+ desc:'Lo esencial arriba (qué pasa y cuándo) y el detalle plegado. Todo se calcula de verdad sobre un log generado de 30 minutos.',
+ render(){
+  const it=byRef('LOG-0047'),L=LOG47,mx=Math.max(...L.mins.map(m=>m.o+m.w+m.e)),W=720,H=130,bw=(W-40)/30;
+  const bars=L.mins.map((m,i)=>{const x=34+i*bw,sc=v=>v/mx*(H-34);let y=H-20;const seg=(v,c)=>{const h=sc(v);y-=h;return v?`<rect x="${x+1}" y="${y}" width="${bw-2}" height="${h}" fill="${c}" rx="1.5"/>`:''};
+    return seg(m.o,'var(--line)')+seg(m.w,'var(--warn)')+seg(m.e,'var(--bad)')+(i%5===0?`<text x="${x+bw/2}" y="${H-5}" text-anchor="middle" fill="var(--muted)">17:${String(22+i).padStart(2,'0')}</text>`:'')}).join('');
+  const sel=S.logTpl,tp=S.showAllTpl?L.tpls:L.tpls.slice(0,5),view=L.lines.map((l,i)=>({l,i})).filter(o=>sel==null||norm(o.l)===sel).slice(0,30);
+  return {main:`${head(it,`Pegado hoy a las 17:52 · ${fmtI(L.lines.length)} líneas · de 17:22 a 17:52`)}
+   <section class="card" data-ids="LEC-04"><div class="stats"><div class="stat"><span class="v" style="color:var(--bad)">${L.errs}</span><span class="xs muted">errores</span></div><div class="stat"><span class="v" style="color:var(--warn)">${L.warns}</span><span class="xs muted">avisos</span></div><div class="stat"><span class="v">${L.tpls.length}</span><span class="xs muted">plantillas</span></div></div>
+     <div class="tbl-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:440px" role="img" aria-label="Líneas por minuto y nivel">${bars}</svg></div>
+     <p class="sm">Los errores se concentran entre <b>17:40 y 17:43</b>.</p></section>
+   <section class="card" data-ids="LEC-04 · plantillas"><div class="ah"><h3>Qué dice</h3><span class="xs muted">Pulsa una plantilla para ver sus líneas</span></div>
+     <div class="tbl-wrap"><table style="min-width:480px"><tbody>${tp.map(t=>`<tr class="click ${sel===t.t?'on':''}" data-tpl="${esc(t.t)}"><td class="n" style="width:48px">${t.n}</td><td class="mono xs" style="white-space:pre">${tplHTML(t.t)}</td></tr>`).join('')}</tbody></table></div>
+     ${L.tpls.length>5?`<button class="btn gh sm" data-act="alltpl" style="align-self:flex-start">${S.showAllTpl?'Ver menos':`Ver las ${L.tpls.length}`}</button>`:''}
+     ${sel?`<pre class="code" style="max-height:280px;overflow:auto">${view.map(o=>`<span class="ln">${o.i+1}</span>${esc(o.l)}`).join('\n')}</pre>`:''}</section>
+   <div class="row"><button class="btn pri sm" data-screen="clogs">Comparar con otro log</button><button class="btn sm" data-screen="hilo">Ver su hilo</button></div>
+   ${details('Líneas originales',`<pre class="code" style="max-height:300px;overflow:auto">${L.lines.slice(0,40).map((l,i)=>`<span class="ln">${i+1}</span>${esc(l).replace(/\b(ERROR|WARN)\b/,'<span class="lv-$1">$1</span>')}`).join('\n')}</pre>`)}
+   ${details('Detalles',kv([['Colección','gateway'],['Etiquetas','#ureq #staging'],['Secretos ocultados','0'],['Referencia','<span class="mono">LOG-0047</span>']])+cifras([['lineas',fmtI(L.lines.length)],['errores',L.errs],['plantillas',L.tpls.length]]))}`}}};
+
+/* ---------- Error ---------- */
+SC.error={name:'Error',group:'Lectores',fase:'v0.1',nav:'inicio',
+ desc:'Lo que importa de un error: qué es, si ya te pasó y qué hiciste entonces. La traza y las librerías quedan plegadas.',
+ render(){const it=byRef('ERR-0015'),user=TR.frames.filter(f=>f.user),lib=TR.frames.filter(f=>!f.user),occ=ITEMS.filter(i=>i.huella===TR.huella).length;
+  return {main:`${head(it,`Pegado hoy a las 17:49 · ${TR.lang}`)}
+   <section class="card" data-ids="LEC-05"><p class="mono sm" style="overflow-wrap:anywhere">${esc(TR.msg)}</p><p class="xs muted">en <span class="mono">${esc(TR.where)}</span></p></section>
+   <section class="card" data-ids="ORG-06"><div class="verdict bad"><div class="big">${occ}.ª vez</div><div class="txt"><b>Ya te pasó el 2 y el 15 de octubre.</b><p class="sm">El 15 escribiste: «Pasa cuando la respuesta no trae content-length; ureq lee el cuerpo entero».</p></div></div>
+     <div class="row"><button class="btn sm pri" data-screen="hilo">Ver el hilo</button><button class="btn sm" data-toast="En la app: añadir la nota «así lo resolví»">Añadir cómo lo resolví</button></div></section>
+   <section class="card" data-ids="LEC-05 · marcos"><h3>Dónde, en tu código</h3><div class="list">${user.map(f=>`<div style="padding:4px 0"><div class="mono sm">${esc(f.fn)}</div><div class="mono xs muted">${esc(f.path)}</div></div>`).join('')}</div></section>
+   ${details(`Librerías y sistema (${lib.length} marcos)`,lib.map(f=>`<div class="mono xs">${esc(f.fn)}</div>`).join(''))}
+   ${details('Traza original',`<pre class="code" style="max-height:260px;overflow:auto">${esc(TRACE)}</pre>`)}
+   ${details('Detalles',kv([['Huella',`<span class="mono">${TR.huella}</span>`],['Cómo se calcula','Tipo de error, mensaje sin números y los dos primeros marcos de tu código'],['Referencia','<span class="mono">ERR-0015</span>']])+cifras([['ocurrencias',occ],['primera_vez','2 oct']]))}`}}};
+
+/* ---------- Comparación de mediciones ---------- */
+SC.medic={name:'Comparación de mediciones',group:'Lectores',fase:'v0.1',nav:'coleccion',
+ desc:'Un veredicto claro, la gráfica y una tabla de dos filas. Los avisos de método están plegados, con su número visible.',
+ render(){const it=byRef('CMP-0004'),{sa,sb,p,sig,la,lb}=BENCH,faster=BENCH.ch<0;
+  const w=[`${la}: el valor más lento (${fmt(sa.max,2)} ms) se aleja de la mediana; la mediana no se ve afectada.`,`${lb}: el valor más lento (${fmt(sb.max,2)} ms) se aleja de la mediana.`,'Las dos series se midieron en la misma máquina: para generalizar, repite en otra.','Decide el número de repeticiones antes de medir; repetir hasta que salga una diferencia aumenta los falsos positivos.'];
+  return {main:`${head(it,`Ayer, 18:21 · ${refb('MED-0007')} frente a ${refb('MED-0008')}`)}
+   <section class="card" data-ids="LEC-06 · CMP-01"><div class="verdict ${sig?(faster?'ok':'bad'):'warn'}"><div class="big">${sig?cambioTxt:'≈'}</div><div class="txt"><b>${sig?`${esc(lb)} es un ${fmt(Math.abs(BENCH.ch),1)} % más ${faster?'rápido':'lento'}`:'Sin diferencia clara'}</b><p class="sm muted">Diferencia ${sig?'significativa':'no significativa'} · Mann-Whitney, ${pTxt(p)} · 20 repeticiones cada uno</p></div></div>
+     <div class="tbl-wrap">${benchSVG()}</div><div class="legend"><span><i style="background:var(--muted)"></i>${esc(la)}</span><span><i style="background:var(--key)"></i>${esc(lb)}</span><span>Línea: mediana · banda: intervalo de confianza del 95 %</span></div>
+     <div class="tbl-wrap"><table style="min-width:420px"><thead><tr><th></th><th>Mediana</th><th>IC 95 %</th><th>Variación</th></tr></thead><tbody>
+       ${[[la,sa],[lb,sb]].map(([l,s])=>`<tr><td><b>${esc(l)}</b></td><td class="n">${fmt(s.med,2)} ms</td><td class="n">${fmt(s.lo,2)} – ${fmt(s.hi,2)}</td><td class="n">${fmt(s.cv*100,1)} %</td></tr>`).join('')}</tbody></table></div></section>
+   ${details(`Avisos de método (${w.length})`,`<div class="gaps">${w.map(t=>`<div class="gap"><span class="dot"></span><span>${esc(t)}</span></div>`).join('')}</div>`,'LEC-06 · avisos')}
+   ${details('Detalles',kv([['Se usa en',`${refb('INV-0003')} apoya · ${refb('DOC-0002')} cifra desfasada`],['Referencia','<span class="mono">CMP-0004</span>']])+cifras([['cambio',cambioTxt],['p',pTxt(p)],['mediana_a',fmt(sa.med,2)+' ms'],['mediana_b',fmt(sb.med,2)+' ms']]))}`}}};
+
+/* ---------- Comparación de logs ---------- */
+SC.clogs={name:'Comparación de logs',group:'Lectores',fase:'v0.1',nav:'coleccion',
+ desc:'Dónde se separa la ejecución mala de la buena y qué mensajes aparecen o faltan, ignorando fechas, IDs y números.',
+ render(){const it=byRef('CMP-0005'),C=CLOG,d=C.div;const list=arr=>arr.map(t=>`<div class="code" style="padding:5px 9px">${tplHTML(t)}</div>`).join('');
+  return {main:`${head(it,`Ayer, 18:51 · ${refb('LOG-0041')} buena · ${refb('LOG-0042')} mala`)}
+   <section class="card" data-ids="CMP-01"><div class="verdict bad"><div class="big">línea ${d+1}</div><div class="txt"><b>Aquí se separan</b><p class="sm muted">${C.onlyB.length} mensajes nuevos en la mala · faltan ${C.onlyG.length} de la buena</p></div></div>
+     <div class="tbl-wrap"><table style="min-width:520px"><tbody>
+      <tr><td class="xs muted" style="width:70px">buena</td><td class="mono xs">${esc(C.G[d])}</td></tr>
+      <tr><td class="xs" style="color:var(--bad)">mala</td><td class="mono xs"><span class="oc" style="background:var(--bad-soft);color:var(--bad)">${esc(C.B[d])}</span></td></tr></tbody></table></div></section>
+   <div class="split"><section class="card"><h3>Solo en la mala</h3>${list(C.onlyB)}</section><section class="card"><h3>Faltan en la mala</h3>${list(C.onlyG)}</section></div>
+   ${details('Cambian de frecuencia',C.changed.length?list(C.changed):'<p class="sm muted">Ninguno.</p>')}
+   ${details('Detalles',cifras([['divergencia',d+1],['nuevos',C.onlyB.length],['ausentes',C.onlyG.length]]))}`}}};
+
+/* ---------- Prompt ---------- */
+function lineDiff(a,b){const A=a.split('\n'),B=b.split('\n'),n=A.length,m=B.length,dp=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=A[i]===B[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+  const out=[];let i=0,j=0;while(i<n&&j<m){if(A[i]===B[j]){out.push(['s',A[i]]);i++;j++}else if(dp[i+1][j]>=dp[i][j+1]){out.push(['r',A[i]]);i++}else{out.push(['a',B[j]]);j++}}
+  while(i<n)out.push(['r',A[i++]]);while(j<m)out.push(['a',B[j++]]);return out}
+const varHTML=t=>esc(t).replace(/\{\{(\w+)\}\}/g,'<span class="var">{{$1}}</span>');
+SC.prompt={name:'Prompt',group:'Lectores',fase:'v0.1',nav:'col:prompts-revision',
+ desc:'El texto con sus variables y, debajo, lo que más se usa: rellenarlas y copiar. Versiones, cambios y valoraciones quedan a un clic.',
+ render(){const it=byRef('PRM-0012'),txt=S.pv==='v2'?PROMPT_V2:PROMPT_V1,vars=[...new Set([...txt.matchAll(/\{\{(\w+)\}\}/g)].map(m=>m[1]))];
+  return {main:`${head(it,'Para Claude · actualizado hoy a las 16:41',`<div class="seg" data-ids="CMP-02">${['v1','v2'].map(v=>`<button data-pv="${v}" aria-pressed="${S.pv===v}">${v}${v==='v2'?' · actual':''}</button>`).join('')}</div>`)}
+   <section class="card" data-ids="LEC-07"><pre class="code" style="white-space:pre-wrap;background:transparent;padding:0;font-size:12.5px">${varHTML(txt)}</pre></section>
+   <section class="card" data-ids="LEC-07 · copiar con valores"><h3>Copiar con valores</h3><div class="g3">${vars.map(v=>`<label class="xs muted" style="display:flex;flex-direction:column;gap:4px">{{${v}}}<input type="text" data-var="${v}" value="${esc(S.vals[v]||'')}"></label>`).join('')}</div>
+     <div class="row"><button class="btn pri sm" data-act="copyprompt">Copiar</button><span class="xs muted">Valoración media de esta versión: ★ 4,5 (2 usos)</span></div></section>
+   ${details('Cambios de la versión 1 a la 2',`<div class="diff">${lineDiff(PROMPT_V1,PROMPT_V2).map(([k,l])=>`<div class="${k}">${k==='a'?'+ ':k==='r'?'− ':'  '}${esc(l)||' '}</div>`).join('')}</div>`,'CMP-02')}
+   ${details('Resultados (3)',`<div class="gaps">${[['★★★★★','17 oct · v2','Detectó que faltaban las consecuencias negativas.'],['★★★★☆','16 oct · v2','Buenas preguntas; algo largo.'],['★★★☆☆','12 oct · v1','Demasiado genérico.']].map(([s,f,n])=>`<div class="gap okk"><span class="dot"></span><div class="gbody"><span class="row"><b>${s}</b><span class="xs muted">${f}</span></span><span class="sm">${n}</span></div></div>`).join('')}</div>`)}`}}};
+
+/* ---------- Documento Markdown ---------- */
+SC.md={name:'Documento Markdown',group:'Lectores',fase:'v0.1',nav:'coleccion',
+ desc:'Progreso de tareas, índice y qué cambió respecto a la versión anterior, marcado en el propio índice.',
+ render(){const it=byRef('DOC-MD-0004'),sec=[['1. Objetivo',0,0,''],['2. Cliente HTTP',3,5,''],['3. Streaming',1,4,'añadida'],['4. Dependencias',2,4,'modificada'],['5. Pruebas',1,5,'']],done=sec.reduce((s,x)=>s+x[1],0),tot=sec.reduce((s,x)=>s+x[2],0);
+  return {main:`${head(it,'Versión 3, pegada ayer a las 16:30 · 2.140 palabras')}
+   <section class="card" data-ids="LEC-08"><div class="row" style="justify-content:space-between"><b>${done} de ${tot} tareas</b><span class="mono xs muted">${Math.round(done/tot*100)} %</span></div><div class="meter"><i style="width:${done/tot*100}%"></i></div>
+     <div class="list" style="margin-top:4px">${sec.map(([h,d,t,c])=>`<div class="row" style="justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line-2)"><span class="sm">${h} ${c?`<span class="st ${c==='añadida'?'ok':'warn'}">${c}</span>`:''}</span><span class="mono xs muted">${t?d+'/'+t:''}</span></div>`).join('')}
+       <div class="row" style="padding:5px 0;justify-content:space-between"><span class="sm muted" style="text-decoration:line-through">6. Fallback con curl</span><span class="st bad">eliminada</span></div></div>
+     <p class="xs muted" data-ids="CMP-02">Desde la versión 2: 1 sección añadida, 1 modificada, 1 eliminada y 2 tareas marcadas.</p></section>
+   ${details('Ver «3. Streaming»',`<div class="dp"><p>El gateway debe reenviar los fragmentos según llegan, sin esperar al cuerpo completo.</p><div class="list sm"><label class="chk"><input type="checkbox" checked disabled> Leer la respuesta como flujo con reqwest</label><label class="chk"><input type="checkbox" disabled> Probar <span class="mono">into_reader</span> con ureq ${refb('URL-0108')}</label><label class="chk"><input type="checkbox" disabled> Timeout por fragmento, no por petición</label><label class="chk"><input type="checkbox" disabled> Medir respuestas de 1 MB</label></div></div>`)}
+   ${details('Versiones',kv([['v3','16 oct, 16:30 · actual'],['v2','12 oct, 10:05'],['v1','8 oct, 18:40']]),'DAT-08')}`}}};
+
+/* ---------- Datos tabulares ---------- */
+function miniHist(bins){const mx=Math.max(...bins),W=120,H=26,bw=W/bins.length;return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">${bins.map((b,i)=>`<rect x="${i*bw+.5}" y="${H-b/mx*(H-1)}" width="${bw-1}" height="${b/mx*(H-1)}" fill="var(--k-dat)" rx=".8"/>`).join('')}</svg>`}
+SC.tabla={name:'Datos tabulares',group:'Lectores',fase:'v0.2',nav:'coleccion',
+ desc:'Una fila por columna con su forma de un vistazo y la consulta que responde a la pregunta. Perfil y consulta calculados sobre 2.400 filas.',
+ render(){const it=byRef('DAT-0004');
+  return {main:`${head(it,`Soltado hoy a las 10:40 · ${fmtI(CSV.rows.length)} filas · 214 KB`)}
+   <section class="card" data-ids="LEC-11 · perfil"><h3>Columnas</h3><div class="tbl-wrap"><table style="min-width:520px"><tbody>${CSV.prof.map(p=>`<tr><td><b class="mono sm">${p.c}</b><br><span class="xs faint">${p.ty}</span></td><td>${p.bins?miniHist(p.bins):p.top?`<span class="xs">${p.top.map(([k,v])=>`${esc(k)} <span class="faint">${fmtI(v)}</span>`).join(' · ')}</span>`:`<span class="mono xs muted">${p.min} → ${p.max}</span>`}</td><td class="xs">${p.nulls?`<span style="color:var(--warn)">${p.nulls} nulos</span>`:''}${p.out?`<span style="color:var(--warn)">${p.out} timeouts de 30 s</span>`:''}</td></tr>`).join('')}</tbody></table></div></section>
+   <section class="card" data-ids="LEC-11 · SQL"><h3>Latencia por cliente</h3><div class="tbl-wrap"><table><thead><tr><th>Cliente</th><th>Filas</th><th>Mediana</th><th>Timeouts</th></tr></thead><tbody>${CSV.res.map(r=>`<tr><td><b>${r.cliente}</b></td><td class="n">${fmtI(r.n)}</td><td class="n">${fmt(r.mediana,2)} ms</td><td class="n" style="${r.timeouts?'color:var(--bad)':''}">${r.timeouts}</td></tr>`).join('')}</tbody></table></div>
+     ${details('Consulta SQL',`<pre class="code">select cliente, count(*) as n,
+       median(latencia_ms) as mediana,
+       count(*) filter (where status = 504) as timeouts
+from 'latencias-gateway.csv'
+group by cliente order by mediana;</pre><p class="xs muted">DuckDB-WASM, en el navegador · 4 ms</p>`)}</section>
+   ${details('Vista previa',`<div class="tbl-wrap"><table style="min-width:620px"><thead><tr>${CSV.prof.map(p=>`<th>${p.c}</th>`).join('')}</tr></thead><tbody>${CSV.rows.slice(0,5).map(r=>`<tr>${CSV.prof.map(p=>`<td class="n">${r[p.c]===null?'<span class="faint">null</span>':esc(r[p.c])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`)}`}}};
+
+/* ---------- Búsqueda ---------- */
+const TALIAS={log:'log',logs:'log',error:'err',errores:'err',mediciones:'med',prompt:'prm',prompts:'prm',documento:'md',md:'md',enlace:'url',enlaces:'url',url:'url',idea:'idea',ideas:'idea',datos:'dat',codigo:'cod',comando:'cmd',json:'jsn',toml:'jsn',texto:'txt',comparacion:'cmp',investigacion:'inv',doc:'doc'};
+function parseQ(q){const f={tipo:[],en:[],tag:[],estado:[],words:[],neg:[]};(q.match(/"[^"]+"|\S+/g)||[]).forEach(tok=>{const t=noacc(tok);
+  if(t.startsWith('tipo:'))t.slice(5).split(',').filter(Boolean).forEach(x=>f.tipo.push(TALIAS[x]||x));else if(t.startsWith('en:'))f.en.push(t.slice(3));else if(t.startsWith('#'))f.tag.push(t.slice(1));
+  else if(t.startsWith('estado:'))f.estado.push(t.slice(7));else if(t.startsWith('-')&&t.length>1)f.neg.push(t.slice(1));else f.words.push(t.replace(/"/g,''))});return f}
+function search(q){const f=parseQ(q);return ITEMS.map(it=>{
+  if(f.tipo.length&&!f.tipo.includes(it.t))return null;if(f.en.length&&!f.en.some(e=>it.cols.includes(e)))return null;if(f.tag.length&&!f.tag.every(t=>it.tags.includes(t)))return null;
+  if(f.estado.length&&!f.estado.includes(noacc(it.estado).replace(/\s/g,'')))return null;
+  const tt=noacc(it.titulo+' '+it.res+' '+it.tags.join(' ')+' '+it.ref),dd=noacc(it.idx||'');if(f.neg.some(w=>tt.includes(w)))return null;
+  const where=[];for(const w of f.words){if(tt.includes(w))where.push('t');else if(dd.includes(w))where.push('c');else return null}return {it,where}}).filter(Boolean)}
+function hl(s,words){let o=esc(s);words.filter(w=>w.length>1).forEach(w=>{o=o.replace(new RegExp('('+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<mark>$1</mark>')});return o}
+function searchBody(){
+  const R=search(S.q),f=parseQ(S.q),groups={};R.forEach(r=>{(groups[r.it.t]=groups[r.it.t]||[]).push(r)});
+  const cnt=fn=>{const c={};R.forEach(({it})=>fn(it).forEach(v=>c[v]=(c[v]||0)+1));return Object.entries(c).sort((a,b)=>b[1]-a[1])};
+  const facet=(title,list,mk,lab=k=>k)=>list.length?`<div><span class="lbl">${title}</span><div class="row" style="margin-top:6px">${list.map(([k,n])=>`<button class="pill" data-qadd="${esc(mk(k))}">${esc(lab(k))} <span class="faint">${n}</span></button>`).join('')}</div></div>`:'';
+  return `<p class="sm muted">${R.length} resultado${R.length===1?'':'s'}</p>
+   ${R.length?Object.entries(groups).map(([t,rs])=>`<section class="card" style="padding:10px 12px;gap:4px"><span class="lbl" style="padding:0 10px">${TIPOS[t].n} · ${rs.length}</span><div class="list">${rs.map(({it,where})=>`<button class="it" data-go="${it.ref}"><span class="ic">${tico(it.t)}</span><span class="tt">${hl(it.titulo,f.words)}</span><span class="mm">${where.includes('c')?'<span class="st">coincide dentro</span> ':''}${hl(it.res,f.words)}</span><span class="rt">${fdia(it.dia)}</span></button>`).join('')}</div></section>`).join('')
+   :`<div class="empty"><b>Sin resultados</b><span class="sm">Quita algún filtro o prueba otra palabra.</span></div>`}
+   ${R.length?details('Afinar',`<div style="display:flex;flex-direction:column;gap:12px">${facet('Tipo',cnt(it=>[it.t]),k=>'tipo:'+Object.keys(TALIAS).find(a=>TALIAS[a]===k),k=>TIPOS[k].n)}${facet('Colección',cnt(it=>it.cols),k=>'en:'+k)}${facet('Etiqueta',cnt(it=>it.tags).slice(0,8),k=>'#'+k,k=>'#'+k)}</div>`,'BUS-04'):''}`}
+SC.buscar={name:'Búsqueda',group:'Ver y buscar',fase:'v0.1',nav:'buscar',
+ desc:'Una caja y los resultados. Los filtros se escriben (tipo:, en:, #etiqueta, estado:, -excluir) y las facetas quedan plegadas en «Afinar». También funciona desde el compositor de Inicio con ?.',
+ render(){return {main:`<div class="ah"><div class="tl"><h2>Buscar</h2></div></div>
+   <div class="cbox" style="flex-direction:row;align-items:center;gap:10px;border-radius:12px" data-ids="BUS-01 · BUS-02">${ico('buscar',17)}<input type="text" id="q" value="${esc(S.q)}" aria-label="Buscar" spellcheck="false" style="border:0;background:transparent;padding:6px 0;font-family:var(--f-m);font-size:13.5px;box-shadow:none"></div>
+   <div class="row">${['tipo:error','en:gateway','#ureq','tipo:prompt','-staging'].map(h=>`<button class="pill" data-qadd="${h}">${h}</button>`).join('')}<button class="btn gh sm" data-act="qclear">Limpiar</button></div>
+   <div id="sres" style="display:flex;flex-direction:column;gap:12px" data-ids="BUS-05">${searchBody()}</div>`}}};
+
+/* ---------- Colección ---------- */
+SC.coleccion={name:'Colección',group:'Ver y buscar',fase:'v0.2',nav:'coleccion',
+ desc:'Un grupo de un vistazo: qué hay, cuándo se trabajó y qué se repite. Lo demás es la lista.',
+ render(){const G=ITEMS.filter(i=>i.cols.includes('gateway')),byT={};G.forEach(i=>byT[i.t]=(byT[i.t]||0)+1);const tmax=Math.max(...Object.values(byT));
+  const days=[];for(let k=13;k>=0;k--){const d=new Date(Date.UTC(2026,9,17)-k*86400000).toISOString().slice(0,10);days.push([d,G.filter(i=>i.dia===d).length])}
+  const dmax=Math.max(...days.map(d=>d[1]),1),W=420,H=90,bw=(W-10)/14,errs=G.filter(i=>i.huella);
+  return {main:`<div class="ah"><div class="tl"><div class="row">${ico('col',16)}<span class="lbl">Colección</span></div><h2>gateway</h2><p class="meta">${G.length} elementos · desde el 2 oct</p></div>
+    <div class="row"><button class="btn sm" data-toast="Creada INV-0004 con la colección">Crear investigación</button><button class="btn sm" data-toast="Exportado rimor-gateway-2026-10-17.zip">Exportar ZIP</button></div></div>
+   <div class="split">
+    <section class="card" data-ids="VIS-04"><h3>Qué hay</h3><div class="list" style="gap:7px">${Object.entries(byT).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<div class="hb"><span class="row" style="gap:6px;flex-wrap:nowrap">${ico(icoT(t),14)}${TIPOS[t].n}</span><span class="tr"><span class="fi" style="width:${n/tmax*100}%;background:var(--k-${TIPOS[t].k})"></span></span><span class="v">${n}</span></div>`).join('')}</div></section>
+    <section class="card" data-ids="VIS-04"><h3>Cuándo</h3><div class="tbl-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:260px" role="img" aria-label="Elementos por día en las dos últimas semanas">${days.map(([d,n],i)=>`<rect x="${5+i*bw+2}" y="${H-18-n/dmax*(H-30)}" width="${bw-4}" height="${Math.max(1.5,n/dmax*(H-30))}" rx="2" fill="${n?'var(--accent)':'var(--line)'}"><title>${d}: ${n}</title></rect>${(i%3===0||i===13)?`<text x="${5+i*bw+bw/2}" y="${H-4}" text-anchor="middle" fill="var(--muted)">${+d.slice(8)}</text>`:''}`).join('')}</svg></div><p class="xs muted">Octubre · el pico es la sesión del día 16.</p></section></div>
+   <section class="card" data-ids="ORG-09"><h3>Se repite</h3><div class="gap hi"><span class="dot"></span><div class="gbody"><b class="sm">read timeout en stream::next_chunk</b><span class="xs muted">${errs.length} veces · última hoy</span></div><button class="btn sm" data-screen="hilo">Ver hilo</button></div></section>
+   <section class="card"><h3>Elementos</h3><div class="list">${G.slice(0,8).map(itemRow).join('')}</div><button class="btn gh sm" data-qset="en:gateway" style="align-self:flex-start">Ver los ${G.length}</button></section>`}}};
+
+/* ---------- Línea de tiempo ---------- */
+SC.tiempo={name:'Línea de tiempo',group:'Ver y buscar',fase:'v0.2',nav:'buscar',
+ desc:'Qué pasó y en qué orden, con la sesión de trabajo sombreada. Pulsa un punto para abrir el elemento.',
+ render(){const day=ITEMS.filter(i=>i.dia==='2026-10-16'),lanes=['md','inv','url','med','cmp','log'],m=h=>{const [a,b]=h.split(':').map(Number);return a*60+b};
+  const x0=m('16:15'),x1=m('19:05'),W=760,L=118,R=16,LH=36,T=30,X=v=>L+(v-x0)/(x1-x0)*(W-L-R),H=T+lanes.length*LH+24;
+  let svg=`<rect x="${X(m('16:30'))}" y="${T-14}" width="${X(m('18:51'))-X(m('16:30'))}" height="${lanes.length*LH+10}" rx="8" fill="var(--accent-soft)"/><text x="${X(m('16:30'))+8}" y="${T-2}" fill="var(--accent)">Evaluación de clientes HTTP</text>`;
+  for(let t=Math.ceil(x0/30)*30;t<=x1;t+=30)svg+=`<text x="${X(t)}" y="${H-5}" text-anchor="middle" fill="var(--muted)">${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}</text>`;
+  lanes.forEach((ln,i)=>{const y=T+i*LH+LH/2+4;svg+=`<text x="8" y="${y+4}" fill="var(--muted)">${TIPOS[ln].n}</text><line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line-2)"/>`;
+    day.filter(it=>it.t===ln).forEach(it=>{svg+=`<g data-go="${it.ref}" style="cursor:pointer"><circle cx="${X(m(it.hora))}" cy="${y}" r="7" fill="var(--k-${TIPOS[ln].k})"/><title>${it.hora} · ${esc(it.titulo)}</title></g>`})});
+  return {wide:true,main:`<div class="ah"><div class="tl"><h2>Línea de tiempo</h2><p class="meta">Viernes, 16 de octubre</p></div><div class="seg">${['Día','Semana','Mes'].map((l,i)=>`<button aria-pressed="${i===0}" data-toast="${i?'En esta referencia solo está dibujado el día':''}">${l}</button>`).join('')}</div></div>
+   <section class="card" data-ids="VIS-05 · ORG-08"><div class="tbl-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:560px" role="img" aria-label="Elementos del 16 de octubre por tipo y hora">${svg}</svg></div></section>
+   ${details('Ese día, en orden',`<div class="list">${[...day].sort((a,b)=>a.hora.localeCompare(b.hora)).map(itemRow).join('')}</div>`)}`}}};
+
+/* ---------- Lienzo ---------- */
+const CNODES={q:{c:'q',b:'Pregunta',p:'¿Cambiamos reqwest por ureq sin perder fiabilidad?'},'URL-0101':{ref:1},'CMP-0004':{ref:1},'CMP-0005':{ref:1},'URL-0108':{ref:1},h1:{c:'nota',b:'Hipótesis',p:'El timeout viene de leer el cuerpo entero sin content-length.'},dec:{c:'',b:'Decisión provisional',p:'reqwest, 49 frente a 45. Frágil.'}};
+const CLINKS=[['URL-0101','q','contexto','var(--muted)'],['CMP-0004','q','apoya','var(--ok)'],['CMP-0005','q','contradice','var(--bad)'],['CMP-0005','h1','apoya','var(--ok)'],['URL-0108','h1','contexto','var(--muted)'],['dec','q','responde','var(--accent)']];
+function drawLinks(){const cv=$('#canvas');if(!cv)return;const box=id=>{const el=cv.querySelector(`[data-node="${id}"]`);return {x:el.offsetLeft+el.offsetWidth/2,y:el.offsetTop+el.offsetHeight/2}};
+  cv.querySelector('svg').innerHTML=CLINKS.map(([a,b,l,c])=>{const A=box(a),B=box(b),mx=(A.x+B.x)/2,my=(A.y+B.y)/2;return `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" stroke="${c}" stroke-width="1.6" stroke-dasharray="${l==='contexto'?'4 4':''}"/><rect x="${mx-34}" y="${my-9}" width="68" height="18" rx="9" fill="var(--panel)" stroke="${c}"/><text x="${mx}" y="${my+3.5}" text-anchor="middle" fill="${c}">${l}</text>`}).join('')}
+SC.lienzo={name:'Lienzo',group:'Ver y buscar',fase:'v0.3',nav:'inv',
+ desc:'Para pensar con las manos: las evidencias de una investigación como tarjetas que puedes mover (arrástralas), unidas por su papel. Sirve para ver de un golpe qué apoya y qué contradice.',
+ render(){return {wide:true,main:`<div class="ah"><div class="tl"><span class="lbl">INV-0003 · Lienzo</span><h2>Cliente HTTP del gateway de IA</h2></div><div class="row"><button class="btn sm" data-toast="En la app: añadir una tarjeta desde cualquier elemento o una nota">Añadir</button><button class="btn sm" data-screen="inv">Vista de lista</button></div></div>
+   <div class="canvas-wrap" data-ids="VIS-10"><div class="canvas" id="canvas"><svg width="860" height="520" aria-hidden="true"></svg>
+   ${Object.entries(CNODES).map(([id,n])=>{const [x,y]=S.canvas[id];if(n.ref){const it=byRef(id);return `<div class="ccard" data-node="${id}" style="left:${x}px;top:${y}px"><div class="row">${tico(it.t)}<span class="mono xs faint">${id}</span></div><b>${esc(it.titulo)}</b><p>${esc(it.res)}</p></div>`}
+     return `<div class="ccard ${n.c}" data-node="${id}" style="left:${x}px;top:${y}px"><span class="lbl">${n.b}</span><p style="color:var(--ink)">${esc(n.p)}</p></div>`}).join('')}</div></div>
+   <div class="legend"><span><i style="background:var(--ok)"></i>apoya</span><span><i style="background:var(--bad)"></i>contradice</span><span><i style="background:var(--muted)"></i>contexto</span><span>Las posiciones se guardan en la investigación.</span></div>`}},
+ after(){drawLinks()}};
+
+/* ---------- Métricas ---------- */
+function lineChart(){const pts=[['2 oct',40.3,'MED-0002'],['9 oct',39.6,'MED-0004'],['16 oct',+BENCH.sa.med.toFixed(1),'MED-0007']],W=420,H=140,L=36,R=14,T=14,B=26,mn=36,mx=41,X=i=>L+i*(W-L-R)/(pts.length-1),Y=v=>T+(mx-v)/(mx-mn)*(H-T-B);
+  let g='';[37,38,39,40,41].forEach(v=>g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line-2)"/><text x="${L-6}" y="${Y(v)+3.5}" text-anchor="end" fill="var(--muted)">${v}</text>`);
+  const ur=BENCH.sb.med;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Mediana de latencia de reqwest en tres mediciones">${g}<polyline points="${pts.map((p,i)=>`${X(i)},${Y(p[1])}`).join(' ')}" fill="none" stroke="var(--key)" stroke-width="2"/>${pts.map((p,i)=>`<g data-go="${p[2]}" style="cursor:pointer"><circle cx="${X(i)}" cy="${Y(p[1])}" r="${i===pts.length-1?5:4}" fill="var(--key)"/><text x="${X(i)+(i===0?14:i===pts.length-1?-10:0)}" y="${Y(p[1])-9}" text-anchor="middle" fill="var(--ink)">${fmt(p[1],1)}</text><text x="${X(i)-(i===pts.length-1?14:0)}" y="${H-8}" text-anchor="middle" fill="var(--muted)">${p[0]}</text></g>`).join('')}<circle cx="${X(2)}" cy="${Y(ur)}" r="4" fill="none" stroke="var(--ok)" stroke-width="2"/><text x="${X(2)-10}" y="${Y(ur)+4}" text-anchor="end" fill="var(--ok)">ureq ${fmt(ur,1)}</text></svg>`}
+function weekBars(){const R=mulberry32(5),groups=[['Logs y errores','var(--ink)'],['Mediciones','var(--key)'],['Enlaces','var(--muted)'],['Prompts','var(--faint)'],['Ideas y notas','var(--line)']];
+  const weeks=Array.from({length:8},(_,w)=>groups.map((g,i)=>Math.floor(R()*(i===0?9:5))+(w===7&&i<2?6:0)));const mx=Math.max(...weeks.map(w=>w.reduce((a,b)=>a+b,0))),W=420,H=120,bw=(W-20)/8;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Capturas por semana y tipo">${weeks.map((w,i)=>{let y=H-20;return w.map((v,j)=>{const h=v/mx*(H-30);y-=h;return `<rect x="${10+i*bw+4}" y="${y}" width="${bw-8}" height="${h}" fill="${groups[j][1]}"/>`}).join('')+`<text x="${10+i*bw+bw/2}" y="${H-5}" text-anchor="middle" fill="var(--muted)">${i===7?'esta':'−'+(7-i)}</text>`}).join('')}</svg>
+   <div class="legend">${groups.map(g=>`<span><i style="background:${g[1]}"></i>${g[0]}</span>`).join('')}</div>`}
+SC.metricas={name:'Métricas',group:'Ver y buscar',fase:'v0.2',nav:'metricas',
+ desc:'Pocas cifras y todas accionables: qué número evoluciona, qué se repite, cuánto tardas en cerrar, qué tienes olvidado y qué te ha ahorrado Rimor. Sin puntuaciones ni rachas.',
+ render(){return {wide:true,main:`<div class="ah"><div class="tl"><h2>Métricas</h2><p class="meta">Calculadas en local con tus elementos · últimas 8 semanas</p></div><button class="btn sm" data-toast="Creado DOC-0003 «Semana del 12 al 18 de octubre» con estos datos">Resumen de la semana</button></div>
+   <div class="g2">
+    <section class="card" data-ids="MET-01"><h3>Cifras que sigues</h3><p class="sm">Mediana de latencia de <b>reqwest</b> con 64 KB: <b style="color:var(--ok)">${fmt((BENCH.sa.med-40.3)/40.3*100,1).replace('-','−')} %</b> desde el 2 oct.</p><div class="tbl-wrap">${lineChart()}</div>
+      <div class="gap acc"><span class="dot"></span><span class="sm">Indexación de 9.000 notas: 1 medición. La gráfica aparece con 3.</span></div></section>
+    <section class="card" data-ids="MET-02"><h3>Lo que más se repite</h3><div class="list" style="gap:10px">${[['read timeout en stream::next_chunk',3,'hoy','con nota','ok'],['database is locked (SQLite)',2,'9 oct','con nota','ok'],['EADDRINUSE :5173',2,'1 oct','sin nota','warn']].map(([t,n,u,s,c])=>`<div style="display:flex;flex-direction:column;gap:4px"><div class="row" style="justify-content:space-between;flex-wrap:nowrap;gap:10px"><span class="mono xs" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${t}</span><span class="st ${c}">${s}</span></div><div class="hb" style="grid-template-columns:minmax(0,1fr) 70px"><span class="tr"><span class="fi" style="width:${n/3*100}%;background:var(--bad)"></span></span><span class="v">${n}× · ${u}</span></div></div>`).join('')}</div>
+      <p class="xs muted">Un error repetido sin nota es el mejor candidato para escribir cómo se resolvió.</p></section>
+    <section class="card" data-ids="MET-03"><h3>Tiempo hasta resolver</h3><div class="stats"><div class="stat"><span class="v">1,6 días</span><span class="xs muted">mediana · 11 hilos resueltos</span></div><div class="stat"><span class="v">3</span><span class="xs muted">siguen abiertos</span></div></div>
+      <div class="list" style="gap:6px">${[['Menos de 1 hora',3],['Menos de 1 día',4],['Menos de 1 semana',3],['Más',1]].map(([l,n])=>`<div class="hb"><span class="xs">${l}</span><span class="tr"><span class="fi" style="width:${n/4*100}%"></span></span><span class="v">${n}</span></div>`).join('')}</div></section>
+    <section class="card" data-ids="MET-04"><h3>Qué capturas</h3>${weekBars()}<p class="xs muted">Esta semana, sobre todo logs, errores y mediciones del gateway.</p></section>
+    <section class="card" data-ids="MET-05"><h3>Pendiente, sin prisa</h3><div class="gaps">
+      <div class="gap"><span class="dot"></span><span style="flex:1">Ideas sin tocar en 30 días: 3</span><button class="btn gh sm" data-toast="Se te propondrán de una en una en Inicio">Revisar</button></div>
+      <div class="gap"><span class="dot"></span><span style="flex:1">INV-0001 sin actividad en 41 días</span><button class="btn gh sm" data-toast="INV-0001 aparcada">Aparcar</button></div>
+      <div class="gap"><span class="dot"></span><span style="flex:1">${bandejaCount()} elementos sin clasificar, todos de hoy</span><button class="btn gh sm" data-screen="inicio">Ver</button></div></div></section>
+    <section class="card" data-ids="MET-06"><h3>Lo que te ha ahorrado Rimor</h3><div class="g2">${[['6','errores reconocidos'],['4','duplicados evitados'],['14','prompts copiados con valores'],['31','búsquedas que encontraron algo']].map(([v,l])=>`<div class="stat"><span class="v">${v}</span><span class="xs muted">${l}</span></div>`).join('')}</div><p class="xs muted">Este mes. Se cuenta en local y no sale de tu equipo.</p></section>
+   </div>`}}};
+
+/* ---------- Investigación ---------- */
+SC.inv={name:'Investigación',group:'Investigar y publicar',fase:'v0.3',nav:'inv',
+ desc:'La pregunta, sus evidencias con su papel y lo que falta, en una sola columna. Escribe la interpretación de CMP-0005 y su aviso desaparece.',
+ render(){const d=decision(),g=gaps(),rc={apoya:'ok',contradice:'bad',contexto:''};
+  const ev=[['URL-0101','contexto','ureq tiene 23 dependencias transitivas frente a 87.'],['CMP-0004','apoya','ureq es algo más rápido con 64 KB.'],['CMP-0005','contradice',null],['URL-0108','contexto','Leer el cuerpo como flujo podría resolver el timeout.']];
+  return {main:`<div class="ah"><div class="tl"><div class="row">${chip('inv')}<span class="st warn">abierta</span></div><h2>¿Cambiamos reqwest por ureq en el gateway de IA?</h2><p class="meta">Abierta ayer · colección gateway · objetivo: menos dependencias sin perder fiabilidad</p></div>
+    <div class="row"><button class="btn sm" data-screen="lienzo">${ico('lienzo',14)} Lienzo</button><button class="btn sm pri" data-screen="doc">${ico('doc',14)} Escribir</button></div></div>
+   <div class="banner" data-ids="INV-07" id="gapbanner"><b>${g.length} cosas por revisar</b><span style="flex:1">${esc(g[0].text)}</span></div>
+   <section class="card" data-ids="INV-01 · INV-04"><h3>Evidencias</h3><div class="list" style="gap:12px">
+     ${ev.map(([r,rol,txt])=>{const it=byRef(r);return `<div style="display:flex;gap:12px;align-items:flex-start">${tico(it.t)}<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><div class="row"><button class="ref" data-go="${r}" style="background:none;padding:0;color:var(--ink);font-family:var(--f-b);font-size:13.5px;font-weight:600;white-space:normal;text-align:left">${esc(it.titulo)}</button><span class="st ${rc[rol]}">${rol}</span></div>
+       ${txt?`<p class="sm muted">${esc(txt)}</p>`:`<textarea id="interp" rows="2" style="font-family:var(--f-b);font-size:13px" placeholder="Tu interpretación, en una línea">${esc(S.interp)}</textarea>`}</div></div>`}).join('')}</div></section>
+   <section class="card" data-ids="INV-06"><div class="row" style="justify-content:space-between"><h3>Decisión provisional</h3><button class="btn gh sm" data-screen="dec">Abrir matriz</button></div><p><b>${S.opts[d.lead]}</b> por ${fmt(d.D,0)} puntos${d.flips.length?`, pero frágil: cambia si «${esc(d.flips[0].name)}» pesa ${fmt(d.flips[0].to,1)}.`:'.'}</p></section>
+   ${details(`Qué falta (${g.length})`,`<div id="gapsbox">${gapsHTML()}</div>`,'INV-07')}
+   ${details('Hipótesis (2)',`<div class="gaps"><div class="gap"><span class="dot"></span><span>El timeout se debe a leer el cuerpo entero sin content-length. <span class="st">pendiente</span></span></div><div class="gap"><span class="dot"></span><span>Con <span class="mono">into_reader</span> el streaming funciona. <span class="st">sin elementos</span></span></div></div>`,'INV-05')}
+   ${details('Cronología',kv([['16 oct 17:00','Investigación abierta'],['16 oct 18:21','CMP-0004 · mediciones'],['16 oct 18:51','CMP-0005 · logs'],['17 oct 09:50','DOC-0002 · borrador'],['17 oct 17:31','URL-0108 · documentación']]),'INV-03')}
+   <div class="row"><button class="btn sm" data-toast="Concluida (pide una conclusión breve)">Concluir</button><button class="btn sm" data-toast="Aparcada">Aparcar</button><button class="btn sm dan" data-toast="Cancelada">Cancelar</button></div>`}}};
+
+/* ---------- Decisión ---------- */
+function decOut(){const d=decision(),mx=Math.max(...d.tot,1);
+  return `<section class="card" data-ids="INV-06"><div class="list" style="gap:8px">${S.opts.map((o,j)=>`<div class="hb" style="grid-template-columns:80px minmax(0,1fr) 40px"><b class="sm">${o}</b><span class="tr" style="height:12px"><span class="fi" style="width:${d.tot[j]/mx*100}%;background:${j===d.lead?'var(--accent)':'var(--faint)'}"></span></span><span class="v">${d.tot[j]}</span></div>`).join('')}</div>
+   <p><b>${S.opts[d.lead]}</b> gana por ${fmt(d.D,0)} puntos.${d.flips.length?` <span class="muted">Si «${esc(d.flips[0].name)}» pasa de ${fmt(d.flips[0].from,0)} a ${fmt(d.flips[0].to,1)}, gana ${S.opts[d.other]}.</span>`:' <span class="muted">Ningún cambio de un solo peso lo invierte.</span>'}</p></section>
+   ${d.flips.length>1?details('Todos los pesos que invierten el resultado',`<div class="gaps">${d.flips.map(f=>`<div class="gap ${f.rel<0.5?'hi':''}"><span class="dot"></span><span>«${esc(f.name)}» de ${fmt(f.from,0)} a ${fmt(f.to,1)}</span></div>`).join('')}</div>`,'VIS-11'):''}`}
+SC.dec={name:'Decisión',group:'Investigar y publicar',fase:'v0.3',nav:'inv',
+ desc:'La matriz y su resultado, con la sensibilidad en una frase. Cambia pesos o puntuaciones y se recalcula.',
+ render(){return {main:`<div class="ah"><div class="tl"><span class="lbl">INV-0003 · Decisión</span><h2>reqwest frente a ureq</h2></div></div>
+   <section class="card" data-ids="INV-06 · matriz"><div class="tbl-wrap"><table style="min-width:500px"><thead><tr><th>Criterio</th><th>Peso</th>${S.opts.map(o=>`<th>${o}</th>`).join('')}<th></th></tr></thead><tbody>
+    ${S.crit.map((c,i)=>`<tr><td>${esc(c.name)}</td><td><input type="number" min="0" max="10" data-cw="${i}" value="${c.w}" aria-label="Peso de ${esc(c.name)}"></td>${S.opts.map((o,j)=>`<td><select data-s="${i}-${j}" aria-label="${o} en ${esc(c.name)}">${[1,2,3,4,5].map(v=>`<option ${v===c.s[j]?'selected':''}>${v}</option>`).join('')}</select></td>`).join('')}<td>${c.ev?refb(c.ev):'<span class="st warn">sin evidencia</span>'}</td></tr>`).join('')}</tbody></table></div><p class="xs muted">Pesos de 0 a 10 · puntuaciones de 1 a 5</p></section>
+   <div id="decout" style="display:flex;flex-direction:column;gap:14px">${decOut()}</div>`}}};
+
+/* ---------- Documento ---------- */
+const CIFRAS={'CMP-0004':{cambio:cambioTxt,p:pTxt(BENCH.p),n:'20'},'CMP-0005':{divergencia:String(CLOG.div+1)}};
+const FIJADAS={'CMP-0004.cambio':'−4,6 %'};
+function renderDoc(src){const lines=src.split('\n'),figs={};let fig=0,html='',ul=false,para=[];const stale=[],broken=[];
+  lines.forEach(l=>{const m=l.match(/^!\[\[([A-Z-]+\d+)\|(\w+)\]\](?:\{#(fig:[\w-]+)\})?/);if(m){fig++;if(m[3])figs[m[3]]=fig}});fig=0;
+  const inline=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\{\{([A-Z-]+\d+)\.(\w+)\}\}/g,(m,r,f)=>{const cur=CIFRAS[r]&&CIFRAS[r][f],fx=FIJADAS[r+'.'+f];if(cur==null){broken.push(`{{${r}.${f}}}`);return `<span class="cifra bad">{{${r}.${f}}}</span>`}
+      if(fx&&fx!==cur){stale.push({k:r+'.'+f,fx,cur});return `<span class="cifra old" title="Fijada ${fx}; ahora ${cur}">${fx}</span>`}return `<span class="cifra">${cur}</span>`})
+    .replace(/\[\[([A-Z-]+\d+)\]\]/g,(m,r)=>byRef(r)?`<button class="ref" data-go="${r}">${r}</button>`:(broken.push(r),`<span class="cifra bad">${r}</span>`))
+    .replace(/@(fig:[\w-]+)/g,(m,k)=>figs[k]?`figura ${figs[k]}`:(broken.push(k),`<span class="cifra bad">${k}</span>`));
+  const fl=()=>{if(para.length){html+=`<p>${inline(para.join(' '))}</p>`;para=[]}},cu=()=>{if(ul){html+='</ul>';ul=false}};
+  for(const l of lines){if(/^# /.test(l)){fl();cu();html+=`<h1>${inline(l.slice(2))}</h1>`;continue}if(/^## /.test(l)){fl();cu();html+=`<h2>${inline(l.slice(3))}</h2>`;continue}
+    if(/^- /.test(l)){fl();if(!ul){html+='<ul>';ul=true}html+=`<li>${inline(l.slice(2))}</li>`;continue}
+    const m=l.match(/^!\[\[([A-Z-]+\d+)\|(\w+)\]\](?:\{#(fig:[\w-]+)\})?\s*$/);if(m){fl();cu();fig++;html+=m[1]==='CMP-0004'&&m[2]==='grafico'?`<figure class="fig"><div class="tbl-wrap">${benchSVG(130)}</div><figcaption>Figura ${fig}. Latencia de reqwest y ureq con 64 KB, 20 repeticiones (${m[1]}).</figcaption></figure>`:`<figure class="fig"><figcaption>Figura ${fig}. ${m[2]} de ${m[1]}.</figcaption></figure>`;continue}
+    if(!l.trim()){fl();cu();continue}cu();para.push(l)}
+  fl();cu();return {html,stale,broken}}
+function docBanner(r){if(!r.stale.length&&!r.broken.length)return `<div class="banner" style="background:var(--ok-soft)"><b style="color:var(--ok)">Todo al día.</b><span>Cifras y referencias coinciden con sus elementos.</span></div>`;
+  return `<div class="banner"><b>${r.stale.length+r.broken.length} por revisar.</b><span style="flex:1">${r.stale.map(s=>`<span class="mono">${s.k}</span> se fijó en ${s.fx} y ahora vale ${s.cur}.`).join(' ')}${r.broken.length?` Referencias rotas: ${r.broken.map(esc).join(', ')}.`:''}</span>${r.stale.length?`<button class="btn sm" data-act="acceptcifra">Usar ${r.stale[0].cur}</button>`:''}</div>`}
+SC.doc={name:'Documento',group:'Investigar y publicar',fase:'v0.3',nav:'doc',
+ desc:'Editor y vista previa lado a lado, un aviso arriba solo si algo está desfasado o roto, y la exportación en un menú. Una cifra está desfasada a propósito: se fijó en −4,6 % y la comparación ahora da otro valor.',
+ render(){const r=renderDoc(S.doc);return {wide:true,main:`<div class="ah"><div class="tl"><div class="row">${chip('doc')}<span class="st warn">borrador</span></div><h2>ADR-0012: Cliente HTTP del gateway de IA</h2><p class="meta">Plantilla ADR · desde ${refb('INV-0003')}</p></div>
+    <div class="row" data-ids="DOC-06 a DOC-10"><select id="expfmt" aria-label="Formato">${['Markdown con figuras','HTML autocontenido','PDF (impresión)','Word · v0.4','LaTeX + .bib · v0.4','PDF con Typst · v0.4'].map(f=>`<option>${f}</option>`).join('')}</select><button class="btn pri sm" data-act="export">Exportar</button></div></div>
+   <div id="docbanner" data-ids="DOC-03 · DOC-14">${docBanner(r)}</div>
+   <div class="split"><section class="card" data-ids="DOC-01 · DOC-02"><textarea id="docsrc" rows="30" spellcheck="false" style="border:0;background:transparent;padding:0">${esc(S.doc)}</textarea></section>
+    <section class="card"><div class="dp" id="docprev">${r.html}</div></section></div>
+   <p class="xs muted"><span class="mono">[[REF]]</span> referencia · <span class="mono">![[REF|grafico]]</span> incrusta · <span class="mono">{{REF.cifra}}</span> cifra viva · <span class="mono">@fig:x</span> figura numerada</p>`}}};
+
+/* ---------- Datos y copias ---------- */
+SC.copias={name:'Datos y copias',group:'Datos',fase:'v0.1',nav:'',
+ desc:'Tres respuestas de un vistazo (cuánto ocupa, si está protegido y cuándo copiaste) y exportar en un clic. Lo demás, plegado.',
+ render(){return {main:`<div class="ah"><div class="tl"><h2>Datos y copias</h2><p class="meta">Espacio «Trabajo» · guardado en tu navegador</p></div></div>
+   <section class="card" data-ids="DAT-06 · DAT-07"><div class="stats"><div class="stat"><span class="v">148 MB</span><span class="xs muted">412 elementos</span></div><div class="stat"><span class="v" style="color:var(--ok)">Protegido</span><span class="xs muted">almacenamiento persistente</span></div><div class="stat"><span class="v">hace 2 días</span><span class="xs muted">última copia · 38 cambios desde entonces</span></div></div>
+     <div class="row"><button class="btn key" data-toast="Exportado rimor-trabajo-2026-10-17.zip (148 MB)">Exportar ZIP</button><button class="btn" data-screen="importar">Importar…</button></div></section>
+   ${details('Otras exportaciones',`<div class="gaps"><div class="gap acc"><span class="dot"></span><span style="flex:1">JSON único. Los adjuntos de más de 1 MB se excluyen y el archivo lo indica.</span><button class="btn sm" data-toast="Exportado rimor-trabajo-2026-10-17.json · 12 adjuntos excluidos">Exportar</button></div><div class="gap acc"><span class="dot"></span><span style="flex:1">Una colección o investigación, con lo que referencia.</span><button class="btn sm" data-toast="Elige qué exportar">Elegir…</button></div></div>`,'DAT-05 · DAT-10')}
+   ${details('Recordatorio de copia',`<label class="chk"><input type="checkbox" checked> <span>Avisar tras 50 cambios o 7 días sin copia</span></label><label class="chk"><input type="checkbox" checked> <span>Exportar un ZIP antes de reemplazar o vaciar la papelera</span></label>`,'DAT-07')}
+   ${details('Espacios y papelera',kv([['Trabajo','412 elementos · activo'],['Pruebas de Struo','58 elementos'],['Papelera','3 elementos, se pueden restaurar']]),'DAT-09 · ORG-07')}
+   ${details('Qué contiene el ZIP',`<pre class="tree">rimor/
+├── manifest.json
+├── elementos/2026/10/…
+├── comparaciones/  investigaciones/  documentos/
+├── adjuntos/        ← por hash
+├── historial/       ← versiones
+└── colecciones.json  vistas.json  papelera/</pre>`,'§13.2')}`}}};
+
+/* ---------- Importar ---------- */
+SC.importar={name:'Importar ZIP',group:'Datos',fase:'v0.1',nav:'',
+ desc:'Qué va a pasar antes de tocar nada, y una sola decisión: cómo importarlo.',
+ render(){const modes=[['fusionar','Fusionar','Si los dos cambiaron, gana el más reciente y el otro queda en el historial.'],['reemplazar','Reemplazar','Borra «Trabajo» y carga el ZIP. Antes se exporta una copia.'],['nuevo','Espacio nuevo','Importa al lado sin tocar nada.']];
+  return {main:`<div class="ah"><div class="tl"><span class="lbl">Importar</span><h2>rimor-trabajo-2026-10-10.zip</h2><p class="meta">162 MB · exportado desde otro equipo el 10 oct</p></div></div>
+   <section class="card" data-ids="DAT-04 · SEG-04"><div class="chk"><span class="m ok">✓</span><span>ZIP válido: esquema 1, 412 archivos, ninguna ruta fuera del espacio.</span></div>
+     <div class="stats">${[['23','nuevos'],['368','idénticos'],['18','actualizados'],['2','en conflicto']].map(([n,l],i)=>`<div class="stat"><span class="v" style="${i===3?'color:var(--warn)':''}">${n}</span><span class="xs muted">${l}</span></div>`).join('')}</div>
+     ${details('Ver los 2 conflictos',kv([[refb('PRM-0012'),'Aquí v2 (hoy) · en el ZIP v1 editada (10 oct) → se queda la de aquí; la otra al historial'],[refb('DOC-MD-0004'),'Aquí v3 (ayer) · en el ZIP v2 con una nota (10 oct) → igual']]))}</section>
+   <section class="card"><h3>Cómo importar</h3><div class="list" style="gap:8px">${modes.map(([k,l,d])=>`<label class="radio ${S.impMode===k?'on':''}"><input type="radio" name="imp" ${S.impMode===k?'checked':''} data-imp="${k}"><span><b class="sm">${l}</b><br><span class="xs muted">${d}</span></span></label>`).join('')}</div>
+     <div class="row" style="justify-content:flex-end"><button class="btn" data-screen="copias">Cancelar</button><button class="btn pri" data-toast="Importado en modo «${S.impMode}» · reindexando">Importar</button></div></section>`}}};
+
+/* ---------- Sistema de diseño ---------- */
+const TOKENS=[['--app','Fondo','#E8E6E1','#1A1A19'],['--panel','Superficie','#F6F5F1','#242422'],['--ink','Tinta','#191919','#EDEBE6'],['--muted','Secundario','#67645E','#9D998F'],['--key','Naranja','#EE4F1F','#FF6A3D'],['--ok','Correcto','#336E45','#7DC48F'],['--warn','Aviso','#8A570B','#E2A84C'],['--bad','Error','#B32F27','#FF7A6B']];
+SC.sistema={name:'Sistema de diseño',group:'Referencia',fase:'—',nav:'',
+ desc:'Estilo Instrumento: tokens de los dos temas, tipografía y componentes. La referencia completa está en rimor-diseno.md.',
+ render(){return {wide:true,main:`<div class="ah"><div class="tl"><h2>Sistema de diseño</h2></div></div>
+   <section class="card"><h3>Color</h3><div class="g4">${TOKENS.map(([v,n,l,d])=>`<div style="display:flex;flex-direction:column;gap:4px;min-width:0"><div class="swatch" style="background:var(${v})"></div><b class="sm">${n}</b><span class="mono xs muted">${v} · ${l} · ${d}</span></div>`).join('')}</div></section>
+   <section class="card"><h3>Tipos (icono y nombre; solo Error lleva color)</h3><div class="row">${Object.keys(TIPOS).map(k=>chip(k)).join('')}</div></section>
+   <section class="card"><h3>Tipografía</h3><p style="font-family:var(--f-d);font-size:28px;font-weight:700;letter-spacing:-.02em">Del rumor a la conclusión</p><p>Archivo para títulos y texto; Roboto Mono para logs, código y cifras.</p><p class="mono num">JetBrains Mono · 38,54 ms · p &lt; 0,001</p></section>
+   <section class="card"><h3>Componentes</h3><div class="row"><button class="btn pri">Primario</button><button class="btn">Normal</button><button class="btn gh">Fantasma</button><button class="pill">filtro</button>${['nuevo','resuelto','abierta','borrador'].map(stChip).join('')}<span class="cifra">−4,5 %</span><span class="cifra old">−4,6 %</span><span class="kbd">Ctrl</span></div>
+     <div class="rimor" style="max-width:520px"><span class="av">${GLYPH(13)}</span><p>Así habla Rimor: una o dos frases con lo que ha entendido y, si hace falta, una pregunta con botones.</p></div></section>
+   <section class="g3"><div class="empty"><b>Vacío</b><span class="sm">Dice qué aparecerá y cómo empezar.</span></div><div class="card"><b class="sm">Cargando</b><p class="xs muted">DuckDB-WASM, solo la primera vez</p><div class="loading"><i></i></div></div><div class="card" style="border-color:var(--bad)"><b class="sm" style="color:var(--bad)">Error</b><p class="sm">El ZIP tiene rutas fuera del espacio. No se ha escrito nada.</p></div></section>
+   <section class="card"><h3>Reglas de limpieza</h3><div class="gaps">${['Una columna de lectura de 780 px; solo lienzo, tiempo, métricas y documento usan todo el ancho.','Arriba lo que responde a «¿qué pasa?»; lo demás en «Detalles», plegado.','Un veredicto por pantalla, en una frase y una cifra.','Las referencias (LOG-0047) solo donde se pueden pulsar; el resto va en Detalles.','Rimor habla en una o dos frases; las preguntas llevan botones, nunca formularios.','Naranja solo para enviar, la serie destacada de una gráfica y los pilotos. Nunca en texto largo ni en más de un botón por pantalla.','Las tarjetas no llevan borde: se separan por el tono y una sombra mínima. Botones y filtros, en píldora; iconos de tipo, en círculo.'].map(t=>`<div class="gap acc"><span class="dot"></span><span>${t}</span></div>`).join('')}</div></section>`}}};
+
+/* =========================================================
+   Notas de desarrollo
+   ========================================================= */
+const NOTES={
+ inicio:{ids:['CAP-01','CAP-03','CAP-04','CAP-05','CAP-13','CAP-14','ORG-01','ORG-08','ORG-13','ORG-15'],inter:['Escribir o pegar abajo; Enter guarda, Mayús+Enter nueva línea','Indicaciones en la última línea: @colección #etiqueta; /tipo al principio; ?buscar','Ctrl+V fuera de un campo pega en el compositor','Responder une la captura a un hilo; Archivar la quita de «sin clasificar»'],estados:['Primer uso: mensaje de bienvenida con ejemplos','Tipo dudoso: el compositor propone /otro','Secretos encontrados','Búsqueda sin resultados'],dec:['¿Feed de hoy o de los últimos 3 días?','Formato de las respuestas: plantillas por lector']},
+ hilo:{ids:['ORG-15','ORG-06','INV-02'],inter:['Responder añade al hilo','Marcar resuelto con una nota','Convertir en investigación'],estados:['Hilo de un solo elemento','Hilo resuelto'],dec:['¿Hilo como entidad propia o como investigación ligera?']},
+ log:{ids:['LEC-04','BUS-05','CMP-01'],inter:['Pulsar una plantilla muestra sus líneas','Comparar con otro log'],estados:['Log enorme: análisis por bloques','Formato sin niveles'],dec:['¿Drain en v0.1?']},
+ error:{ids:['LEC-05','ORG-06'],inter:['Ver el hilo','Añadir cómo se resolvió'],estados:['Primera aparición','Lenguaje sin soporte'],dec:['Heurísticas de «tu código» por lenguaje']},
+ medic:{ids:['LEC-06','CMP-01'],inter:['Abrir las fuentes','Citar cifras'],estados:['Sin diferencia clara','Pocas repeticiones'],dec:['¿Hodges-Lehmann en v0.1?']},
+ clogs:{ids:['CMP-01','LEC-04'],inter:['Abrir las fuentes'],estados:['Logs idénticos'],dec:['Alineación por secuencia o por plantilla']},
+ prompt:{ids:['LEC-07','CMP-02','DAT-08'],inter:['Cambiar de versión','Rellenar variables y copiar (funciona)'],estados:['Sin resultados','Skill o CLAUDE.md'],dec:['Respuestas largas como adjunto']},
+ md:{ids:['LEC-08','CMP-02','DAT-08'],inter:['Ver secciones y versiones'],estados:['Sin tareas'],dec:['Criterio de «misma versión»']},
+ tabla:{ids:['LEC-11','VIS-07'],inter:['Ver consulta y vista previa'],estados:['Cargando DuckDB','Archivo demasiado grande'],dec:['Límite de tamaño']},
+ buscar:{ids:['BUS-01','BUS-02','BUS-04','BUS-05'],inter:['Escribir filtros (funciona)','Pulsar sugerencias o facetas'],estados:['Sin resultados','Índice reconstruyéndose'],dec:['Ranking']},
+ coleccion:{ids:['VIS-04','ORG-09'],inter:['Crear investigación','Exportar la colección'],estados:['Colección vacía'],dec:['Bloques según el tipo de grupo']},
+ tiempo:{ids:['VIS-05','ORG-08'],inter:['Pulsar un punto abre el elemento'],estados:['Día vacío'],dec:['Umbral de sesión (45 min)']},
+ lienzo:{ids:['VIS-10'],inter:['Arrastrar tarjetas (funciona)','Añadir tarjetas o notas'],estados:['Lienzo vacío: colocar las evidencias en círculo'],dec:['React Flow o implementación propia']},
+ metricas:{ids:['MET-01','MET-02','MET-03','MET-04','MET-05','MET-06','MET-07'],inter:['Fijar una cifra citable para seguirla','Generar el resumen de la semana como documento'],estados:['Pocos datos: dice cuántos faltan (P15)'],dec:['Qué cuenta como «resuelto» en un hilo']},
+ inv:{ids:['INV-01','INV-03','INV-04','INV-05','INV-06','INV-07','INV-08'],inter:['Escribir la interpretación quita el aviso (funciona)','Lienzo y escribir documento'],estados:['Recién creada','Concluida'],dec:['Orden de evidencias']},
+ dec:{ids:['INV-06','VIS-11'],inter:['Cambiar pesos y puntuaciones (funciona)'],estados:['Más de dos opciones','Empate'],dec:['Escala de pesos']},
+ doc:{ids:['DOC-01','DOC-02','DOC-03','DOC-06','DOC-07','DOC-14'],inter:['Editar actualiza la vista previa (funciona)','Aceptar la cifra nueva'],estados:['Referencia rota','Exportación en curso'],dec:['Vista previa al lado o integrada']},
+ copias:{ids:['DAT-03','DAT-05','DAT-06','DAT-07','DAT-09'],inter:['Exportar ZIP','Importar'],estados:['Persistencia denegada','Ventana privada'],dec:['Frecuencia del recordatorio']},
+ importar:{ids:['DAT-04','SEG-04'],inter:['Elegir modo (funciona)'],estados:['ZIP no válido','Esquema antiguo'],dec:['Límites de tamaño']},
+ sistema:{ids:['§17','rimor-diseno.md'],inter:['Cambia el tema arriba'],estados:['Vacío, cargando, error'],dec:['Comprobar contraste AA del naranja sobre fondo oscuro en textos pequeños']}
+};
+
+/* =========================================================
+   Render y eventos
+   ========================================================= */
+const ORDER=['inicio','hilo','log','error','medic','clogs','prompt','md','tabla','buscar','coleccion','tiempo','lienzo','metricas','inv','dec','doc','copias','importar','sistema'];
+function renderNav(){let html='',last='';ORDER.forEach(k=>{const s=SC[k];if(s.group!==last){html+=`<span class="lbl g">${s.group}</span>`;last=s.group}
+  html+=`<button data-screen="${k}" ${S.screen===k?'aria-current="page"':''}><span>${s.name}${s.isNew?' <span class="new">nuevo</span>':''}</span><span class="fase">${s.fase==='propuesta'?'prop.':s.fase}</span></button>`});
+  $('#specnav').innerHTML=html;$('#sel').innerHTML=ORDER.map(k=>`<option value="${k}" ${S.screen===k?'selected':''}>${SC[k].group} · ${SC[k].name}</option>`).join('')}
+function render(){
+  const s=SC[S.screen],r=s.render(),n=NOTES[S.screen];renderNav();
+  $('#content').innerHTML=`<div class="shead"><h1>${s.name}</h1><span class="fase">${s.fase}</span><p>${s.desc}</p></div>
+   <div class="frame-wrap"><div class="frame ${S.ids?'ids-on':''}"><div class="shell">${rail(s.nav)}<section class="amain"><div class="col ${r.wide?'wide':''}">${r.main}</div>${r.composer?`<div class="col ccol" style="flex:0;padding-bottom:0;gap:0">${r.composer}</div>`:''}</section></div></div></div>
+   <details class="devnotes"><summary>Notas de desarrollo</summary><div class="devgrid">
+     <div><span class="lbl">Funcionalidades</span><div class="idl">${n.ids.map(i=>`<span class="idc ${i.endsWith('*')?'prop':''}">${i.replace('*','')}</span>`).join('')}</div>${n.ids.some(i=>i.endsWith('*'))?'<p class="xs muted" style="margin-top:6px">En ámbar, propuestas nuevas que aún no están en el plan.</p>':''}</div>
+     <div><span class="lbl">Interacciones</span><ul>${n.inter.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+     <div><span class="lbl">Estados que hay que diseñar</span><ul>${n.estados.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+     <div><span class="lbl">Pendiente de decidir</span><ul>${n.dec.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></div></details>`;
+  s.after&&s.after()}
+function go(k){if(!SC[k])return;S.screen=k;render();try{history.replaceState(null,'','#'+k)}catch(e){}window.scrollTo(0,0)}
+
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('button,[data-go],tr[data-tpl]');if(!b)return;
+  if(b.dataset.qadd!==undefined){const t=b.dataset.qadd,toks=S.q.split(/\s+/).filter(Boolean);S.q=toks.includes(t)?toks.filter(x=>x!==t).join(' '):(S.q+' '+t).trim();if($('#q')){$('#q').value=S.q;$('#sres').innerHTML=searchBody()}else go('buscar');return}
+  if(b.dataset.qset!==undefined){S.q=b.dataset.qset;go('buscar');return}
+  if(b.dataset.screen!==undefined){const k=b.dataset.screen;if(k.startsWith('col:')){toast(`Colección «${k.slice(4)}»: misma pantalla que «gateway»`);return}if(SC[k])go(k);return}
+  if(b.dataset.go){const r=b.dataset.go;if(REFMAP[r]){if(REFMAP[r]!==S.screen)go(REFMAP[r])}else toast(`${r}: pantalla no incluida en esta referencia`);return}
+  if(b.dataset.tpl!==undefined){S.logTpl=S.logTpl===b.dataset.tpl?null:b.dataset.tpl;render();return}
+  if(b.dataset.ff){S.ff=b.dataset.ff;render();return}
+  if(b.dataset.pv){S.pv=b.dataset.pv;render();return}
+  if(b.dataset.toast!==undefined){if(b.dataset.toast)toast(b.dataset.toast);return}
+  if(b.dataset.w){S.mobile=b.dataset.w==='m';document.body.classList.toggle('is-mobile',S.mobile);document.querySelectorAll('[data-w]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.w===b.dataset.w));if(S.screen==='lienzo')drawLinks();return}
+  if(b.dataset.th!==undefined){const th=b.dataset.th;if(th)document.documentElement.setAttribute('data-theme',th);else document.documentElement.removeAttribute('data-theme');document.querySelectorAll('[data-th]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.th===th));return}
+  if(b.id==='t-ids'){S.ids=!S.ids;b.setAttribute('aria-pressed',S.ids);b.textContent=S.ids?'Ocultar IDs':'Mostrar IDs';const f=document.querySelector('.frame');if(f)f.classList.toggle('ids-on',S.ids);return}
+  switch(b.dataset.act){
+    case 'send':sendComp();break;
+    case 'reply':S.replyTo=b.dataset.ref;if(S.screen!=='inicio'){go('inicio')}else render();{const c=$('#comp');if(c){c.focus();c.scrollIntoView({block:'nearest'})}}break;
+    case 'noreply':S.replyTo=null;render();break;
+    case 'arch':S.archived.add(b.dataset.ref);toast(`${b.dataset.ref} archivado`);render();break;
+    case 'alltpl':S.showAllTpl=!S.showAllTpl;render();break;
+    case 'qclear':S.q='';$('#q').value='';$('#sres').innerHTML=searchBody();break;
+    case 'acceptcifra':FIJADAS['CMP-0004.cambio']=cambioTxt;updDoc();toast('Cifra actualizada a '+cambioTxt);break;
+    case 'export':toast('Exportado: '+$('#expfmt').value.replace(' · v0.4',''));break;
+    case 'copyprompt':{const t=(S.pv==='v2'?PROMPT_V2:PROMPT_V1).replace(/\{\{(\w+)\}\}/g,(m,k)=>S.vals[k]||m);try{navigator.clipboard.writeText(t).then(()=>toast('Copiado con valores'),()=>toast('El navegador no deja copiar en esta vista'))}catch(e){toast('No se pudo copiar')}break}
+  }});
+document.addEventListener('input',ev=>{const t=ev.target;
+  if(t.id==='comp'){S.comp=t.value;$('#cprev').innerHTML=compPreview();t.style.height='auto';t.style.height=Math.min(220,t.scrollHeight)+'px'}
+  if(t.id==='q'){S.q=t.value;$('#sres').innerHTML=searchBody()}
+  if(t.id==='interp'){S.interp=t.value;const g=gaps();if($('#gapsbox'))$('#gapsbox').innerHTML=gapsHTML();$('#gapbanner').innerHTML=`<b>${g.length} cosas por revisar</b><span style="flex:1">${esc(g[0].text)}</span>`}
+  if(t.id==='docsrc')updDoc();
+  if(t.dataset.var)S.vals[t.dataset.var]=t.value;
+  if(t.dataset.cw!==undefined){S.crit[+t.dataset.cw].w=Math.max(0,Math.min(10,parseFloat(t.value)||0));$('#decout').innerHTML=decOut()}});
+document.addEventListener('change',ev=>{const t=ev.target;
+  if(t.dataset.s){const [i,j]=t.dataset.s.split('-').map(Number);S.crit[i].s[j]=+t.value;$('#decout').innerHTML=decOut()}
+  if(t.dataset.imp){S.impMode=t.dataset.imp;render()}
+  if(t.id==='sel')go(t.value)});
+function updDoc(){const src=$('#docsrc');if(src)S.doc=src.value;const r=renderDoc(S.doc);if($('#docprev'))$('#docprev').innerHTML=r.html;if($('#docbanner'))$('#docbanner').innerHTML=docBanner(r)}
+document.addEventListener('keydown',ev=>{if(ev.target.id==='comp'&&ev.key==='Enter'&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();sendComp()}});
+document.addEventListener('paste',ev=>{const a=document.activeElement;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))return;const t=(ev.clipboardData&&ev.clipboardData.getData('text'))||'';if(!t.trim())return;ev.preventDefault();
+  S.comp=t;if(S.screen!=='inicio'&&S.screen!=='hilo')go('inicio');else render();const c=$('#comp');if(c){c.focus();c.scrollIntoView({block:'nearest'})}});
+/* Arrastrar en el lienzo */
+let drag=null;
+document.addEventListener('pointerdown',ev=>{const c=ev.target.closest('.ccard');if(!c)return;drag={el:c,id:c.dataset.node,sx:ev.clientX,sy:ev.clientY,x:c.offsetLeft,y:c.offsetTop};try{c.setPointerCapture(ev.pointerId)}catch(e){}});
+document.addEventListener('pointermove',ev=>{if(!drag)return;const x=Math.max(0,Math.min(860-drag.el.offsetWidth,drag.x+ev.clientX-drag.sx)),y=Math.max(0,Math.min(520-drag.el.offsetHeight,drag.y+ev.clientY-drag.sy));drag.el.style.left=x+'px';drag.el.style.top=y+'px';S.canvas[drag.id]=[x,y];drawLinks()});
+document.addEventListener('pointerup',()=>{drag=null});
+
+(function(){const h=(location.hash||'').slice(1);if(SC[h])S.screen=h;render()})();
+</script>
+
+</body></html>
