@@ -1,0 +1,179 @@
+/* Tokens del estilo Instrumento: copia literal del anexo de rimor-diseno.md (§16). Es el único archivo con colores. */
+:root {
+  /* Superficies y texto */
+  --page: #dcd9d2;
+  --app: #e8e6e1;
+  --panel: #f6f5f1;
+  --panel-2: #e3e0d9;
+  --ink: #191919;
+  --muted: #67645e;
+  --faint: #737068;
+  --line: #ccc8bf;
+  --line-2: #ddd9d1;
+  --apagado: #a8a49b; /* decorativo: animaciones del símbolo */
+
+  /* Activo neutro */
+  --accent: #191919;
+  --accent-ink: #f6f5f1;
+  --accent-soft: #e3e0d9;
+
+  /* Señal: el único naranja */
+  --key: #ee4f1f;
+  --key-ink: #191919;
+  --key-text: #c9401a;
+  --key-soft: #f8d9cd;
+
+  /* Estados */
+  --ok: #336e45;
+  --ok-soft: #dcebdf;
+  --warn: #8a570b;
+  --warn-soft: #f3e6cf;
+  --bad: #b32f27;
+  --bad-soft: #f5dad6;
+
+  /* Tipos (neutros; solo Error con color) */
+  --k-x: #45433f;
+  --k-x-bg: #e3e0d9;
+  --k-err: #b32f27;
+  --k-err-bg: #f5dad6;
+  --k-log: var(--k-x);
+  --k-log-bg: var(--k-x-bg);
+  --k-med: var(--k-x);
+  --k-med-bg: var(--k-x-bg);
+  --k-prm: var(--k-x);
+  --k-prm-bg: var(--k-x-bg);
+  --k-md: var(--k-x);
+  --k-md-bg: var(--k-x-bg);
+  --k-url: var(--k-x);
+  --k-url-bg: var(--k-x-bg);
+  --k-idea: var(--k-x);
+  --k-idea-bg: var(--k-x-bg);
+  --k-dat: var(--k-x);
+  --k-dat-bg: var(--k-x-bg);
+  --k-cod: var(--k-x);
+  --k-cod-bg: var(--k-x-bg);
+  --k-cmp: var(--k-x);
+  --k-cmp-bg: var(--k-x-bg);
+  --k-inv: var(--k-x);
+  --k-inv-bg: var(--k-x-bg);
+  --k-doc: var(--k-x);
+  --k-doc-bg: var(--k-x-bg);
+
+  /* Calor (calendario de actividad) */
+  --heat-1: #ead9cc;
+  --heat-2: #f0b79e;
+  --heat-3: #ee8a60;
+  --heat-4: #ee4f1f;
+
+  /* Detalles físicos y profundidad */
+  --grille: rgba(25, 25, 25, 0.16);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
+
+  /* Forma */
+  --r-xs: 5px;
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  /* Tipografía */
+  --f-d: "Archivo", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --f-b: "Archivo", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --f-m: "Roboto Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #121211;
+    --app: #1a1a19;
+    --panel: #242422;
+    --panel-2: #2e2d2b;
+    --ink: #edebe6;
+    --muted: #9d998f;
+    --faint: #8f8b83;
+    --line: #3a3936;
+    --line-2: #2f2e2b;
+    --apagado: #5e5b55;
+    --accent: #edebe6;
+    --accent-ink: #1a1a19;
+    --accent-soft: #34332f;
+    --key: #ff6a3d;
+    --key-ink: #1a1a19;
+    --key-text: #ff7e55;
+    --key-soft: #40291f;
+    --ok: #7dc48f;
+    --ok-soft: #1f3125;
+    --warn: #e2a84c;
+    --warn-soft: #3a2d16;
+    --bad: #ff7a6b;
+    --bad-soft: #3f201d;
+    --k-x: #cfcbc2;
+    --k-x-bg: #2e2d2b;
+    --k-err: #ff7a6b;
+    --k-err-bg: #3f201d;
+    --heat-1: #3a2a22;
+    --heat-2: #6a3a26;
+    --heat-3: #b5502e;
+    --heat-4: #ff6a3d;
+    --grille: rgba(255, 255, 255, 0.1);
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  /* Mismos valores que el bloque anterior, para que el selector de Ajustes mande. */
+  --page: #121211;
+  --app: #1a1a19;
+  --panel: #242422;
+  --panel-2: #2e2d2b;
+  --ink: #edebe6;
+  --muted: #9d998f;
+  --faint: #8f8b83;
+  --line: #3a3936;
+  --line-2: #2f2e2b;
+  --apagado: #5e5b55;
+  --accent: #edebe6;
+  --accent-ink: #1a1a19;
+  --accent-soft: #34332f;
+  --key: #ff6a3d;
+  --key-ink: #1a1a19;
+  --key-text: #ff7e55;
+  --key-soft: #40291f;
+  --ok: #7dc48f;
+  --ok-soft: #1f3125;
+  --warn: #e2a84c;
+  --warn-soft: #3a2d16;
+  --bad: #ff7a6b;
+  --bad-soft: #3f201d;
+  --k-x: #cfcbc2;
+  --k-x-bg: #2e2d2b;
+  --k-err: #ff7a6b;
+  --k-err-bg: #3f201d;
+  --heat-1: #3a2a22;
+  --heat-2: #6a3a26;
+  --heat-3: #b5502e;
+  --heat-4: #ff6a3d;
+  --grille: rgba(255, 255, 255, 0.1);
+  --shadow: none;
+  color-scheme: dark;
+}
+
+/* Añadidos (ADR-0004): sombras que las pantallas usan además de --shadow. En oscuro reproducen lo que
+   las pantallas pintan de verdad (su «var(--shadow), …» con --shadow: none no es válido y cae a la regla anterior). */
+:root {
+  --sombra-flotante: 0 1px 2px rgba(0, 0, 0, 0.07), 0 8px 28px rgba(0, 0, 0, 0.08);
+  --sombra-pulsado: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --sombra-tarjeta-lienzo: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sombra-flotante: 0 6px 24px rgba(10, 20, 40, 0.08);
+  }
+}
+:root[data-theme="dark"] {
+  --sombra-flotante: 0 6px 24px rgba(10, 20, 40, 0.08);
+}

@@ -169,6 +169,12 @@ importers:
       '@astrojs/react':
         specifier: 4.4.2
         version: 4.4.2(@types/node@24.19.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(jiti@2.7.0)(lightningcss@1.32.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(yaml@2.9.1)
+      '@fontsource/archivo':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/roboto-mono':
+        specifier: 5.3.0
+        version: 5.3.0
       astro:
         specifier: ^5.17.1
         version: 5.18.2(@types/node@24.19.2)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.64.7)(typescript@5.9.3)(yaml@2.9.1)
@@ -771,6 +777,12 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@fontsource/archivo@5.3.0':
+    resolution: {integrity: sha512-5DIMgPVJRi62OqdOVoogCFxP73EkNM/E0YVTSDIQlDEJfDbxqZduwM/YoNZwC9Sx1CDgpKinqf8ckRY1QNIecw==}
+
+  '@fontsource/roboto-mono@5.3.0':
+    resolution: {integrity: sha512-yhwplHMHW9dCk+1pZuERfcJe+K3rosGVZEoK0XktkxRSqQ9qsipSwwiuW2/8Qmtp9lzu3Ixa/ie4BMH3i8CkZQ==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -3362,6 +3374,10 @@ snapshots:
 
   '@esbuild/win32-x64@0.27.7':
     optional: true
+
+  '@fontsource/archivo@5.3.0': {}
+
+  '@fontsource/roboto-mono@5.3.0': {}
 
   '@img/colour@1.1.0':
     optional: true

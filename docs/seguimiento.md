@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 01:50
-**Ahora:** IN-002 · Tema Instrumento y componentes base · fase implementación
+**Última actualización:** 2026-10-18 01:58
+**Ahora:** IN-002 · Tema Instrumento y componentes base · fase verificación
 **Siguiente:** IN-003 · Textos, idiomas y formatos
 **Progreso:** F0 9/9 · v0.1 1/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 10/99
 
@@ -19,7 +19,7 @@
 | F0-8 | MiniSearch | F0 | — | hecha | 7eacd39 | docs/f0/F0-8.md |
 | F0-9 | Fuentes empaquetadas | F0 | — | hecha | f529c42 | docs/f0/F0-9.md |
 | IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | hecha | 4088155 b31670c d8ece75 | docs/features/IN-001-repositorio.md |
-| IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | en análisis y diseño | — | docs/features/IN-002-tema-y-componentes.md |
+| IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | en implementación | 3f75c99 | docs/features/IN-002-tema-y-componentes.md |
 | IN-003 | Textos, idiomas y formatos | v0.1 | 0 | pendiente | — | — |
 | IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | pendiente | — | — |
 | IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | pendiente | — | — |
@@ -153,7 +153,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-002 | análisis y diseño | diseño y ADR-0004 | … |
+| 2026-10-18 | IN-002 | implementación | pnpm verificar OK (34 pruebas, 76,9 KB) | … |
+| 2026-10-18 | IN-002 | análisis y diseño | diseño y ADR-0004 | 3f75c99 |
 | 2026-10-18 | IN-001 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | d8ece75 |
 | 2026-10-18 | IN-001 | implementación | pnpm verificar OK (31 s, carga inicial 68,6 KB) | b31670c |
 | 2026-10-18 | IN-001 | análisis y diseño | diseño escrito y autorrevisado | 4088155 |
@@ -168,5 +169,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-001 hecha. Siguiente: IN-002 (diseño ya escrito en docs/features/IN-002-tema-y-componentes.md y ADR-0004; hay archivos de implementación adelantados sin commit en src/ui/).
-- Último `pnpm verificar`: OK (2026-10-18 02:00).
+- IN-002: implementado. Falta verificación (criterios, revisión independiente).
+- Último `pnpm verificar`: OK (2026-10-18 02:20).

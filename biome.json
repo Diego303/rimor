@@ -12,6 +12,7 @@
     "rules": {
       "preset": "recommended",
       "suspicious": { "noExplicitAny": "error" },
+      "complexity": { "noImportantStyles": "off" },
       "style": { "useImportType": "error", "noNonNullAssertion": "error" }
     }
   },

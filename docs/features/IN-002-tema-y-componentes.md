@@ -114,3 +114,13 @@ Mientras no existan los ajustes del espacio (IN-038), la preferencia vive en `lo
 
 - Cubre todas las tareas de la ficha; se aparta en `lucide-react` (ADR-0004).
 - No contradice ADR-0001/0002. Lo más simple: CSS portado con los mismos nombres y componentes finos.
+
+## Cambios durante la implementación
+
+- **Tokens añadidos al final de `tokens.css`** (bloque marcado, ADR-0004): `--sombra-flotante`, `--sombra-pulsado` y `--sombra-tarjeta-lienzo`, las sombras que las pantallas usan además de `--shadow`. Así ningún componente lleva un `rgba()` suelto.
+- **Tamaños de letra en `rem`** (14 px = `.875rem`), como pide la guía §13.2; con el tamaño de letra por defecto se ven igual que en las pantallas.
+- `ChipTipo` e `IconoTipo` reciben el nombre del tipo ya traducido (`nombre`) hasta que exista i18n (IN-003). El mapa tipo → icono y clase vive en `src/ui/iconos/tipos.ts` con los nombres de tipo del plan; IN-004 definirá `TipoElemento` con los mismos nombres.
+- Iconos añadidos con la misma retícula para lo que las pantallas no dibujan: imagen, PDF, fórmula, diagrama, cálculo, datos y copias, ajustes, fijar, papelera, cerrar, copiar, descargar, subir, más y hecho.
+- `Medidor` y `Segmentado` usan `role="meter"` y `role="group"` sobre `div` (con su comentario para Biome): `<meter>` no admite el aspecto de la guía en todos los navegadores y `<fieldset>` obliga a una leyenda visible.
+- Biome: `noImportantStyles` desactivada; los dos `!important` (`[hidden]` y movimiento reducido) son intencionados.
+- Los estilos globales y las fuentes se importan en `Base.astro`, no en la isla, para que Astro los enlace en el HTML aunque la isla sea `client:only`.

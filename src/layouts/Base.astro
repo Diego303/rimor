@@ -1,4 +1,7 @@
 ---
+import '../ui/tema/fuentes';
+import '../ui/tema/estilos.css';
+
 interface Props {
   titulo?: string;
 }
@@ -13,6 +16,14 @@ const { titulo = 'Rimor' } = Astro.props;
     <meta name="description" content="Rimor: del rumor a la conclusión." />
     <meta name="generator" content={Astro.generator} />
     <title>{titulo}</title>
+    <!-- Aplica el tema forzado antes de pintar, sin parpadeo (src/ui/tema/tema.ts). -->
+    <script is:inline>
+      try {
+        var t = localStorage.getItem('rimor:tema');
+        if (t === 'claro') document.documentElement.dataset.theme = 'light';
+        else if (t === 'oscuro') document.documentElement.dataset.theme = 'dark';
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <slot />

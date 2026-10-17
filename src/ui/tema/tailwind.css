@@ -1,0 +1,22 @@
+/* Tailwind v4 sin preflight: la base es la de las pantallas (ADR-0004). Expone los tokens (guía §14.3). */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --color-app: var(--app);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-key: var(--key);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --font-sans: var(--f-b);
+  --font-mono: var(--f-m);
+  --radius-card: 14px;
+  --radius-compositor: 20px;
+  --shadow-card: var(--shadow);
+}

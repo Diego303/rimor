@@ -1,0 +1,5 @@
+/* Punto de entrada de los estilos de Rimor. */
+@import "./tokens.css";
+@import "./tailwind.css";
+@import "./base.css";
+@import "../componentes/componentes.css";

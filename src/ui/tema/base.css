@@ -1,0 +1,95 @@
+/* Base del documento, portada de «Pantallas de Rimor» (ADR-0004). Tamaños de letra en rem (guía §13.2). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+body {
+  background: var(--app);
+  color: var(--ink);
+  font-family: var(--f-b);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+:focus-visible {
+  outline: 2px solid var(--key);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--f-d);
+  margin: 0;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+p {
+  margin: 0;
+}
+img {
+  max-width: 100%;
+}
+[hidden] {
+  display: none !important;
+}
+svg.i {
+  flex: none;
+  display: block;
+}
+.mono {
+  font-family: var(--f-m);
+  font-size: 0.9em;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+.muted {
+  color: var(--muted);
+}
+.faint {
+  color: var(--faint);
+}
+.sm {
+  font-size: 0.8125rem;
+}
+.xs {
+  font-size: 0.75rem;
+}
+.lbl {
+  font-size: 0.65625rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--muted);
+}
+.solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
