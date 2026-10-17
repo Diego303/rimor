@@ -1,18 +1,18 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 00:51
-**Ahora:** F0-4 · typst.ts a PDF
-**Siguiente:** F0-5 · DuckDB-WASM
-**Progreso:** F0 3/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 3/99
+**Última actualización:** 2026-10-18 00:55
+**Ahora:** F0-5 · DuckDB-WASM
+**Siguiente:** F0-6 · Logs grandes
+**Progreso:** F0 4/9 · v0.1 0/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 4/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
 |---|---|---|---|---|---|---|
 | F0-1 | OPFS a escala | F0 | — | hecha | 589ad61 | docs/f0/F0-1.md |
 | F0-2 | ZIP de ida y vuelta | F0 | — | hecha | f501d1a | docs/f0/F0-2.md |
-| F0-3 | pandoc-wasm | F0 | — | hecha | — | docs/f0/F0-3.md |
-| F0-4 | typst.ts a PDF | F0 | — | pendiente | — | — |
+| F0-3 | pandoc-wasm | F0 | — | hecha | 23b903b | docs/f0/F0-3.md |
+| F0-4 | typst.ts a PDF | F0 | — | hecha | — | docs/f0/F0-4.md |
 | F0-5 | DuckDB-WASM | F0 | — | pendiente | — | — |
 | F0-6 | Logs grandes | F0 | — | pendiente | — | — |
 | F0-7 | CORS de APIs | F0 | — | pendiente | — | — |
@@ -132,6 +132,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **F0-1 (OPFS):** ejecutar el script del anexo de `docs/f0/F0-1.md` en Chrome, Firefox y Safari, con y sin la PWA instalada, y anotar tiempos y resultado de `persist()`.
 - **F0-2 (ZIP):** exportar 200 MB en la app publicada con el panel de rendimiento abierto y comprobar que no hay tareas largas en el hilo principal.
 - **F0-3 (Pandoc):** medir descarga y compilación de `pandoc.wasm` en los tres navegadores; abrir el `.docx` en Word y compilar el `.tex` en Overleaf.
+- **F0-4 (Typst):** abrir en un lector de PDF el PDF que genere la app publicada.
 
 ## Bloqueos
 (ninguno)
@@ -139,10 +140,11 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | F0-3 | informe | tres salidas correctas; 15,5 MB gzip; carga diferida | … |
+| 2026-10-18 | F0-4 | informe | PDF sin red correcto; IN-085 se hace | … |
+| 2026-10-18 | F0-3 | informe | tres salidas correctas; 15,5 MB gzip; carga diferida | 23b903b |
 | 2026-10-18 | F0-2 | informe | 5.030/5.030 idénticos; importar por directorio central | f501d1a |
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- F0-3 hecha. Siguiente: F0-4 (prototipo en f0/typst/; hay un .typ de prueba en el scratchpad: minipaper.typ).
+- F0-4 hecha. Siguiente: F0-5 (prototipo en f0/duckdb/).
 - Último `pnpm verificar`: aún no existe (lo crea IN-001).
