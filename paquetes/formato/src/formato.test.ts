@@ -261,6 +261,99 @@ describe('elemento: casos hostiles', () => {
   });
 });
 
+describe('revisión de IN-004', () => {
+  it('el prompt del Anexo B (sin modificado, origen, hash ni ocultados) se lee y se completa', () => {
+    const md = [
+      '---',
+      'id: 01JAB5D7Q2X8M5N7P0R4S6T8V0',
+      'ref: PRM-0012',
+      'tipo: prompt',
+      'titulo: Revisor de ADR',
+      'creado: 2026-10-17T18:05:12+02:00',
+      'version: 2',
+      'colecciones: [prompts-revision]',
+      'lector:',
+      '  nombre: prompt',
+      '  version: 1',
+      '  resumen: { variables: [adr, contexto], tokens_aprox: 410, destino: "Claude" }',
+      'resultados:',
+      '  - fecha: 2026-10-17',
+      '    valoracion: 4',
+      '    nota: Detectó la falta de consecuencias negativas.',
+      '    archivo: historial/PRM-0012/resultado-2026-10-17.md',
+      '---',
+      '',
+      '```prompt',
+      'Actúa como revisor de decisiones de arquitectura. Lee el ADR {{adr}} en el contexto {{contexto}}…',
+      '```',
+      '',
+    ].join('\n');
+    const r = leerElemento(md);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.valor.frontmatter.modificado).toBe('2026-10-17T18:05:12+02:00');
+    expect(r.valor.frontmatter.origen).toBe('importado');
+    expect(r.valor.frontmatter.ocultados).toBe(0);
+    expect(r.valor.frontmatter.hash).toBe(hashOriginal(r.valor.original ?? ''));
+    expect(r.valor.frontmatter.version).toBe(2);
+    expect(r.valor.frontmatter.resultados).toHaveLength(1);
+  });
+
+  it('el documento del Anexo B valida sin creado', () => {
+    const doc = {
+      id: '01JAB7F3Q2X8M5N7P0R4S6T8V0',
+      ref: 'DOC-0002',
+      tipo: 'documento',
+      plantilla: 'adr',
+      titulo: 'ADR-0012: Cliente HTTP del gateway de IA',
+      investigacion: 'INV-0003',
+      estado: 'borrador',
+      cifras: { 'CMP-0004.cambio': { valor: '-4,6 %', fijado: '2026-10-17T19:10:00+02:00' } },
+    };
+    expect(v.safeParse(documentoSchema, doc).success).toBe(true);
+  });
+
+  it('reescribir conserva los comentarios de lo que cambia y el estilo de lo que no', () => {
+    const previo = [
+      'titulo: Viejo # comentario del título',
+      'etiquetas:',
+      '  - ureq # primera',
+      '  - streaming',
+      'lector:',
+      '  nombre: log # c1',
+      '  resumen: {lineas: 1}',
+      '',
+    ].join('\n');
+    const nuevo = escribirYaml(
+      { titulo: 'Nuevo', etiquetas: ['ureq', 'streaming'], lector: { nombre: 'log', resumen: { lineas: 2 } } },
+      previo,
+    );
+    expect(nuevo).toContain('titulo: Nuevo # comentario del título');
+    expect(nuevo).toContain('etiquetas:\n  - ureq # primera\n  - streaming');
+    expect(nuevo).toContain('nombre: log # c1');
+    expect(nuevo).toContain('resumen: {lineas: 2}');
+  });
+
+  it('un surrogate suelto se codifica como U+FFFD, como TextEncoder', () => {
+    expect([...utf8('a\uD800b')]).toEqual([0x61, 0xef, 0xbf, 0xbd, 0x62]);
+  });
+
+  it('rechaza fechas imposibles o sin segundos y la ruta de historial no depende de ellos', () => {
+    const fm = { ...elementoBase().frontmatter };
+    expect(
+      leerElemento(escribirElemento({ ...elementoBase(), frontmatter: { ...fm, creado: '2026-13-45T99:99:99Z' } })).ok,
+    ).toBe(false);
+    expect(
+      leerElemento(escribirElemento({ ...elementoBase(), frontmatter: { ...fm, creado: '2026-10-17T18:05+02:00' } }))
+        .ok,
+    ).toBe(false);
+    expect(
+      leerElemento(escribirElemento({ ...elementoBase(), frontmatter: { ...fm, creado: '2026-02-30T10:00:00Z' } })).ok,
+    ).toBe(false);
+    expect(rutaHistorial('PRM-0012', '2026-10-17T18:05+02:00')).toBe('historial/PRM-0012/2026-10-17T18-05-00.md');
+  });
+});
+
 describe('yaml', () => {
   it('separar acepta un frontmatter vacío y finales \\r\\n en los delimitadores', () => {
     expect(separar('---\n---\ncuerpo')).toEqual({ ok: true, valor: { yaml: '', cuerpo: 'cuerpo' } });

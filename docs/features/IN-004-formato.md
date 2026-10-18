@@ -152,3 +152,30 @@ Cubre las tareas y pruebas de la ficha. Las decisiones nuevas (tipo `archivo`, �
 - Listas y mapas en línea sin relleno (`[gateway]`, `{lineas: 11}`), como el `colecciones: [gateway]` del Anexo B.
 - `MIGRACIONES` es una tabla vacía: con un solo esquema, migrar de 1 a 1 no aplica ningún paso (la identidad) y no hace falta una función que no haga nada.
 - `ESQUEMA_ACTUAL` vive en `version.ts` para que `migraciones.ts` no importe el índice.
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 04:00): `astro check` y tipos del paquete, 0 errores; Biome, colores y textos, OK; Vitest 11 archivos y 89 pruebas (26 del paquete), OK; construcción, OK; carga inicial 76,2 KB.
+
+| Criterio | Evidencia |
+|---|---|
+| Esquemas Valibot de todo el modelo, versión de esquema 1 | `esquemas.ts`: elemento, comparación, hilo, investigación, documento, manifest, colecciones, vistas y ajustes, con claves desconocidas permitidas |
+| `leer(escribir(x)) ≡ x` (propiedad) | Dos propiedades de fast-check (300 y 400 casos): textos con acentos graves, `\r`, emojis, cadenas que confunden a YAML, adjuntos y reescritura sobre el archivo previo |
+| Los ejemplos del Anexo B validan | Log, prompt (incompleto: se completan `modificado`, `origen`, `hash` y `ocultados`), investigación, documento (sin `creado`), comparación y manifest |
+| Claves desconocidas y comentarios se conservan | Pruebas de reescritura: comentario del título, de la lista y del mapa `lector`, estilo en bloque intacto, clave futura conservada |
+| Nombres con tildes, emojis y títulos vacíos | `slug` y rutas, con el año y mes del texto ISO |
+| ULID monotónico, refs, prefijos con `HIL` | Pruebas de `crearGeneradorUlid` (mismo milisegundo y reloj que retrocede) y `asignarRef` |
+| Original en el `.md` o como adjunto (> 2 MB) | `cabeEnMd`, `adjunto` en el frontmatter y prueba con notas que acaban en código |
+| Hash SHA-256 del original normalizado | Vectores FIPS 180-2; `\r\n` y `\n` dan el mismo hash; surrogates sueltos como U+FFFD |
+| Migraciones | `migrar` de 1 a 1 y rechazo de esquemas futuros o no válidos |
+| Cero dependencias de DOM; se usa desde Node | `tsconfig` del paquete con `lib: ES2023` y sin tipos; las pruebas corren en Node |
+
+### Revisión independiente
+
+Hallazgos, todos corregidos con prueba:
+
+1. El prompt del Anexo B (sin `modificado`, `origen`, `hash` ni `ocultados`) y el documento (sin `creado`) no validaban: esos campos son opcionales al leer y `leerElemento` los completa (`completarFrontmatter`); el tipo que usa la app (`FrontmatterComun`) los tiene siempre.
+2. Reescribir con `previo` sustituía nodos enteros y perdía sus comentarios: ahora se fusiona (un escalar cambia su valor y conserva comentario y estilo; un mapa, clave a clave).
+3. El estilo compacto se aplicaba a todo el documento previo: ahora solo a los nodos nuevos.
+4. Un surrogate suelto se codificaba distinto que con `TextEncoder`, y el hash no coincidiría con los bytes guardados: ahora es U+FFFD.
+5. Se aceptaban fechas imposibles (`2026-13-45T99:99:99Z`) y sin segundos, que rompían `rutaElemento` y `rutaHistorial`: la fecha debe existir y llevar segundos, y `rutaHistorial` ya no depende de la forma exacta.

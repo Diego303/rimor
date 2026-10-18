@@ -8,7 +8,24 @@ import { esRef, type Ref } from './refs';
 import { TIPOS_ELEMENTO } from './tipos';
 import { esUlid } from './ulid';
 
-const ISO_CON_ZONA = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/;
+const ISO_CON_ZONA = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-](\d{2}):(\d{2}))$/;
+
+/** Fecha ISO 8601 con segundos y zona, y que exista de verdad (sin «2026-13-45»). */
+export function esIsoFecha(x: string): boolean {
+  const m = ISO_CON_ZONA.exec(x);
+  if (!m) return false;
+  const [anio, mes, dia, h, min, s, zh = '0', zm = '0'] = m.slice(1).map(Number) as number[];
+  const fecha = new Date(Date.UTC(anio ?? 0, (mes ?? 1) - 1, dia ?? 1));
+  return (
+    fecha.getUTCMonth() === (mes ?? 1) - 1 &&
+    fecha.getUTCDate() === dia &&
+    (h ?? 0) < 24 &&
+    (min ?? 0) < 60 &&
+    (s ?? 0) < 60 &&
+    Number(zh) < 24 &&
+    Number(zm) < 60
+  );
+}
 
 export const ulidSchema = v.pipe(v.string(), v.check(esUlid, 'ulid'));
 export const refSchema = v.pipe(
@@ -16,7 +33,7 @@ export const refSchema = v.pipe(
   v.check(esRef, 'ref'),
   v.transform((x) => x as Ref),
 );
-export const isoFechaSchema = v.pipe(v.string(), v.regex(ISO_CON_ZONA, 'fecha ISO con zona'));
+export const isoFechaSchema = v.pipe(v.string(), v.check(esIsoFecha, 'fecha ISO con segundos y zona'));
 export const hashSchema = v.pipe(
   v.string(),
   v.regex(/^sha256:[0-9a-f]{64}$/, 'hash'),
@@ -41,30 +58,41 @@ export const lectorSchema = v.looseObject({
   resumen: v.record(v.string(), v.unknown()),
 });
 
-/** Frontmatter común de un elemento (plan §13.4). */
-export const frontmatterSchema = v.looseObject({
+/**
+ * Frontmatter común de un elemento tal como se lee (plan §13.4). `modificado`, `origen`, `hash` y `ocultados`
+ * pueden faltar, como en el ejemplo del prompt del Anexo B; `leerElemento` los completa (ver `completarFrontmatter`).
+ */
+export const frontmatterLeidoSchema = v.looseObject({
   id: ulidSchema,
   ref: refSchema,
   tipo: v.picklist(TIPOS_ELEMENTO),
   titulo: v.string(),
   creado: isoFechaSchema,
-  modificado: isoFechaSchema,
-  origen: v.picklist(ORIGENES),
+  modificado: v.optional(isoFechaSchema),
+  origen: v.optional(v.picklist(ORIGENES)),
   estado: v.optional(v.string()),
   colecciones: v.optional(textos),
   investigaciones: v.optional(refs),
   etiquetas: v.optional(textos),
   sesion: v.optional(v.string()),
   hilo: v.optional(refSchema),
-  hash: hashSchema,
-  ocultados: v.pipe(v.number(), v.integer(), v.minValue(0)),
+  hash: v.optional(hashSchema),
+  ocultados: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
   lector: lectorSchema,
   fijado: v.optional(v.boolean()),
   alias: v.optional(refs),
   version: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1))),
   adjunto: v.optional(adjuntoSchema),
 });
-export type FrontmatterComun = v.InferOutput<typeof frontmatterSchema>;
+export type FrontmatterLeido = v.InferOutput<typeof frontmatterLeidoSchema>;
+
+/** Frontmatter completo: el que maneja la app y el que se escribe. */
+export type FrontmatterComun = FrontmatterLeido & {
+  modificado: string;
+  origen: (typeof ORIGENES)[number];
+  hash: `sha256:${string}`;
+  ocultados: number;
+};
 
 const entidadBase = {
   id: ulidSchema,
@@ -134,6 +162,8 @@ export type Investigacion = v.InferOutput<typeof investigacionSchema>;
 /** Documento: informe, ADR, postmortem o minipaper (Anexo B). */
 export const documentoSchema = v.looseObject({
   ...entidadBase,
+  // El ejemplo del Anexo B no lleva `creado`.
+  creado: v.optional(isoFechaSchema),
   tipo: v.literal('documento'),
   plantilla: v.optional(v.string()),
   investigacion: v.optional(refSchema),

@@ -3,9 +3,9 @@
  * en el último bloque de código (o como adjunto si el frontmatter lleva `adjunto`).
  */
 import * as v from 'valibot';
-import { type FrontmatterComun, frontmatterSchema } from './esquemas';
+import { type FrontmatterComun, type FrontmatterLeido, frontmatterLeidoSchema } from './esquemas';
 import { escribirYaml, leerYaml, separar, unir } from './frontmatter';
-import { cercaPara } from './original';
+import { cercaPara, hashOriginal } from './original';
 import { fallo, ok, type Resultado } from './resultado';
 import { LENGUAJE_ORIGINAL } from './tipos';
 
@@ -48,9 +48,9 @@ function ordenar(fm: Record<string, unknown>): Record<string, unknown> {
   return salida;
 }
 
-/** Valida un frontmatter de elemento. */
-export function validarFrontmatter(datos: unknown): Resultado<FrontmatterComun> {
-  const r = v.safeParse(frontmatterSchema, datos);
+/** Valida un frontmatter de elemento tal como se lee (los campos que se pueden deducir pueden faltar). */
+export function validarFrontmatter(datos: unknown): Resultado<FrontmatterLeido> {
+  const r = v.safeParse(frontmatterLeidoSchema, datos);
   if (r.success) return ok(r.output);
   const problema = r.issues[0];
   return fallo('formato.frontmatterInvalido', {
@@ -90,6 +90,21 @@ function partirCuerpo(cuerpo: string, conOriginal: boolean): { notas: string; or
   return { notas, original };
 }
 
+/**
+ * Completa lo que un archivo escrito a mano o por otra herramienta puede no traer: `modificado` toma
+ * `creado`, `origen` es «importado», `ocultados` 0 y el `hash` se calcula del original (o del adjunto).
+ */
+export function completarFrontmatter(fm: FrontmatterLeido, original: string | null): FrontmatterComun {
+  const hash = fm.hash ?? (fm.adjunto ? (`sha256:${fm.adjunto.hash}` as const) : hashOriginal(original ?? ''));
+  return {
+    ...fm,
+    modificado: fm.modificado ?? fm.creado,
+    origen: fm.origen ?? 'importado',
+    hash,
+    ocultados: fm.ocultados ?? 0,
+  };
+}
+
 /** Lee el `.md` de un elemento y valida su frontmatter. */
 export function leerElemento(texto: string): Resultado<Elemento> {
   const partes = separar(texto);
@@ -100,5 +115,5 @@ export function leerElemento(texto: string): Resultado<Elemento> {
   if (!fm.ok) return fm;
   const cuerpo = partirCuerpo(partes.valor.cuerpo, fm.valor.adjunto === undefined);
   if (!cuerpo) return fallo('formato.sinOriginal', { ref: fm.valor.ref });
-  return ok({ frontmatter: fm.valor, ...cuerpo });
+  return ok({ frontmatter: completarFrontmatter(fm.valor, cuerpo.original), ...cuerpo });
 }

@@ -1,8 +1,14 @@
 /** Codificación UTF-8 sin depender de TextEncoder (que no está en `lib: ES2023`). */
+
+/** Un surrogate suelto no es texto válido: se codifica como U+FFFD, igual que TextEncoder. */
+function puntoValido(caracter: string): number {
+  const c = caracter.codePointAt(0) ?? 0;
+  return c >= 0xd800 && c <= 0xdfff ? 0xfffd : c;
+}
 export function utf8(texto: string): Uint8Array {
   const salida: number[] = [];
   for (const caracter of texto) {
-    const c = caracter.codePointAt(0) ?? 0;
+    const c = puntoValido(caracter);
     if (c < 0x80) salida.push(c);
     else if (c < 0x800) salida.push(0xc0 | (c >> 6), 0x80 | (c & 63));
     else if (c < 0x10000) salida.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63));
@@ -15,7 +21,7 @@ export function utf8(texto: string): Uint8Array {
 export function bytesUtf8(texto: string): number {
   let n = 0;
   for (const caracter of texto) {
-    const c = caracter.codePointAt(0) ?? 0;
+    const c = puntoValido(caracter);
     n += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
   }
   return n;

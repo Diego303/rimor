@@ -52,5 +52,7 @@ export function rutaAdjunto(hashHex: string, extension: string): string {
 
 /** Ruta de una versión anterior: `historial/PRM-0012/2026-10-17T18-05-12.md`. */
 export function rutaHistorial(ref: string, fecha: string): string {
-  return `historial/${ref}/${fecha.slice(0, 19).replace(/:/g, '-')}.md`;
+  const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/.exec(fecha);
+  const sello = m ? `${m[1]}T${m[2]}-${m[3]}-${m[4] ?? '00'}` : fecha.replace(/[^\w-]/g, '-');
+  return `historial/${ref}/${sello}.md`;
 }

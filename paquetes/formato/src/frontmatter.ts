@@ -62,8 +62,59 @@ function estiloCompacto(doc: Document): void {
 const igual = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
 
 /**
+ * Lleva el nodo `nodo` al valor `valor` tocando lo mínimo: un escalar cambia su valor (y conserva su
+ * comentario y estilo), un mapa se fusiona clave a clave y una lista de escalares del mismo largo se
+ * actualiza elemento a elemento. Si la forma cambia, se sustituye el nodo. Devuelve el nodo a poner.
+ */
+function fusionar(doc: Document, nodo: unknown, valor: unknown): unknown {
+  const esObjeto = (x: unknown): x is Record<string, unknown> =>
+    typeof x === 'object' && x !== null && !Array.isArray(x);
+  if (isScalar(nodo) && (valor === null || typeof valor !== 'object')) {
+    nodo.value = valor;
+    return nodo;
+  }
+  if (isMap(nodo) && esObjeto(valor)) {
+    const anterior = (nodo.toJSON() ?? {}) as Record<string, unknown>;
+    for (const clave of Object.keys(anterior)) if (!(clave in valor) || valor[clave] === undefined) nodo.delete(clave);
+    for (const [clave, v] of Object.entries(valor)) {
+      if (v === undefined || (clave in anterior && igual(anterior[clave], v))) continue;
+      nodo.set(clave, clave in anterior ? fusionar(doc, nodo.get(clave, true), v) : nuevoNodo(doc, v));
+    }
+    return nodo;
+  }
+  if (
+    isSeq(nodo) &&
+    Array.isArray(valor) &&
+    nodo.items.length === valor.length &&
+    nodo.items.every((x) => isScalar(x))
+  ) {
+    valor.forEach((v, i) => {
+      nodo.items[i] = fusionar(doc, nodo.items[i], v);
+    });
+    return nodo;
+  }
+  return nuevoNodo(doc, valor);
+}
+
+/** Nodo nuevo con el estilo compacto del Anexo B. */
+function nuevoNodo(doc: Document, valor: unknown) {
+  const nodo = doc.createNode(valor);
+  const temporal = new Document(nodo);
+  estiloCompacto(temporal);
+  // Aquí el nodo es la raíz del documento temporal: se le aplica la misma regla que a un mapa anidado.
+  if (
+    isMap(temporal.contents) &&
+    temporal.contents.items.length <= 8 &&
+    temporal.contents.items.every((p) => isScalar(p.value))
+  )
+    temporal.contents.flow = true;
+  return temporal.contents;
+}
+
+/**
  * Escribe un objeto como YAML. Sin `previo`, en el orden de sus claves; con `previo`, edita ese YAML:
- * cambia solo lo que cambió, borra lo que ya no está y añade lo nuevo al final, sin perder comentarios.
+ * cambia solo lo que cambió, borra lo que ya no está y añade lo nuevo al final, sin perder comentarios
+ * ni el estilo de lo que no se toca.
  */
 export function escribirYaml(valor: Record<string, unknown>, previo?: string): string {
   const base = previo === undefined ? undefined : parseDocument(previo);
@@ -72,17 +123,6 @@ export function escribirYaml(valor: Record<string, unknown>, previo?: string): s
     estiloCompacto(doc);
     return doc.toString(OPCIONES);
   }
-  const anterior = (base.toJS() ?? {}) as Record<string, unknown>;
-  for (const clave of Object.keys(anterior)) if (!(clave in valor)) base.delete(clave);
-  for (const [clave, v] of Object.entries(valor)) {
-    if (v === undefined) {
-      base.delete(clave);
-      continue;
-    }
-    if (clave in anterior && igual(anterior[clave], v)) continue;
-    const nodo = base.createNode(v);
-    base.set(clave, nodo);
-  }
-  estiloCompacto(base);
+  base.contents = fusionar(base, base.contents, valor) as typeof base.contents;
   return base.toString(OPCIONES);
 }
