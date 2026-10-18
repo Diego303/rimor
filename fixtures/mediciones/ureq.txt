@@ -1,0 +1,21 @@
+# ureq · 20 peticiones de 64 KB contra Ollama local
+36.92 ms
+37.40 ms
+35.88 ms
+36.51 ms
+38.95 ms
+36.20 ms
+37.11 ms
+36.74 ms
+35.97 ms
+37.66 ms
+36.38 ms
+40.21 ms
+36.85 ms
+36.03 ms
+37.29 ms
+36.60 ms
+35.79 ms
+37.02 ms
+36.47 ms
+36.99 ms

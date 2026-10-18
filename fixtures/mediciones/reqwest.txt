@@ -1,0 +1,21 @@
+# reqwest · 20 peticiones de 64 KB contra Ollama local
+38.41 ms
+39.02 ms
+37.88 ms
+38.76 ms
+40.12 ms
+38.15 ms
+37.94 ms
+38.60 ms
+39.35 ms
+38.02 ms
+38.88 ms
+41.70 ms
+38.27 ms
+38.49 ms
+37.71 ms
+39.10 ms
+38.33 ms
+38.95 ms
+38.11 ms
+38.58 ms

@@ -1,0 +1,6 @@
+# consulta a SQLite · índice nuevo
+112931 us
+117403 us
+115148 us
+119036 us
+110973 us

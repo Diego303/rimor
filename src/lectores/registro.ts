@@ -12,6 +12,7 @@ import { lectorEnlace } from './enlace/lector';
 import { lectorError } from './error/lector';
 import { lectorIdea } from './idea/lector';
 import { lectorLog } from './log/lector';
+import { lectorMediciones } from './mediciones/lector';
 import { lectorTexto } from './texto/lector';
 
 /**
@@ -44,6 +45,7 @@ export const LECTORES: readonly Lector[] = [
   lectorEnlace, // 3
   lectorError, // 4
   lectorLog, // 5
+  lectorMediciones, // 6
   lectorIdea, // 16
   lectorTexto, // 17
 ];

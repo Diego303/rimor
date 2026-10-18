@@ -1,0 +1,122 @@
+{
+  "reqwest.txt": {
+    "formato": "lineas",
+    "series": [
+      {
+        "etiqueta": "reqwest",
+        "unidad": "ms",
+        "n": 20,
+        "mediana": 38.535,
+        "icBajo": 38.11,
+        "icAlto": 39.02
+      }
+    ]
+  },
+  "ureq.txt": {
+    "formato": "lineas",
+    "series": [
+      {
+        "etiqueta": "ureq",
+        "unidad": "ms",
+        "n": 20,
+        "mediana": 36.795,
+        "icBajo": 36.2,
+        "icAlto": 37.29
+      }
+    ]
+  },
+  "sin-unidad.txt": {
+    "formato": "lineas",
+    "series": [
+      {
+        "etiqueta": "parseo de 10.000 filas",
+        "unidad": "ms",
+        "n": 11,
+        "mediana": 12.4,
+        "icBajo": 12.1,
+        "icAlto": 12.9
+      }
+    ]
+  },
+  "mezcla.txt": {
+    "formato": "lineas",
+    "series": [
+      {
+        "etiqueta": "arranque en frío",
+        "unidad": "ms",
+        "n": 12,
+        "mediana": 0.885,
+        "icBajo": 0.86,
+        "icAlto": 0.93
+      }
+    ]
+  },
+  "pocas.txt": {
+    "formato": "lineas",
+    "series": [
+      {
+        "etiqueta": "compilación incremental",
+        "unidad": "ms",
+        "n": 5,
+        "mediana": 4300.0,
+        "icBajo": 4100.0,
+        "icAlto": 4500.0
+      }
+    ]
+  },
+  "segundos.txt": {
+    "formato": "lineas",
+    "series": [
+      {
+        "etiqueta": "suite completa",
+        "unidad": "s",
+        "n": 10,
+        "mediana": 62.15,
+        "icBajo": 61.4,
+        "icAlto": 63.0
+      }
+    ]
+  },
+  "go-bench.txt": {
+    "formato": "go",
+    "series": [
+      {
+        "etiqueta": "Parse",
+        "unidad": "ms",
+        "n": 5,
+        "mediana": 0.012733,
+        "icBajo": 0.012681,
+        "icAlto": 0.012809
+      },
+      {
+        "etiqueta": "Encode",
+        "unidad": "ms",
+        "n": 5,
+        "mediana": 0.002911,
+        "icBajo": 0.002899,
+        "icAlto": 0.00294
+      }
+    ]
+  },
+  "hyperfine.json": {
+    "formato": "hyperfine",
+    "series": [
+      {
+        "etiqueta": "rg TODO src",
+        "unidad": "ms",
+        "n": 12,
+        "mediana": 41.05,
+        "icBajo": 40.3,
+        "icAlto": 42.0
+      },
+      {
+        "etiqueta": "grep -r TODO src",
+        "unidad": "ms",
+        "n": 10,
+        "mediana": 182.5,
+        "icBajo": 177.0,
+        "icAlto": 192.0
+      }
+    ]
+  }
+}

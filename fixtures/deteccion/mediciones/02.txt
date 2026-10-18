@@ -1,0 +1,6 @@
+# arranque en frío
+107.29ms
+113.19ms
+113.70ms
+107.11ms
+113.73ms

@@ -92,6 +92,24 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
       ],
     },
   },
+  "mediciones": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "8 measurements · median 383.0 ms (95% CI: 359.8 – 399.2). That is few: at least 10 are recommended.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "8 mediciones · mediana 383,0 ms (IC 95 %: 359,8 – 399,2). Son pocas: lo recomendable son al menos 10.",
+        },
+      ],
+    },
+  },
   "plantilla": {
     "en": {
       "texto": [

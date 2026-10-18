@@ -1,0 +1,17 @@
+goos: linux
+goarch: amd64
+pkg: example.com/m1
+BenchmarkParse-8   	342488	57941 ns/op	1870 B/op	5 allocs/op
+BenchmarkParse-16   	669539	56988 ns/op	413 B/op	19 allocs/op
+BenchmarkParse-4   	381847	60419 ns/op	3381 B/op	20 allocs/op
+BenchmarkParse-8   	452391	59369 ns/op	772 B/op	7 allocs/op
+BenchmarkParse-8   	277586	59475 ns/op	2239 B/op	4 allocs/op
+BenchmarkParse-16   	344931	58720 ns/op	3264 B/op	16 allocs/op
+BenchmarkParse-4   	32532	57904 ns/op	1295 B/op	14 allocs/op
+BenchmarkParse-4   	474937	57089 ns/op	3152 B/op	13 allocs/op
+BenchmarkParse-4   	379055	56757 ns/op	3185 B/op	6 allocs/op
+BenchmarkParse-8   	116136	56876 ns/op	1390 B/op	9 allocs/op
+BenchmarkSort-4   	487657	84984 ns/op	1489 B/op	14 allocs/op
+BenchmarkDecode-4   	21339	30780 ns/op	928 B/op	6 allocs/op
+PASS
+ok  	example.com/m1	5.946s

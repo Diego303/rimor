@@ -1,0 +1,25 @@
+goos: linux
+goarch: amd64
+pkg: example.com/m3
+BenchmarkDecode-4   	286885	47518 ns/op	2771 B/op	11 allocs/op
+BenchmarkDecode-8   	865445	49237 ns/op	2566 B/op	9 allocs/op
+BenchmarkDecode-8   	577464	48517 ns/op	1410 B/op	3 allocs/op
+BenchmarkDecode-8   	166315	49494 ns/op	1925 B/op	13 allocs/op
+BenchmarkDecode-16   	94476	47817 ns/op	3069 B/op	14 allocs/op
+BenchmarkDecode-16   	510870	45417 ns/op	3708 B/op	2 allocs/op
+BenchmarkDecode-8   	507877	48688 ns/op	927 B/op	15 allocs/op
+BenchmarkDecode-8   	719026	47734 ns/op	3607 B/op	17 allocs/op
+BenchmarkDecode-8   	465022	48348 ns/op	3243 B/op	12 allocs/op
+BenchmarkDecode-8   	255382	47909 ns/op	1017 B/op	15 allocs/op
+BenchmarkLookup-16   	115006	39864 ns/op	3005 B/op	0 allocs/op
+BenchmarkLookup-16   	694637	39869 ns/op	293 B/op	15 allocs/op
+BenchmarkLookup-16   	294382	41769 ns/op	3183 B/op	0 allocs/op
+BenchmarkLookup-4   	425622	40322 ns/op	3127 B/op	5 allocs/op
+BenchmarkLookup-4   	375393	41109 ns/op	1762 B/op	1 allocs/op
+BenchmarkLookup-16   	276875	40982 ns/op	706 B/op	13 allocs/op
+BenchmarkLookup-16   	787472	40750 ns/op	1069 B/op	18 allocs/op
+BenchmarkLookup-4   	535905	41509 ns/op	2544 B/op	1 allocs/op
+BenchmarkLookup-8   	349293	41098 ns/op	1552 B/op	2 allocs/op
+BenchmarkLookup-16   	49244	42198 ns/op	1607 B/op	17 allocs/op
+PASS
+ok  	example.com/m3	10.803s

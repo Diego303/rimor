@@ -1,0 +1,13 @@
+# arranque en frío
+run 1: 850 µs
+run 2: 0.91 ms
+run 3: 870us
+run 4: 905 µs
+run 5: 1.02 ms
+run 6: 880 µs
+run 7: 860000 ns
+run 8: 0,93 ms
+run 9: 875 μs
+run 10: 890 µs
+run 11: 0.88 ms
+run 12: 902 µs

@@ -1,0 +1,9 @@
+# reqwest · 20 peticiones
+384.10 ms
+399.20 ms
+366.45 ms
+389.20 ms
+381.82 ms
+359.80 ms
+384.61 ms
+378.85 ms

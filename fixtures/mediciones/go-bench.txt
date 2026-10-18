@@ -1,0 +1,16 @@
+goos: linux
+goarch: amd64
+pkg: example.com/parser
+cpu: AMD Ryzen 7 5800X 8-Core Processor
+BenchmarkParse-16          	   93421	     12733 ns/op	    4096 B/op	      12 allocs/op
+BenchmarkParse-16          	   94012	     12681 ns/op	    4096 B/op	      12 allocs/op
+BenchmarkParse-16          	   92877	     12809 ns/op	    4096 B/op	      12 allocs/op
+BenchmarkParse-16          	   93950	     12702 ns/op	    4096 B/op	      12 allocs/op
+BenchmarkParse-16          	   93102	     12755 ns/op	    4096 B/op	      12 allocs/op
+BenchmarkEncode-16         	  410233	      2911 ns/op	     512 B/op	       3 allocs/op
+BenchmarkEncode-16         	  409876	      2925 ns/op	     512 B/op	       3 allocs/op
+BenchmarkEncode-16         	  412001	      2899 ns/op	     512 B/op	       3 allocs/op
+BenchmarkEncode-16         	  408765	      2940 ns/op	     512 B/op	       3 allocs/op
+BenchmarkEncode-16         	  411320	      2903 ns/op	     512 B/op	       3 allocs/op
+PASS
+ok  	example.com/parser	14.220s

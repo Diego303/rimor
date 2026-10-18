@@ -1,0 +1,13 @@
+# con caché
+tiempo: 83.14 ms
+tiempo: 83.07 ms
+tiempo: 82.68 ms
+tiempo: 81.24 ms
+tiempo: 83.54 ms
+tiempo: 88.93 ms
+tiempo: 87.98 ms
+tiempo: 87.35 ms
+tiempo: 86.60 ms
+tiempo: 82.30 ms
+tiempo: 86.45 ms
+tiempo: 89.44 ms

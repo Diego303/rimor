@@ -18,12 +18,13 @@ interface PropsTabla<F> {
   activa?: (fila: F) => boolean;
   /** Descripción para el lector de pantalla. */
   titulo?: string;
+  className?: string;
 }
 
-export function Tabla<F>({ columnas, filas, clave, alPulsarFila, activa, titulo }: PropsTabla<F>) {
+export function Tabla<F>({ columnas, filas, clave, alPulsarFila, activa, titulo, className }: PropsTabla<F>) {
   return (
     <div className="tbl-wrap">
-      <table>
+      <table className={className}>
         {titulo && <caption className="solo-lector">{titulo}</caption>}
         <thead>
           <tr>

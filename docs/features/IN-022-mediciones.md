@@ -44,12 +44,12 @@ Que una serie de tiempos diga cuánto tarda de verdad y con qué confianza, sin 
 
 ## Tareas
 
-- [ ] Formatos v0.1: una medida por línea con o sin unidad, `go test -bench` y JSON de hyperfine. Etiqueta desde un comentario `#`.
-- [ ] Normaliza unidades a ms (o a s si todo pasa de 10 s).
-- [ ] Deriva las estadísticas de IN-011 y los avisos de método.
-- [ ] Vista: gráfico de puntos con mediana e intervalo, tabla de estadísticos y avisos plegados con recuento.
-- [ ] Cifras: `mediana`, `ic_bajo`, `ic_alto`, `n`, `cv`.
-- [ ] Respuesta: «20 mediciones · mediana 38,54 ms (IC 95 %: 38,11 – 39,02).» y, si n < 10, «Son pocas: lo recomendable son al menos 10.»
+- [x] Formatos v0.1: una medida por línea con o sin unidad, `go test -bench` y JSON de hyperfine. Etiqueta desde un comentario `#`.
+- [x] Normaliza unidades a ms (o a s si todo pasa de 10 s).
+- [x] Deriva las estadísticas de IN-011 y los avisos de método.
+- [x] Vista: gráfico de puntos con mediana e intervalo, tabla de estadísticos y avisos plegados con recuento.
+- [x] Cifras: `mediana`, `ic_bajo`, `ic_alto`, `n`, `cv`.
+- [x] Respuesta: «20 mediciones · mediana 38,54 ms (IC 95 %: 38,11 – 39,02).» y, si n < 10, «Son pocas: lo recomendable son al menos 10.»
 
 ## Pruebas previstas
 
@@ -75,3 +75,12 @@ Que una serie de tiempos diga cuánto tarda de verdad y con qué confianza, sin 
 ## Autorrevisión
 
 Cubre las seis tareas. Los formatos de v0.2 (pytest-benchmark, JMH, criterion, CSV) son de IN-047; la comparación y Mann-Whitney en pantalla, de IN-028, que reutilizará `GraficoPuntos`.
+
+## Cambios durante la implementación
+
+- Todas las series de un pegado van en la misma unidad (s solo si todos sus valores pasan de 10 s), para dibujarlas y compararlas juntas.
+- Con una sola medición, la respuesta no da intervalo («1 medición: 38,40 ms.») y la tabla pone «—» en IC y variación; sin medidas, «No he encontrado mediciones que leer.».
+- `medidaDeLinea` tiene un modo estricto (al detectar) que descarta líneas con hora, fecha o nivel de log y frases de más de 6 palabras; al leer (también con `/med`), basta un número con unidad.
+- `Tabla` admite `className` (la de mediciones lleva `min-width: 420px`, como la de la referencia).
+- Varias series: cada aviso lleva delante el nombre de su serie; las series sin nombre se llaman «Serie N».
+

@@ -1,0 +1,12 @@
+goos: linux
+goarch: amd64
+pkg: example.com/m4
+BenchmarkSort-8   	297177	72541 ns/op	1509 B/op	8 allocs/op
+BenchmarkEncode-4   	581739	58163 ns/op	2421 B/op	11 allocs/op
+BenchmarkEncode-16   	419377	59768 ns/op	2225 B/op	7 allocs/op
+BenchmarkEncode-8   	239254	60066 ns/op	629 B/op	20 allocs/op
+BenchmarkEncode-4   	658022	59431 ns/op	1065 B/op	12 allocs/op
+BenchmarkEncode-8   	550672	58479 ns/op	760 B/op	19 allocs/op
+BenchmarkParse-16   	824401	61798 ns/op	3653 B/op	6 allocs/op
+PASS
+ok  	example.com/m4	6.556s

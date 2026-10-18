@@ -1043,6 +1043,46 @@ details.more > div {
 .histograma-log .eje {
   fill: var(--muted);
 }
+/* Mediciones (IN-022): gráfico de puntos como benchSVG de la referencia. */
+.grafico-puntos {
+  min-width: 420px;
+}
+.grafico-puntos .gp-eje line {
+  stroke: var(--line-2);
+}
+.grafico-puntos .gp-eje text,
+.grafico-puntos .gp-unidad {
+  fill: var(--muted);
+}
+.grafico-puntos .gp-etiqueta {
+  fill: var(--ink);
+}
+.grafico-puntos .gp-serie.clave {
+  color: var(--key);
+}
+.grafico-puntos .gp-serie.referencia {
+  color: var(--muted);
+}
+.grafico-puntos .gp-serie circle {
+  fill: currentColor;
+}
+.grafico-puntos .gp-banda {
+  fill: currentColor;
+  opacity: 0.14;
+}
+.grafico-puntos .gp-mediana {
+  stroke: currentColor;
+  stroke-width: 2.5;
+}
+.legend .clave {
+  background: var(--key);
+}
+.legend .referencia {
+  background: var(--muted);
+}
+.tabla-mediciones {
+  min-width: 420px;
+}
 .tabla-plantillas {
   min-width: 480px;
 }

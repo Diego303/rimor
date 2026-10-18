@@ -169,6 +169,67 @@ describe('vista de Log', () => {
   });
 });
 
+describe('vista de Mediciones', () => {
+  const cargar = async (archivo: string) => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { lectorMediciones } = await import('./mediciones/lector');
+    const texto = readFileSync(join(process.cwd(), 'fixtures/mediciones', archivo), 'utf8');
+    const el = elementoFalso(9, texto, 'mediciones');
+    return { el, datos: await lectorMediciones.derivar(el) };
+  };
+
+  it('la mediana como veredicto, el gráfico con su banda y su mediana, la tabla y los avisos con su número', async () => {
+    const { default: VistaMediciones } = await import('./mediciones/Vista');
+    const { el, datos } = await cargar('reqwest.txt');
+    const { container } = render(<VistaMediciones el={el} datos={datos} />);
+    expect(container.querySelector('.verdict.ok .big')?.textContent).toBe('38,54\u00a0ms');
+    expect(screen.getByText('Mediana de 20 mediciones')).toBeTruthy();
+    const grafico = container.querySelector('svg.grafico-puntos');
+    expect(grafico?.getAttribute('aria-label')).toBe('Distribución de reqwest');
+    expect(grafico?.querySelectorAll('.gp-serie.clave circle')).toHaveLength(20);
+    expect(grafico?.querySelectorAll('.gp-banda')).toHaveLength(1);
+    expect(grafico?.querySelectorAll('.gp-mediana')).toHaveLength(1);
+    expect(grafico?.querySelector('.gp-unidad')?.textContent).toBe('ms');
+    // La banda va del IC bajo al alto y la mediana cae dentro.
+    const banda = grafico?.querySelector('.gp-banda');
+    const x = Number(banda?.getAttribute('x'));
+    const ancho = Number(banda?.getAttribute('width'));
+    const mediana = Number(grafico?.querySelector('.gp-mediana')?.getAttribute('x1'));
+    expect(mediana).toBeGreaterThan(x);
+    expect(mediana).toBeLessThan(x + ancho);
+    expect(screen.getByText('Línea: mediana · banda: intervalo de confianza del 95 %')).toBeTruthy();
+    const celdas = [...container.querySelectorAll('.tabla-mediciones tbody td')].map((c) => c.textContent);
+    expect(celdas).toEqual([
+      'reqwest',
+      '20',
+      '38,54\u00a0ms',
+      '38,11 – 39,02',
+      expect.stringMatching(/^\d,\d\u00a0%$/),
+    ]);
+    // Un atípico (41,70 ms): un aviso, con su número en el plegable.
+    expect(screen.getByText('Avisos de método (1)')).toBeTruthy();
+    expect(screen.getByText(/Un valor \(41,70 ms\) se aleja de la mediana/)).toBeTruthy();
+    expect(screen.getByText('mediana').closest('.st')?.textContent).toBe('mediana 38,54\u00a0ms');
+  });
+
+  it('con pocas, el veredicto avisa; varias series, una fila y una banda por serie', async () => {
+    const { default: VistaMediciones } = await import('./mediciones/Vista');
+    const pocas = await cargar('pocas.txt');
+    const { container, unmount } = render(<VistaMediciones el={pocas.el} datos={pocas.datos} />);
+    expect(container.querySelector('.verdict.warn')).toBeTruthy();
+    expect(screen.getByText(/^Solo 5 mediciones: lo recomendable son al menos 10/)).toBeTruthy();
+    unmount();
+    const go = await cargar('go-bench.txt');
+    const otra = render(<VistaMediciones el={go.el} datos={go.datos} />);
+    expect(otra.container.querySelectorAll('.gp-banda')).toHaveLength(2);
+    expect(otra.container.querySelectorAll('.tabla-mediciones tbody tr')).toHaveLength(2);
+    expect(otra.container.querySelector('.verdict .big')?.textContent).toBe('0,01273\u00a0ms');
+    // Los avisos de cada serie llevan su nombre delante.
+    expect(screen.getAllByText(/^(Parse|Encode): Solo 5 mediciones/)).toHaveLength(2);
+  });
+});
+
 describe('vista de Error', () => {
   it('fechas: del mismo mes, «el 2 y el 15 de octubre»; de meses distintos, cada una con su mes', async () => {
     const { listaDeFechas } = await import('./error/Vista');
