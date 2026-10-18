@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 18:11
-**Ahora:** IN-017 · Lector Texto y lector genérico de archivo · fase verificación
-**Siguiente:** IN-018 · Lector Idea y resurgimiento mínimo
-**Progreso:** F0 9/9 · v0.1 18/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 27/99
+**Última actualización:** 2026-10-18 18:24
+**Ahora:** IN-018 · Lector Idea y resurgimiento mínimo · fase análisis y diseño
+**Siguiente:** IN-019 · Lector Enlace básico
+**Progreso:** F0 9/9 · v0.1 19/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 28/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -36,7 +36,7 @@
 | IN-014 | Flujo de captura | v0.1 | 3 | hecha | 683703f 9830443 02b7548 | docs/features/IN-014-captura.md |
 | IN-015 | Compositor | v0.1 | 3 | hecha | df7d8c3 3531022 871224d | docs/features/IN-015-compositor.md |
 | IN-016 | Respuestas de Rimor y contadores locales | v0.1 | 3 | hecha | c521a65 5b52db2 674f816 | docs/features/IN-016-respuestas.md |
-| IN-017 | Lector Texto y lector genérico de archivo | v0.1 | 3 | en verificación | ecade38 | docs/features/IN-017-texto-archivo.md |
+| IN-017 | Lector Texto y lector genérico de archivo | v0.1 | 3 | hecha | ecade38 19869f2 | docs/features/IN-017-texto-archivo.md |
 | IN-018 | Lector Idea y resurgimiento mínimo | v0.1 | 4 | pendiente | — | — |
 | IN-019 | Lector Enlace básico | v0.1 | 4 | pendiente | — | — |
 | IN-020 | Lector Log | v0.1 | 4 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-017 | implementación | OK (577 pruebas; matriz 50/50) | … |
+| 2026-10-18 | IN-017 | verificación | OK (581 pruebas; 7 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-017 | implementación | OK (577 pruebas; matriz 50/50) | 19869f2 |
 | 2026-10-18 | IN-017 | análisis y diseño | Texto con enlaces y menciones, Archivo con descarga y marca de pendiente, corpus de binarios | ecade38 |
 | 2026-10-18 | IN-016 | verificación | OK (567 pruebas; 11 hallazgos de la revisión corregidos) | 674f816 |
 | 2026-10-18 | IN-016 | implementación | OK (563 pruebas) | 5b52db2 |
@@ -240,4 +241,4 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-016 hecha. Siguiente: IN-017 (diseño escrito en docs/features/IN-017-texto-archivo.md, sin commit; lectores y script del corpus en borrador en el scratchpad in017/).
+- IN-017 hecha. Siguiente: IN-018 (diseño escrito en docs/features/IN-018-idea.md, sin commit; corpus de ideas en el scratchpad in018/idea).

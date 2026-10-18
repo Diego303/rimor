@@ -72,7 +72,22 @@ describe('saneado', () => {
       expect(container.querySelector('a')?.hasAttribute('href'), md).toBe(false);
     }
     const { container } = render(<MarkdownSeguro texto="[ir](#seccion)" />);
-    expect(container.querySelector('a')?.getAttribute('href')).toBe('#seccion');
+    // Con el prefijo de los `id`, para que casen.
+    expect(container.querySelector('a')?.getAttribute('href')).toBe('#rimor-seccion');
+  });
+
+  it('las notas al pie casan con sus destinos, en el idioma de la interfaz, y no navegan', () => {
+    const { container } = render(<MarkdownSeguro texto={'Dato[^1].\n\n[^1]: La fuente.'} />);
+    const llamada = container.querySelector('sup a') as HTMLAnchorElement;
+    const destino = llamada.getAttribute('href')?.slice(1) ?? '';
+    expect(container.querySelector(`[id="${destino}"]`)).toBeTruthy();
+    expect(container.textContent).toContain('Notas');
+    expect(container.querySelector('[aria-label="Volver a la referencia 1"]')).toBeTruthy();
+    const hashAntes = window.location.hash;
+    const clic = new MouseEvent('click', { bubbles: true, cancelable: true });
+    llamada.dispatchEvent(clic);
+    expect(clic.defaultPrevented).toBe(true);
+    expect(window.location.hash).toBe(hashAntes);
   });
 
   it('sanearSvg solo admite url(#…) internas y pone prefijo a los id y a sus referencias', () => {

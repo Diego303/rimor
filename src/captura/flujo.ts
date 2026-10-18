@@ -29,6 +29,8 @@ import { type Candidato, detectar, entradaDeArchivo } from './detector';
 /** Por encima de este tamaño, un archivo se rechaza (ficha IN-014). */
 export const LIMITE_ARCHIVO = 50 * 1024 * 1024;
 const LARGO_TITULO = 120;
+/** Tipos cuyo lector trabaja con los bytes del archivo, no con su texto. */
+const TIPOS_BINARIOS: ReadonlySet<TipoElemento> = new Set(['archivo', 'imagen', 'pdf']);
 
 export type OrigenCaptura = 'pegado' | 'soltado' | 'compartido';
 
@@ -115,11 +117,12 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
   let texto = entrada.texto;
   let bytes: Uint8Array | null = null;
   let cabecera: Uint8Array | undefined;
+  let leidos: Uint8Array | null = null;
   const archivo = entrada.archivo;
   if (archivo) {
     if (archivo.size > LIMITE_ARCHIVO)
       return fallo('captura.demasiadoGrande', { nombre: archivo.name, tam: archivo.size, limite: LIMITE_ARCHIVO });
-    const leidos = new Uint8Array(await archivo.arrayBuffer());
+    leidos = new Uint8Array(await archivo.arrayBuffer());
     const e = entradaDeArchivo(archivo.name, archivo.type, leidos);
     cabecera = e.cabecera;
     if (e.entrada.texto !== undefined) texto = e.entrada.texto;
@@ -137,7 +140,7 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
 
   // Lo que ven el detector y el lector. Un archivo de texto viaja ya con los secretos ocultados.
   const nombre = archivo?.name;
-  const vista: Entrada = {
+  let vista: Entrada = {
     ...(texto !== undefined ? { texto } : {}),
     ...(nombre ? { nombre } : {}),
     ...(archivo?.type ? { mime: archivo.type } : {}),
@@ -148,6 +151,15 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
   const deteccion = entrada.tipo ? null : detectar(vista, registro, cabecera ? { cabecera } : {});
   const lector = lectorPara(registro, entrada.tipo, deteccion?.lector ?? null, bytes !== null);
   if (!lector) return fallo('captura.sinLector', { tipo: entrada.tipo ?? deteccion?.tipo ?? 'texto' });
+
+  // Un archivo de texto que va a un lector de binarios (un SVG con MIME de imagen) se guarda tal cual: su
+  // adjunto debe ser el original, byte a byte (como cualquier binario, no pasa por la ocultación).
+  if (archivo && !bytes && leidos && TIPOS_BINARIOS.has(lector.tipo)) {
+    bytes = leidos;
+    texto = undefined;
+    ocultados = 0;
+    vista = { nombre: archivo.name, archivos: [archivo], ...(archivo.type ? { mime: archivo.type } : {}) };
+  }
 
   // 4. Duplicado exacto: mismo original que un elemento que no está en la papelera.
   const hash: FrontmatterComun['hash'] = bytes ? `sha256:${sha256Hex(bytes)}` : hashOriginal(texto ?? '');

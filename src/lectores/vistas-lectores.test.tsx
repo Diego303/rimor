@@ -79,9 +79,44 @@ describe('vista de Archivo', () => {
     expect(screen.getByText('tipo desconocido')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Descargar el original' }));
     await waitFor(() => expect(clic).toHaveBeenCalled());
+    // El enlace temporal no se revoca enseguida (Safari cancelaría la descarga).
+    expect(revocar).not.toHaveBeenCalled();
     expect(new Uint8Array((await blobs[0]?.arrayBuffer()) ?? new ArrayBuffer(0))).toEqual(new Uint8Array([7, 8, 9]));
     clic.mockRestore();
     crear.mockRestore();
     revocar.mockRestore();
+  });
+});
+
+describe('vista de Texto guardado aparte', () => {
+  it('enseña su principio y deja descargarlo entero', async () => {
+    const cerrojos: Cerrojos = { request: (_n, _o, fn) => fn({}) };
+    const almacen = new AlmacenMemoria();
+    await almacen.escribir('adjuntos/cc/grande.txt', new TextEncoder().encode('principio del texto enorme'));
+    const dependencias = async (): Promise<DependenciasProveedor> => ({
+      espacioId: 'vista-texto-grande',
+      almacen,
+      fabricaIndexedDb: new IDBFactory(),
+      cerrojos,
+      canal: { postMessage: () => undefined, addEventListener: () => undefined, close: () => undefined },
+      enMemoria: false,
+    });
+    const base = elementoFalso(5, '', 'texto');
+    const el = {
+      ...base,
+      original: null,
+      frontmatter: {
+        ...base.frontmatter,
+        adjunto: { hash: 'c'.repeat(64), ruta: 'adjuntos/cc/grande.txt', mime: 'text/plain', tam: 3_000_000 },
+      },
+    };
+    render(
+      <ProveedorEspacio dependencias={dependencias}>
+        <VistaTexto el={el} datos={{ lineas: 0, palabras: 0, enlaces: [], menciones: [] }} />
+      </ProveedorEspacio>,
+    );
+    expect(await screen.findByText('principio del texto enorme')).toBeTruthy();
+    expect(screen.getByText(/guardado aparte por su tamaño/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Descargar el texto completo' })).toBeTruthy();
   });
 });

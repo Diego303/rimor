@@ -21,25 +21,41 @@ function contarLineas(texto: string): number {
   return sinFinal === '' ? 0 : sinFinal.split(/\r?\n/).length;
 }
 
+/** Líneas que son solo marcado: cercas de código, reglas, imágenes o un encabezado vacío. */
+const SOLO_MARCADO = /^(?:`{3,}.*|~{3,}.*|(?:[-*_]\s*){3,}|!\[[^\]]*\]\([^)]*\)|#{1,6})$/;
+
 /** Primera línea con contenido, sin las marcas de Markdown del principio (`#`, `-`, `*`, `>`, `1.`). */
 export function tituloDe(texto: string): string {
-  const linea = texto.split(/\r?\n/).find((l) => l.trim()) ?? '';
-  const limpia = linea
-    .trim()
-    .replace(/^(?:#{1,6}\s+|[-*+]\s+(?:\[[ xX]\]\s+)?|>\s*|\d+[.)]\s+)/, '')
-    .trim();
-  return limpia.length > LARGO_TITULO ? `${limpia.slice(0, LARGO_TITULO - 1)}…` : limpia;
+  for (const linea of texto.split(/\r?\n/)) {
+    const l = linea.trim();
+    if (!l || SOLO_MARCADO.test(l)) continue;
+    const limpia = l.replace(/^(?:#{1,6}\s+|[-*+]\s+(?:\[[ xX]\]\s+)?|>\s*|\d+[.)]\s+)/, '').trim();
+    if (!limpia) continue;
+    return limpia.length > LARGO_TITULO ? `${limpia.slice(0, LARGO_TITULO - 1)}…` : limpia;
+  }
+  return '';
 }
 
-/** URL `http(s)://` del texto, sin repetir y sin la puntuación final que se les pega. */
+/** Lo que nunca forma parte de una URL pegada en un texto: espacios, comillas, corchetes y ángulos. */
+const URL_EN_TEXTO = /(?<![\p{L}\p{N}])https?:\/\/[^\s<>"'`«»“”‘’[\]{}|\\^]+/giu;
+
+/**
+ * URL `http(s)://` del texto, sin repetir y sin lo que se les pega alrededor: puntuación final, marcas de
+ * Markdown (`**`, `_`), comillas, o el `)` de un paréntesis que se abrió fuera.
+ */
 export function enlacesDe(texto: string): string[] {
   const vistos = new Set<string>();
-  for (const m of texto.matchAll(/\bhttps?:\/\/[^\s<>"'`]+/gi)) {
-    let url = m[0].replace(/[.,;:!?]+$/, '');
-    // Un paréntesis de cierre final solo es parte de la URL si abrió uno dentro (Wikipedia).
-    while (url.endsWith(')') && (url.match(/\(/g)?.length ?? 0) < (url.match(/\)/g)?.length ?? 0))
-      url = url.slice(0, -1);
-    vistos.add(url);
+  for (const m of texto.matchAll(URL_EN_TEXTO)) {
+    let url = m[0];
+    for (;;) {
+      const antes = url;
+      url = url.replace(/[.,;:!?*_~]+$/, '');
+      // Un paréntesis de cierre final solo es parte de la URL si abrió uno dentro (Wikipedia).
+      if (url.endsWith(')') && (url.match(/\(/g)?.length ?? 0) < (url.match(/\)/g)?.length ?? 0))
+        url = url.slice(0, -1);
+      if (url === antes) break;
+    }
+    if (/^https?:\/\/[^/]/i.test(url)) vistos.add(url);
   }
   return [...vistos];
 }
@@ -61,11 +77,21 @@ export const lectorTexto: Lector<DatosTexto> = {
 
   async leer(e: Entrada): Promise<Borrador> {
     const texto = e.texto ?? '';
-    return { titulo: tituloDe(texto), original: texto, resumen: { lineas: contarLineas(texto) } };
+    return {
+      titulo: tituloDe(texto),
+      original: texto,
+      resumen: { lineas: contarLineas(texto), palabras: texto.split(/\s+/).filter(Boolean).length },
+    };
   },
 
   async derivar(el: Elemento): Promise<DatosTexto> {
-    const texto = el.original ?? '';
+    // Un texto de más de 2 MB va como adjunto (D8) y el Worker no lo lee: se queda con lo que contó `leer`.
+    if (el.original === null) {
+      const r = el.frontmatter.lector.resumen;
+      const n = (x: unknown) => (typeof x === 'number' ? x : 0);
+      return { lineas: n(r.lineas), palabras: n(r.palabras), enlaces: [], menciones: [] };
+    }
+    const texto = el.original;
     return {
       lineas: contarLineas(texto),
       palabras: texto.split(/\s+/).filter(Boolean).length,
@@ -98,12 +124,14 @@ export const lectorTexto: Lector<DatosTexto> = {
       };
     if (d.menciones.length) {
       const refs = d.menciones.slice(0, 3);
+      const mas = d.menciones.length - refs.length;
       const piezas: Fragmento[] = [{ t: 'texto', v: ` ${t('menciona')}` }];
       refs.forEach((ref, i) => {
-        if (i > 0) piezas.push({ t: 'texto', v: i === refs.length - 1 ? t('y') : ', ' });
+        if (i > 0) piezas.push({ t: 'texto', v: i === refs.length - 1 && !mas ? t('y') : ', ' });
         piezas.push({ t: 'ref', ref });
       });
-      piezas.push({ t: 'texto', v: '.' });
+      // Con más de tres, se dice cuántas faltan: nunca una lista incompleta como si fuera entera.
+      piezas.push({ t: 'texto', v: mas ? `${t('yMas', { n: mas })}.` : '.' });
       return { texto: [guardado, ...piezas] };
     }
     return { texto: [guardado] };

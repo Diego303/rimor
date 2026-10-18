@@ -79,3 +79,26 @@ Cubre las tres tareas y la aceptación. Es el primer uso real de la plantilla: s
 - El corpus de binarios lo genera `scripts/corpus-archivos.mjs` (cabeceras reales de 25 formatos, de 14 a 512 bytes).
 - La instantánea de respuestas usa el primer ejemplo de la carpeta de cada lector, también si es un archivo (como adjunto).
 
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 18:24): tipos 0 errores; Biome, colores y textos, OK; Vitest 46 archivos y 581 pruebas, OK; construcción OK; carga inicial 176,8 KB. **`pnpm deteccion`**: texto 25/25 y archivo 25/25 (100 %).
+
+| Criterio | Evidencia |
+|---|---|
+| Texto: Markdown saneado, enlaces, menciones, título | `texto.test.ts` y vista con un `<script>` que no se ejecuta |
+| Archivo: adjunto por hash, nombre, tamaño, MIME, descarga, `pendiente_lector` | `archivo.test.ts`, vista con la descarga de los bytes y prueba de captura |
+| Respuestas de la ficha | Pruebas de los dos lectores en es y en, e instantáneas |
+| Cualquier cosa que no reconozca otro lector se guarda y se encuentra | Captura con el registro real: texto, binario, PNG sin lector propio, archivo sin MIME, SVG, texto de más de 2 MB |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Enlaces con caracteres de más** (comillas «» “”, `**`, `_`, corchetes de Markdown, punto dentro de un paréntesis): la URL no incluye comillas ni corchetes y se limpian las marcas y la puntuación del final; `_https://…_` ya se reconoce.
+2. **Un texto de más de 2 MB quedaba invisible**: su vista lee el adjunto y enseña los primeros 100 KB en plano, con la descarga del texto entero; la tarjeta y los derivados usan lo que contó `leer` (que ahora también cuenta palabras).
+3. **Anclas internas rotas** (notas al pie con `href` sin el prefijo de los `id`): las anclas `#…` llevan el prefijo `rimor-`, `MarkdownSeguro` desplaza a su destino sin cambiar el hash (que es la ruta) y las notas al pie salen en el idioma de la interfaz.
+4. **El enlace temporal de la descarga se revocaba enseguida**: se revoca a los 60 s (`src/lectores/descargar.ts`, común a Texto y Archivo).
+5. **Un archivo de texto con MIME de imagen o PDF (un SVG)** se guardaba decodificado: va al lector de binarios con sus bytes tal cual, su hash y su extensión.
+6. **Títulos que eran marcado** (cercas, reglas, imágenes, encabezados vacíos): se saltan esas líneas.
+7. **Con más de tres menciones** la respuesta las recortaba sin decirlo: «… y 2 más».
+

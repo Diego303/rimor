@@ -19,6 +19,9 @@ describe('lector Texto', () => {
     expect(tituloDe('> cita importante')).toBe('cita importante');
     expect(tituloDe('1. primer paso')).toBe('primer paso');
     expect(tituloDe('x'.repeat(200))).toHaveLength(120);
+    // Las líneas que son solo marcado no son título.
+    expect(tituloDe('```js\nconst a = 1;\n```')).toBe('const a = 1;');
+    expect(tituloDe('---\n## \n![img](x.png)\n* * *\nDe verdad')).toBe('De verdad');
   });
 
   it('enlaces sin repetir y sin la puntuación final; paréntesis equilibrados', () => {
@@ -28,6 +31,33 @@ describe('lector Texto', () => {
       ),
     ).toEqual(['https://ejemplo.org/a', 'https://es.wikipedia.org/wiki/Rust_(lenguaje)']);
     expect(enlacesDe('sin enlaces ni ftp://x.org')).toEqual([]);
+    expect(
+      enlacesDe('«https://docs.rs/ureq». “https://b.org” **https://a.com** _https://c.org_ (ver https://d.org.)'),
+    ).toEqual(['https://docs.rs/ureq', 'https://b.org', 'https://a.com', 'https://c.org', 'https://d.org']);
+    expect(enlacesDe('[https://a.com](https://a.com)')).toEqual(['https://a.com']);
+  });
+
+  it('con más de tres menciones, dice cuántas faltan', async () => {
+    const el = elementoFalso(9, 'ERR-0001 ERR-0002 ERR-0003 ERR-0004 ERR-0005', 'texto');
+    const d = await lectorTexto.derivar(el);
+    const texto = lectorTexto
+      .respuesta(el, d, ctx())
+      .texto.map((f) => ('v' in f ? f.v : f.ref))
+      .join('');
+    expect(texto).toBe('Texto guardado. Menciona ERR-0001, ERR-0002, ERR-0003 y 2 más.');
+  });
+
+  it('un texto guardado aparte (más de 2 MB) conserva lo que contó al leer', async () => {
+    const base = elementoFalso(10, '', 'texto');
+    const el = {
+      ...base,
+      original: null,
+      frontmatter: {
+        ...base.frontmatter,
+        lector: { nombre: 'texto', version: 1, resumen: { lineas: 50_000, palabras: 400_000 } },
+      },
+    };
+    expect(await lectorTexto.derivar(el)).toEqual({ lineas: 50_000, palabras: 400_000, enlaces: [], menciones: [] });
   });
 
   it('menciones solo de refs de Rimor válidas', () => {
@@ -60,7 +90,7 @@ describe('lector Texto', () => {
     expect(await lectorTexto.leer({ texto: '## Idea\nuna\n' })).toEqual({
       titulo: 'Idea',
       original: '## Idea\nuna\n',
-      resumen: { lineas: 2 },
+      resumen: { lineas: 2, palabras: 3 },
     });
     expect(lectorTexto.detectar({ texto: 'algo' })).toBe(0.1);
     expect(lectorTexto.detectar({ texto: '  ' })).toBe(0);

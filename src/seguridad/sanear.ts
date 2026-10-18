@@ -79,7 +79,11 @@ function endurecer() {
         if (/^(https?:|mailto:)/i.test(href)) {
           nodo.properties.rel = ['noopener', 'noreferrer', 'nofollow'];
           nodo.properties.target = '_blank';
-        } else if (!href.startsWith('#')) {
+        } else if (href.startsWith('#')) {
+          // Anclas internas (notas al pie, `[ir](#seccion)`): apuntan a los `id`, que llevan el prefijo. Con el
+          // router por hash, `MarkdownSeguro` intercepta el clic y desplaza sin navegar.
+          if (!href.startsWith('#rimor-')) nodo.properties.href = `#rimor-${href.slice(1)}`;
+        } else {
           // Relativos («/otra/ruta», «../») o sin protocolo («//dominio»): sacarían de la app por la misma pestaña.
           delete nodo.properties.href;
         }
@@ -89,16 +93,25 @@ function endurecer() {
   };
 }
 
-const procesador = unified()
-  .use(remarkParse)
-  .use(remarkGfm)
-  .use(remarkRehype, { allowDangerousHtml: true })
-  .use(rehypeRaw)
-  .use(rehypeSanitize, ESQUEMA)
-  .use(endurecer);
+/** Textos de las notas al pie de GFM, en el idioma de la interfaz. */
+const NOTAS_AL_PIE = {
+  es: { footnoteLabel: 'Notas', footnoteBackLabel: (i: number) => `Volver a la referencia ${i + 1}` },
+  en: { footnoteLabel: 'Footnotes', footnoteBackLabel: (i: number) => `Back to reference ${i + 1}` },
+} as const;
+
+const procesadorPara = (idioma: 'es' | 'en') =>
+  unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkRehype, { allowDangerousHtml: true, ...NOTAS_AL_PIE[idioma] })
+    .use(rehypeRaw)
+    .use(rehypeSanitize, ESQUEMA)
+    .use(endurecer);
+const PROCESADORES = { es: procesadorPara('es'), en: procesadorPara('en') };
 
 /** Markdown pegado → árbol hast saneado, listo para pintar. */
-export function markdownAHast(md: string): Root {
+export function markdownAHast(md: string, idioma: 'es' | 'en' = 'es'): Root {
+  const procesador = PROCESADORES[idioma];
   return procesador.runSync(procesador.parse(md)) as Root;
 }
 
