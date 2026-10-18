@@ -145,3 +145,10 @@ function migrar(e: EspacioMigrable, desde: number, hasta: number): Resultado<Esp
 ## Autorrevisión
 
 Cubre las tareas y pruebas de la ficha. Las decisiones nuevas (tipo `archivo`, último bloque como original) no contradicen el plan y se registran.
+
+## Cambios durante la implementación
+
+- **Sin escalares de bloque en el YAML** (`blockQuote: false`): la propiedad de ida y vuelta encontró que `yaml` pierde el espacio inicial de un texto como `" \n"` cuando lo escribe como bloque `|+`. Con comillas dobles todo texto vuelve idéntico. Consecuencia: si alguien escribe a mano un bloque `|` en el frontmatter, al reescribirlo Rimor lo pasa a comillas (el valor no cambia).
+- Listas y mapas en línea sin relleno (`[gateway]`, `{lineas: 11}`), como el `colecciones: [gateway]` del Anexo B.
+- `MIGRACIONES` es una tabla vacía: con un solo esquema, migrar de 1 a 1 no aplica ningún paso (la identidad) y no hace falta una función que no haga nada.
+- `ESQUEMA_ACTUAL` vive en `version.ts` para que `migraciones.ts` no importe el índice.

@@ -26,7 +26,7 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi�
 | `src/ui/iconos/` | Iconos de las pantallas y aspecto de cada tipo | 002 |
 | `src/ui/muestras/` | Página `#/muestras`, solo en desarrollo | 002 |
 | `src/i18n/` | Catálogos `es` y `en`, `traducir` y `t` con claves tipadas, `useT`, idioma inicial y formateadores | 003 |
-| `paquetes/formato` | Esquemas y formato de archivos (esqueleto) | 001 |
+| `paquetes/formato` | Esquemas Valibot, `.md` de elementos (frontmatter fiel, notas y original), ULID, refs, rutas, SHA-256 y migraciones | 004 |
 | `paquetes/estadistica` | Estadística de mediciones (esqueleto) | 001 |
 | `scripts/` | Comprobación de colores y de textos sin traducir, tamaño de la carga inicial y seguimiento | 001, 003 |
 

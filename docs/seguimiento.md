@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 02:20
-**Ahora:** IN-004 · Formato de archivos · fase implementación
+**Última actualización:** 2026-10-18 02:28
+**Ahora:** IN-004 · Formato de archivos · fase verificación
 **Siguiente:** IN-089 · Símbolo «Señal», iconos de app y favicon
 **Progreso:** F0 9/9 · v0.1 3/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 12/99
 
@@ -21,7 +21,7 @@
 | IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | hecha | 4088155 b31670c d8ece75 | docs/features/IN-001-repositorio.md |
 | IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | hecha | 3f75c99 4b3c27c 63afa3a | docs/features/IN-002-tema-y-componentes.md |
 | IN-003 | Textos, idiomas y formatos | v0.1 | 0 | hecha | e4770f8 2001502 d44efd6 | docs/features/IN-003-textos-idiomas-formatos.md |
-| IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | en análisis y diseño | — | docs/features/IN-004-formato.md |
+| IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | en implementación | eea9cb1 | docs/features/IN-004-formato.md |
 | IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | pendiente | — | — |
 | IN-005 | Almacén OPFS y en memoria | v0.1 | 1 | pendiente | — | — |
 | IN-006 | Caché de derivados e índice | v0.1 | 1 | pendiente | — | — |
@@ -156,7 +156,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-004 | análisis y diseño | modelo, formato del .md y migraciones | … |
+| 2026-10-18 | IN-004 | implementación | pnpm verificar OK (84 pruebas) | … |
+| 2026-10-18 | IN-004 | análisis y diseño | modelo, formato del .md y migraciones | eea9cb1 |
 | 2026-10-18 | IN-003 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | d44efd6 |
 | 2026-10-18 | IN-003 | implementación | pnpm verificar OK (61 pruebas, 76,2 KB) | 2001502 |
 | 2026-10-18 | IN-003 | análisis y diseño | librería propia mínima y regla de textos | e4770f8 |
@@ -177,5 +178,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-003 hecha. Siguiente: IN-004 (diseño y código en borrador en el scratchpad in004/).
-- Último `pnpm verificar`: OK (2026-10-18 03:20).
+- IN-004: implementado. Falta verificación.
+- Último `pnpm verificar`: OK (2026-10-18 03:35).
