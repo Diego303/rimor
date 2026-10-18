@@ -10,5 +10,6 @@ Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepacha
 - Formato de archivos del espacio en `@rimor/formato`: esquemas de elementos, comparaciones, hilos, investigaciones, documentos, manifest, colecciones, vistas y ajustes; frontmatter que conserva orden, comentarios y claves desconocidas; ULID, refs, nombres de archivo, hash SHA-256 del original y migraciones (IN-004).
 - Símbolo «Señal» y logotipo como componentes que siguen al tema, favicon que cambia con el modo claro u oscuro, iconos de app y `theme-color`; `pnpm marca` optimiza los SVG de marca y genera el logotipo en contornos (IN-089).
 - Almacén de archivos del espacio en OPFS (en un Worker) y en memoria, con escritura atómica, cola de escrituras por archivo, repositorio de elementos con papelera y adjuntos sin duplicados, y coordinación para que solo una pestaña escriba (IN-005).
+- Caché del espacio en IndexedDB (frontmatter, derivados de los lectores e índice de búsqueda comprimido) que se pone al día con los archivos al abrir, leyendo solo lo nuevo o cambiado (IN-006).
 ### Cambiado
 ### Corregido

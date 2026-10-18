@@ -87,6 +87,16 @@ export class Repositorio {
     return fallidos;
   }
 
+  /** Arma el índice desde la caché (IN-006), sin abrir archivos. */
+  cargarDesde(entradas: Iterable<{ id: string; ref: string; ruta: string }>): void {
+    this.porId.clear();
+    this.idPorRef.clear();
+    for (const { id, ref, ruta } of entradas) {
+      this.porId.set(id, { id, ref, ruta, enPapelera: ruta.startsWith(`${CARPETA_PAPELERA}/`) });
+      this.idPorRef.set(ref, id);
+    }
+  }
+
   private indexar(el: Elemento, ruta: string): void {
     const { id, ref } = el.frontmatter;
     const previa = this.porId.get(id);

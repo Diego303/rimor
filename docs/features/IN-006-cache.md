@@ -105,3 +105,9 @@ Con `fake-indexeddb` (IndexedDB en Node):
 ## Autorrevisión
 
 Cubre la ficha; la parte visible de la reconstrucción va en IN-007, que ya depende de IN-090.
+
+## Cambios durante la implementación
+
+- **`openDB` de `idb` no admite otra IndexedDB que la global**: la caché abre la base con la fábrica indicada (`fabrica.open`) y la envuelve con `wrap` de `idb`. Así las pruebas usan una IndexedDB aislada cada una (`new IDBFactory()` de `fake-indexeddb`); con la global compartida, la prueba «borrar IndexedDB y reconciliar» no habría borrado nada.
+- `Repositorio.cargarDesde(entradas)` arma el índice id/ref → ruta desde la caché.
+- `reconciliar` devuelve también las entradas vigentes, para que quien abre el espacio (IN-007) llene el repositorio sin otra consulta.

@@ -29,12 +29,22 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi�
 | `src/ui/muestras/` | Página `#/muestras`, solo en desarrollo | 002 |
 | `src/i18n/` | Catálogos `es` y `en`, `traducir` y `t` con claves tipadas, `useT`, idioma inicial y formateadores | 003 |
 | `src/almacen/` | Contrato `Almacen`, adaptadores en memoria y OPFS, cola de escrituras, `Repositorio` y coordinación de pestañas | 005 |
+| `src/almacen/cache/` | `CacheEspacio` (IndexedDB), `reconciliar` y compresión gzip | 006 |
 | `src/workers/almacen.worker.ts` | OPFS con accesos síncronos, expuesto con Comlink | 005 |
 | `paquetes/formato` | Esquemas Valibot, `.md` de elementos (frontmatter fiel, notas y original), ULID, refs, rutas, SHA-256 y migraciones | 004 |
 | `paquetes/estadistica` | Estadística de mediciones (esqueleto) | 001 |
 | `scripts/` | Comprobación de colores y de textos sin traducir, tamaño de la carga inicial y seguimiento | 001, 003 |
 
 ## Flujos
+
+### Apertura de un espacio (IN-005, IN-006)
+
+```
+almacén (OPFS en Worker) ──listar──▶ reconciliar ◀──frontmatters── CacheEspacio (IndexedDB)
+                                        │ lee solo lo nuevo o cambiado (ruta, tamaño, fecha)
+                                        ▼
+                         Repositorio.cargarDesde(entradas)  (índice id/ref → ruta)
+```
 
 Se describen a medida que llegan: captura (IN-014), derivados (IN-012), búsqueda (IN-032) y exportación (IN-035).
 
