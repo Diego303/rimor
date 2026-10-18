@@ -169,3 +169,103 @@ describe('resaltado (Lezer, D16)', () => {
     expect(await resaltar('x'.repeat(200_001), 'python')).toBeNull();
   });
 });
+
+/** Casos de la revisión independiente. */
+describe('revisión: confusiones de lenguaje', () => {
+  it('el `from x import y` de Python no suma a SQL', () => {
+    const py =
+      'from os import path\nfrom typing import List\nfrom dataclasses import dataclass\n\ndef f(x):\n    return path.join(x)\n';
+    expect(lenguajePorSintaxis(py)).toBe('python');
+  });
+
+  it('C# sin `using` ni `namespace` (un controlador) es C#, no TypeScript', () => {
+    const cs = [
+      '[ApiController]',
+      'public class UsuariosController : ControllerBase',
+      '{',
+      '    private readonly IUserService _service;',
+      '    public async Task<IActionResult> Get(int id)',
+      '    {',
+      '        var user = await _service.GetAsync(id);',
+      '        return Ok(user);',
+      '    }',
+      '}',
+    ].join('\n');
+    expect(lenguajePorSintaxis(cs)).toBe('csharp');
+  });
+
+  it('PHP sin `<?php`, Shell sin shebang y Swift (que no es Go)', () => {
+    expect(lenguajePorSintaxis('public function getName(): string\n{\n    return $this->name;\n}\n')).toBe('php');
+    expect(lenguajePorSintaxis('for f in *.log; do\n  gzip "$f"\ndone\n')).toBe('shell');
+    expect(
+      lenguajePorSintaxis(
+        'func saludo(nombre: String) -> String {\n    return "Hola"\n}\nlet x = saludo(nombre: "a")\n',
+      ),
+    ).not.toBe('go');
+  });
+
+  it('`enum class Color` define Color', () => {
+    expect(analizarCodigo('enum class Color { Rojo, Verde };\nint main() { return 0; }\n').definiciones).toContain(
+      'Color',
+    );
+  });
+});
+
+describe('revisión: lo que no es código', () => {
+  const casos: Record<string, string> = {
+    'lista de tareas en inglés': 'Update the changelog\nSelect a new logo\nOrder by Friday\nCreate table for the party',
+    'otra lista en inglés':
+      'Update README with the new flags\nSelect a venue for the offsite\nDelete from the calendar the old meetings',
+    TOML: '[package]\nname = "rimor"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]\nserde = "1"\n',
+    '.env': 'DATABASE_URL=postgres://localhost/db\nPORT=8080\nDEBUG=true\nexport API_KEY=abc\n',
+    INI: '; configuración\n[servidor]\nhost = localhost\npuerto = 8080\n[registro]\nnivel = info\n',
+    JSONC: '{\n  // Opciones del compilador\n  "compilerOptions": {\n    "strict": true,\n  },\n}\n',
+  };
+  for (const [nombre, texto] of Object.entries(casos))
+    it(nombre, () => {
+      expect(confianzaCodigo(texto), nombre).toBe(0);
+      expect(detectar({ texto }, REGISTRO).lector).not.toBe('codigo');
+    });
+
+  it('un fragmento corto de Ruby es código, sin duda con Idea', () => {
+    const d = detectar({ texto: 'users.each do |u|\n  puts u.name\nend' }, REGISTRO);
+    expect(d.lector).toBe('codigo');
+    expect(d.alternativa).toBeUndefined();
+  });
+});
+
+describe('revisión: Python real', () => {
+  it('docstrings, decoradores, campos anotados, assert e imports en varias líneas', () => {
+    const py = [
+      'from dataclasses import dataclass',
+      'from .tipos import (',
+      '    EXTENSIONES,',
+      '    MAPA,',
+      ')',
+      '',
+      '',
+      '@dataclass(frozen=True)',
+      'class Salud:',
+      '    """Salud del jugador.',
+      '',
+      '    Guarda la vida y las vendas que le quedan para curarse durante la partida.',
+      '    """',
+      '',
+      '    vida: int',
+      '    vendas: int = 3',
+      '',
+      '    def curar(self, n: int) -> "Salud":',
+      '        assert n > 0',
+      '        return Salud(self.vida + n, self.vendas - 1)',
+    ].join('\n');
+    expect(confianzaCodigo(py)).toBe(0.8);
+    expect(lenguajePorSintaxis(py)).toBe('python');
+  });
+});
+
+describe('revisión: resaltado de textos grandes', () => {
+  it('más de 60.000 caracteres no se resaltan', async () => {
+    expect(await resaltar('x = 1\n'.repeat(12_000), 'python')).toBeNull();
+    expect(await resaltar('x = 1\n'.repeat(1_000), 'python')).not.toBeNull();
+  });
+});

@@ -13,8 +13,11 @@ export interface Trozo {
   clases: string;
 }
 
-/** Más de esto no se resalta: se enseña tal cual, para que la vista no se atasque. */
-export const MAX_CARACTERES_RESALTADO = 200_000;
+/**
+ * Más de esto no se resalta: se enseña tal cual. Analizar y pintar va en el hilo principal (unos 650 ms y 175.000
+ * trozos con 200 KB de JavaScript minificado); con 60.000 caracteres se queda por debajo de 200 ms.
+ */
+export const MAX_CARACTERES_RESALTADO = 60_000;
 
 type Cargador = (texto: string) => Promise<Parser>;
 

@@ -85,7 +85,9 @@ const TS: readonly Senal[] = [
   [/^(?:export )?(?:interface|type) [A-Z]\w*/, 3],
   [/: ?(?:string|number|boolean|void|unknown|any|never|Promise<)\b/, 3],
   [/\bas const\b|\bas [A-Z]\w*\b/, 2],
-  [/^(?:public|private|protected|readonly) [\w$]+/, 2],
+  // Miembros con tipo: con visibilidad (`private x: string`) o acabados en `;` (`x?: number;`). Sin eso, también
+  // casarían los campos anotados de Python (`x: int = 0`).
+  [/^(?:(?:public|private|protected) (?:readonly )?|readonly )[\w$]+\??: \S|^[\w$]+\??: [\w$<>[\]| ]+;$/, 2],
 ];
 
 const SENALES: Record<Exclude<Lenguaje, 'typescript' | 'javascript'>, readonly Senal[]> = {
@@ -109,7 +111,12 @@ const SENALES: Record<Exclude<Lenguaje, 'typescript' | 'javascript'>, readonly S
     [/^namespace [\w.]+/, 3],
     [/\{ get; (?:private |init; )?(?:set; )?\}/, 4],
     [/\bConsole\.Write(?:Line)?\(/, 3],
-    [/^(?:public|private|internal) (?:static )?(?:async )?(?:override )?(?:class|void|Task|string|int|bool)\b/, 1],
+    [
+      /^(?:public|private|protected|internal) (?:(?:static|readonly|async|override|virtual|sealed|abstract|partial) )*(?:class|record|struct|void|Task(?:<[^>]*>)?|string|int|bool|decimal|I[A-Z]\w*)\b/,
+      3,
+    ],
+    [/: (?:ControllerBase|Controller|DbContext)\b|^\[(?:Http(?:Get|Post|Put|Delete)|ApiController|Route)\b/, 4],
+    [/\bawait \w+(?:\.\w+)*Async\(/, 2],
   ],
   cpp: [
     [/^#include ?[<"]/, 4],
@@ -121,7 +128,7 @@ const SENALES: Record<Exclude<Lenguaje, 'typescript' | 'javascript'>, readonly S
   ],
   go: [
     [/^package \w+$/, 4],
-    [/^func (?:\(\w+ \*?\w+\) )?\w+\(/, 4],
+    [/^func (?:\(\w+ \*?\w+\) )?\w+\((?!.*->)/, 4],
     [/:=/, 2],
     [/^import \($|^import "/, 3],
     [/\bfmt\.(?:Print|Sprint|Errorf)/, 3],
@@ -142,7 +149,8 @@ const SENALES: Record<Exclude<Lenguaje, 'typescript' | 'javascript'>, readonly S
     [/^<\?php/, 6],
     [/^\$\w+ ?=/, 2],
     [/\$this->/, 3],
-    [/^(?:public |private |protected )?(?:static )?function \w+\(/, 2],
+    [/^(?:public |private |protected )?(?:static )?function \w+\(/, 3],
+    [/\$\w+->\w|\$\w+ ?\./, 1],
     [/^namespace [\w\\]+;$/, 3],
   ],
   ruby: [
@@ -157,7 +165,9 @@ const SENALES: Record<Exclude<Lenguaje, 'typescript' | 'javascript'>, readonly S
   shell: [
     [/^#!\/(?:usr\/)?bin\/(?:env )?(?:ba|z)?sh\b/, 6],
     [/^(?:if|while) \[\[? .+ \]\]?;? ?(?:then|do)?$/, 3],
-    [/^(?:fi|done|esac|then)$/, 4],
+    [/^(?:fi|done|esac|then|do)$/, 4],
+    [/^for \w+ in .+?(?:; ?do)?$|^while .+; ?do$|^case .+ in$/, 3],
+    [/"\$\{?\w+\}?"/, 1],
     [/\$\(\w/, 2],
     [/^export \w+=/, 2],
     [/^echo\b/, 2],
@@ -170,10 +180,16 @@ const SENALES: Record<Exclude<Lenguaje, 'typescript' | 'javascript'>, readonly S
       2,
     ],
     [
-      /^(?:SELECT|INSERT INTO|UPDATE|DELETE FROM|CREATE (?:OR REPLACE )?(?:TABLE|INDEX|VIEW|UNIQUE|EXTENSION|FUNCTION|TRIGGER|SCHEMA|TYPE|SEQUENCE)|ALTER TABLE|DROP (?:TABLE|INDEX|VIEW)|WITH \w+ AS)\b/i,
+      // En mayúsculas (sin `i`): «Update the changelog» o el `from x import y` de Python no son SQL.
+      /^(?:SELECT|INSERT INTO|UPDATE|DELETE FROM|CREATE (?:OR REPLACE )?(?:TABLE|INDEX|VIEW|UNIQUE|EXTENSION|FUNCTION|TRIGGER|SCHEMA|TYPE|SEQUENCE)|ALTER TABLE|DROP (?:TABLE|INDEX|VIEW)|WITH \w+ AS)\b/,
       4,
     ],
-    [/^(?:FROM|WHERE|GROUP BY|ORDER BY|(?:LEFT |RIGHT |INNER |OUTER )?JOIN|HAVING|LIMIT|VALUES|AND|OR)\b/i, 3],
+    [/^(?:FROM|WHERE|GROUP BY|ORDER BY|(?:LEFT |RIGHT |INNER |OUTER )?JOIN|HAVING|LIMIT|VALUES|AND|OR)\b/, 3],
+    // En minúsculas, solo con la forma de una sentencia.
+    [
+      /^(?:select [\w*., ()]+ from \w|insert into \w+ ?\(|update \w+ set \w|delete from \w+(?: where|;|$)|create table (?:if not exists )?\w+ ?\()/,
+      4,
+    ],
   ],
 };
 

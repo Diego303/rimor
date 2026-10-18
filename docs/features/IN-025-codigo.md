@@ -88,3 +88,32 @@ Cubre las tres tareas. La comparación de versiones (CMP-02) es de IN-029 y el d
 - La PHP sin `<?php` se analiza como programa (no como plantilla con HTML).
 - Si llega de archivo, su nombre va en el frontmatter (`archivo_de_codigo`) para saber el lenguaje igual al derivar.
 
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-19 01:40): tipos 0 errores; Biome, colores y textos, OK; Vitest 55 archivos y 964 pruebas, OK; construcción OK; carga inicial 210,3 KB (los analizadores Lezer, fuera). **`pnpm deteccion`**: 100 % de 250 ejemplos.
+
+| Criterio | Evidencia |
+|---|---|
+| Lenguaje por densidad (12) y por extensión | `fixtures/codigo/` (2 por lenguaje) y 25 de la matriz; casos de TS/JS, C#/TS, PHP sin `<?php`, Shell sin shebang, Swift; con código real del disco pegado sin nombre: Python 38/40, Rust 39/40, Shell 12/12, SQL 3/3, TypeScript 36/40 y JavaScript 25/30 como código |
+| No roba otros tipos | JSON y JSONC, TOML, INI, `.env`, logs (también JSON por línea y logfmt), trazas, documentos con vallas, prosa, listas en inglés, prompts; sin dudas nuevas con Idea |
+| Resaltado de solo lectura (Lezer) | 8 lenguajes con `tok-keyword` y el texto intacto; sin analizador o con más de 60.000 caracteres, el texto tal cual; analizadores cargados bajo demanda y fuera de la carga inicial |
+| Respuesta | «Código TypeScript, 48 líneas.» en es y en; sin lenguaje; reglas de estilo |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **`from x import y` sumaba a SQL** y **listas de tareas en inglés salían como SQL**: las palabras clave de SQL cuentan en mayúsculas; en minúsculas, solo con forma de sentencia (`select … from x`, `insert into x (`, `update x set`…).
+2. **TOML, `.env`, INI y JSONC como código**: casi todo `clave = valor` o `[sección]` es configuración (del lector del puesto 7); el JSON con comentarios y comas finales es JSON.
+3. **C# sin `using` salía como TypeScript**: señales de C# (miembros con modificadores y tipos de .NET, controladores, `await …Async(`) y los miembros de TypeScript exigen su anotación de tipo.
+4. **Mucho Python real quedaba como Texto**: decoradores, campos anotados, `assert`/`raise`/`yield`…, nombres de un `import` en varias líneas, y los docstrings no cuentan.
+5. **Palabras clave sin distinguir** (`--accent` es el color del texto en la paleta Instrumento): palabras clave en `--key`, cadenas en `--ok`, números en `--warn`, comentarios en `--muted`; tipos y definiciones en seminegrita.
+6. **Textos grandes en el hilo principal**: el tope de resaltado baja a 60.000 caracteres (por debajo de 200 ms).
+7. **`@lezer/lr` indirecta de hace 12 días**: fijada a 1.4.10 con `overrides`.
+8. **PHP sin `<?php`, Shell sin shebang y Swift como Go**: señales de métodos de PHP, `for … do … done` y `"$var"`; el `func` de Go no lleva `->`.
+9. **Fragmentos cortos dudaban con Idea**: Idea ya no toma lo que Código reconoce.
+10. **Accesibilidad**: el código va en una región con foco de teclado (se desplaza en horizontal) y los números de línea están ocultos para los lectores de pantalla y no se copian.
+11. **`enum class Color`** define `Color`.
+
+Sin cambiar: TypeScript sin anotaciones de tipo se toma por JavaScript (es JavaScript válido); Kotlin, Scala y Swift no tienen lenguaje (no están entre los 12).

@@ -25,16 +25,17 @@ export const MAX_DEFINICIONES = 50;
 
 /** Una definición al principio de la línea, en cualquiera de los lenguajes. */
 const DEFINICION =
-  /^(?:export |pub(?:\(crate\))? |public |private |protected |internal |static |async |abstract |final |default )*(?:function\*? ?|def |fn |func (?:\(\w+ \*?\w+\) )?|class |interface |struct |enum |trait |impl |type |module )([A-Za-z_$][\w$]*)/;
+  /^(?:export |pub(?:\(crate\))? |public |private |protected |internal |static |async |abstract |final |default )*(?:function\*? ?|def |fn |func (?:\(\w+ \*?\w+\) )?|class |interface |struct |enum class |enum struct |enum |trait |impl |type |module )([A-Za-z_$][\w$]*)/;
 /** Funciones como valor: `const nombre = (…) =>` o `= function`. */
 const FUNCION_COMO_VALOR =
   /^(?:export )?(?:const|let|var) ([A-Za-z_$][\w$]*) ?= ?(?:async )?(?:\(|function\b|[A-Za-z_$][\w$]* ?=>)/;
 
 /** Lo que delata que una línea es código: puntuación de cierre, asignaciones, llamadas, comentarios de código… */
-// Además: atributos de Ruby (`@id = id`), aperturas (`CREATE TABLE x (`) y propiedades de un objeto literal
-// (`clave: 'valor',`, `clave: {`).
+// Además: atributos de Ruby (`@id = id`), aperturas (`CREATE TABLE x (`), propiedades de un objeto literal
+// (`clave: 'valor',`, `clave: {`), y de Python decoradores, campos anotados (`vida: int`), `assert`, `raise`… y
+// los nombres de un `import` en varias líneas (`EXTENSIONES,`).
 const LINEA_DE_CODIGO =
-  /[;{}([]$|^['"]?[\w$-]+['"]? ?: ?.+,$|^@\w+ ?=|^[})\]]|\):$|^(?:\/\/|\/\*|\*|#include|#define|import |from \S+ import|package |use |using |return\b|if ?\(|for ?\(|while ?\(|def |class |fn |func |end$|fi$|done$)|^[\w$.[\]]+ ?(?:[+\-*/%]|\?\?|\|\|)?= ?\S|^\w[\w.]*\(.*\);?$|=>|::|:=|->/;
+  /[;{}([]$|^@[\w.]+(?:\(.*\))?$|^\w+: ?[\w.[\], |]+(?: = .+)?$|^(?:assert|raise|yield|pass|break|continue|await)\b|^\w+,$|^['"]?[\w$-]+['"]? ?: ?.+,$|^@\w+ ?=|^[})\]]|\):$|^(?:\/\/|\/\*|\*|#include|#define|import |from \S+ import|package |use |using |return\b|if ?\(|for ?\(|while ?\(|def |class |fn |func |end$|fi$|done$)|^[\w$.[\]]+ ?(?:[+\-*/%]|\?\?|\|\|)?= ?\S|^\w[\w.]*\(.*\);?$|=>|::|:=|->/;
 
 /**
  * Una línea de prosa (empieza en mayúscula, acaba en punto, cinco palabras o más y sin puntuación de código) no
@@ -68,8 +69,16 @@ function esJson(texto: string): boolean {
 function fraccionDeCodigo(lineas: readonly string[]): number {
   let codigo = 0;
   let cuentan = 0;
+  let enDocstring = false;
   for (const l of lineas) {
     if (TRAZA.test(l) || LOG.test(l)) return 0;
+    // Docstrings de Python: la línea de las comillas triples es código; lo de dentro, documentación (no cuenta).
+    const comillas = l.match(TRIPLES)?.length ?? 0;
+    if (enDocstring) {
+      if (comillas % 2) enDocstring = false;
+      continue;
+    }
+    if (comillas % 2) enDocstring = true;
     // Los comentarios no dicen nada (ni a favor ni en contra): un script muy comentado sigue siendo código.
     if (COMENTARIO.test(l) && !l.startsWith('#!')) continue;
     cuentan++;
@@ -81,6 +90,31 @@ function fraccionDeCodigo(lineas: readonly string[]): number {
 
 /** Una línea de comentario en cualquiera de los 12 lenguajes. */
 const COMENTARIO = /^(?:#|\/\/|\/\*|\*|--)/;
+/** Comillas triples de Python. */
+const TRIPLES = /"{3}|'{3}/g;
+
+/**
+ * Configuración (TOML, INI, `.env`): casi todo son `clave = valor`, `CLAVE=valor` o `[sección]`. Es del lector de
+ * JSON, YAML y TOML (puesto 7 del Anexo D), no de Código.
+ */
+function esConfiguracion(lineas: readonly string[]): boolean {
+  const datos = lineas.filter((l) => !/^[#;]/.test(l));
+  if (!datos.length) return false;
+  const deConfiguracion = datos.filter(
+    (l) => /^\[[\w.\- "']+\]$/.test(l) || /^(?:export )?["']?[\w.-]+["']? ?= ?[^;(){}]*$/.test(l),
+  ).length;
+  return deConfiguracion / datos.length >= 0.7;
+}
+
+/** JSON con comentarios y comas finales (`tsconfig.json`, VS Code): ¿es JSON sin ellos? */
+function esJsonConComentarios(texto: string): boolean {
+  if (!/^\s*[[{]/.test(texto)) return false;
+  const limpio = texto
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '')
+    .replace(/,(\s*[}\]])/g, '$1');
+  return esJson(limpio);
+}
 
 /** Caracteres que se miran para detectar. */
 const MUESTRA = 50_000;
@@ -97,6 +131,7 @@ export function confianzaCodigo(texto: string, nombreArchivo?: string): number {
   // Un log (también de JSON por línea o logfmt, que se parecen a código) es del lector Log.
   if (esJson(t) || /^[ \t]*(?:```|~~~)/m.test(t) || confianzaLog(t) > 0) return 0;
   const lineas = lineasDeCodigo(t);
+  if (esJsonConComentarios(t) || esConfiguracion(lineas)) return 0;
   if (fraccionDeCodigo(lineas) < FRACCION_CODIGO) return 0;
   return lenguajePorSintaxis(t) ? 0.8 : 0.7;
 }

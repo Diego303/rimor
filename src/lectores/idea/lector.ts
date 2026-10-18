@@ -2,7 +2,9 @@
  * Lector Idea (LEC-02): un texto corto sin señales de otro tipo, o lo que se marca con `/idea`. Nace en
  * «semilla» y vuelve a los 7 días si no se hace nada con ella (ver `resurgir.ts`).
  */
+
 import type { Elemento } from '@rimor/formato';
+import { confianzaCodigo } from '../codigo/analisis';
 import type { Borrador, Entrada, Lector } from '../contrato';
 import { textos } from './textos';
 
@@ -33,7 +35,8 @@ export function pareceIdea(texto: string): boolean {
   const t = texto.trim();
   if (!t || t.length >= LARGO_IDEA) return false;
   if (t.split(/\r?\n/).length > 3) return false;
-  return !SENALES_DE_OTRO.some((r) => r.test(t));
+  // Un fragmento de código corto (un bloque de Ruby de tres líneas) no es una idea: que no haya duda con Código.
+  return !SENALES_DE_OTRO.some((r) => r.test(t)) && confianzaCodigo(t) === 0;
 }
 
 export interface DatosIdea {

@@ -244,7 +244,14 @@ describe('vista de Código', () => {
     const pre = container.querySelector('pre.codigo');
     expect(pre?.querySelectorAll('.linea')).toHaveLength(12);
     await waitFor(() => expect(pre?.querySelector('.tok-keyword')).toBeTruthy(), { timeout: 4000 });
-    expect(pre?.textContent).toBe(texto);
+    // El texto pintado, sin los números de línea (ocultos para los lectores de pantalla y sin copiarse), es el original.
+    const sinNumeros = (nodo: Element | null | undefined) => {
+      const copia = nodo?.cloneNode(true) as Element | undefined;
+      for (const n of copia?.querySelectorAll('.ln') ?? []) n.remove();
+      return copia?.textContent;
+    };
+    expect(sinNumeros(pre)).toBe(texto);
+    expect(pre?.querySelector('.ln')?.getAttribute('aria-hidden')).toBe('true');
     expect(screen.getByText('Rust')).toBeTruthy();
     expect(screen.getByText('(por su sintaxis)')).toBeTruthy();
   });
@@ -252,7 +259,9 @@ describe('vista de Código', () => {
   it('sin analizador (SQL), el texto tal cual y el aviso', () => {
     const texto = 'SELECT id\nFROM elementos\nWHERE ref = 1;';
     const { container } = render(<VistaCodigo el={elementoFalso(17, texto, 'codigo')} datos={analizarCodigo(texto)} />);
-    expect(container.querySelector('pre.codigo')?.textContent).toBe(`${texto}\n`);
+    const copia = container.querySelector('pre.codigo')?.cloneNode(true) as Element;
+    for (const n of copia.querySelectorAll('.ln')) n.remove();
+    expect(copia.textContent).toBe(`${texto}\n`);
     expect(screen.getByText('Sin resaltado de sintaxis para este lenguaje.')).toBeTruthy();
   });
 });

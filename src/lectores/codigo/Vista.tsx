@@ -38,24 +38,31 @@ export default function VistaCodigo({ el, datos }: PropsVista<DatosCodigo>) {
   return (
     <>
       <Tarjeta>
-        <pre className="code codigo">
-          {lineas.map((trozos, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: las líneas del código son fijas y en su orden.
-            <span key={i} className="linea">
-              {trozos.map((tr, j) =>
-                tr.clases ? (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: los trozos de una línea son fijos y en su orden.
-                  <span key={j} className={tr.clases}>
-                    {tr.texto}
-                  </span>
-                ) : (
-                  tr.texto
-                ),
-              )}
-              {'\n'}
-            </span>
-          ))}
-        </pre>
+        {/* biome-ignore lint/a11y/noNoninteractiveTabindex: una región que se desplaza necesita el foco del teclado (WCAG 2.1.1). */}
+        <section className="codigo-desplazable" aria-label={t('codigo')} tabIndex={0}>
+          <pre className="code codigo">
+            {lineas.map((trozos, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: las líneas del código son fijas y en su orden.
+              <span key={i} className="linea">
+                {/* El número de línea no se lee ni se copia. */}
+                <span className="ln" aria-hidden="true">
+                  {i + 1}
+                </span>
+                {trozos.map((tr, j) =>
+                  tr.clases ? (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: los trozos de una línea son fijos y en su orden.
+                    <span key={j} className={tr.clases}>
+                      {tr.texto}
+                    </span>
+                  ) : (
+                    tr.texto
+                  ),
+                )}
+                {'\n'}
+              </span>
+            ))}
+          </pre>
+        </section>
         {datos.lenguaje && !tieneResaltado(datos.lenguaje) && <p className="xs muted">{t('sinResaltado')}</p>}
       </Tarjeta>
 

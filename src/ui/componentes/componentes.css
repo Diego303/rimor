@@ -1147,14 +1147,17 @@ pre.code.prompt-texto {
 .seccion-indice:hover .sm {
   color: var(--accent);
 }
-/* Código (IN-025): números de línea que no se copian y colores de los `tok-*` de Lezer con los tokens de la guía. */
-pre.code.codigo {
-  counter-reset: linea;
+/* Código (IN-025): números de línea que no se leen ni se copian, y colores de los `tok-*` de Lezer con la paleta
+   de la guía (casi monocroma): palabras clave en `--key`, cadenas en `--ok`, números en `--warn`, comentarios en
+   `--muted`; tipos y definiciones, con el color del texto en seminegrita. */
+.codigo-desplazable {
   overflow-x: auto;
+  border-radius: var(--r-sm);
 }
-pre.code.codigo .linea::before {
-  counter-increment: linea;
-  content: counter(linea);
+pre.code.codigo {
+  overflow: visible;
+}
+pre.code.codigo .ln {
   display: inline-block;
   width: 3.2em;
   margin-right: 1em;
@@ -1164,7 +1167,7 @@ pre.code.codigo .linea::before {
 }
 .codigo .tok-keyword,
 .codigo .tok-operator.tok-definition {
-  color: var(--accent);
+  color: var(--key);
 }
 .codigo .tok-string,
 .codigo .tok-string2 {
@@ -1183,15 +1186,10 @@ pre.code.codigo .linea::before {
 }
 .codigo .tok-typeName,
 .codigo .tok-className,
-.codigo .tok-namespace {
-  color: var(--k-prm);
-}
+.codigo .tok-namespace,
 .codigo .tok-variableName.tok-definition,
 .codigo .tok-macroName {
-  color: var(--k-url);
-}
-.codigo .tok-propertyName {
-  color: var(--k-dat);
+  font-weight: 600;
 }
 .codigo .tok-invalid {
   color: var(--bad);

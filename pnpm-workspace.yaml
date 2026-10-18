@@ -6,3 +6,6 @@ enableGlobalVirtualStore: true
 allowBuilds:
   esbuild: false
   sharp: false
+# Dependencias indirectas fijadas a versiones publicadas hace más de dos semanas (IN-025).
+overrides:
+  '@lezer/lr': 1.4.10
