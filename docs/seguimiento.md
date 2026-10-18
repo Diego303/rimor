@@ -2,7 +2,7 @@
 
 **Estado global:** EN CURSO
 **Última actualización:** 2026-10-18 16:25
-**Ahora:** IN-013 · Detector de tipo y corpus · fase análisis y diseño
+**Ahora:** IN-013 · Detector de tipo y corpus · fase implementación
 **Siguiente:** IN-014 · Flujo de captura
 **Progreso:** F0 9/9 · v0.1 14/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 23/99
 
@@ -31,8 +31,8 @@
 | IN-011 | Paquete de estadística | v0.1 | 1 | hecha | 5838d9a b2ebf4e afb9e32 | docs/features/IN-011-estadistica.md |
 | IN-090 | Animaciones del símbolo (núcleo) | v0.1 | 1 | hecha | b9e91ee bdd15f6 69e2ee5 | docs/features/IN-090-animaciones.md |
 | IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | hecha | 39f479a 86e9ce2 d410b16 | docs/features/IN-007-espacio.md |
-| IN-012 | Contrato y registro de lectores | v0.1 | 2 | hecha | fa7e527 00d01e5 | docs/features/IN-012-lectores.md |
-| IN-013 | Detector de tipo y corpus | v0.1 | 2 | pendiente | — | — |
+| IN-012 | Contrato y registro de lectores | v0.1 | 2 | hecha | fa7e527 00d01e5 aa34b1e | docs/features/IN-012-lectores.md |
+| IN-013 | Detector de tipo y corpus | v0.1 | 2 | en análisis y diseño | — | docs/features/IN-013-detector.md |
 | IN-014 | Flujo de captura | v0.1 | 3 | pendiente | — | — |
 | IN-015 | Compositor | v0.1 | 3 | pendiente | — | — |
 | IN-016 | Respuestas de Rimor y contadores locales | v0.1 | 3 | pendiente | — | — |
@@ -169,7 +169,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-012 | verificación | OK (439 pruebas; 8 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-013 | análisis y diseño | atajos, arbitraje con duda, corpus por carpeta y matriz | … |
+| 2026-10-18 | IN-012 | verificación | OK (439 pruebas; 8 hallazgos de la revisión corregidos) | aa34b1e |
 | 2026-10-18 | IN-012 | implementación | OK (431 pruebas) | 00d01e5 |
 | 2026-10-18 | IN-012 | análisis y diseño | núcleo y vistas por carpeta, cola de derivados en Worker, contenedores y plantilla | fa7e527 |
 | 2026-10-18 | IN-007 | verificación | OK (412 pruebas; 11 hallazgos de la revisión corregidos) | d410b16 |
