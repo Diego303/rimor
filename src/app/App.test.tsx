@@ -1,6 +1,6 @@
 // IndexedDB en memoria para la caché del espacio; sin Worker, el almacén cae a memoria.
 import 'fake-indexeddb/auto';
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { App } from './App';
 
@@ -9,4 +9,15 @@ describe('App', () => {
     render(<App />);
     expect(await screen.findByRole('navigation', { name: 'Rimor' }, { timeout: 5000 })).toBeTruthy();
   });
+
+  it('Ctrl+Mayús+Espacio lleva a Inicio y enfoca el compositor desde otra pantalla', async () => {
+    window.location.hash = '#/ajustes';
+    render(<App />);
+    await screen.findByRole('navigation', { name: 'Rimor' }, { timeout: 5000 });
+    await act(async () => undefined);
+    fireEvent.keyDown(window, { key: ' ', code: 'Space', ctrlKey: true, shiftKey: true });
+    // El idioma sale del navegador de pruebas: se busca la caja por su papel.
+    const area = await screen.findByRole('textbox', {}, { timeout: 5000 });
+    await waitFor(() => expect(document.activeElement).toBe(area));
+  }, 15_000);
 });

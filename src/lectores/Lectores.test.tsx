@@ -117,7 +117,8 @@ describe('lector de punta a punta', () => {
 
     retenido.soltar();
     // Su vista, cargada en diferido, con lo derivado.
-    expect(await screen.findByText('palabras')).toBeTruthy();
+    // La señal se queda al menos 600 ms y la vista se carga en diferido: se le da margen.
+    expect(await screen.findByText('palabras', {}, { timeout: 4000 })).toBeTruthy();
     expect(screen.getByText('10')).toBeTruthy();
     expect(screen.queryByRole('status')).toBeNull();
   });
@@ -139,7 +140,7 @@ describe('lector de punta a punta', () => {
         </ProveedorLectores>
       </ProveedorEspacio>,
     );
-    await screen.findByText('palabras');
+    await screen.findByText('palabras', {}, { timeout: 4000 });
     await waitFor(() =>
       expect(repositorio?.frontmatter('TXT-0099')?.lector.resumen).toEqual({ lineas: 3, palabras: 10 }),
     );

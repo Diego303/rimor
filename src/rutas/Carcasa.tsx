@@ -5,6 +5,7 @@
 import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { ProveedorCaptura } from '../captura/Captura';
+import { useCompositor } from '../captura/compositor';
 import { AvisoAlmacenamiento } from '../espacio/Avisos';
 import { useT } from '../i18n/useT';
 import { AyudaAtajos } from '../ui/atajos/AyudaAtajos';
@@ -31,6 +32,15 @@ export function Carcasa() {
         { teclas: 'g h', descripcion: 'atajos.irInicio', accion: () => void navegar({ to: '/' }) },
         { teclas: 'g b', descripcion: 'atajos.irBuscar', accion: () => void navegar({ to: '/buscar' }) },
         { teclas: '?', descripcion: 'atajos.ayuda', accion: () => setAyuda(true) },
+        {
+          teclas: 'ctrl+shift+space',
+          descripcion: 'atajos.enfocarCompositor',
+          enCampos: true,
+          accion: () => {
+            void navegar({ to: '/' });
+            useCompositor.getState().enfocar();
+          },
+        },
       ]),
     [gestor, navegar],
   );

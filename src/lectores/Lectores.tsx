@@ -5,6 +5,7 @@
 import type { Elemento } from '@rimor/formato';
 import { Component, createContext, type ReactNode, Suspense, useContext, useEffect, useState } from 'react';
 import type { Repositorio } from '../almacen/repositorio';
+import { type Previa, previsualizar } from '../captura/previa';
 import { useEspacioOpcional } from '../espacio/Espacio';
 import { useT } from '../i18n/useT';
 import { ErrorTarjeta, IconoTipo } from '../ui/componentes';
@@ -19,6 +20,8 @@ import { olvidarVistas, tarjetaDe, vistaDe } from './vistas';
 interface ValorLectores {
   registro: Registro;
   cola: ColaDerivados;
+  /** Vista previa del compositor (en el Worker si lo hay). */
+  previsualizar(texto: string): Promise<Previa>;
 }
 
 const Contexto = createContext<ValorLectores | null>(null);
@@ -43,7 +46,12 @@ export function ProveedorLectores({ children, registro = REGISTRO, ejecutar }: P
 
   useEffect(() => {
     const ejecutor = ejecutar
-      ? { ejecutar, reiniciar: () => undefined, cerrar: () => undefined }
+      ? {
+          ejecutar,
+          previsualizar: async (texto: string) => previsualizar(texto, registro),
+          reiniciar: () => undefined,
+          cerrar: () => undefined,
+        }
       : crearEjecutor(registro);
     const escribe = () => espacio?.coordinacion.modo() === 'escritor';
     const cache = espacio && {
@@ -63,7 +71,7 @@ export function ProveedorLectores({ children, registro = REGISTRO, ejecutar }: P
       // Un Worker atascado se termina; lo siguiente abre otro.
       alAgotarPlazo: ejecutor.reiniciar,
     });
-    setValor({ registro, cola: nueva });
+    setValor({ registro, cola: nueva, previsualizar: ejecutor.previsualizar });
     return () => ejecutor.cerrar();
   }, [registro, ejecutar, espacio]);
 

@@ -960,3 +960,143 @@ details.more > div {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ---------- Compositor (IN-015): reglas de la pantalla de referencia con su «Estilo Instrumento» ---------- */
+.ccol {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  flex: 0;
+  padding-bottom: 0;
+  gap: 0;
+}
+.composer {
+  padding: 14px 0 calc(16px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to bottom, transparent, var(--app) 26%);
+  z-index: 3;
+}
+.cbox {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid transparent;
+  border-radius: 20px;
+  padding: 10px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--sombra-flotante);
+}
+.cbox:focus-within {
+  border-color: var(--ink);
+}
+.cbox textarea {
+  border: 0;
+  background: transparent;
+  padding: 4px 2px;
+  resize: none;
+  font-family: var(--f-b);
+  font-size: 0.875rem;
+  min-height: 44px;
+  max-height: 220px;
+}
+.cbox textarea:focus {
+  box-shadow: none;
+}
+.crow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.crow .hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.send {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--key);
+  color: var(--key-ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: none;
+}
+.send:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+/* Sugerencias de @, # y /: lista flotante sobre la caja (la pantalla de referencia no la dibuja). */
+.sugerencias {
+  position: absolute;
+  left: 12px;
+  bottom: calc(100% + 6px);
+  min-width: 200px;
+  max-width: calc(100% - 24px);
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--panel);
+  border-radius: var(--r-sm);
+  box-shadow: var(--sombra-flotante);
+  z-index: 4;
+}
+.sugerencias {
+  display: flex;
+  flex-direction: column;
+}
+.sugerencias button {
+  text-align: left;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.sugerencias button.activa,
+.sugerencias button:hover {
+  background: var(--panel-2);
+}
+.cprev {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 0.75rem;
+}
+.cprev:empty {
+  display: none;
+}
+.cprev .st {
+  border-radius: 999px;
+}
+.cprev .aviso-tipo {
+  color: var(--warn);
+}
+.cprev .adjunto {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cprev .adjunto button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  display: inline-grid;
+}
+.replying {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.78125rem;
+  color: var(--muted);
+  padding: 0 4px 6px;
+}

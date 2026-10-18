@@ -5,6 +5,7 @@
 
 import type { Elemento } from '@rimor/formato';
 import { type Remote, wrap } from 'comlink';
+import { type Previa, previsualizar } from '../captura/previa';
 import type { ApiDerivados } from '../workers/derivados.worker';
 import type { Ejecutor } from './derivados';
 import type { Registro } from './registro';
@@ -20,6 +21,8 @@ export function ejecutorEnHilo(registro: Registro): Ejecutor {
 
 export interface EjecutorCerrable {
   ejecutar: Ejecutor;
+  /** Vista previa del compositor: en el Worker si lo hay (textos grandes, IN-015). */
+  previsualizar(texto: string): Promise<Previa>;
   /** Termina el Worker atascado; lo siguiente que se pida abre otro. */
   reiniciar(): void;
   /** Termina el Worker para siempre: lo que se pida después se rechaza. */
@@ -32,7 +35,9 @@ export interface EjecutorCerrable {
  */
 export function crearEjecutor(registro: Registro): EjecutorCerrable {
   const enHilo = ejecutorEnHilo(registro);
-  if (typeof Worker !== 'function') return { ejecutar: enHilo, reiniciar: () => undefined, cerrar: () => undefined };
+  const previaEnHilo = async (texto: string) => previsualizar(texto, registro);
+  if (typeof Worker !== 'function')
+    return { ejecutar: enHilo, previsualizar: previaEnHilo, reiniciar: () => undefined, cerrar: () => undefined };
 
   let actual: { worker: Worker; api: Remote<ApiDerivados>; roto: Promise<never> } | null = null;
   let averiado = false;
@@ -62,6 +67,12 @@ export function crearEjecutor(registro: Registro): EjecutorCerrable {
       if (averiado) return enHilo(nombre, el);
       const w = actual ?? abrir();
       return Promise.race([w.api.derivar(nombre, el), w.roto]);
+    },
+    previsualizar: (texto: string) => {
+      if (cerrado) return Promise.reject(new Error('derivados.cerrado'));
+      if (averiado) return previaEnHilo(texto);
+      const w = actual ?? abrir();
+      return Promise.race([w.api.previsualizar(texto), w.roto]);
     },
     reiniciar: terminar,
     cerrar: () => {

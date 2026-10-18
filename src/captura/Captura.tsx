@@ -2,7 +2,8 @@
  * Captura en la interfaz (IN-014, CAP-01, CAP-02): pegar fuera de un campo de texto lleva lo pegado al
  * compositor; soltar archivos sobre cualquier pantalla los guarda uno a uno, con «Guardado. Deshacer».
  */
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import type { Resultado } from '@rimor/formato';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useEspacioOpcional } from '../espacio/Espacio';
 import { useEspacio } from '../estado/espacio';
 import { fmtBytes } from '../i18n/formatos';
@@ -11,16 +12,34 @@ import { useLectoresOpcional } from '../lectores/Lectores';
 import { esCampoDeTexto } from '../ui/atajos/atajos';
 import { useAvisos } from '../ui/componentes';
 import { useCompositor } from './compositor';
-import { type Capturado, type Capturador, crearCapturador, LIMITE_ARCHIVO } from './flujo';
+import { type Capturado, type Capturador, crearCapturador, LIMITE_ARCHIVO, type ResultadoCaptura } from './flujo';
 
-const Contexto = createContext<Capturador | null>(null);
+interface ValorCaptura {
+  capturador: Capturador | null;
+  /** Avisa del resultado de varias capturas: «Guardado. Deshacer» primero y después lo demás. */
+  informar(resultados: readonly ResultadoDe[]): void;
+}
 
-/** El capturador del espacio abierto (lo usa el compositor), o `null` si aún no hay espacio. */
-export function useCapturador(): Capturador | null {
+/** El resultado de capturar una cosa, con lo que hace falta para explicarlo. */
+export interface ResultadoDe {
+  nombre: string;
+  tam?: number;
+  r: Resultado<ResultadoCaptura> | null;
+}
+
+const Contexto = createContext<ValorCaptura>({ capturador: null, informar: () => undefined });
+
+/** El capturador del espacio abierto (o `null` si aún no hay) y cómo avisar de lo capturado. */
+export function useCaptura(): ValorCaptura {
   return useContext(Contexto);
 }
 
 const conArchivos = (e: DragEvent) => [...(e.dataTransfer?.types ?? [])].includes('Files');
+
+/** Una zona que gestiona su propio soltar (el compositor): el soltar global la respeta. */
+export const ATRIBUTO_ZONA_SOLTAR = 'data-zona-soltar';
+const enZonaPropia = (e: Event) =>
+  e.target instanceof Element && e.target.closest(`[${ATRIBUTO_ZONA_SOLTAR}]`) !== null;
 
 interface Props {
   children: ReactNode;
@@ -49,6 +68,58 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
     [espacio, lectores],
   );
 
+  const informar = useCallback(
+    (resultados: readonly ResultadoDe[]) => {
+      const creados: Capturado[] = [];
+      // Los demás avisos van después del de «Guardado», para que Deshacer salga en cuanto se guarda.
+      const otros: (() => void)[] = [];
+      for (const { nombre, tam, r } of resultados) {
+        if (!r) otros.push(() => avisar(t('captura.fallo', { nombre })));
+        else if (r.ok) {
+          if (r.valor.tipo === 'creado') creados.push(r.valor.capturado);
+          else {
+            const ref = r.valor.ref;
+            otros.push(() =>
+              avisar(t('captura.duplicado', { ref }), {
+                ...(alAbrir ? { accion: { etiqueta: t('captura.ver'), alPulsar: () => alAbrir(ref) } } : {}),
+              }),
+            );
+          }
+        } else {
+          const codigo = r.error.codigo;
+          const texto =
+            codigo === 'captura.demasiadoGrande'
+              ? t('captura.demasiadoGrande', {
+                  nombre,
+                  tam: fmtBytes(tam ?? 0, idioma),
+                  limite: fmtBytes(LIMITE_ARCHIVO, idioma),
+                })
+              : codigo === 'almacen.soloLectura'
+                ? t('espacio.aviso.soloLectura')
+                : codigo === 'captura.sinLector'
+                  ? t('captura.sinLector', { nombre })
+                  : codigo === 'captura.vacia'
+                    ? null
+                    : t('captura.fallo', { nombre });
+          if (texto) otros.push(() => avisar(texto));
+        }
+      }
+      if (creados.length)
+        avisar(t('captura.guardado', { n: creados.length }), {
+          accion: {
+            etiqueta: t('captura.deshacer'),
+            alPulsar: () =>
+              void Promise.all(creados.map((c) => capturador?.deshacer(c).catch(() => false))).then((hechos) => {
+                // Si alguno ya se había editado, movido o no se pudo borrar, se dice: nunca se finge.
+                if (hechos.some((h) => !h)) avisar(t('captura.noDeshecho'));
+              }),
+          },
+        });
+      for (const avisarOtro of otros) avisarOtro();
+    },
+    [avisar, t, idioma, alAbrir, capturador],
+  );
+
   // Pegar fuera de un campo: al compositor (no guarda directamente) y a Inicio.
   useEffect(() => {
     const alPegar = (e: ClipboardEvent) => {
@@ -67,17 +138,18 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
     return () => document.removeEventListener('paste', alPegar);
   }, [recibir, alRecibir, soloLectura, avisar, t]);
 
-  // Soltar archivos en cualquier pantalla.
+  // Soltar archivos en cualquier pantalla (salvo en una zona que lo gestiona ella, como el compositor).
   useEffect(() => {
     const entrar = (e: DragEvent) => {
       if (!conArchivos(e)) return;
       e.preventDefault();
       dentro.current++;
-      setSoltando(true);
+      setSoltando(!enZonaPropia(e));
     };
     const encima = (e: DragEvent) => {
       if (!conArchivos(e)) return;
       e.preventDefault();
+      setSoltando(!enZonaPropia(e));
       if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
     };
     const salir = (e: DragEvent) => {
@@ -87,62 +159,21 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
     };
     const soltar = (e: DragEvent) => {
       if (!conArchivos(e)) return;
-      e.preventDefault();
       dentro.current = 0;
       setSoltando(false);
+      if (enZonaPropia(e)) return;
+      e.preventDefault();
       void guardar([...(e.dataTransfer?.files ?? [])]);
     };
     async function guardar(archivos: File[]) {
       if (!archivos.length || !capturador) return;
       if (soloLectura) return avisar(t('espacio.aviso.soloLectura'));
-      const creados: Capturado[] = [];
-      // Los demás avisos van después del de «Guardado», para que Deshacer salga en cuanto se guarda.
-      const otros: (() => void)[] = [];
+      const resultados: ResultadoDe[] = [];
       for (const archivo of archivos) {
         const r = await capturador.capturar({ archivo, origen: 'soltado' }).catch(() => null);
-        if (!r) otros.push(() => avisar(t('captura.fallo', { nombre: archivo.name })));
-        else if (r.ok) {
-          if (r.valor.tipo === 'creado') creados.push(r.valor.capturado);
-          else {
-            const ref = r.valor.ref;
-            otros.push(() =>
-              avisar(t('captura.duplicado', { ref }), {
-                ...(alAbrir ? { accion: { etiqueta: t('captura.ver'), alPulsar: () => alAbrir(ref) } } : {}),
-              }),
-            );
-          }
-        } else {
-          const codigo = r.error.codigo;
-          otros.push(() =>
-            avisar(
-              codigo === 'captura.demasiadoGrande'
-                ? t('captura.demasiadoGrande', {
-                    nombre: archivo.name,
-                    tam: fmtBytes(archivo.size, idioma),
-                    limite: fmtBytes(LIMITE_ARCHIVO, idioma),
-                  })
-                : codigo === 'almacen.soloLectura'
-                  ? t('espacio.aviso.soloLectura')
-                  : codigo === 'captura.sinLector'
-                    ? t('captura.sinLector', { nombre: archivo.name })
-                    : t('captura.fallo', { nombre: archivo.name }),
-            ),
-          );
-        }
+        resultados.push({ nombre: archivo.name, tam: archivo.size, r });
       }
-      if (creados.length)
-        avisar(t('captura.guardado', { n: creados.length }), {
-          accion: {
-            etiqueta: t('captura.deshacer'),
-            alPulsar: () => void deshacerTodos(creados),
-          },
-        });
-      for (const avisarOtro of otros) avisarOtro();
-    }
-    async function deshacerTodos(creados: Capturado[]) {
-      const hechos = await Promise.all(creados.map((c) => capturador?.deshacer(c).catch(() => false)));
-      // Si alguno ya se había editado, movido o no se pudo borrar, se dice: nunca se finge haberlo deshecho.
-      if (hechos.some((h) => !h)) avisar(t('captura.noDeshecho'));
+      informar(resultados);
     }
     window.addEventListener('dragenter', entrar);
     window.addEventListener('dragover', encima);
@@ -154,10 +185,11 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
       window.removeEventListener('dragleave', salir);
       window.removeEventListener('drop', soltar);
     };
-  }, [capturador, avisar, t, idioma, soloLectura, alAbrir]);
+  }, [capturador, avisar, t, soloLectura, informar]);
 
+  const valor = useMemo(() => ({ capturador, informar }), [capturador, informar]);
   return (
-    <Contexto.Provider value={capturador}>
+    <Contexto.Provider value={valor}>
       {children}
       {soltando && (
         <div className="capa-soltar" aria-hidden="true">

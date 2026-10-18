@@ -70,7 +70,8 @@
       "space": "Space",
       "enter": "Enter",
       "escape": "Esc"
-    }
+    },
+    "enfocarCompositor": "Write in the composer"
   },
   "errores": {
     "pantalla": {
@@ -180,5 +181,33 @@
     "soltar": "Drop to save",
     "ver": "Open",
     "noDeshecho": "Something was not undone: it had already been edited or moved."
+  },
+  "compositor": {
+    "placeholder": "Paste, type or drop something…",
+    "placeholderHilo": "Reply in this thread: a note, a log, how you solved it…",
+    "etiqueta": "Capture",
+    "guardar": "Save",
+    "adjuntar": "Attach",
+    "sugerencias": "Suggestions",
+    "respondiendoA": "Replying to",
+    "iraASuHilo": ": it will go to its thread",
+    "noResponder": "Do not reply",
+    "seGuardaraComo": "Will be saved as",
+    "elegido": "chosen with /",
+    "secretos": {
+      "one": "{n} secret will be hidden",
+      "other": "{n} secrets will be hidden"
+    },
+    "alternativa": "Or {tipo}? Type /{palabra} at the start",
+    "buscar": "Search “{texto}”. Enter to see it here.",
+    "quitarAdjunto": "Remove {nombre}",
+    "pista": {
+      "coleccion": "collection",
+      "etiqueta": "tag",
+      "tipo": "type",
+      "buscar": "search",
+      "nuevaLinea": "Shift+Enter: new line"
+    },
+    "sugerencia": "Suggestion: {opcion}. Arrows to change, Enter to choose."
   }
 }

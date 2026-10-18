@@ -38,15 +38,15 @@ Capturar como en un chat, configurando lo mínimo. Catálogo: **CAP-03** (indica
 
 ## Tareas
 
-- [ ] Área de texto que crece hasta 220 px; Enter guarda, Mayús+Enter salta de línea; respeta la composición de texto (IME).
-- [ ] `analizarIndicaciones(texto)`: `/tipo`, `@colección`, `#etiqueta`, `?texto` → `{ cuerpo, tipo?, colecciones, etiquetas, busqueda? }`.
-- [ ] Vista previa en vivo con *debounce* de 120 ms (en el Worker si pasa de 20 KB): tipo y confianza, alternativa, colecciones, etiquetas y secretos.
-- [ ] Autocompletar `@`, `#` y `/`.
-- [ ] Botón de adjuntar y zona de soltar.
-- [ ] Modo respuesta con «Respondiendo a REF» y cancelar.
-- [ ] `?texto` + Enter deja la búsqueda para el feed (lo conecta IN-032).
-- [ ] `Ctrl+Mayús+Espacio` enfoca el compositor desde cualquier pantalla.
-- [ ] Borrador en `sessionStorage`.
+- [x] Área de texto que crece hasta 220 px; Enter guarda, Mayús+Enter salta de línea; respeta la composición de texto (IME).
+- [x] `analizarIndicaciones(texto)`: `/tipo`, `@colección`, `#etiqueta`, `?texto` → `{ cuerpo, tipo?, colecciones, etiquetas, busqueda? }`.
+- [x] Vista previa en vivo con *debounce* de 120 ms (en el Worker si pasa de 20 KB): tipo y confianza, alternativa, colecciones, etiquetas y secretos.
+- [x] Autocompletar `@`, `#` y `/`.
+- [x] Botón de adjuntar y zona de soltar.
+- [x] Modo respuesta con «Respondiendo a REF» y cancelar.
+- [x] `?texto` + Enter deja la búsqueda para el feed (lo conecta IN-032).
+- [x] `Ctrl+Mayús+Espacio` enfoca el compositor desde cualquier pantalla.
+- [x] Borrador en `sessionStorage`.
 
 ## Pruebas previstas
 
@@ -70,3 +70,14 @@ Capturar como en un chat, configurando lo mínimo. Catálogo: **CAP-03** (indica
 ## Autorrevisión
 
 Cubre las nueve tareas y los dos criterios. Lo visual sale de las reglas de la pantalla de referencia; el autocompletado no está dibujado allí y usa las piezas de la guía (lista con `card`, elementos `ibtn`). IN-026 pinta el feed y las búsquedas pendientes, IN-030 activa el modo respuesta e IN-032 conecta `?texto` con la búsqueda.
+
+## Cambios durante la implementación
+
+- La vista previa es `previsualizar(texto, registro)` (`src/captura/previa.ts`), la misma función en el hilo principal y en el Worker de derivados (`api.previsualizar`), que el contexto de lectores expone.
+- `ProveedorCaptura` da `useCaptura()` con el capturador e `informar(resultados)`: el compositor y el soltar global avisan igual («Guardado. Deshacer» primero; duplicados con «Ver»).
+- El soltar global respeta las zonas marcadas con `data-zona-soltar` (el compositor añade lo soltado al borrador).
+- Sugerencias: botones dentro de una lista flotante, recorridos con las flechas desde el área de texto; una región viva anuncia la sugerencia activa (el patrón de combobox de ARIA no es válido sobre un `textarea`).
+- El compositor solo se enfoca con llegadas nuevas (`atendidas`): volver a Inicio no abre el teclado del móvil.
+- Si algo no se pudo guardar (un fallo, no un duplicado), el borrador se conserva para reintentar.
+- IME: además de `isComposing`, la tecla `Process` y el código 229 (Safari).
+

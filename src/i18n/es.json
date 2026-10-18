@@ -70,7 +70,8 @@
       "space": "Espacio",
       "enter": "Intro",
       "escape": "Esc"
-    }
+    },
+    "enfocarCompositor": "Escribir en el compositor"
   },
   "errores": {
     "pantalla": {
@@ -180,5 +181,33 @@
     "soltar": "Suelta para guardar",
     "ver": "Ver",
     "noDeshecho": "Algo no se deshizo: ya se había editado o movido."
+  },
+  "compositor": {
+    "placeholder": "Pega, escribe o suelta algo…",
+    "placeholderHilo": "Responder en este hilo: una nota, un log, cómo lo resolviste…",
+    "etiqueta": "Capturar",
+    "guardar": "Guardar",
+    "adjuntar": "Adjuntar",
+    "sugerencias": "Sugerencias",
+    "respondiendoA": "Respondiendo a",
+    "iraASuHilo": ": irá a su hilo",
+    "noResponder": "No responder",
+    "seGuardaraComo": "Se guardará como",
+    "elegido": "elegido con /",
+    "secretos": {
+      "one": "{n} secreto se ocultará",
+      "other": "{n} secretos se ocultarán"
+    },
+    "alternativa": "¿o {tipo}? Escribe /{palabra} al principio",
+    "buscar": "Buscar «{texto}». Enter para verlo aquí.",
+    "quitarAdjunto": "Quitar {nombre}",
+    "pista": {
+      "coleccion": "colección",
+      "etiqueta": "etiqueta",
+      "tipo": "tipo",
+      "buscar": "buscar",
+      "nuevaLinea": "Mayús+Enter: nueva línea"
+    },
+    "sugerencia": "Sugerencia: {opcion}. Flechas para cambiar, Enter para elegir."
   }
 }
