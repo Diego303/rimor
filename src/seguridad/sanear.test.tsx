@@ -61,6 +61,32 @@ describe('saneado', () => {
     expect(JSON.stringify(arbol)).toContain('imagen-externa');
   });
 
+  it('los enlaces relativos o sin protocolo pierden el destino; las anclas internas se quedan', () => {
+    for (const md of [
+      '[x](//evil.example/p)',
+      '<a href="//evil.example">x</a>',
+      '[x](/otra/ruta)',
+      '[x](../../salir)',
+    ]) {
+      const { container } = render(<MarkdownSeguro texto={md} />);
+      expect(container.querySelector('a')?.hasAttribute('href'), md).toBe(false);
+    }
+    const { container } = render(<MarkdownSeguro texto="[ir](#seccion)" />);
+    expect(container.querySelector('a')?.getAttribute('href')).toBe('#seccion');
+  });
+
+  it('sanearSvg solo admite url(#…) internas y pone prefijo a los id y a sus referencias', () => {
+    const limpio = sanearSvg(
+      '<svg><defs><linearGradient id="g"/><mask id="m"/></defs><rect fill="url(https://e.example/x.svg#g)" mask="url(https://e.example/m.svg#m)" clip-path="url(//e.example/c)" marker-end="url(data:x)"/><rect fill="url(#g)" mask="url(\'#m\')"/><g id="ayuda-atajos"/></svg>',
+    );
+    expect(limpio).not.toContain('e.example');
+    expect(limpio).not.toContain('data:');
+    expect(limpio).toContain('id="rimor-g"');
+    expect(limpio).toContain('fill="url(#rimor-g)"');
+    expect(limpio).toContain('mask="url(#rimor-m)"');
+    expect(limpio).toContain('id="rimor-ayuda-atajos"');
+  });
+
   it('los id llevan prefijo para no pisar la app', () => {
     expect(JSON.stringify(sanearHtml('<p id="principal">x</p>'))).toContain('rimor-principal');
   });
@@ -71,7 +97,7 @@ describe('saneado', () => {
     );
     expect(limpio).not.toMatch(/script|foreignObject|onload|onclick|x\.example/);
     expect(limpio).toContain('<rect');
-    expect(limpio).toContain('href="#b"');
+    expect(limpio).toContain('href="#rimor-b"');
     expect(limpio).toContain('hola');
   });
 });

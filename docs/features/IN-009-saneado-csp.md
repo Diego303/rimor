@@ -100,3 +100,24 @@ Cubre las tres tareas. La CSP en `<meta>` es la única posible en GitHub Pages y
 - La CSP se inserta en el propio `pnpm build` (`astro build && node scripts/csp.mjs`), así la construcción de GitHub Pages ya la lleva; `comprobar-dist` verifica que va antes de cualquier script, que autoriza cada script en línea por su hash y que no permite `unsafe-inline` ni `unsafe-eval` en scripts.
 - `MarkdownSeguro` se exporta por defecto para cargarlo con `React.lazy` desde las vistas que lo usen (IN-017, IN-024), fuera de la carga inicial.
 - El corpus XSS (`src/seguridad/xss.ts`) tiene 27 cargas.
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 07:45): tipos 0 errores; Biome, colores y textos, OK; Vitest 24 archivos y 223 pruebas, OK; construcción con CSP; carga inicial 113,6 KB; `comprobar:dist` OK.
+
+| Criterio | Evidencia |
+|---|---|
+| `sanear.ts` con `rehype-sanitize` y esquema propio (sin `script`, `iframe`, `on*`, `style`, `javascript:`); SVG por la misma vía | `sanear.test.tsx`: corpus de 27 cargas XSS; enlaces relativos o sin protocolo sin destino; `sanearSvg` sin scripts, `foreignObject`, `on*`, enlaces ni `url()` externas, con `id` y referencias con prefijo |
+| `MarkdownSeguro` como única forma de pintar Markdown pegado | Componente con `hast-util-to-jsx-runtime`, sin `dangerouslySetInnerHTML`; Markdown normal (títulos, tareas, tablas, código, enlaces) bien pintado |
+| CSP en `<meta>`, `default-src 'self'`, sin `unsafe-eval` | `scripts/csp.mjs` en `pnpm build`; `comprobar-dist.mjs` valida directivas exactas y un `script-src` con solo `'self'` y hashes (`comprobar-dist.test.mjs`); ADR-0005 |
+| Ninguna carga del corpus ejecuta código ni hace peticiones | DOM saneado sin atributos ni elementos peligrosos y sin imágenes (las remotas pasan a enlace) |
+| Prueba de extremo a extremo que pega un `<img onerror>` | Cubierta a nivel de componente; la de navegador queda para Playwright |
+
+### Revisión independiente (seguridad)
+
+Hallazgos corregidos con prueba:
+
+1. Enlaces sin protocolo (`//dominio`) y relativos (`/ruta`, `../`) pasaban el saneado y sacaban de la app en la misma pestaña: ahora pierden el destino; solo quedan `http`, `https`, `mailto` y anclas `#…`.
+2. En `sanearSvg`, `fill`, `stroke`, `mask`, `clip-path` y `marker-*` admitían `url()` externas: solo se admite `url(#id)`.
+3. Los `id` del SVG salían sin prefijo (podían pisar los de la app): ahora llevan `rimor-`, y sus referencias internas (`href="#…"`, `url(#…)`) se reescriben a juego.
+4. `comprobar-dist` daba por buena una CSP con `*`, esquemas o `'unsafe-hashes'`: ahora exige directivas exactas y un `script-src` con solo el origen y hashes.

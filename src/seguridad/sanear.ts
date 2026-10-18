@@ -74,11 +74,14 @@ function endurecer() {
         padre.children.splice(indice, 1, src ? enlace : { type: 'text', value: alt });
         return indice;
       }
-      if (nodo.tagName === 'a') {
-        const href = String(nodo.properties.href ?? '');
+      if (nodo.tagName === 'a' && nodo.properties.href !== undefined) {
+        const href = String(nodo.properties.href);
         if (/^(https?:|mailto:)/i.test(href)) {
           nodo.properties.rel = ['noopener', 'noreferrer', 'nofollow'];
           nodo.properties.target = '_blank';
+        } else if (!href.startsWith('#')) {
+          // Relativos («/otra/ruta», «../») o sin protocolo («//dominio»): sacarían de la app por la misma pestaña.
+          delete nodo.properties.href;
         }
       }
       return undefined;
@@ -193,11 +196,36 @@ const ESQUEMA_SVG: Esquema = {
   protocols: { href: [] },
   strip: ['script', 'style', 'foreignObject'],
   clobberPrefix: 'rimor-',
-  clobber: [],
+  clobber: ['id'],
 };
+
+/** Atributos que pueden llevar `url(…)`: solo se admite una referencia interna, `url(#id)`. */
+const CON_URL = ['fill', 'stroke', 'mask', 'clipPath', 'markerEnd', 'markerStart', 'markerMid', 'filter'];
+
+/**
+ * Tras sanear un SVG: quita las `url()` que no apuntan dentro del propio SVG y lleva las referencias internas
+ * (`href="#x"`, `url(#x)`) a los `id` con prefijo.
+ */
+function referenciasInternas() {
+  return (arbol: Root) => {
+    visit(arbol, 'element', (nodo: Element) => {
+      for (const atributo of CON_URL) {
+        const v = nodo.properties[atributo];
+        if (typeof v !== 'string' || !v.includes('url(')) continue;
+        const interna = /^\s*url\(\s*['"]?#([\w-]+)['"]?\s*\)\s*$/.exec(v);
+        if (interna) nodo.properties[atributo] = `url(#rimor-${interna[1]})`;
+        else delete nodo.properties[atributo];
+      }
+      const href = nodo.properties.href;
+      if (typeof href === 'string' && href.startsWith('#') && !href.startsWith('#rimor-'))
+        nodo.properties.href = `#rimor-${href.slice(1)}`;
+    });
+  };
+}
 
 /** SVG pegado o generado → SVG saneado como texto. */
 export function sanearSvg(svg: string): string {
   const arbol = fromHtml(svg, { fragment: true, space: 'svg' });
-  return toHtml(unified().use(rehypeSanitize, ESQUEMA_SVG).runSync(arbol) as Root, { space: 'svg' });
+  const limpio = unified().use(rehypeSanitize, ESQUEMA_SVG).use(referenciasInternas).runSync(arbol) as Root;
+  return toHtml(limpio, { space: 'svg' });
 }
