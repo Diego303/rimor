@@ -88,11 +88,11 @@ Como la versión forma parte de la clave, subir `version` de un lector hace que 
 
 ## Tareas
 
-- [ ] Interfaz `Lector<D>` del plan (§14.4), con `respuesta` (CAP-14), `cifras`, `incrustaciones` (preparadas para v0.3) y `textoIndexable`.
-- [ ] Registro ordenado según el Anexo D del plan.
-- [ ] Worker de derivados: cola con prioridad (lo visible primero), cancelación y caché (IN-006).
-- [ ] `VistaElemento` y `TarjetaElemento` con la vista del lector diferida (`React.lazy`); mientras `derivar` no termina, resumen del frontmatter y `<Senal estado="analizando">`.
-- [ ] Plantilla de lector (`lectores/_plantilla/`) con todos los archivos y un README.
+- [x] Interfaz `Lector<D>` del plan (§14.4), con `respuesta` (CAP-14), `cifras`, `incrustaciones` (preparadas para v0.3) y `textoIndexable`.
+- [x] Registro ordenado según el Anexo D del plan.
+- [x] Worker de derivados: cola con prioridad (lo visible primero), cancelación y caché (IN-006).
+- [x] `VistaElemento` y `TarjetaElemento` con la vista del lector diferida (`React.lazy`); mientras `derivar` no termina, resumen del frontmatter y `<Senal estado="analizando">`.
+- [x] Plantilla de lector (`lectores/_plantilla/`) con todos los archivos y un README.
 
 ## Pruebas previstas
 
@@ -119,3 +119,13 @@ Como la versión forma parte de la clave, subir `version` de un lector hace que 
 ## Autorrevisión
 
 Cubre las cinco tareas y la aceptación de la ficha. Las desviaciones del plan (núcleo y vistas separados, prefijo desde `PREFIJOS`, contexto con frontmatters, textos por lector) quedan explicadas arriba y se anotan en «Desviaciones del plan» del seguimiento. Deja a IN-013 el detector (usa `lectores` y `detectar`), a IN-014 la captura (usa `leer` y la cola con prioridad de fondo) y a IN-016 el contexto y el pintado de respuestas.
+
+## Cambios durante la implementación
+
+- **Motor de textos aparte** (`src/i18n/motor.ts`): `traducirEn(catalogos, idioma, clave, vars)` sin catálogos ni React. Lo usan `traducir` (app) y `definirTextos` (lectores), y así el Worker de derivados no arrastra `es.json` ni `en.json`.
+- `ProveedorLectores` recibe el **ejecutor** (no la cola) para que las pruebas cubran también la puesta al día del frontmatter. Esa puesta al día relee el elemento y solo escribe si su hash no cambió, para no pisar una edición hecha mientras se derivaba.
+- `cifras` usa una función de parámetro bivariante: con `exactOptionalPropertyTypes`, un mapa de funciones `(d: D) => Cifra` impedía guardar `Lector<Datos>` en una lista de `Lector<unknown>`.
+- Si el Worker de derivados no carga (evento `error`, que Comlink no convierte en rechazo), lo pendiente se rechaza y lo siguiente se deriva en el hilo principal.
+- La plantilla cuenta las líneas sin la vacía que deja un salto final. Sus `Vista` y `Tarjeta` entran en la construcción como trozos diferidos (1,5 KB) que nunca se cargan mientras no se registre: `import.meta.glob` no admite excluirlas solo en producción.
+- `LECTORES` empieza vacío: el primero real es Texto (IN-017). Una prueba exige que respete `ORDEN_DETECCION`.
+

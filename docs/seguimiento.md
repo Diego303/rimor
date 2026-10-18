@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 16:05
-**Ahora:** IN-012 · Contrato y registro de lectores · fase implementación
+**Última actualización:** 2026-10-18 16:15
+**Ahora:** IN-012 · Contrato y registro de lectores · fase verificación
 **Siguiente:** IN-013 · Detector de tipo y corpus
 **Progreso:** F0 9/9 · v0.1 13/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 22/99
 
@@ -31,7 +31,7 @@
 | IN-011 | Paquete de estadística | v0.1 | 1 | hecha | 5838d9a b2ebf4e afb9e32 | docs/features/IN-011-estadistica.md |
 | IN-090 | Animaciones del símbolo (núcleo) | v0.1 | 1 | hecha | b9e91ee bdd15f6 69e2ee5 | docs/features/IN-090-animaciones.md |
 | IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | hecha | 39f479a 86e9ce2 d410b16 | docs/features/IN-007-espacio.md |
-| IN-012 | Contrato y registro de lectores | v0.1 | 2 | en análisis y diseño | — | docs/features/IN-012-lectores.md |
+| IN-012 | Contrato y registro de lectores | v0.1 | 2 | en verificación | fa7e527 | docs/features/IN-012-lectores.md |
 | IN-013 | Detector de tipo y corpus | v0.1 | 2 | pendiente | — | — |
 | IN-014 | Flujo de captura | v0.1 | 3 | pendiente | — | — |
 | IN-015 | Compositor | v0.1 | 3 | pendiente | — | — |
@@ -168,7 +168,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-012 | análisis y diseño | núcleo y vistas por carpeta, cola de derivados en Worker, contenedores y plantilla | … |
+| 2026-10-18 | IN-012 | implementación | OK (431 pruebas) | … |
+| 2026-10-18 | IN-012 | análisis y diseño | núcleo y vistas por carpeta, cola de derivados en Worker, contenedores y plantilla | fa7e527 |
 | 2026-10-18 | IN-007 | verificación | OK (412 pruebas; 11 hallazgos de la revisión corregidos) | d410b16 |
 | 2026-10-18 | IN-007 | implementación | OK (402 pruebas) | 86e9ce2 |
 | 2026-10-18 | IN-007 | análisis y diseño | abrir o crear, persistencia, última copia y arranque | 39f479a |

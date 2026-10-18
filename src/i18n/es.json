@@ -160,5 +160,11 @@
       "meta": "Espacio «{nombre}» · guardado en tu navegador",
       "metaMemoria": "Espacio «{nombre}» · solo en esta pestaña"
     }
+  },
+  "lectores": {
+    "error": {
+      "titulo": "No se pudo analizar",
+      "texto": "El lector falló con este elemento. Aquí tienes el original tal cual."
+    }
   }
 }

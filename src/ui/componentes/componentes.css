@@ -927,3 +927,16 @@ details.more > div {
   inset: 22px 24px auto;
   pointer-events: none;
 }
+
+/* ---------- Lectores (IN-012) ---------- */
+.vista-elemento {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tarjeta-elemento .row b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

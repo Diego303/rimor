@@ -1,0 +1,195 @@
+import 'fake-indexeddb/auto';
+import { IDBFactory } from 'fake-indexeddb';
+import { describe, expect, it } from 'vitest';
+import { CacheEspacio } from '../almacen/cache/cache';
+import { lectorPlantilla } from './_plantilla/lector';
+import { ColaDerivados, type Ejecutor, esCancelado } from './derivados';
+import { ejecutorEnHilo } from './ejecutor';
+import { elementoFalso, lectorFalso } from './pruebas/falsos';
+import { crearRegistro, LECTORES, ORDEN_DETECCION, puestoDe } from './registro';
+import { definirTextos } from './textos';
+import { carpetaDe } from './vistas';
+
+/** Ejecutor que no termina hasta que se suelta cada trabajo, y anota el orden en que empiezan. */
+function ejecutorManual() {
+  const empezados: string[] = [];
+  const soltar: (() => void)[] = [];
+  const ejecutar: Ejecutor = (_nombre, el) =>
+    new Promise((ok) => {
+      empezados.push(el.frontmatter.ref);
+      soltar.push(() => ok({ largo: (el.original ?? '').length }));
+    });
+  return { ejecutar, empezados, soltarSiguiente: () => soltar.shift()?.() };
+}
+
+const esperarVuelta = () => new Promise((r) => setTimeout(r, 0));
+
+describe('registro', () => {
+  it('busca por nombre y, si el lector ya no existe, por tipo', () => {
+    const r = crearRegistro([lectorFalso()]);
+    expect(r.porNombre('falso')?.nombre).toBe('falso');
+    expect(r.paraElemento(elementoFalso(1))?.nombre).toBe('falso');
+    expect(r.paraElemento(elementoFalso(1, 'x', 'desaparecido'))?.nombre).toBe('falso');
+    const otroTipo = elementoFalso(2, 'x', 'desaparecido');
+    otroTipo.frontmatter.tipo = 'log';
+    expect(r.paraElemento(otroTipo)).toBeUndefined();
+  });
+
+  it('rechaza nombres repetidos o no válidos y versiones no enteras', () => {
+    expect(() => crearRegistro([lectorFalso(), lectorFalso()])).toThrow('repetido');
+    expect(() => crearRegistro([lectorFalso({ nombre: 'Con Espacios' })])).toThrow('Nombre');
+    expect(() => crearRegistro([lectorFalso({ version: 0 })])).toThrow('Versión');
+    expect(() => crearRegistro([lectorFalso({ version: 1.5 })])).toThrow('Versión');
+  });
+
+  it('el Anexo D tiene 17 puestos sin nombres repetidos y LECTORES respeta su orden', () => {
+    expect(ORDEN_DETECCION).toHaveLength(17);
+    const nombres = ORDEN_DETECCION.flat();
+    expect(new Set(nombres).size).toBe(nombres.length);
+    const puestos = LECTORES.map((l) => puestoDe(l.nombre));
+    expect(puestos.every((p) => p >= 0)).toBe(true);
+    expect([...puestos].sort((a, b) => a - b)).toEqual(puestos);
+    expect(() => crearRegistro(LECTORES)).not.toThrow();
+  });
+
+  it('las vistas se encuentran por carpeta, la plantilla sin su guion bajo', () => {
+    expect(carpetaDe('./log/Vista.tsx')).toBe('log');
+    expect(carpetaDe('./_plantilla/Tarjeta.tsx')).toBe('plantilla');
+  });
+});
+
+describe('textos de un lector', () => {
+  it('interpolan, eligen plural, formatean números y caen al español', () => {
+    const textos = definirTextos(
+      { analizando: 'Analizando', n: { one: '{n} cosa', other: '{n} cosas' }, solo: 'solo en español' },
+      { analizando: 'Analysing', n: { one: '{n} thing', other: '{n} things' } },
+    );
+    expect(textos.t('es', 'n', { n: 10000 })).toBe('10.000 cosas');
+    expect(textos.t('en', 'n', { n: 1 })).toBe('1 thing');
+    expect(textos.t('en', 'solo')).toBe('solo en español');
+  });
+});
+
+describe('ColaDerivados', () => {
+  it('deriva una vez y después lo saca de la caché', async () => {
+    const lector = lectorFalso();
+    const registro = crearRegistro([lector]);
+    const cache = await CacheEspacio.abrir('d1', new IDBFactory());
+    const cola = new ColaDerivados({ registro, ejecutar: ejecutorEnHilo(registro), cache });
+    expect(await cola.pedir(elementoFalso(1, 'abc'))).toEqual({ largo: 3 });
+    const otra = new ColaDerivados({ registro, ejecutar: ejecutorEnHilo(registro), cache });
+    expect(await otra.pedir(elementoFalso(1, 'abc'))).toEqual({ largo: 3 });
+    expect(lector.derivados).toBe(1);
+    cache.cerrar();
+  });
+
+  it('comparte el trabajo entre peticiones iguales', async () => {
+    const lector = lectorFalso();
+    const registro = crearRegistro([lector]);
+    const cola = new ColaDerivados({ registro, ejecutar: ejecutorEnHilo(registro) });
+    const el = elementoFalso(1);
+    const [a, b] = await Promise.all([cola.pedir(el), cola.pedir(el, { prioridad: 'visible' })]);
+    expect(a).toEqual(b);
+    expect(lector.derivados).toBe(1);
+    expect(cola.pendientes).toBe(0);
+  });
+
+  it('atiende primero lo visible y, dentro de cada prioridad, por orden de llegada', async () => {
+    const m = ejecutorManual();
+    const cola = new ColaDerivados({ registro: crearRegistro([lectorFalso()]), ejecutar: m.ejecutar });
+    const peticiones = [
+      cola.pedir(elementoFalso(1)),
+      cola.pedir(elementoFalso(2)),
+      cola.pedir(elementoFalso(3), { prioridad: 'visible' }),
+      cola.pedir(elementoFalso(4)),
+      cola.pedir(elementoFalso(5), { prioridad: 'visible' }),
+    ];
+    // Una petición visible de un trabajo de fondo ya en cola lo adelanta.
+    peticiones.push(cola.pedir(elementoFalso(4), { prioridad: 'visible' }));
+    for (let i = 0; i < 5; i++) {
+      await esperarVuelta();
+      m.soltarSiguiente();
+    }
+    await Promise.all(peticiones);
+    expect(m.empezados).toEqual(['TXT-0001', 'TXT-0003', 'TXT-0004', 'TXT-0005', 'TXT-0002']);
+  });
+
+  it('cancelar en cola lo quita; cancelar en marcha rechaza la petición y guarda igual el resultado', async () => {
+    const m = ejecutorManual();
+    const cache = await CacheEspacio.abrir('d2', new IDBFactory());
+    const cola = new ColaDerivados({ registro: crearRegistro([lectorFalso()]), ejecutar: m.ejecutar, cache });
+    const enMarcha = new AbortController();
+    const enCola = new AbortController();
+    const a = cola.pedir(elementoFalso(1, 'abcd'), { senal: enMarcha.signal });
+    const b = cola.pedir(elementoFalso(2), { senal: enCola.signal });
+    await esperarVuelta();
+    enCola.abort();
+    enMarcha.abort();
+    await expect(b).rejects.toSatisfy(esCancelado);
+    await expect(a).rejects.toSatisfy(esCancelado);
+    m.soltarSiguiente();
+    await esperarVuelta();
+    await esperarVuelta();
+    expect(m.empezados).toEqual(['TXT-0001']);
+    expect(cola.pendientes).toBe(0);
+    const fm = elementoFalso(1, 'abcd').frontmatter;
+    expect(await cache.derivado(fm.id, 'falso', 1, fm.hash)).toEqual({ largo: 4 });
+    // Una señal ya cancelada ni siquiera entra.
+    await expect(cola.pedir(elementoFalso(3), { senal: AbortSignal.abort() })).rejects.toSatisfy(esCancelado);
+    cache.cerrar();
+  });
+
+  it('los errores llegan a quien espera y no se guardan', async () => {
+    let fallar = true;
+    const lector = lectorFalso({
+      async derivar(el) {
+        if (fallar) throw new Error('roto');
+        return { largo: (el.original ?? '').length };
+      },
+    });
+    const registro = crearRegistro([lector]);
+    const cache = await CacheEspacio.abrir('d3', new IDBFactory());
+    const cola = new ColaDerivados({ registro, ejecutar: ejecutorEnHilo(registro), cache });
+    await expect(cola.pedir(elementoFalso(1, 'ab'))).rejects.toThrow('roto');
+    fallar = false;
+    expect(await cola.pedir(elementoFalso(1, 'ab'))).toEqual({ largo: 2 });
+    cache.cerrar();
+  });
+
+  it('subir la versión de un lector recalcula y borra lo de la versión vieja', async () => {
+    const cache = await CacheEspacio.abrir('d4', new IDBFactory());
+    const v1 = lectorFalso();
+    const r1 = crearRegistro([v1]);
+    const derivados: { version: number; datos: unknown }[] = [];
+    await new ColaDerivados({ registro: r1, ejecutar: ejecutorEnHilo(r1), cache }).pedir(elementoFalso(1, 'abc'));
+
+    const v2 = lectorFalso({
+      version: 2,
+      async derivar(el) {
+        return { largo: (el.original ?? '').length * 10 };
+      },
+    });
+    const r2 = crearRegistro([v2]);
+    const cola2 = new ColaDerivados({
+      registro: r2,
+      ejecutar: ejecutorEnHilo(r2),
+      cache,
+      alDerivar: (_el, lector, datos) => derivados.push({ version: lector.version, datos }),
+    });
+    expect(await cola2.pedir(elementoFalso(1, 'abc'))).toEqual({ largo: 30 });
+    expect(derivados).toEqual([{ version: 2, datos: { largo: 30 } }]);
+    const fm = elementoFalso(1, 'abc').frontmatter;
+    expect(await cache.derivado(fm.id, 'falso', 1, fm.hash)).toBeUndefined();
+    expect(await cache.derivado(fm.id, 'falso', 2, fm.hash)).toEqual({ largo: 30 });
+    cache.cerrar();
+  });
+
+  it('sin lector para el elemento, rechaza', async () => {
+    const cola = new ColaDerivados({ registro: crearRegistro([]), ejecutar: async () => 0 });
+    await expect(cola.pedir(elementoFalso(1))).rejects.toThrow('lector.desconocido');
+  });
+
+  it('la plantilla es un lector válido para el registro', () => {
+    expect(() => crearRegistro([lectorPlantilla])).not.toThrow();
+  });
+});

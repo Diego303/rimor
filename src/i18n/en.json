@@ -160,5 +160,11 @@
       "meta": "Workspace “{nombre}” · stored in your browser",
       "metaMemoria": "Workspace “{nombre}” · only in this tab"
     }
+  },
+  "lectores": {
+    "error": {
+      "titulo": "Could not analyse it",
+      "texto": "The reader failed on this item. Here is the original as it is."
+    }
   }
 }

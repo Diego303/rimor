@@ -6,6 +6,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { lazy, Suspense, useState } from 'react';
 import { ProveedorEspacio } from '../espacio/Espacio';
 import { iniciarIdioma } from '../i18n/iniciar';
+import { ProveedorLectores } from '../lectores/Lectores';
 import { crearRouter } from '../rutas/rutas';
 
 iniciarIdioma();
@@ -24,7 +25,9 @@ export function App() {
   }
   return (
     <ProveedorEspacio>
-      <RouterProvider router={router} />
+      <ProveedorLectores>
+        <RouterProvider router={router} />
+      </ProveedorLectores>
     </ProveedorEspacio>
   );
 }
