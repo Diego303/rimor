@@ -197,7 +197,45 @@ export class Repositorio {
    * Guarda un elemento. Si ya existía, conserva el YAML anterior (orden y comentarios) y, si cambió el
    * título o la ref, renombra el archivo. Devuelve la ruta final.
    */
+  /** Las escrituras de un mismo elemento van de una en una, en el orden en que se piden. */
+  private readonly turnos = new Map<string, Promise<unknown>>();
+
+  private enTurno<T>(id: string, fn: () => Promise<T>): Promise<T> {
+    const previo = this.turnos.get(id) ?? Promise.resolve();
+    const actual = previo.catch(() => undefined).then(fn);
+    const fin = actual.catch(() => undefined);
+    this.turnos.set(id, fin);
+    void fin.then(() => {
+      if (this.turnos.get(id) === fin) this.turnos.delete(id);
+    });
+    return actual;
+  }
+
   async guardarElemento(el: Elemento): Promise<string> {
+    this.comprobarEscritura();
+    return this.enTurno(el.frontmatter.id, () => this.guardarAhora(el));
+  }
+
+  /**
+   * Lee el elemento y guarda lo que devuelva `cambio`, sin que otra escritura del mismo elemento se cuele entre
+   * medias (lo usan los cambios automáticos, como el resumen de un lector, para no pisar una edición). Si
+   * `cambio` devuelve `null`, no se escribe nada.
+   */
+  async actualizarElemento(refOId: string, cambio: (el: Elemento) => Elemento | null): Promise<Resultado<boolean>> {
+    this.comprobarEscritura();
+    const e = this.buscar(refOId);
+    if (!e) return fallo('almacen.noEncontrado', { ref: refOId });
+    return this.enTurno(e.id, async () => {
+      const actual = await this.leerElemento(e.id);
+      if (!actual.ok) return actual;
+      const nuevo = cambio(actual.valor);
+      if (!nuevo) return ok(false);
+      await this.guardarAhora(nuevo);
+      return ok(true);
+    });
+  }
+
+  private async guardarAhora(el: Elemento): Promise<string> {
     this.comprobarEscritura();
     const previa = this.porId.get(el.frontmatter.id);
     const destino = previa?.enPapelera
@@ -228,6 +266,12 @@ export class Repositorio {
 
   async moverAPapelera(refOId: string): Promise<Resultado<string>> {
     this.comprobarEscritura();
+    const id = this.buscar(refOId)?.id;
+    if (!id) return fallo('almacen.noEncontrado', { ref: refOId });
+    return this.enTurno(id, () => this.moverAPapeleraAhora(refOId));
+  }
+
+  private async moverAPapeleraAhora(refOId: string): Promise<Resultado<string>> {
     const e = this.buscar(refOId);
     if (!e) return fallo('almacen.noEncontrado', { ref: refOId });
     if (e.enPapelera) return ok(e.ruta);
@@ -241,6 +285,12 @@ export class Repositorio {
 
   async restaurar(refOId: string): Promise<Resultado<string>> {
     this.comprobarEscritura();
+    const id = this.buscar(refOId)?.id;
+    if (!id) return fallo('almacen.noEncontrado', { ref: refOId });
+    return this.enTurno(id, () => this.restaurarAhora(refOId));
+  }
+
+  private async restaurarAhora(refOId: string): Promise<Resultado<string>> {
     const e = this.buscar(refOId);
     if (!e) return fallo('almacen.noEncontrado', { ref: refOId });
     if (!e.enPapelera) return ok(e.ruta);

@@ -21,9 +21,19 @@ export interface OpcionesCola {
   registro: Registro;
   ejecutar: Ejecutor;
   cache?: CacheDerivados;
-  /** Tras calcular (no al sacarlo de la caché): para poner al día el resumen del frontmatter. */
+  /**
+   * Con los datos de cada trabajo, calculados o sacados de la caché: para poner al día el resumen del frontmatter
+   * (otra pestaña pudo calcularlos, o la escritura anterior pudo fallar).
+   */
   alDerivar?: (el: Elemento, lector: Lector, datos: unknown) => void;
+  /** Plazo de un cálculo; al agotarse, quien espera recibe `derivados.tiempoAgotado` y la cola sigue. */
+  plazoMs?: number;
+  /** Se llama al agotarse un plazo: el ejecutor puede terminar el Worker atascado. */
+  alAgotarPlazo?: () => void;
 }
+
+/** Plazo por defecto de un cálculo: un log de 50.000 líneas debe tardar menos de 2 s (plan §14.7). */
+export const PLAZO_DERIVAR_MS = 60_000;
 
 export interface OpcionesPedir {
   prioridad?: Prioridad;
@@ -31,6 +41,7 @@ export interface OpcionesPedir {
 }
 
 interface Peticion {
+  prioridad: Prioridad;
   resolver(d: unknown): void;
   rechazar(e: unknown): void;
 }
@@ -75,7 +86,7 @@ export class ColaDerivados {
     const clave = `${fm.id}|${lector.nombre}|${lector.version}|${fm.hash}`;
 
     return new Promise<D>((resolver, rechazar) => {
-      const peticion: Peticion = { resolver: resolver as (d: unknown) => void, rechazar };
+      const peticion: Peticion = { prioridad, resolver: resolver as (d: unknown) => void, rechazar };
       let trabajo = this.trabajos.get(clave);
       if (!trabajo) {
         trabajo = { clave, el, lector, prioridad, fase: 'consultando', esperando: new Set() };
@@ -91,6 +102,8 @@ export class ColaDerivados {
           if (!t.esperando.delete(peticion)) return;
           rechazar(errorCancelado());
           if (t.esperando.size === 0 && t.fase !== 'en-marcha') this.descartar(t);
+          // Si ya nadie lo quiere ver, vuelve a ser de fondo.
+          else if (![...t.esperando].some((p) => p.prioridad === 'visible')) t.prioridad = 'fondo';
         },
         { once: true },
       );
@@ -107,7 +120,10 @@ export class ColaDerivados {
       guardado = undefined; // Una caché que falla equivale a no tenerlo: se calcula.
     }
     if (this.trabajos.get(t.clave) !== t) return; // Cancelado mientras se consultaba.
-    if (guardado !== undefined) return this.terminar(t, (p) => p.resolver(guardado));
+    if (guardado !== undefined) {
+      this.avisarDerivado(t, guardado);
+      return this.terminar(t, (p) => p.resolver(guardado));
+    }
     t.fase = 'en-cola';
     this.cola.push(t);
     this.siguiente();
@@ -127,23 +143,36 @@ export class ColaDerivados {
     this.ocupada = true;
     t.fase = 'en-marcha';
     const fm = t.el.frontmatter;
+    let tiempo: ReturnType<typeof setTimeout> | undefined;
     try {
-      const datos = await this.opciones.ejecutar(t.lector.nombre, t.el);
+      // Un cálculo que no termina (bucle, Worker atascado) no puede dejar la cola parada para siempre.
+      const plazo = new Promise<never>((_, ko) => {
+        tiempo = setTimeout(() => {
+          this.opciones.alAgotarPlazo?.();
+          ko(new Error('derivados.tiempoAgotado'));
+        }, this.opciones.plazoMs ?? PLAZO_DERIVAR_MS);
+      });
+      const datos = await Promise.race([this.opciones.ejecutar(t.lector.nombre, t.el), plazo]);
       // Aunque ya nadie lo espere, el resultado vale para la próxima vez.
       await this.opciones.cache
         ?.guardarDerivado(fm.id, t.lector.nombre, t.lector.version, fm.hash, datos)
         .catch(() => undefined);
-      try {
-        this.opciones.alDerivar?.(t.el, t.lector, datos);
-      } catch {
-        // Un fallo al poner al día el frontmatter no invalida los datos.
-      }
+      this.avisarDerivado(t, datos);
       this.terminar(t, (p) => p.resolver(datos));
     } catch (e) {
       this.terminar(t, (p) => p.rechazar(e));
     } finally {
+      clearTimeout(tiempo);
       this.ocupada = false;
       this.siguiente();
+    }
+  }
+
+  private avisarDerivado(t: Trabajo, datos: unknown): void {
+    try {
+      this.opciones.alDerivar?.(t.el, t.lector, datos);
+    } catch {
+      // Un fallo al poner al día el frontmatter no invalida los datos.
     }
   }
 

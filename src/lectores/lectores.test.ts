@@ -1,10 +1,10 @@
 import 'fake-indexeddb/auto';
 import { IDBFactory } from 'fake-indexeddb';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CacheEspacio } from '../almacen/cache/cache';
 import { lectorPlantilla } from './_plantilla/lector';
 import { ColaDerivados, type Ejecutor, esCancelado } from './derivados';
-import { ejecutorEnHilo } from './ejecutor';
+import { crearEjecutor, ejecutorEnHilo } from './ejecutor';
 import { elementoFalso, lectorFalso } from './pruebas/falsos';
 import { crearRegistro, LECTORES, ORDEN_DETECCION, puestoDe } from './registro';
 import { definirTextos } from './textos';
@@ -184,6 +184,58 @@ describe('ColaDerivados', () => {
     cache.cerrar();
   });
 
+  it('avisa también con los datos sacados de la caché (para poner al día el frontmatter)', async () => {
+    const registro = crearRegistro([lectorFalso()]);
+    const cache = await CacheEspacio.abrir('d5', new IDBFactory());
+    await new ColaDerivados({ registro, ejecutar: ejecutorEnHilo(registro), cache }).pedir(elementoFalso(1, 'abc'));
+    const avisos: unknown[] = [];
+    const cola = new ColaDerivados({
+      registro,
+      ejecutar: ejecutorEnHilo(registro),
+      cache,
+      alDerivar: (_e, _l, d) => avisos.push(d),
+    });
+    await cola.pedir(elementoFalso(1, 'abc'));
+    expect(avisos).toEqual([{ largo: 3 }]);
+    cache.cerrar();
+  });
+
+  it('un cálculo que no termina agota su plazo y la cola sigue', async () => {
+    const registro = crearRegistro([lectorFalso()]);
+    const enHilo = ejecutorEnHilo(registro);
+    let agotados = 0;
+    const cola = new ColaDerivados({
+      registro,
+      ejecutar: (n, el) => (el.frontmatter.ref === 'TXT-0001' ? new Promise(() => undefined) : enHilo(n, el)),
+      plazoMs: 20,
+      alAgotarPlazo: () => agotados++,
+    });
+    const colgado = cola.pedir(elementoFalso(1));
+    const siguiente = cola.pedir(elementoFalso(2, 'ab'));
+    await expect(colgado).rejects.toThrow('derivados.tiempoAgotado');
+    expect(await siguiente).toEqual({ largo: 2 });
+    expect(agotados).toBe(1);
+  });
+
+  it('si se cancela la única petición visible, el trabajo vuelve a ser de fondo', async () => {
+    const m = ejecutorManual();
+    const cola = new ColaDerivados({ registro: crearRegistro([lectorFalso()]), ejecutar: m.ejecutar });
+    const ocupando = cola.pedir(elementoFalso(1));
+    const fondo = cola.pedir(elementoFalso(2));
+    const parar = new AbortController();
+    const visibleCancelada = cola.pedir(elementoFalso(2), { prioridad: 'visible', senal: parar.signal });
+    const visible = cola.pedir(elementoFalso(3), { prioridad: 'visible' });
+    await esperarVuelta();
+    parar.abort();
+    await expect(visibleCancelada).rejects.toSatisfy(esCancelado);
+    for (let i = 0; i < 3; i++) {
+      m.soltarSiguiente();
+      await esperarVuelta();
+    }
+    await Promise.all([ocupando, fondo, visible]);
+    expect(m.empezados).toEqual(['TXT-0001', 'TXT-0003', 'TXT-0002']);
+  });
+
   it('sin lector para el elemento, rechaza', async () => {
     const cola = new ColaDerivados({ registro: crearRegistro([]), ejecutar: async () => 0 });
     await expect(cola.pedir(elementoFalso(1))).rejects.toThrow('lector.desconocido');
@@ -191,5 +243,46 @@ describe('ColaDerivados', () => {
 
   it('la plantilla es un lector válido para el registro', () => {
     expect(() => crearRegistro([lectorPlantilla])).not.toThrow();
+  });
+});
+
+/** Worker falso que nunca contesta y puede emitir `error`, como uno cuyo módulo no carga. */
+class WorkerMudo {
+  static ultimo: WorkerMudo | null = null;
+  readonly oyentes: ((e: unknown) => void)[] = [];
+  terminate = vi.fn();
+  constructor() {
+    WorkerMudo.ultimo = this;
+  }
+  addEventListener(tipo: string, fn: (e: unknown) => void) {
+    if (tipo === 'error') this.oyentes.push(fn);
+  }
+  removeEventListener() {}
+  postMessage() {}
+  start() {}
+}
+
+describe('ejecutor', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('si el Worker no carga, rechaza lo pendiente y deriva lo siguiente en el hilo principal', async () => {
+    vi.stubGlobal('Worker', WorkerMudo);
+    const registro = crearRegistro([lectorFalso()]);
+    const ejecutor = crearEjecutor(registro);
+    const pendiente = ejecutor.ejecutar('falso', elementoFalso(1));
+    for (const fn of WorkerMudo.ultimo?.oyentes ?? []) fn({});
+    await expect(pendiente).rejects.toThrow('derivados.workerNoCarga');
+    expect(await ejecutor.ejecutar('falso', elementoFalso(2, 'abc'))).toEqual({ largo: 3 });
+  });
+
+  it('cerrado, termina el Worker y no abre otro', async () => {
+    vi.stubGlobal('Worker', WorkerMudo);
+    const ejecutor = crearEjecutor(crearRegistro([lectorFalso()]));
+    void ejecutor.ejecutar('falso', elementoFalso(1));
+    const primero = WorkerMudo.ultimo;
+    ejecutor.cerrar();
+    expect(primero?.terminate).toHaveBeenCalled();
+    await expect(ejecutor.ejecutar('falso', elementoFalso(2))).rejects.toThrow('derivados.cerrado');
+    expect(WorkerMudo.ultimo).toBe(primero);
   });
 });

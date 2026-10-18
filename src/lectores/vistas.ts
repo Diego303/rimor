@@ -18,7 +18,7 @@ export const carpetaDe = (ruta: string): string => (ruta.split('/')[1] ?? '').re
 function porCarpeta<P>(modulos: Record<string, Modulo<P>>) {
   const cargadores = new Map(Object.entries(modulos).map(([ruta, cargar]) => [carpetaDe(ruta), cargar]));
   const hechos = new Map<string, LazyExoticComponent<ComponentType<P>>>();
-  return (nombre: string): LazyExoticComponent<ComponentType<P>> | null => {
+  const de = (nombre: string): LazyExoticComponent<ComponentType<P>> | null => {
     const cargar = cargadores.get(nombre);
     if (!cargar) return null;
     let c = hechos.get(nombre);
@@ -28,10 +28,22 @@ function porCarpeta<P>(modulos: Record<string, Modulo<P>>) {
     }
     return c;
   };
+  // `lazy` recuerda un fallo de carga para siempre; olvidándolo, el siguiente intento vuelve a pedir el trozo.
+  const olvidar = (nombre: string) => void hechos.delete(nombre);
+  return { de, olvidar };
 }
 
+const vistas = porCarpeta<PropsVista<unknown>>(VISTAS);
+const tarjetas = porCarpeta<PropsTarjeta>(TARJETAS);
+
 /** Vista completa del lector `nombre`, o `null` si no tiene. */
-export const vistaDe = porCarpeta<PropsVista<unknown>>(VISTAS);
+export const vistaDe = vistas.de;
 
 /** Tarjeta del lector `nombre`, o `null` si no tiene. */
-export const tarjetaDe = porCarpeta<PropsTarjeta>(TARJETAS);
+export const tarjetaDe = tarjetas.de;
+
+/** Tras un fallo (trozo que no carga tras un despliegue, sin conexión), la próxima vez se vuelve a cargar. */
+export function olvidarVistas(nombre: string): void {
+  vistas.olvidar(nombre);
+  tarjetas.olvidar(nombre);
+}

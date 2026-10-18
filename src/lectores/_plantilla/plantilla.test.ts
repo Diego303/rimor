@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { type Elemento, hashOriginal } from '@rimor/formato';
 import { describe, expect, it } from 'vitest';
 import { lectorPlantilla } from './lector';
 
-const ejemplo = readFileSync(join(process.cwd(), 'src/lectores/_plantilla/fixtures/ejemplo.txt'), 'utf8');
+// Relativo a este archivo: sigue valiendo en la carpeta del lector copiado.
+const ejemplo = readFileSync(new URL('./fixtures/ejemplo.txt', import.meta.url), 'utf8');
 
 describe('lector plantilla', () => {
   it('lee el título de la primera línea y guarda el original', async () => {

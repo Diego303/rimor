@@ -20,7 +20,9 @@ export function ejecutorEnHilo(registro: Registro): Ejecutor {
 
 export interface EjecutorCerrable {
   ejecutar: Ejecutor;
-  /** Termina el Worker; si después se vuelve a pedir algo, se crea otro. */
+  /** Termina el Worker atascado; lo siguiente que se pida abre otro. */
+  reiniciar(): void;
+  /** Termina el Worker para siempre: lo que se pida después se rechaza. */
   cerrar(): void;
 }
 
@@ -30,10 +32,15 @@ export interface EjecutorCerrable {
  */
 export function crearEjecutor(registro: Registro): EjecutorCerrable {
   const enHilo = ejecutorEnHilo(registro);
-  if (typeof Worker !== 'function') return { ejecutar: enHilo, cerrar: () => undefined };
+  if (typeof Worker !== 'function') return { ejecutar: enHilo, reiniciar: () => undefined, cerrar: () => undefined };
 
   let actual: { worker: Worker; api: Remote<ApiDerivados>; roto: Promise<never> } | null = null;
   let averiado = false;
+  let cerrado = false;
+  const terminar = () => {
+    actual?.worker.terminate();
+    actual = null;
+  };
   const abrir = () => {
     const worker = new Worker(new URL('../workers/derivados.worker.ts', import.meta.url), { type: 'module' });
     const roto = new Promise<never>((_, ko) =>
@@ -51,13 +58,15 @@ export function crearEjecutor(registro: Registro): EjecutorCerrable {
 
   return {
     ejecutar: (nombre: string, el: Elemento) => {
+      if (cerrado) return Promise.reject(new Error('derivados.cerrado'));
       if (averiado) return enHilo(nombre, el);
       const w = actual ?? abrir();
       return Promise.race([w.api.derivar(nombre, el), w.roto]);
     },
+    reiniciar: terminar,
     cerrar: () => {
-      actual?.worker.terminate();
-      actual = null;
+      cerrado = true;
+      terminar();
     },
   };
 }

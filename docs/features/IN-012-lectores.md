@@ -129,3 +129,30 @@ Cubre las cinco tareas y la aceptación de la ficha. Las desviaciones del plan (
 - La plantilla cuenta las líneas sin la vacía que deja un salto final. Sus `Vista` y `Tarjeta` entran en la construcción como trozos diferidos (1,5 KB) que nunca se cargan mientras no se registre: `import.meta.glob` no admite excluirlas solo en producción.
 - `LECTORES` empieza vacío: el primero real es Texto (IN-017). Una prueba exige que respete `ORDEN_DETECCION`.
 
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 16:25): tipos 0 errores; Biome, colores y textos, OK; Vitest 34 archivos y 439 pruebas, OK; construcción OK (Worker de derivados en su trozo, 4,8 KB, sin React; vistas en trozos diferidos); carga inicial 165,0 KB.
+
+| Criterio | Evidencia |
+|---|---|
+| Interfaz `Lector<D>` con `respuesta`, `cifras`, `incrustaciones` y `textoIndexable` | `src/lectores/contrato.ts`; la plantilla los usa y su prueba los ejercita |
+| Registro ordenado según el Anexo D | `ORDEN_DETECCION` (17 puestos) y prueba de que `LECTORES` lo respeta |
+| Worker de derivados con prioridad, cancelación y caché | Pruebas de `ColaDerivados` (caché, deduplicado, visible primero, cancelación en cola y en marcha, prioridad que vuelve a bajar, plazo) y del ejecutor (Worker que no carga, cerrado) |
+| `VistaElemento` y `TarjetaElemento` diferidos, con resumen y «analizando» | Prueba de punta a punta con la plantilla registrada |
+| Plantilla con todos los archivos y README | `src/lectores/_plantilla/` y su prueba |
+| Lector falso de punta a punta; cambio de versión que recalcula | `Lectores.test.tsx` y prueba de versión en `lectores.test.ts` |
+| La plantilla se copia, se rellena y aparece sin tocar nada fuera de su carpeta y de `registro.ts` | La plantilla registrada se pinta con sus vistas encontradas por convención; que aparezca en una pantalla real llega con IN-016/IN-026 (anotado en «Notas para funcionalidades futuras») |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **El frontmatter podía quedarse viejo**: `alDerivar` se llama también con los datos sacados de la caché, y una pestaña lectora calcula pero no guarda en la caché compartida (podría ser de otra versión de la app).
+2. **Un `derivar` que no terminaba paraba la cola**: plazo de 60 s por cálculo (`derivados.tiempoAgotado`); al agotarse, el ejecutor reinicia el Worker.
+3. **«Analizando» parpadeaba**: `useEsperaVisible` depende del estado del cálculo, así que la señal, si aparece, se queda al menos 600 ms.
+4. **Sin límite de errores en vistas y tarjetas**: `LimiteLector` enseña el error con el original (vista) o el resumen (tarjeta) y olvida el trozo diferido para que el siguiente intento lo vuelva a cargar; un `resumenLegible` que lanza no rompe nada.
+5. **La puesta al día del frontmatter podía pisar una edición**: `Repositorio.actualizarElemento` lee y escribe dentro del turno del elemento, y las escrituras de un mismo elemento (guardar, papelera, restaurar) van en orden.
+6. **Worker sin cerrar tras desmontar**: el ejecutor cerrado rechaza lo que se le pida y no abre otro Worker (`reiniciar` es lo que abre otro).
+7. **La prioridad no bajaba**: al cancelarse la única petición visible, el trabajo vuelve a ser de fondo.
+8. La prueba de la plantilla lee su ejemplo relativo a su carpeta (sirve al copiarla); el hueco «aparece en la app» queda anotado para IN-016/IN-026.
+

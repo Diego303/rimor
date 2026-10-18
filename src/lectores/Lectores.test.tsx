@@ -164,6 +164,21 @@ describe('lector de punta a punta', () => {
     expect(screen.getByText('otro texto')).toBeTruthy();
   });
 
+  it('un resumen que el lector no entiende no rompe la vista ni la tarjeta', async () => {
+    const raro = crearRegistro([
+      lectorFalso({
+        resumenLegible: () => {
+          throw new Error('resumen de otra forma');
+        },
+      }),
+    ]);
+    const retenido = ejecutorRetenido(raro);
+    montar(raro, retenido.ejecutar, elementoFalso(4, 'texto raro'));
+    expect(await screen.findByText('Elemento 4')).toBeTruthy();
+    retenido.soltar();
+    expect(await screen.findByText('texto raro')).toBeTruthy();
+  });
+
   it('sin lector para el elemento, el original tal cual', async () => {
     const vacio = crearRegistro([]);
     montar(vacio, ejecutorEnHilo(vacio), elementoFalso(3, 'sin lector'));

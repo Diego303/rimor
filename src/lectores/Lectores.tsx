@@ -3,7 +3,8 @@
  * contenedores `VistaElemento` y `TarjetaElemento`, que pintan la vista de cada lector en diferido.
  */
 import type { Elemento } from '@rimor/formato';
-import { createContext, type ReactNode, Suspense, useContext, useEffect, useState } from 'react';
+import { Component, createContext, type ReactNode, Suspense, useContext, useEffect, useState } from 'react';
+import type { Repositorio } from '../almacen/repositorio';
 import { useEspacioOpcional } from '../espacio/Espacio';
 import { useT } from '../i18n/useT';
 import { ErrorTarjeta, IconoTipo } from '../ui/componentes';
@@ -13,7 +14,7 @@ import type { Lector } from './contrato';
 import { ColaDerivados, type Ejecutor, esCancelado } from './derivados';
 import { crearEjecutor } from './ejecutor';
 import { REGISTRO, type Registro } from './registro';
-import { tarjetaDe, vistaDe } from './vistas';
+import { olvidarVistas, tarjetaDe, vistaDe } from './vistas';
 
 interface ValorLectores {
   registro: Registro;
@@ -32,51 +33,61 @@ interface PropsProveedor {
 }
 
 /**
- * Registro y cola de derivados para las pantallas. La cola usa la caché del espacio y, cuando un derivado
- * nuevo cambia el resumen o la versión del lector, pone al día el frontmatter (solo la pestaña que escribe y
- * solo si el archivo sigue siendo el mismo).
+ * Registro y cola de derivados para las pantallas. La cola usa la caché del espacio (solo la pestaña que escribe
+ * guarda en ella) y, cuando los datos de un elemento cambian el resumen o la versión de su lector, pone al día
+ * el frontmatter (solo la pestaña que escribe y solo si el original sigue siendo el mismo).
  */
 export function ProveedorLectores({ children, registro = REGISTRO, ejecutar }: PropsProveedor) {
   const espacio = useEspacioOpcional();
   const [valor, setValor] = useState<ValorLectores | null>(null);
 
   useEffect(() => {
-    const ejecutor = ejecutar ? { ejecutar, cerrar: () => undefined } : crearEjecutor(registro);
-    const repositorio = espacio?.repositorio;
+    const ejecutor = ejecutar
+      ? { ejecutar, reiniciar: () => undefined, cerrar: () => undefined }
+      : crearEjecutor(registro);
+    const escribe = () => espacio?.coordinacion.modo() === 'escritor';
+    const cache = espacio && {
+      derivado: espacio.cache.derivado.bind(espacio.cache),
+      // Una pestaña lectora no toca la caché compartida (IN-007): podría ser de otra versión de la app.
+      guardarDerivado: async (...args: Parameters<typeof espacio.cache.guardarDerivado>) => {
+        if (escribe()) await espacio.cache.guardarDerivado(...args);
+      },
+    };
     const nueva = new ColaDerivados({
       registro,
       ejecutar: ejecutor.ejecutar,
-      ...(espacio ? { cache: espacio.cache } : {}),
-      alDerivar: (el, lector, datos) => void ponerAlDia(el, lector, datos),
+      ...(cache ? { cache } : {}),
+      alDerivar: (el, lector, datos) => {
+        if (espacio && escribe()) void ponerAlDia(espacio.repositorio, el, lector, datos).catch(() => undefined);
+      },
+      // Un Worker atascado se termina; lo siguiente abre otro.
+      alAgotarPlazo: ejecutor.reiniciar,
     });
-    async function ponerAlDia(el: Elemento, lector: Lector, datos: unknown) {
-      if (!repositorio || espacio?.coordinacion.modo() !== 'escritor') return;
-      const resumen = lector.resumen(datos);
-      const fm = el.frontmatter;
-      if (
-        fm.lector.nombre === lector.nombre &&
-        fm.lector.version === lector.version &&
-        mismoResumen(fm.lector.resumen, resumen)
-      )
-        return;
-      // Se relee: si el archivo cambió desde que se pidió el derivado, este ya no le corresponde.
-      const actual = await repositorio.leerElemento(fm.id);
-      if (!actual.ok || actual.valor.frontmatter.hash !== fm.hash) return;
-      await repositorio
-        .guardarElemento({
-          ...actual.valor,
-          frontmatter: {
-            ...actual.valor.frontmatter,
-            lector: { nombre: lector.nombre, version: lector.version, resumen },
-          },
-        })
-        .catch(() => undefined);
-    }
     setValor({ registro, cola: nueva });
     return () => ejecutor.cerrar();
   }, [registro, ejecutar, espacio]);
 
   return valor ? <Contexto.Provider value={valor}>{children}</Contexto.Provider> : null;
+}
+
+/** Escribe en el frontmatter el resumen y la versión vigentes del lector, si cambiaron. */
+async function ponerAlDia(repositorio: Repositorio, el: Elemento, lector: Lector, datos: unknown): Promise<void> {
+  const resumen = lector.resumen(datos);
+  const vigente = (fm: Elemento['frontmatter']) =>
+    fm.lector.nombre === lector.nombre &&
+    fm.lector.version === lector.version &&
+    mismoResumen(fm.lector.resumen, resumen);
+  if (vigente(el.frontmatter)) return;
+  // Leer y escribir en el mismo turno del elemento: una edición pedida a la vez no se pisa.
+  await repositorio.actualizarElemento(el.frontmatter.id, (actual) =>
+    // Si el original cambió desde que se pidieron los datos, estos ya no le corresponden.
+    actual.frontmatter.hash !== el.frontmatter.hash || vigente(actual.frontmatter)
+      ? null
+      : {
+          ...actual,
+          frontmatter: { ...actual.frontmatter, lector: { nombre: lector.nombre, version: lector.version, resumen } },
+        },
+  );
 }
 
 export function useLectores(): ValorLectores {
@@ -126,48 +137,74 @@ function Original({ el }: { el: Elemento }) {
   return <pre className="code">{el.original ?? ''}</pre>;
 }
 
-/** Resumen del frontmatter en una línea, si el lector sabe decirlo. */
+/** Resumen del frontmatter en una línea, si el lector sabe decirlo (un resumen de otra forma no lo rompe). */
 function ResumenFrontmatter({ el, lector }: { el: Elemento; lector: Lector }) {
   const { idioma } = useT();
-  const texto = lector.resumenLegible?.(el.frontmatter.lector.resumen, idioma);
+  let texto: string | undefined;
+  try {
+    texto = lector.resumenLegible?.(el.frontmatter.lector.resumen, idioma);
+  } catch {
+    texto = undefined;
+  }
   return texto ? <p className="sm muted">{texto}</p> : null;
 }
 
-/** «Analizando» con lo que calcula el lector, pasados 400 ms. */
-function Analizando({ lector }: { lector: Lector }) {
-  const { idioma } = useT();
-  const visible = useEsperaVisible(true);
-  return visible ? <Senal estado="analizando" etiqueta={lector.textos.t(idioma, 'analizando')} /> : null;
+/**
+ * Límite de errores de la vista o la tarjeta de un lector: si su trozo no carga o falla al pintar, se enseña la
+ * alternativa en su sitio (no cae la pantalla) y la próxima vez se vuelve a cargar.
+ */
+class LimiteLector extends Component<
+  { nombre: string; alternativa: ReactNode; children: ReactNode },
+  { fallo: boolean }
+> {
+  override state = { fallo: false };
+
+  static getDerivedStateFromError() {
+    return { fallo: true };
+  }
+
+  override componentDidCatch(error: Error): void {
+    olvidarVistas(this.props.nombre);
+    console.error(error);
+  }
+
+  override render() {
+    return this.state.fallo ? this.props.alternativa : this.props.children;
+  }
 }
 
 /** Vista completa de un elemento: la del lector con sus derivados, o lo que se sepa mientras tanto. */
 export function VistaElemento({ el }: { el: Elemento }) {
-  const { t } = useT();
+  const { t, idioma } = useT();
   const { registro } = useLectores();
   const derivado = useDerivado(el);
   const lector = registro.paraElemento(el);
+  // «Analizando» aparece pasados 400 ms y, si aparece, se queda al menos 600 ms (guía §11.1).
+  const analizando = useEsperaVisible(derivado.estado === 'calculando');
+  const fallo = (
+    <>
+      <ErrorTarjeta titulo={t('lectores.error.titulo')}>{t('lectores.error.texto')}</ErrorTarjeta>
+      <Original el={el} />
+    </>
+  );
 
   if (!lector || derivado.estado === 'sin-lector') return <Original el={el} />;
-  if (derivado.estado === 'error')
-    return (
-      <>
-        <ErrorTarjeta titulo={t('lectores.error.titulo')}>{t('lectores.error.texto')}</ErrorTarjeta>
-        <Original el={el} />
-      </>
-    );
-  if (derivado.estado === 'calculando')
+  if (derivado.estado === 'error') return fallo;
+  if (derivado.estado === 'calculando' || analizando)
     return (
       <div className="vista-elemento">
         <ResumenFrontmatter el={el} lector={lector} />
-        <Analizando lector={lector} />
+        {analizando && <Senal estado="analizando" etiqueta={lector.textos.t(idioma, 'analizando')} />}
       </div>
     );
   const Vista = vistaDe(lector.nombre);
   if (!Vista) return <Original el={el} />;
   return (
-    <Suspense fallback={<ResumenFrontmatter el={el} lector={lector} />}>
-      <Vista el={el} datos={derivado.datos} />
-    </Suspense>
+    <LimiteLector key={`${lector.nombre}|${el.frontmatter.id}`} nombre={lector.nombre} alternativa={fallo}>
+      <Suspense fallback={<ResumenFrontmatter el={el} lector={lector} />}>
+        <Vista el={el} datos={derivado.datos} />
+      </Suspense>
+    </LimiteLector>
   );
 }
 
@@ -185,10 +222,12 @@ export function TarjetaElemento({ el }: { el: Elemento }) {
         <b className="sm">{fm.titulo}</b>
         <span className="mono xs muted">{fm.ref}</span>
       </div>
-      {Tarjeta ? (
-        <Suspense fallback={resumen}>
-          <Tarjeta el={el} />
-        </Suspense>
+      {lector && Tarjeta ? (
+        <LimiteLector key={`${lector.nombre}|${fm.id}`} nombre={lector.nombre} alternativa={resumen}>
+          <Suspense fallback={resumen}>
+            <Tarjeta el={el} />
+          </Suspense>
+        </LimiteLector>
       ) : (
         resumen
       )}

@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 16:15
-**Ahora:** IN-012 · Contrato y registro de lectores · fase verificación
-**Siguiente:** IN-013 · Detector de tipo y corpus
-**Progreso:** F0 9/9 · v0.1 13/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 22/99
+**Última actualización:** 2026-10-18 16:25
+**Ahora:** IN-013 · Detector de tipo y corpus · fase análisis y diseño
+**Siguiente:** IN-014 · Flujo de captura
+**Progreso:** F0 9/9 · v0.1 14/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 23/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -31,7 +31,7 @@
 | IN-011 | Paquete de estadística | v0.1 | 1 | hecha | 5838d9a b2ebf4e afb9e32 | docs/features/IN-011-estadistica.md |
 | IN-090 | Animaciones del símbolo (núcleo) | v0.1 | 1 | hecha | b9e91ee bdd15f6 69e2ee5 | docs/features/IN-090-animaciones.md |
 | IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | hecha | 39f479a 86e9ce2 d410b16 | docs/features/IN-007-espacio.md |
-| IN-012 | Contrato y registro de lectores | v0.1 | 2 | en verificación | fa7e527 | docs/features/IN-012-lectores.md |
+| IN-012 | Contrato y registro de lectores | v0.1 | 2 | hecha | fa7e527 00d01e5 | docs/features/IN-012-lectores.md |
 | IN-013 | Detector de tipo y corpus | v0.1 | 2 | pendiente | — | — |
 | IN-014 | Flujo de captura | v0.1 | 3 | pendiente | — | — |
 | IN-015 | Compositor | v0.1 | 3 | pendiente | — | — |
@@ -143,6 +143,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
 
 ## Notas para funcionalidades futuras
+- **IN-014/IN-016/IN-026 (IN-012):** `VistaElemento` y `TarjetaElemento` aún no están en ninguna pantalla; la pantalla Elemento (IN-016/IN-026) y el feed deben usarlas para que un lector nuevo «aparezca en la app». La captura pide los derivados con prioridad de fondo y pasa los primeros bytes de los archivos al detector (`cabecera`).
 - **IN-050:** las rutas de `public/marca/manifest-iconos.json` son relativas a `marca/`; al copiar el bloque `icons` al manifest de la PWA, hay que anteponer `marca/` (revisión de IN-089).
 - **IN-008 e IN-016:** el raíl usa `Logotipo` de 18 px y el avatar de `RespuestaRimor`, `SimboloRimor` mono de 13 px (IN-089).
 
@@ -168,7 +169,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-012 | implementación | OK (431 pruebas) | … |
+| 2026-10-18 | IN-012 | verificación | OK (439 pruebas; 8 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-012 | implementación | OK (431 pruebas) | 00d01e5 |
 | 2026-10-18 | IN-012 | análisis y diseño | núcleo y vistas por carpeta, cola de derivados en Worker, contenedores y plantilla | fa7e527 |
 | 2026-10-18 | IN-007 | verificación | OK (412 pruebas; 11 hallazgos de la revisión corregidos) | d410b16 |
 | 2026-10-18 | IN-007 | implementación | OK (402 pruebas) | 86e9ce2 |
@@ -220,4 +222,4 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-012 en implementación (diseño en docs/features/IN-012-lectores.md).
+- IN-012 hecha. Siguiente: IN-013 (diseño en docs/features/IN-013-detector.md, código en borrador en el scratchpad in013/, corpus de texto en fixtures/deteccion/texto/).

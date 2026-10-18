@@ -25,6 +25,30 @@ function elemento(cambios: Partial<Elemento['frontmatter']> = {}): Elemento {
 }
 
 describe('Repositorio', () => {
+  it('actualizarElemento lee y escribe en el turno del elemento: no pisa una edición pedida a la vez', async () => {
+    const repo = new Repositorio(new AlmacenMemoria());
+    await repo.guardarElemento(elemento());
+    // La edición del usuario y el cambio automático salen a la vez; el automático relee dentro de su turno.
+    const edicion = repo.guardarElemento({ ...elemento(), notas: 'nota del usuario' });
+    const automatico = repo.actualizarElemento('LOG-0042', (el) => ({
+      ...el,
+      frontmatter: { ...el.frontmatter, lector: { nombre: 'log', version: 2, resumen: { lineas: 3 } } },
+    }));
+    await Promise.all([edicion, automatico]);
+    const leido = await repo.leerElemento('LOG-0042');
+    expect(leido.ok && leido.valor.notas).toBe('nota del usuario');
+    expect(leido.ok && leido.valor.frontmatter.lector.version).toBe(2);
+    expect(await repo.actualizarElemento('LOG-0042', () => null)).toEqual({ ok: true, valor: false });
+    expect((await repo.actualizarElemento('LOG-9999', (el) => el)).ok).toBe(false);
+  });
+
+  it('en modo lectura, cualquier escritura falla con almacen.soloLectura', async () => {
+    const repo = new Repositorio(new AlmacenMemoria(), undefined, { puedeEscribir: () => false });
+    await expect(repo.guardarElemento(elemento())).rejects.toThrow('almacen.soloLectura');
+    await expect(repo.guardarAdjunto(new Uint8Array([1]), 'bin')).rejects.toThrow('almacen.soloLectura');
+    await expect(repo.vaciarPapelera()).rejects.toThrow('almacen.soloLectura');
+  });
+
   it('guarda en la ruta por fecha y lee por ref y por id', async () => {
     const repo = new Repositorio(new AlmacenMemoria());
     expect(await repo.guardarElemento(elemento())).toBe('elementos/2026/10/LOG-0042--timeout-en-streaming.md');
