@@ -17,13 +17,15 @@ function leerCorpus(): Ejemplo[] {
     .filter((d) => d.isDirectory())
     .flatMap((d) =>
       readdirSync(join(RAIZ, d.name))
-        .filter((f) => f.endsWith('.txt'))
         .sort()
-        .map((f) => ({
-          esperado: d.name,
-          archivo: `${d.name}/${f}`,
-          texto: readFileSync(join(RAIZ, d.name, f), 'utf8'),
-        })),
+        .map((f): Ejemplo => {
+          const archivo = `${d.name}/${f}`;
+          const ruta = join(RAIZ, d.name, f);
+          // `.txt`: texto pegado. Otra extensión: archivo soltado, con sus bytes.
+          return f.endsWith('.txt')
+            ? { esperado: d.name, archivo, texto: readFileSync(ruta, 'utf8') }
+            : { esperado: d.name, archivo, bytes: new Uint8Array(readFileSync(ruta)) };
+        }),
     );
 }
 

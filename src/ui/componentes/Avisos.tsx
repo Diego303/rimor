@@ -79,6 +79,11 @@ export function ProveedorAvisos({ children }: { children: ReactNode }) {
   );
 }
 
+/** La cola de avisos, o `null` fuera de `ProveedorAvisos` (vistas pintadas sueltas). */
+export function useAvisosOpcional(): ContextoAvisos | null {
+  return useContext(Contexto);
+}
+
 /** Acceso a la cola de avisos. Requiere `ProveedorAvisos`. */
 export function useAvisos(): ContextoAvisos {
   const c = useContext(Contexto);

@@ -336,3 +336,30 @@ describe('capturar el corpus de detección', () => {
     }
   });
 });
+
+describe('con los lectores de la app (red de seguridad)', () => {
+  it('cualquier cosa que no reconozca otro lector se guarda y se encuentra', async () => {
+    const { REGISTRO } = await import('../lectores/registro');
+    const repositorio = new Repositorio(new AlmacenMemoria());
+    const capturador = crearCapturador({ repositorio, registro: REGISTRO });
+    const casos = [
+      { texto: 'Una nota cualquiera sobre la reunión de hoy.', origen: 'pegado' as const },
+      { archivo: new File([new Uint8Array([0, 1, 2, 3, 255])], 'raro.bin'), origen: 'soltado' as const },
+      {
+        archivo: new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])], 'foto.png', {
+          type: 'image/png',
+        }),
+        origen: 'soltado' as const,
+      },
+      { archivo: new File(['texto suelto en un archivo'], 'sin-tipo'), origen: 'soltado' as const },
+    ];
+    const refs: string[] = [];
+    for (const caso of casos) refs.push(creado(await capturador.capturar(caso)).elemento.frontmatter.ref);
+    expect(refs).toEqual(['TXT-0001', 'ARC-0001', 'ARC-0002', 'TXT-0002']);
+    for (const ref of refs) expect((await repositorio.leerElemento(ref)).ok).toBe(true);
+    expect(repositorio.frontmatter('ARC-0001')).toMatchObject({
+      lector: { nombre: 'archivo' },
+      pendiente_lector: true,
+    });
+  });
+});

@@ -954,7 +954,25 @@ details.more > div {
   pointer-events: none;
 }
 
-/* ---------- Lectores (IN-012) ---------- */
+/* ---------- Lectores (IN-012, IN-017) ---------- */
+.lista-enlaces {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lista-enlaces a {
+  overflow-wrap: anywhere;
+}
+.tarjeta-texto {
+  white-space: pre-line;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
 .vista-elemento {
   display: flex;
   flex-direction: column;

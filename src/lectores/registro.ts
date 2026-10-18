@@ -6,7 +6,9 @@
  * de `ORDEN_DETECCION` (si su nombre no está, se añade a su puesto).
  */
 import type { Elemento } from '@rimor/formato';
+import { lectorArchivo } from './archivo/lector';
 import type { Lector } from './contrato';
+import { lectorTexto } from './texto/lector';
 
 /**
  * Puestos del Anexo D, del primero al último; cada puesto admite los lectores que nombra. Un lector registrado
@@ -33,7 +35,10 @@ export const ORDEN_DETECCION: readonly (readonly string[])[] = [
 ];
 
 /** Los lectores de la app, en el orden de `ORDEN_DETECCION`. */
-export const LECTORES: readonly Lector[] = [];
+export const LECTORES: readonly Lector[] = [
+  lectorArchivo, // 2
+  lectorTexto, // 17
+];
 
 export interface Registro {
   /** En orden de detección. */

@@ -196,17 +196,31 @@ describe('respuestas de los lectores sobre el corpus', () => {
   it('instantánea de la respuesta de cada lector con su primer ejemplo', async () => {
     const instantaneas: Record<string, unknown> = {};
     for (const lector of lectores) {
-      // Su propio ejemplo (el primero de su carpeta del corpus) o, si aún no tiene, el primero de todos.
+      // Su propio ejemplo (el primero de su carpeta del corpus): un texto pegado o un archivo soltado.
       let propios: string[] = [];
       try {
-        propios = readdirSync(join(raiz, lector.tipo))
-          .filter((f) => f.endsWith('.txt'))
-          .sort();
+        propios = readdirSync(join(raiz, lector.tipo)).sort();
       } catch {
         propios = [];
       }
-      const texto = propios[0] ? readFileSync(join(raiz, lector.tipo, propios[0]), 'utf8') : (ejemplos[0] ?? '');
-      const el = con(elementoFalso(1, texto), { tipo: lector.tipo });
+      const primero = propios[0];
+      let el = con(elementoFalso(1, ejemplos[0] ?? ''), { tipo: lector.tipo });
+      if (primero?.endsWith('.txt'))
+        el = con(elementoFalso(1, readFileSync(join(raiz, lector.tipo, primero), 'utf8')), { tipo: lector.tipo });
+      else if (primero) {
+        const tam = readFileSync(join(raiz, lector.tipo, primero)).length;
+        el = {
+          ...con(elementoFalso(1, ''), { tipo: lector.tipo }),
+          original: null,
+        };
+        el.frontmatter.adjunto = {
+          hash: '0'.repeat(64),
+          ruta: `adjuntos/00/${primero}`,
+          nombre: primero,
+          mime: '',
+          tam,
+        };
+      }
       const datos = await lector.derivar(el);
       instantaneas[lector.nombre] = {
         es: lector.respuesta(el, datos, ctx('es')),

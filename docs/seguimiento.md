@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 18:00
-**Ahora:** IN-017 · Lector Texto y lector genérico de archivo · fase implementación
+**Última actualización:** 2026-10-18 18:11
+**Ahora:** IN-017 · Lector Texto y lector genérico de archivo · fase verificación
 **Siguiente:** IN-018 · Lector Idea y resurgimiento mínimo
 **Progreso:** F0 9/9 · v0.1 18/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 27/99
 
@@ -36,7 +36,7 @@
 | IN-014 | Flujo de captura | v0.1 | 3 | hecha | 683703f 9830443 02b7548 | docs/features/IN-014-captura.md |
 | IN-015 | Compositor | v0.1 | 3 | hecha | df7d8c3 3531022 871224d | docs/features/IN-015-compositor.md |
 | IN-016 | Respuestas de Rimor y contadores locales | v0.1 | 3 | hecha | c521a65 5b52db2 674f816 | docs/features/IN-016-respuestas.md |
-| IN-017 | Lector Texto y lector genérico de archivo | v0.1 | 3 | en análisis y diseño | — | docs/features/IN-017-texto-archivo.md |
+| IN-017 | Lector Texto y lector genérico de archivo | v0.1 | 3 | en verificación | ecade38 | docs/features/IN-017-texto-archivo.md |
 | IN-018 | Lector Idea y resurgimiento mínimo | v0.1 | 4 | pendiente | — | — |
 | IN-019 | Lector Enlace básico | v0.1 | 4 | pendiente | — | — |
 | IN-020 | Lector Log | v0.1 | 4 | pendiente | — | — |
@@ -143,6 +143,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
 
 ## Notas para funcionalidades futuras
+- **Lectores de imagen y PDF (v0.3, IN-017):** al registrarlos, releer los elementos con `pendiente_lector: true` de su tipo (y quitar la marca).
 - **IN-026 e IN-049 (IN-016):** contar `respuestasDescartadas` («No» o archivar sin actuar) en el triaje y `correccionesDeTipo` cuando se corrija el tipo (también un `/tipo` que contradice al detector) con `espacio.contadores.contar(…)`. IN-021, IN-023 e IN-032 cuentan `erroresReconocidos`, `copiasConValores` y `busquedasConResultado`.
 - **IN-029 (IN-016):** rellenar `Contexto.versiones` desde `historial/` y `version`.
 - **IN-014/IN-016/IN-026 (IN-012):** `VistaElemento` y `TarjetaElemento` aún no están en ninguna pantalla; la pantalla Elemento (IN-016/IN-026) y el feed deben usarlas para que un lector nuevo «aparezca en la app». La captura pide los derivados con prioridad de fondo y pasa los primeros bytes de los archivos al detector (`cabecera`).
@@ -172,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-017 | análisis y diseño | Texto con enlaces y menciones, Archivo con descarga y marca de pendiente, corpus de binarios | … |
+| 2026-10-18 | IN-017 | implementación | OK (577 pruebas; matriz 50/50) | … |
+| 2026-10-18 | IN-017 | análisis y diseño | Texto con enlaces y menciones, Archivo con descarga y marca de pendiente, corpus de binarios | ecade38 |
 | 2026-10-18 | IN-016 | verificación | OK (567 pruebas; 11 hallazgos de la revisión corregidos) | 674f816 |
 | 2026-10-18 | IN-016 | implementación | OK (563 pruebas) | 5b52db2 |
 | 2026-10-18 | IN-016 | análisis y diseño | contexto, composición con frase de secretos, reglas de estilo, RespuestaRimor y contadores | c521a65 |

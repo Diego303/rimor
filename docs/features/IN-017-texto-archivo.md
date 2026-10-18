@@ -43,9 +43,9 @@ La red de seguridad, y el primer lector que valida el contrato. Catálogo: **LEC
 
 ## Tareas
 
-- [ ] Texto: renderiza Markdown saneado; extrae enlaces y menciones de refs; título de la primera línea.
-- [ ] Archivo genérico: adjunto por hash; muestra nombre, tamaño y tipo MIME; descarga del original; marca «pendiente de lector».
-- [ ] Respuestas: «Texto guardado.» · «Archivo de 2,4 MB guardado. Rimor aún no sabe leer este tipo.»
+- [x] Texto: renderiza Markdown saneado; extrae enlaces y menciones de refs; título de la primera línea.
+- [x] Archivo genérico: adjunto por hash; muestra nombre, tamaño y tipo MIME; descarga del original; marca «pendiente de lector».
+- [x] Respuestas: «Texto guardado.» · «Archivo de 2,4 MB guardado. Rimor aún no sabe leer este tipo.»
 
 ## Pruebas previstas
 
@@ -70,3 +70,12 @@ La red de seguridad, y el primer lector que valida el contrato. Catálogo: **LEC
 ## Autorrevisión
 
 Cubre las tres tareas y la aceptación. Es el primer uso real de la plantilla: si algo del contrato no encaja, se corrige aquí y se anota.
+
+## Cambios durante la implementación
+
+- **Corrección pendiente de IN-013:** el cargador del corpus en `deteccion.test.ts` seguía leyendo solo `.txt` (la sustitución del hallazgo 4 de su revisión no se aplicó porque el formateador había cambiado el texto). Ahora un archivo con otra extensión entra como archivo soltado; con él, la matriz mide texto y archivo (50 ejemplos, 100 %).
+- `Repositorio.leerAdjunto(ruta)` para la descarga; leer no necesita el cerrojo.
+- `useAvisosOpcional()` en `Avisos.tsx`: las vistas se pintan también sin proveedor de avisos.
+- El corpus de binarios lo genera `scripts/corpus-archivos.mjs` (cabeceras reales de 25 formatos, de 14 a 512 bytes).
+- La instantánea de respuestas usa el primer ejemplo de la carpeta de cada lector, también si es un archivo (como adjunto).
+

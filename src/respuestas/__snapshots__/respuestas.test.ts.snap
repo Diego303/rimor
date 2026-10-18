@@ -2,6 +2,24 @@
 
 exports[`respuestas de los lectores sobre el corpus > instantánea de la respuesta de cada lector con su primer ejemplo 1`] = `
 {
+  "archivo": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "26 B file saved. Rimor cannot read this type yet.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Archivo de 26 B guardado. Rimor aún no sabe leer este tipo.",
+        },
+      ],
+    },
+  },
   "plantilla": {
     "en": {
       "texto": [
@@ -16,6 +34,24 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
         {
           "t": "texto",
           "v": "Texto de 1 línea y 59 palabras.",
+        },
+      ],
+    },
+  },
+  "texto": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Text saved.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Texto guardado.",
         },
       ],
     },

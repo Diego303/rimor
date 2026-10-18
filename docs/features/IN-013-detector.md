@@ -118,6 +118,6 @@ Hallazgos corregidos, con prueba:
 1. **Una imagen o un PDF sin su lector iban a Texto**: un binario nunca entra al arbitraje; va a su lector, al genérico de archivo si no lo hay (como en v0.1) o, sin ninguno, sin lector.
 2. **Archivos de texto con MIME raro (`.ts` como `video/mp2t`, `.sh`, `.toml`) se trataban como binarios**: decide el contenido (`pareceTexto`: UTF-8 válido y sin bytes nulos en los primeros 1.024 bytes) y, sin cabecera, el MIME o la extensión.
 3. **Un binario sin MIME (SQLite, Parquet) no iba a `archivo`**, y un MIME vacío no caía al del archivo: corregidos.
-4. **El arnés solo medía texto pegado**: un ejemplo con otra extensión que `.txt` entra como archivo soltado, con `entradaDeArchivo` (la misma que usará la captura), así que los lectores de archivo pueden traer su corpus sin cambiar el arnés.
+4. **El arnés solo medía texto pegado** (el cargador de la prueba se corrigió de verdad en IN-017; aquí solo se aplicó en `evaluar`): un ejemplo con otra extensión que `.txt` entra como archivo soltado, con `entradaDeArchivo` (la misma que usará la captura), así que los lectores de archivo pueden traer su corpus sin cambiar el arnés.
 5. **Nada obligaba a un lector nuevo a traer su corpus**: la prueba exige una carpeta por cada tipo con lector registrado.
 

@@ -340,6 +340,11 @@ export class Repositorio {
     });
   }
 
+  /** Los bytes de un adjunto, o `null` si no está. Leer no necesita el cerrojo. */
+  leerAdjunto(ruta: string): Promise<Uint8Array | null> {
+    return this.almacen.leer(ruta);
+  }
+
   /** ¿Usa algún elemento conocido (también en la papelera) el adjunto de `ruta`? */
   usaAdjunto(ruta: string): boolean {
     for (const fm of this.fms.values()) if (fm.adjunto?.ruta === ruta) return true;
