@@ -234,3 +234,115 @@ describe('resultados', () => {
     expect(fm.resultados).toHaveLength(2);
   });
 });
+
+/** Casos de la revisión independiente: retroceso, falsos positivos y prompts que no se reconocían. */
+describe('revisión: coste lineal', () => {
+  it('un encabezado con una tirada larga de espacios no retrocede', () => {
+    const inicio = performance.now();
+    seccionesDe(`# a${' '.repeat(20_000)}b`);
+    confianzaPrompt(`Resume este texto en tres puntos:\n\n# Informe${' '.repeat(10_000)}pág. 3\n`);
+    tituloDePrompt(`# a${' '.repeat(20_000)}b`);
+    expect(performance.now() - inicio).toBeLessThan(500);
+  });
+
+  it('muchas exclusiones (JSON en una línea) y muchos saltos de línea', () => {
+    const jsonEnLinea = Array.from({ length: 20_000 }, (_, i) => `{"a": "{b${i}}"}`).join('\n');
+    const saltos = `Write a summary${'\n'.repeat(19_000)}x`;
+    const inicio = performance.now();
+    variablesDe(jsonEnLinea);
+    confianzaPrompt(saltos);
+    expect(performance.now() - inicio).toBeLessThan(1500);
+  });
+});
+
+describe('revisión: lo que no son prompts (con el detector real)', () => {
+  const casos: Record<string, string> = {
+    'README con Build y Testing':
+      '# Mi proyecto\n\nUna librería para leer CSV.\n\n## Build\n\npnpm build\n\n## Testing\n\npnpm test\n',
+    'documento con Arquitectura y Convenciones':
+      '# Diseño\n\n## Arquitectura\n\nTres capas.\n\n## Convenciones\n\nCamelCase en todo.\n',
+    'idea que nombra CLAUDE.md': 'Actualizar el CLAUDE.md con la regla de commits',
+    'idea que nombra AGENTS.md': 'mirar AGENTS.md del repo de Pedro',
+    hashtags: '#build roto otra vez en main\n#testing hay que arreglar los flaky',
+    'datos de un servidor': 'Servidor de pruebas\nSistema: Ubuntu 22.04\nUsuario: root\nIP: 10.0.0.3',
+    'informe de fallo': 'El botón no responde.\nSystem: macOS 14.2\nUser: diego\nBrowser: Firefox',
+    'README con `<paquete>`':
+      '# Herramienta\n\nInstala con `pnpm add <paquete>` y luego:\n\nEscribe el nombre del archivo y pulsa Enter para empezar a trabajar con él en tu equipo.',
+    TypeScript:
+      '// Return the user list\nexport async function usuarios(): Promise<User[]> {\n  return api.get<User>("/u");\n}\n',
+    Python: 'def saludo(nombre):\n    # Return a greeting\n    return f"Hola {nombre}, tienes {n} mensajes"\n',
+    Jinja:
+      '<ul>\n{% for item in items %}\n  <li>{{ item.name }}</li>\n{% endfor %}\n</ul>\nNever edit this file by hand, it is generated from the template.',
+    receta:
+      'Receta de lentejas\n1. Pon las lentejas en remojo.\n2. Escribe la lista de la compra.\n3. Nunca añadas sal al principio porque se endurecen y tardan más en cocer bien.',
+    correo:
+      'Hola Ana,\n\nRevisa el documento que te envío antes del viernes, por favor. Siempre que puedas, responde con tus comentarios en el mismo hilo para no perder nada de la respuesta.\n\nUn saludo,\nDiego',
+    'lista de tareas':
+      '- Revisa el PR de Luis\n- Escribe el changelog\n- Nunca hagas push a main sin revisar los tests primero, que luego pasa lo que pasa en producción.',
+    HTML: '<html>\n<body>\n<header>\n<nav>Menú</nav>\n</header>\n<form>\n<button>Enviar</button>\n</form>\n<footer>Pie</footer>\n</body>\n</html>\nAlways keep this file valid.',
+    'YAML de varios documentos': '---\nname: api\ndescription: servicio\n---\nname: web\ndescription: front\n',
+  };
+  for (const [nombre, texto] of Object.entries(casos))
+    it(nombre, () => {
+      expect(confianzaPrompt(texto), nombre).toBe(0);
+      expect(detectar({ texto }, REGISTRO).lector).not.toBe('prompt');
+    });
+
+  it('las trazas de Python no ofrecen la duda con Prompt', () => {
+    for (const f of ['python/04.txt', 'python/05.txt', 'variantes/py-chain.txt', 'variantes/py-win-stdlib.txt']) {
+      const texto = readFileSync(join(process.cwd(), 'fixtures/trazas', f), 'utf8');
+      expect(confianzaPrompt(texto), f).toBe(0);
+      expect(variablesDe(texto).map(escrituraDe), f).not.toContain('<module>');
+    }
+  });
+});
+
+describe('revisión: prompts que no se reconocían', () => {
+  it('papeles y encargos en la primera línea', () => {
+    for (const texto of [
+      "You are a helpful assistant that answers questions about the user's calendar. Be concise and friendly. If you do not know the answer, say so.",
+      'You will be given a customer email. Classify its sentiment as positive, negative or neutral and explain your reasoning briefly in one sentence.',
+      'Vas a actuar como un tutor de matemáticas para estudiantes de secundaria. Explica cada paso con ejemplos sencillos y pregunta si lo han entendido.',
+      'Te paso un artículo. Quiero que lo resumas en cinco puntos clave, en español neutro, sin opiniones propias y citando las cifras exactas del texto.',
+    ])
+      expect(detectar({ texto }, REGISTRO).lector, texto).toBe('prompt');
+  });
+
+  it('«You are a … agent» es un agente; un CLAUDE.md soltado se reconoce por su nombre', () => {
+    const agente =
+      'You are a code review agent. Your job is to find bugs in the diff.\n\nRules:\n- Only report real bugs.\n- Be concise.';
+    expect(analizarPrompt(agente).forma).toBe('agente');
+    expect(confianzaPrompt('# Proyecto\n\nNotas sueltas del proyecto.', 'CLAUDE.md')).toBe(0.85);
+    expect(analizarPrompt('# Proyecto\n\nNotas.', 'AGENTS.md').forma).toBe('claude-md');
+  });
+
+  it('variables con letras de cualquier alfabeto; Handlebars sin escapar no es una variable', () => {
+    expect(variablesDe('{año} {{nombre_ñ}} <tú>').map(escrituraDe)).toEqual(['{año}', '{{nombre_ñ}}', '<tú>']);
+    expect(variablesDe('{{{html}}}')).toEqual([]);
+  });
+
+  it('no son variables: genéricos, teclas, etiquetas vacías, código en línea y `~~~`', () => {
+    expect(variablesDe('Pulsa <Enter> o <Esc>; usa <meta> y <link>; Map<K, V> y List<T>')).toEqual([]);
+    expect(variablesDe('Usa `format!("{name}")` y `{{x}}` como ejemplo')).toEqual([]);
+    expect(variablesDe('~~~\n{x}\n~~~\nY {y}').map(escrituraDe)).toEqual(['{y}']);
+    expect(variablesDe('```\n{x} sin cerrar')).toEqual([]);
+  });
+
+  it('destino: ni Claude Shannon ni gpt-partition-table; una skill con `model` sigue siendo skill', () => {
+    expect(destinoDe('El algoritmo de Claude Shannon', 'libre')).toBeNull();
+    expect(destinoDe('Usa gpt-partition-table', 'libre')).toBeNull();
+    expect(destinoDe('Usa GPT-4o', 'libre')).toBe('GPT');
+    expect(analizarPrompt('---\nname: x\ndescription: y\nmodel: sonnet\n---\n\nHaz esto.').forma).toBe('skill');
+  });
+
+  it('secciones: también las listas numeradas de primer nivel', () => {
+    expect(seccionesDe('1. Lo que está bien\n2. Lo que falta\n   1. anidada')).toEqual([
+      'Lo que está bien',
+      'Lo que falta',
+    ]);
+  });
+
+  it('una forma desconocida en el YAML se lee como prompt libre', () => {
+    expect(lectorPrompt.resumenLegible?.({ forma: 'rara', variables: [] }, 'es')).toBe('Prompt · 0 variables');
+  });
+});

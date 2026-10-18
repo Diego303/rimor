@@ -7,7 +7,15 @@ import type { Elemento } from '@rimor/formato';
 import type { Idioma } from '../../i18n/formatos';
 import { fmtNumero } from '../../i18n/formatos';
 import type { Borrador, Entrada, Lector } from '../contrato';
-import { analizarPrompt, confianzaPrompt, type DatosPrompt, frontmatterDe } from './analisis';
+import {
+  ARCHIVOS_DE_AGENTE,
+  analizarPrompt,
+  confianzaPrompt,
+  type DatosPrompt,
+  encabezadoDe,
+  FORMAS,
+  frontmatterDe,
+} from './analisis';
 import { textos } from './textos';
 
 export type { DatosPrompt } from './analisis';
@@ -19,7 +27,10 @@ export function tituloDePrompt(texto: string): string {
   const fm = frontmatterDe(texto);
   if (fm?.name) return fm.name.slice(0, LARGO_TITULO);
   const sinFm = texto.replace(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/, '');
-  const encabezado = /^#{1,6}\s+(.+?)\s*#*\s*$/m.exec(sinFm)?.[1];
+  const encabezado = sinFm
+    .split('\n')
+    .map(encabezadoDe)
+    .find((h) => h)?.titulo;
   if (encabezado) return encabezado.slice(0, LARGO_TITULO);
   const primera = (sinFm.split('\n').find((l) => l.trim()) ?? '').trim();
   const frase = (/^(.+?[.:!?])(?:\s|$)/.exec(primera)?.[1] ?? primera).replace(/[.:]$/, '');
@@ -36,21 +47,25 @@ export const lectorPrompt: Lector<DatosPrompt> = {
   version: 1,
   textos,
 
-  detectar: (e: Entrada) => (e.texto !== undefined ? confianzaPrompt(e.texto) : 0),
+  detectar: (e: Entrada) => (e.texto !== undefined ? confianzaPrompt(e.texto, e.nombre) : 0),
 
   async leer(e: Entrada): Promise<Borrador> {
     const texto = e.texto ?? '';
-    const d = analizarPrompt(texto);
+    const d = analizarPrompt(texto, e.nombre);
+    // Un `CLAUDE.md` o un `AGENTS.md` soltado como archivo se reconoce por su nombre: se guarda para derivar igual.
+    const archivo = e.nombre && ARCHIVOS_DE_AGENTE.test(e.nombre) ? e.nombre : undefined;
     return {
-      titulo: tituloDePrompt(texto),
+      titulo: archivo ?? tituloDePrompt(texto),
       original: texto,
       resumen: lectorPrompt.resumen(d),
+      ...(archivo ? { metadatos: { archivo_de_agente: archivo } } : {}),
     };
   },
 
   async derivar(el: Elemento): Promise<DatosPrompt> {
     if (el.original === null) throw new Error('prompt.sinOriginal');
-    return analizarPrompt(el.original);
+    const archivo = (el.frontmatter as Record<string, unknown>).archivo_de_agente;
+    return analizarPrompt(el.original, typeof archivo === 'string' ? archivo : undefined);
   },
 
   // Como el Anexo B: `{ variables: [adr, contexto], tokens_aprox: 410, destino: "Claude" }`.
@@ -62,7 +77,7 @@ export const lectorPrompt: Lector<DatosPrompt> = {
   }),
 
   resumenLegible(r, idioma) {
-    const forma = typeof r.forma === 'string' ? r.forma : 'libre';
+    const forma = FORMAS.includes(r.forma as never) ? (r.forma as string) : 'libre';
     const n = Array.isArray(r.variables) ? r.variables.length : 0;
     const base = t(idioma, 'legible', {
       forma: t(idioma, `formas.${forma}`),
@@ -79,9 +94,10 @@ export const lectorPrompt: Lector<DatosPrompt> = {
     let primera: string;
     if ((d.forma === 'skill' || d.forma === 'agente') && d.nombre) {
       const clave = d.forma === 'skill' ? 'skill' : 'agente';
+      const nombre = d.nombre.length > LARGO_TITULO ? `${d.nombre.slice(0, LARGO_TITULO - 1)}…` : d.nombre;
       primera = n
-        ? t(i, `respuesta.${clave}`, { nombre: d.nombre, n })
-        : t(i, `respuesta.${clave}SinVariables`, { nombre: d.nombre, tokens });
+        ? t(i, `respuesta.${clave}`, { nombre, n })
+        : t(i, `respuesta.${clave}SinVariables`, { nombre, tokens });
     } else if (d.forma === 'claude-md' && !n) primera = t(i, 'respuesta.claudeMd', { tokens });
     else primera = n ? t(i, 'respuesta.conVariables', { n }) : t(i, 'respuesta.sinVariables', { tokens });
     return { texto: [{ t: 'texto', v: `${primera}${copiar}` }] };

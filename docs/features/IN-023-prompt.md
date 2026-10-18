@@ -82,6 +82,7 @@ Como la referencia:
 | Texto en imperativo que no es para un modelo (una receta, una lista de tareas) | Exige señales de modelo (segunda persona + rol, variables, secciones o palabras de IA) y una longitud mínima |
 | Dónde recordar los valores | En el navegador (`localStorage`), no en el espacio: son de un caso concreto y pueden ser sensibles |
 | Varios resultados el mismo día | Sufijo `-2`, `-3` en el archivo |
+| Cómo reconocer un `CLAUDE.md` pegado sin su nombre | Por su título, su arranque o su lista de reglas (decidido en la verificación); soltado como archivo, por su nombre |
 
 ## Autorrevisión
 
@@ -96,3 +97,37 @@ Cubre las cinco tareas y las dos pruebas de la ficha (sustitución con llaves; s
 - Las exclusiones (código y JSON) y las etiquetas que se cierran se calculan en una pasada lineal; la detección mira los primeros 20.000 caracteres.
 - Los encabezados Markdown no cuentan como estructura de prompt al detectar (un documento también los tiene); sí las variables y las secciones XML.
 
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 23:22): tipos 0 errores; Biome, colores y textos, OK; Vitest 53 archivos y 858 pruebas, OK; construcción OK; carga inicial 203,8 KB. **`pnpm deteccion`**: 100 % de 200 ejemplos (archivo, enlace, error, idea, log, mediciones, prompt y texto).
+
+| Criterio | Evidencia |
+|---|---|
+| Detecta prompts, roles, `CLAUDE.md`, skills y agentes | `fixtures/prompts/` (12, con reglas de proyecto, la plantilla de AGENTS.md y un título Setext) y 25 de la matriz; 31 de 32 `CLAUDE.md`/`AGENTS.md` reales pegados como texto (todos, soltados como archivo) |
+| No roba otros tipos | READMEs, documentos, ideas que nombran `CLAUDE.md`, datos de un sistema, código, Jinja, HTML, recetas, correos, listas de tareas, YAML; las trazas de Python ya no dan la duda; de 61 documentos reales, 2 son prompts (uno lo es de verdad) |
+| Variables, tokens, secciones, destino | Tres sintaxis con letras de cualquier alfabeto; exclusiones de código, JSON y código en línea; 4 caracteres por token; secciones; destino solo si se nombra un modelo |
+| Copiar con valores | Prueba de la vista: portapapeles, alternativa seleccionada (también al repetir), contador `copiasConValores`, valores recordados por prompt |
+| Resultados en `historial/REF/resultado-fecha.md` | Prueba del repositorio (sufijos, carreras, fuera de `historial/`, pestaña lectora) y de la vista (archivo, frontmatter, lista al momento, sin huérfanos si falla) |
+| Respuesta | «Prompt con 3 variables. Lo puedes copiar con valores.» en es y en; skill, agente, `CLAUDE.md` y sin variables; reglas de estilo |
+| Sustitución con llaves | Valores con `{{}}`, `{}`, `<>`, `$&` y `$1`, sin sustituir dos veces |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Retroceso cúbico en los encabezados** (`# a` + miles de espacios colgaba la detección): el encabezado se lee a mano, sin expresión.
+2. **READMEs, documentos e ideas tomados por `CLAUDE.md`**: cuenta el nombre del archivo, un primer título que lo dice (`# CLAUDE.md`, `Repository Guidelines`, «instrucciones para Claude Code», ATX o Setext), un párrafo de arranque dirigido al agente, la plantilla de Claude Code o una lista de reglas (3 viñetas o más y el 60 % con «nunca», «siempre», «antes de»…); nombrarlo en una frase no basta. El destino es Claude solo si lo nombra.
+3. **Falsos positivos**: roles solo con contenido (cuatro palabras o más en dos roles); sin verbos que abren líneas de código; código, trazas, XML, Jinja y documentos con varios encabezados fuera; HTML completo y teclas, genéricos y marcadores de traza (`<module>`) no son variables; YAML de varios documentos no es una skill.
+4. **Trazas de Python con la duda «¿Error o Prompt?»**: `<module>` ya no es variable y las trazas no son prompts.
+5. **Prompts que no se reconocían**: papel en la primera línea («You are a…», «You will be given…», «Vas a actuar como…») a 0,8; instrucciones contadas por frases («Te paso… Quiero que…»); «You are a … agent» es un agente; `CLAUDE.md` por su nombre de archivo; variables con letras no ASCII.
+6. **Archivo huérfano si fallaba la segunda escritura**: se borra (`borrarDeHistorial`) y el formulario sigue abierto.
+7. **Costes cuadráticos**: tramos excluidos por bisección, sin `\s*` con la bandera `m`, detección sobre los primeros 20.000 caracteres (y la forma, con la misma muestra al detectar y al derivar).
+8. **Exclusiones incompletas**: `~~~`, bloques sin cerrar hasta el final, código en línea (también para `{{x}}`) y listas de objetos JSON en una línea; `{{{x}}}` de Handlebars no se sustituye.
+9. **Destino**: ni «Claude Shannon» ni «gpt-partition-table».
+10. **Una skill con `model` era un agente**: agente solo con `tools`.
+11. **Listas numeradas de primer nivel** como secciones (lo prometía el diseño).
+12. **Vista**: la lista y la media se ponen al día al guardar sin esperar al elemento releído; la alternativa de copia se vuelve a seleccionar en cada intento; claves sin repetir.
+13. **Textos**: una forma desconocida se lee como «Prompt»; el `name` de una skill se recorta en la respuesta.
+
+Sin cambiar: una plantilla de correo con `{nombre}` y una instrucción («Responde a este correo…») se toma por prompt; un README que documenta plantillas con varias `{{variables}}` también (0,8). Un `CLAUDE.md` que es solo memoria del proyecto, sin reglas ni título que lo diga, pegado como texto, va a Texto (soltado como archivo, se reconoce).

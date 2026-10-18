@@ -308,11 +308,30 @@ describe('vista de Prompt', () => {
     const archivo = fm.resultados[0]?.archivo ?? '';
     expect(archivo).toMatch(/^historial\/PRM-0012\/resultado-\d{4}-\d{2}-\d{2}\.md$/);
     expect(await abierto.e?.repositorio.leerHistorial(archivo)).toContain('Le falta el contexto.');
+    // La lista y la media lo enseñan ya, sin esperar a que llegue el elemento releído.
+    expect(await otra.findByText('Resultados (1)')).toBeTruthy();
+    expect(otra.getByText('Valoración media: ★ 4,0 (1 uso)')).toBeTruthy();
     const leido = await abierto.e?.repositorio.leerElemento('PRM-0012');
     if (!leido?.ok) throw new Error('sin leer');
     otra.rerender(montar(leido.valor as typeof el));
     expect(await otra.findByText('Resultados (1)')).toBeTruthy();
-    expect(otra.getByText('Valoración media: ★ 4,0 (1 uso)')).toBeTruthy();
+
+    // Si el elemento no se puede actualizar, el archivo del resultado no se queda huérfano en el historial.
+    const repo = abierto.e?.repositorio;
+    if (!repo) throw new Error('sin repositorio');
+    const fallo = vi.spyOn(repo, 'actualizarElemento').mockResolvedValueOnce({
+      ok: false,
+      error: { codigo: 'almacen.soloLectura' },
+    } as never);
+    fireEvent.click(otra.getByRole('button', { name: 'Añadir resultado' }));
+    fireEvent.click(otra.getByLabelText('2 estrellas'));
+    fireEvent.click(otra.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(fallo).toHaveBeenCalled());
+    await waitFor(async () => expect(await repo.leerHistorial(archivo.replace('.md', '-2.md'))).toBeNull());
+    // El formulario sigue abierto para volver a intentarlo (el aviso de fallo va a la cola de avisos).
+    expect(otra.getByLabelText('Respuesta que obtuviste')).toBeTruthy();
+    expect(otra.getByText('Resultados (1)')).toBeTruthy();
+    fallo.mockRestore();
   });
 });
 

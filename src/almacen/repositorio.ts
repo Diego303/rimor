@@ -404,6 +404,13 @@ export class Repositorio {
     });
   }
 
+  /** Borra un archivo de `historial/` (el de un resultado que no se llegó a apuntar en su elemento). */
+  async borrarDeHistorial(ruta: string): Promise<void> {
+    this.comprobarEscritura();
+    if (!ruta.startsWith(`${CARPETA_HISTORIAL}/`)) throw new Error(`Ruta fuera del historial: «${ruta}»`);
+    await this.almacen.borrar(validarRuta(ruta));
+  }
+
   /** Un archivo de `historial/`, o `null` si no está. Leer no necesita el cerrojo. */
   async leerHistorial(ruta: string): Promise<string | null> {
     if (!ruta.startsWith(`${CARPETA_HISTORIAL}/`)) return null;

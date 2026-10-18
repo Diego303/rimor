@@ -64,12 +64,18 @@ async function copiarAlPortapapeles(texto: string): Promise<boolean> {
   }
 }
 
-function CopiarConValores({ el, datos, t }: PropsVista<DatosPrompt> & { t: T }) {
+function CopiarConValores({
+  el,
+  datos,
+  resultados,
+  t,
+}: PropsVista<DatosPrompt> & { resultados: readonly ResultadoPrompt[]; t: T }) {
   const espacio = useEspacioOpcional();
   const avisos = useAvisosOpcional();
   const clave = claveValores(espacio?.manifest.espacio.id ?? 'local', el.frontmatter.id);
   const [valores, setValores] = useState<Record<string, string>>(() => leerValores(clave));
-  const [listo, setListo] = useState<string | null>(null);
+  // `vez` cambia en cada intento: si vuelve a fallar con el mismo texto, se vuelve a seleccionar.
+  const [listo, setListo] = useState<{ texto: string; vez: number } | null>(null);
   const areaLista = useRef<HTMLTextAreaElement>(null);
   const id = useId();
 
@@ -92,10 +98,9 @@ function CopiarConValores({ el, datos, t }: PropsVista<DatosPrompt> & { t: T }) 
     if (await copiarAlPortapapeles(texto)) {
       setListo(null);
       avisos?.avisar(t('copiado'));
-    } else setListo(texto);
+    } else setListo((previo) => ({ texto, vez: (previo?.vez ?? 0) + 1 }));
   }
 
-  const resultados = resultadosDe(el.frontmatter);
   const media = valoracionMedia(resultados);
   const { idioma } = useT();
 
@@ -132,14 +137,22 @@ function CopiarConValores({ el, datos, t }: PropsVista<DatosPrompt> & { t: T }) 
           <p className="xs muted" role="status">
             {t('noCopiado')}
           </p>
-          <textarea ref={areaLista} readOnly rows={6} aria-label={t('textoListo')} value={listo} />
+          <textarea ref={areaLista} readOnly rows={6} aria-label={t('textoListo')} value={listo.texto} />
         </div>
       )}
     </Tarjeta>
   );
 }
 
-function Resultados({ el, t }: { el: PropsVista<DatosPrompt>['el']; t: T }) {
+interface PropsResultados {
+  el: PropsVista<DatosPrompt>['el'];
+  resultados: readonly ResultadoPrompt[];
+  /** Se ha guardado uno: la lista lo enseña ya, sin esperar a que llegue el elemento releído. */
+  alGuardar: (r: ResultadoPrompt) => void;
+  t: T;
+}
+
+function Resultados({ el, resultados, alGuardar, t }: PropsResultados) {
   const { idioma } = useT();
   const espacio = useEspacioOpcional();
   const soloLectura = useEspacio((s) => s.soloLectura);
@@ -150,30 +163,35 @@ function Resultados({ el, t }: { el: PropsVista<DatosPrompt>['el']; t: T }) {
   const [nota, setNota] = useState('');
   const [guardando, setGuardando] = useState(false);
   const nombreGrupo = useId();
-  const resultados = resultadosDe(el.frontmatter);
 
   async function guardar() {
     if (!espacio || valoracion < 1) return;
     setGuardando(true);
     const fecha = isoConZona(new Date()).slice(0, 10);
     const ref = el.frontmatter.ref;
+    const repo = espacio.repositorio;
+    let archivo: string | null = null;
     try {
-      const archivo = await espacio.repositorio.guardarEnHistorial(
+      archivo = await repo.guardarEnHistorial(
         baseResultado(ref, fecha),
         archivoResultado({ ref, fecha, valoracion, nota: nota.trim(), respuesta }),
       );
       const nuevo: ResultadoPrompt = { fecha, valoracion, nota: nota.trim(), archivo };
-      const r = await espacio.repositorio.actualizarElemento(el.frontmatter.id, (actual) => ({
+      const r = await repo.actualizarElemento(el.frontmatter.id, (actual) => ({
         ...actual,
         frontmatter: { ...conResultado(actual.frontmatter, nuevo), modificado: isoConZona(new Date()) },
       }));
       if (!r.ok) throw new Error(r.error.codigo);
+      archivo = null;
+      alGuardar(nuevo);
       setAbierto(false);
       setRespuesta('');
       setValoracion(0);
       setNota('');
       avisos?.avisar(t('resultadoGuardado'));
     } catch {
+      // Si el elemento no se pudo actualizar, el archivo del resultado no queda huérfano en el historial.
+      if (archivo) await repo.borrarDeHistorial(archivo).catch(() => undefined);
       avisos?.avisar(t('noGuardado'));
     } finally {
       setGuardando(false);
@@ -184,8 +202,9 @@ function Resultados({ el, t }: { el: PropsVista<DatosPrompt>['el']; t: T }) {
     <Detalles resumen={t('resultados')} recuento={resultados.length}>
       {resultados.length ? (
         <Huecos>
-          {resultados.map((r) => (
-            <Hueco key={r.archivo || `${r.fecha}-${r.nota}`} gravedad="resuelto">
+          {resultados.map((r, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: los resultados solo se añaden al final.
+            <Hueco key={i} gravedad="resuelto">
               <span className="row">
                 <b>
                   <span aria-hidden="true">{estrellas(r.valoracion)}</span>
@@ -252,6 +271,9 @@ export default function VistaPrompt({ el, datos }: PropsVista<DatosPrompt>) {
   const { idioma } = useT();
   const t = textos.t.bind(textos, idioma) as unknown as T;
   const trozos = useMemo(() => trozosDe(el.original ?? ''), [el.original]);
+  const [resultados, setResultados] = useState(() => resultadosDe(el.frontmatter));
+  // Cuando llega el elemento releído (o otro), manda lo que dice su frontmatter.
+  useEffect(() => setResultados(resultadosDe(el.frontmatter)), [el.frontmatter]);
   const cifras = Object.entries(lectorPrompt.cifras ?? {}).map(([nombre, f]) => [nombre, f(datos).texto] as const);
 
   return (
@@ -271,9 +293,9 @@ export default function VistaPrompt({ el, datos }: PropsVista<DatosPrompt>) {
         </pre>
       </Tarjeta>
 
-      {datos.variables.length > 0 && <CopiarConValores el={el} datos={datos} t={t} />}
+      {datos.variables.length > 0 && <CopiarConValores el={el} datos={datos} resultados={resultados} t={t} />}
 
-      <Resultados el={el} t={t} />
+      <Resultados el={el} resultados={resultados} alGuardar={(r) => setResultados((p) => [...p, r])} t={t} />
 
       <Detalles resumen={t('detalles')}>
         <dl className="kv">
