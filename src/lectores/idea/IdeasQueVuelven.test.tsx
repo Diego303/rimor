@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { AlmacenMemoria } from '../../almacen/memoria';
 import type { Cerrojos } from '../../almacen/pestanas';
 import { type DependenciasProveedor, ProveedorEspacio, useEspacioAbierto } from '../../espacio/Espacio';
+import { useEspacio } from '../../estado/espacio';
 import { ProveedorAvisos } from '../../ui/componentes';
 import { elementoFalso } from '../pruebas/falsos';
 import { IdeasQueVuelven } from './IdeasQueVuelven';
@@ -72,7 +73,9 @@ describe('ideas que vuelven', () => {
     expect(screen.queryByText('Convertir en investigación')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Más adelante' }));
     await waitFor(() => expect(document.querySelector('article.msg')).toBeNull());
-    expect(repositorio?.frontmatter('IDE-0001')?.vuelve).toBe(isoConZona(new Date(dia0.getTime() + 37 * DIA)));
+    expect(repositorio?.frontmatter('IDE-0001')?.vuelve).toBe(
+      isoConZona(new Date(dia0.getFullYear(), dia0.getMonth(), dia0.getDate() + 37)),
+    );
   });
 
   it('«Descartar» la deja descartada', async () => {
@@ -80,6 +83,15 @@ describe('ideas que vuelven', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Descartar' }));
     await waitFor(() => expect(repositorio?.frontmatter('IDE-0001')?.estado).toBe('descartada'));
     expect(document.querySelector('article.msg')).toBeNull();
+  });
+
+  it('en una pestaña que solo lee, el mensaje sale sin botones', async () => {
+    await montar(9);
+    expect(await screen.findByText(/Hace 9 días guardaste una idea/)).toBeTruthy();
+    // El espacio pinta el modo de la pestaña al abrir; aquí pasa a solo lectura (otra pestaña cogió el cerrojo).
+    act(() => useEspacio.setState({ soloLectura: true }));
+    expect(screen.queryByRole('button', { name: 'Más adelante' })).toBeNull();
+    useEspacio.setState({ soloLectura: false });
   });
 
   it('antes del día 7, nada', async () => {

@@ -20,6 +20,7 @@ export const textos = definirTextos(
     descartar: 'Descartar',
     pospuesta: 'Volverá dentro de 30 días',
     descartadaAviso: 'Idea descartada',
+    noGuardado: 'No se pudo guardar el cambio.',
   },
   {
     analizando: 'Saving the idea',
@@ -39,5 +40,6 @@ export const textos = definirTextos(
     descartar: 'Discard',
     pospuesta: 'It will come back in 30 days',
     descartadaAviso: 'Idea discarded',
+    noGuardado: 'The change could not be saved.',
   },
 );

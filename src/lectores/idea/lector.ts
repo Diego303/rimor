@@ -14,15 +14,18 @@ export const ESTADOS_ELEGIBLES: readonly EstadoIdea[] = ['semilla', 'explorando'
 /** Menos de esto (y sin otras señales) es una idea (plan §8.8). */
 export const LARGO_IDEA = 280;
 
-/** Señales de que un texto corto es otra cosa: un enlace, un log, una traza, mediciones, código, un comando o Markdown. */
+/**
+ * Señales de que un texto corto es otra cosa: un enlace, un log, una traza, mediciones, código, un comando o
+ * Markdown. Solo sintaxis, nunca palabras sueltas: «Measure the return rate» o «Revisar el stack trace» son ideas.
+ */
 const SENALES_DE_OTRO = [
   /https?:\/\//i,
-  /\b\d{1,2}:\d{2}(?::\d{2})?\b/, // hora
-  /\b(?:ERROR|WARN|WARNING|INFO|DEBUG|TRACE|FATAL)\b/,
-  /\b(?:Traceback|panicked at|Exception|at \S+\(|stack trace)\b/i,
+  /\b\d{1,2}:\d{2}:\d{2}\b/, // marca de tiempo de log (con segundos; «a las 10:30» es una idea)
+  /^\s*\[?(?:ERROR|WARN|WARNING|INFO|DEBUG|TRACE|FATAL)\]?[\s:]|\[(?:ERROR|WARN|WARNING|INFO|DEBUG|TRACE|FATAL)\]/m, // nivel
+  /\b\w*(?:Error|Exception)\s*:|^\s*(?:panic|Traceback|thread '.*' panicked)\b|panicked at|^\s*at \S+[.(:]/m, // traza
   /\d+(?:[.,]\d+)?\s*(?:ns|µs|us|ms|s|KB|MB|GB|%)\b.*\d+(?:[.,]\d+)?\s*(?:ns|µs|us|ms|s|KB|MB|GB|%)\b/i, // mediciones
-  /[{};]\s*$|=>|\b(?:def|function|fn|const|let|var|import|return|class)\s/m, // código
-  /^\s*(?:\$|>\s|(?:sudo|git|npm|pnpm|docker|kubectl|curl|ssh|cd|ls|cat|grep)\s)/m, // comando
+  /[{};]\s*$|=>|\w\.\w+\(|\w\(\)|^\s*[A-Za-z_][\w.]*\s*=\s*\S|^\s*(?:SELECT|INSERT INTO|UPDATE|DELETE FROM)\b/m, // código
+  /^\s*(?:\$\s|>\s|(?:sudo|git|npm|pnpm|npx|yarn|docker|kubectl|curl|wget|ssh|ssh-keygen|cd|ls|cat|grep|find|rm|cp|mv|mkdir|chmod|echo|export|make|cargo|pip|python|python3|node|go|brew|apt|systemctl)\s+\S)/m, // comando
   /^\s*(?:#{1,6}\s|[-*+]\s|\d+\.\s|```)/m, // Markdown
 ];
 
@@ -46,7 +49,8 @@ export const lectorIdea: Lector<DatosIdea> = {
   version: 1,
   textos,
 
-  detectar: (e: Entrada) => (e.texto !== undefined && pareceIdea(e.texto) ? 0.7 : 0),
+  // Un archivo soltado nunca es una idea (un `.env` o un `.yaml` de una línea): lo deciden su tipo o Texto.
+  detectar: (e: Entrada) => (!e.archivos?.length && e.texto !== undefined && pareceIdea(e.texto) ? 0.7 : 0),
 
   async leer(e: Entrada): Promise<Borrador> {
     const texto = e.texto ?? '';

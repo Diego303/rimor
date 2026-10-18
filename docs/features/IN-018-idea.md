@@ -68,7 +68,35 @@ Cubre las cuatro tareas y la aceptación, con el alcance de la incoherencia 1 (s
 ## Cambios durante la implementación
 
 - **`vuelve` solo se escribe al posponer**: la primera vuelta se calcula desde `creado` (`cuandoVuelve`), que lleva el reloj de la captura. Así el lector no necesita reloj y el reloj simulado de las pruebas manda.
-- Cambiar el estado desde la vista quita `vuelve`; si vuelve a semilla, cuenta otra vez desde que se guardó.
+- Cambiar el estado desde la vista conserva `vuelve` (una idea pospuesta que vuelve a semilla sigue esperando a su fecha) y actualiza `modificado`.
 - Las reglas `.msg`, `.mhead`, `.mprev` y `.mact` de la pantalla de referencia (con su «Estilo Instrumento»: radio 14, sin borde, sombra) quedan en `componentes.css` para el feed de IN-026.
 - Dos pruebas de la captura usaban textos cortos como ejemplo de Texto; ahora son ideas, y se ajustaron con textos largos (y una prueba nueva de que lo corto sin señales es una idea).
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 19:47): tipos 0 errores; Biome, colores y textos, OK; Vitest 48 archivos y 592 pruebas, OK; construcción OK; carga inicial 178,2 KB. **`pnpm deteccion`**: archivo, idea y texto 25/25 cada uno (100 %).
+
+| Criterio | Evidencia |
+|---|---|
+| Detecta texto corto sin otras señales, o `/idea` | `idea.test.ts` (casos que sí y que no) y la matriz con el corpus de ideas; `/idea` lo resuelve el compositor (IN-015) |
+| Estados (convertida solo desde IN-070) | Vista con los cuatro elegibles; prueba de cambio de estado |
+| Resurgimiento a los 7 días y, pospuesta, a los 30 | `idea.test.ts` e `IdeasQueVuelven.test.tsx` con el reloj simulado: día 6 no, día 7 sí; pospuesta, día 36 no, día 37 sí |
+| Respuesta de la ficha | Prueba en es y en, e instantánea |
+| Sin «Convertir en investigación» | Prueba del mensaje |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Errores, código y comandos cortos se tomaban por ideas** (`TypeError: …`, `panic: …`, `SELECT …`, `console.log(x)`, `PORT=8080`, `rm -rf …`, `echo $PATH`): señales de traza, código y comando ampliadas, siempre por sintaxis.
+2. **Un archivo de texto corto soltado se guardaba como idea**: un archivo nunca es una idea.
+3. **En una pestaña que solo lee los botones no hacían nada, en silencio**: no se ofrecen; y si una escritura falla, se avisa («No se pudo guardar el cambio»).
+4. **Palabras corrientes impedían detectar ideas** («let», «class», «return», «function», «stack trace», «DEBUG», «10:30»): fuera las palabras sueltas; los niveles de log cuentan al principio de línea o entre corchetes y las horas, con segundos.
+5. **Cambiar el estado, posponer o descartar no tocaba `modificado`**: ahora sí (y Deshacer ya no borra una idea editada).
+6. **La vista no seguía los cambios de fuera**: se sincroniza con el repositorio y con el modo de la pestaña.
+7. **El mensaje no aparecía solo al llegar su día**: un temporizador despierta cuando toca la siguiente vuelta (y como mucho cada hora).
+8. **«Día 7» eran 7×24 horas**: días de calendario en la zona del usuario (vuelve al empezar el día; los cambios de hora no la mueven).
+9. **Volver a «semilla» se saltaba el aplazamiento**: se conserva `vuelve`.
+10. **Una idea sin `estado`** se trata como semilla en todas partes.
+11. **El orden de las que vuelven** es por instante (`Date.parse`), no por el texto de la fecha.
 

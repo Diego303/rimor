@@ -6,12 +6,16 @@
 import type { FrontmatterComun } from '@rimor/formato';
 import { useEffect, useState } from 'react';
 import { useEspacioOpcional } from '../../espacio/Espacio';
+import { useEspacio } from '../../estado/espacio';
 import { useT } from '../../i18n/useT';
 import { RespuestaRimor } from '../../respuestas/RespuestaRimor';
 import { Boton } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
-import { descartar, diasDesde, posponer, vuelven } from './resurgir';
+import { descartar, diasDesde, posponer, proximaVuelta, vuelven } from './resurgir';
 import { textos } from './textos';
+
+/** Como mucho se espera esto entre repasos, aunque no toque ninguna vuelta (relojes que saltan, suspensión). */
+const REPASO_MAXIMO_MS = 60 * 60 * 1000;
 
 interface Props {
   /** El reloj (las pruebas lo simulan). */
@@ -21,15 +25,30 @@ interface Props {
 export function IdeasQueVuelven({ reloj = () => new Date() }: Props) {
   const { idioma } = useT();
   const espacio = useEspacioOpcional();
+  const soloLectura = useEspacio((s) => s.soloLectura);
   const avisos = useAvisosOpcional();
   const [ideas, setIdeas] = useState<FrontmatterComun[]>([]);
 
+  // Se recalcula con cada cambio del espacio y, con la app abierta, cuando le toca volver a la siguiente.
   // biome-ignore lint/correctness/useExhaustiveDependencies: el reloj se lee al recalcular; cambiarlo no recalcula.
   useEffect(() => {
     if (!espacio) return undefined;
-    const calcular = () => setIdeas(vuelven(espacio.repositorio.elementos(), reloj()));
+    let despertador: ReturnType<typeof setTimeout> | undefined;
+    const calcular = () => {
+      clearTimeout(despertador);
+      const ahora = reloj();
+      const elementos = espacio.repositorio.elementos();
+      setIdeas(vuelven(elementos, ahora));
+      const proxima = proximaVuelta(elementos, ahora);
+      const espera = proxima === null ? REPASO_MAXIMO_MS : Math.min(proxima - ahora.getTime() + 1000, REPASO_MAXIMO_MS);
+      despertador = setTimeout(calcular, Math.max(espera, 1000));
+    };
     calcular();
-    return espacio.alCambiar(calcular);
+    const baja = espacio.alCambiar(calcular);
+    return () => {
+      baja();
+      clearTimeout(despertador);
+    };
   }, [espacio]);
 
   if (!espacio || !ideas.length) return null;
@@ -39,7 +58,8 @@ export function IdeasQueVuelven({ reloj = () => new Date() }: Props) {
     const r = await espacio?.repositorio
       .actualizarElemento(fm.id, (el) => ({ ...el, frontmatter: cambio(el.frontmatter) }))
       .catch(() => null);
-    if (r?.ok) avisos?.avisar(aviso);
+    // Nunca en silencio: si no se pudo guardar, se dice.
+    avisos?.avisar(r?.ok ? aviso : t('noGuardado'));
   }
 
   return (
@@ -55,14 +75,17 @@ export function IdeasQueVuelven({ reloj = () => new Date() }: Props) {
               ],
             }}
           />
-          <div className="mact">
-            <Boton pequeno onClick={() => void actuar(fm, (f) => posponer(f, reloj()), t('pospuesta'))}>
-              {t('masAdelante')}
-            </Boton>
-            <Boton pequeno onClick={() => void actuar(fm, descartar, t('descartadaAviso'))}>
-              {t('descartar')}
-            </Boton>
-          </div>
+          {/* En una pestaña que solo lee no se ofrece lo que no podría guardarse. */}
+          {!soloLectura && (
+            <div className="mact">
+              <Boton pequeno onClick={() => void actuar(fm, (f) => posponer(f, reloj()), t('pospuesta'))}>
+                {t('masAdelante')}
+              </Boton>
+              <Boton pequeno onClick={() => void actuar(fm, (f) => descartar(f, reloj()), t('descartadaAviso'))}>
+                {t('descartar')}
+              </Boton>
+            </div>
+          )}
         </article>
       ))}
     </>
