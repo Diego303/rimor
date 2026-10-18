@@ -1,0 +1,173 @@
+/* Carcasa de la app, portada de «Pantallas de Rimor» (.shell, .rail, .rb, .space, .amain, .col) con sus
+   reglas «Estilo Instrumento» (ADR-0004). El marco es el contenedor «app» de la consulta a 720 px. */
+.marco {
+  container-type: inline-size;
+  container-name: app;
+  height: 100dvh;
+  background: var(--app);
+}
+.shell {
+  display: grid;
+  grid-template-columns: 212px minmax(0, 1fr);
+  height: 100dvh;
+}
+.rail {
+  grid-column: 1;
+  grid-row: 1;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  overflow-y: auto;
+}
+.rail .rbrand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 8px 14px;
+}
+.rb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  padding: 7px 9px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13.5px;
+  text-align: left;
+  width: 100%;
+  min-width: 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+.rb span.t {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rb:hover {
+  background: var(--panel-2);
+}
+.rb[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.rb .n {
+  margin-left: auto;
+  font-family: var(--f-m);
+  font-size: 11px;
+  color: var(--muted);
+}
+.rb[aria-current="page"] .n {
+  color: var(--key-text);
+}
+.rail .sec {
+  margin: 14px 9px 3px;
+}
+.rail .space {
+  margin-top: auto;
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 10px 9px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  background: transparent;
+  text-align: left;
+  width: 100%;
+  text-decoration: none;
+}
+.rail .space::before {
+  content: "";
+  display: block;
+  height: 38px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: radial-gradient(circle, var(--grille) 1.5px, transparent 2px) 0 0 / 8px 8px;
+}
+.rail .space b {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.amain {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 22px 24px 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.col {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 28px;
+  flex: 1;
+}
+.col.wide {
+  max-width: none;
+}
+@container app (max-width: 720px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .rail {
+    grid-column: 1;
+    grid-row: 2;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: 0;
+    border-top: 1px solid var(--line);
+    padding: 6px;
+    gap: 2px;
+    z-index: 4;
+  }
+  .rail .sec,
+  .rail .space,
+  .rail .rb.sub,
+  .rail .rbrand {
+    display: none;
+  }
+  .rb {
+    width: auto;
+    flex: none;
+    white-space: nowrap;
+    min-height: 40px;
+  }
+  .amain {
+    grid-column: 1;
+    grid-row: 1;
+    padding: 16px 14px 0;
+  }
+  .g2,
+  .g3,
+  .g4,
+  .split {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .hide-m {
+    display: none !important;
+  }
+  .ccol {
+    bottom: 0;
+  }
+}

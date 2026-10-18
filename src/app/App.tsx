@@ -1,16 +1,19 @@
 /**
  * Raíz de la isla de Rimor: el único árbol React de la app (ADR-0002).
- * IN-008 sustituye este esqueleto por la carcasa completa con su router.
+ * Monta el router; `#/muestras` (solo en desarrollo) se pinta fuera de la carcasa, a pantalla completa.
  */
-import { lazy, Suspense } from 'react';
+import { RouterProvider } from '@tanstack/react-router';
+import { lazy, Suspense, useState } from 'react';
 import { iniciarIdioma } from '../i18n/iniciar';
+import { crearRouter } from '../rutas/rutas';
 
 iniciarIdioma();
 
-// Solo en desarrollo; en producción `import.meta.env.DEV` es falso y Vite elimina el import.
+// En producción `import.meta.env.DEV` es falso y Vite elimina el import.
 const Muestras = import.meta.env.DEV ? lazy(() => import('../ui/muestras/Muestras')) : null;
 
 export function App() {
+  const [router] = useState(() => crearRouter());
   if (Muestras && location.hash.startsWith('#/muestras')) {
     return (
       <Suspense>
@@ -18,10 +21,5 @@ export function App() {
       </Suspense>
     );
   }
-  return (
-    <div className="carcasa">
-      <nav className="rail" />
-      <main className="amain" />
-    </div>
-  );
+  return <RouterProvider router={router} />;
 }

@@ -36,7 +36,76 @@
     "en": "English"
   },
   "comun": {
-    "vez": { "one": "{n} time", "other": "{n} times" },
-    "enesimaVez": "{ordinal} time"
+    "vez": {
+      "one": "{n} time",
+      "other": "{n} times"
+    },
+    "enesimaVez": "{ordinal} time",
+    "cargandoPantalla": "Opening the screen…"
+  },
+  "rail": {
+    "etiqueta": "Rimor",
+    "inicio": "Home",
+    "buscar": "Search",
+    "colecciones": "Collections",
+    "ajustes": "Settings",
+    "copiaAlDia": "Backup up to date",
+    "copiaPendiente": "Backup due",
+    "espacioSinNombre": "Workspace",
+    "ultimaCopia": "Last backup: {cuando}",
+    "sinCopia": "No backup yet"
+  },
+  "atajos": {
+    "titulo": "Keyboard shortcuts",
+    "luego": "then",
+    "cerrar": "Close",
+    "buscar": "Search",
+    "irInicio": "Go to Home",
+    "irBuscar": "Go to Search",
+    "ayuda": "Show this help"
+  },
+  "errores": {
+    "pantalla": {
+      "titulo": "This screen failed",
+      "texto": "The rest of Rimor keeps working and nothing was lost.",
+      "reintentar": "Try again"
+    }
+  },
+  "pantallas": {
+    "inicio": {
+      "titulo": "Home",
+      "vacioTitulo": "What you capture will show up here",
+      "vacio": "Whatever you paste will appear here with what Rimor understood."
+    },
+    "elemento": {
+      "titulo": "Item",
+      "vacioTitulo": "Item view",
+      "vacio": "Here you will see what Rimor computed from this item."
+    },
+    "hilo": {
+      "titulo": "Thread",
+      "vacioTitulo": "Thread",
+      "vacio": "Here you will see the thread's items in order, with what you learned."
+    },
+    "buscar": {
+      "titulo": "Search",
+      "vacioTitulo": "Search everything you saved",
+      "vacio": "Type words or filters such as tipo:log or #tag."
+    },
+    "coleccion": {
+      "titulo": "Collection",
+      "vacioTitulo": "Empty collection",
+      "vacio": "Add items with @collection when capturing."
+    },
+    "datos": {
+      "titulo": "Data and backups",
+      "vacioTitulo": "Data and backups",
+      "vacio": "Here you will see how much space is used, whether it is protected and when it was backed up."
+    },
+    "ajustes": {
+      "titulo": "Settings",
+      "vacioTitulo": "Settings",
+      "vacio": "Theme, language, detection, secrets, replies and backups."
+    }
   }
 }

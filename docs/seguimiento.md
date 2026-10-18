@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 03:19
-**Ahora:** IN-008 · Carcasa, navegación, atajos y diseño adaptable · fase implementación
+**Última actualización:** 2026-10-18 03:25
+**Ahora:** IN-008 · Carcasa, navegación, atajos y diseño adaptable · fase verificación
 **Siguiente:** IN-009 · Saneado y política de seguridad de contenido
 **Progreso:** F0 9/9 · v0.1 7/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 16/99
 
@@ -25,7 +25,7 @@
 | IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | hecha | 4177d63 58a44ca 9c0cb34 | docs/features/IN-089-marca.md |
 | IN-005 | Almacén OPFS y en memoria | v0.1 | 1 | hecha | 8683837 1212e5a 06512fc | docs/features/IN-005-almacen.md |
 | IN-006 | Caché de derivados e índice | v0.1 | 1 | hecha | 07a0baf 74e501c 4b6ee55 | docs/features/IN-006-cache.md |
-| IN-008 | Carcasa, navegación, atajos y diseño adaptable | v0.1 | 1 | en análisis y diseño | — | docs/features/IN-008-carcasa.md |
+| IN-008 | Carcasa, navegación, atajos y diseño adaptable | v0.1 | 1 | en implementación | bd270d9 | docs/features/IN-008-carcasa.md |
 | IN-009 | Saneado y política de seguridad de contenido | v0.1 | 1 | pendiente | — | — |
 | IN-010 | Ocultación de secretos | v0.1 | 1 | pendiente | — | — |
 | IN-011 | Paquete de estadística | v0.1 | 1 | pendiente | — | — |
@@ -161,7 +161,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-008 | análisis y diseño | router por hash, raíl, atajos y límite de errores | … |
+| 2026-10-18 | IN-008 | implementación | pnpm verificar OK (182 pruebas, 112,7 KB) | … |
+| 2026-10-18 | IN-008 | análisis y diseño | router por hash, raíl, atajos y límite de errores | bd270d9 |
 | 2026-10-18 | IN-006 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | 4b6ee55 |
 | 2026-10-18 | IN-006 | implementación | pnpm verificar OK (165 pruebas) | 74e501c |
 | 2026-10-18 | IN-006 | análisis y diseño | IndexedDB con frontmatter, derivados, índice y reconciliación | 07a0baf |
@@ -194,5 +195,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-006 hecha. Siguiente: IN-008 (diseño y código en borrador en el scratchpad in008/).
-- Último `pnpm verificar`: OK (2026-10-18 06:10).
+- IN-008: implementado. Falta verificación.
+- Último `pnpm verificar`: OK (2026-10-18 06:30).

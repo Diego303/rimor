@@ -11,5 +11,6 @@ Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepacha
 - Símbolo «Señal» y logotipo como componentes que siguen al tema, favicon que cambia con el modo claro u oscuro, iconos de app y `theme-color`; `pnpm marca` optimiza los SVG de marca y genera el logotipo en contornos (IN-089).
 - Almacén de archivos del espacio en OPFS (en un Worker) y en memoria, con escritura atómica, cola de escrituras por archivo, repositorio de elementos con papelera y adjuntos sin duplicados, y coordinación para que solo una pestaña escriba (IN-005).
 - Caché del espacio en IndexedDB (frontmatter, derivados de los lectores e índice de búsqueda comprimido) que se pone al día con los archivos al abrir, leyendo solo lo nuevo o cambiado (IN-006).
+- Carcasa de la app: raíl con Inicio, Buscar, colecciones, Ajustes y el pie del espacio con su piloto de copia; rutas por hash para GitHub Pages; barra inferior por debajo de 720 px; atajos de teclado con ayuda en «?»; avisos efímeros y límite de errores por pantalla (IN-008).
 ### Cambiado
 ### Corregido

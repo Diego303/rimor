@@ -910,3 +910,22 @@ details.more > div {
 .rimor p {
   min-width: 0;
 }
+
+/* ---------- Diálogo ---------- */
+.dialogo {
+  border: 0;
+  padding: 16px 18px;
+  max-width: min(520px, calc(100% - 32px));
+  color: var(--ink);
+  box-shadow: var(--sombra-flotante);
+}
+.dialogo::backdrop {
+  background: var(--grille);
+}
+.contents {
+  display: contents;
+}
+.row.inline {
+  display: inline-flex;
+  gap: 4px;
+}

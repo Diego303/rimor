@@ -36,7 +36,76 @@
     "en": "English"
   },
   "comun": {
-    "vez": { "one": "{n} vez", "other": "{n} veces" },
-    "enesimaVez": "{ordinal} vez"
+    "vez": {
+      "one": "{n} vez",
+      "other": "{n} veces"
+    },
+    "enesimaVez": "{ordinal} vez",
+    "cargandoPantalla": "Abriendo la pantalla…"
+  },
+  "rail": {
+    "etiqueta": "Rimor",
+    "inicio": "Inicio",
+    "buscar": "Buscar",
+    "colecciones": "Colecciones",
+    "ajustes": "Ajustes",
+    "copiaAlDia": "Copia al día",
+    "copiaPendiente": "Toca hacer copia",
+    "espacioSinNombre": "Espacio",
+    "ultimaCopia": "Última copia: {cuando}",
+    "sinCopia": "Sin copia todavía"
+  },
+  "atajos": {
+    "titulo": "Atajos de teclado",
+    "luego": "luego",
+    "cerrar": "Cerrar",
+    "buscar": "Buscar",
+    "irInicio": "Ir a Inicio",
+    "irBuscar": "Ir a Buscar",
+    "ayuda": "Mostrar esta ayuda"
+  },
+  "errores": {
+    "pantalla": {
+      "titulo": "Esta pantalla ha fallado",
+      "texto": "El resto de Rimor sigue funcionando y no se ha perdido nada.",
+      "reintentar": "Volver a intentarlo"
+    }
+  },
+  "pantallas": {
+    "inicio": {
+      "titulo": "Inicio",
+      "vacioTitulo": "Aquí aparecerá lo que captures",
+      "vacio": "Lo que pegues aparecerá aquí con lo que Rimor haya entendido."
+    },
+    "elemento": {
+      "titulo": "Elemento",
+      "vacioTitulo": "Vista del elemento",
+      "vacio": "Aquí verás lo que Rimor ha calculado de este elemento."
+    },
+    "hilo": {
+      "titulo": "Hilo",
+      "vacioTitulo": "Hilo",
+      "vacio": "Aquí verás los elementos del hilo en orden, con lo que aprendiste."
+    },
+    "buscar": {
+      "titulo": "Buscar",
+      "vacioTitulo": "Busca en todo lo que has guardado",
+      "vacio": "Escribe palabras o filtros como tipo:log o #etiqueta."
+    },
+    "coleccion": {
+      "titulo": "Colección",
+      "vacioTitulo": "Colección vacía",
+      "vacio": "Añade elementos con @colección al capturar."
+    },
+    "datos": {
+      "titulo": "Datos y copias",
+      "vacioTitulo": "Datos y copias",
+      "vacio": "Aquí verás cuánto ocupa el espacio, si está protegido y cuándo se copió."
+    },
+    "ajustes": {
+      "titulo": "Ajustes",
+      "vacioTitulo": "Ajustes",
+      "vacio": "Tema, idioma, detección, secretos, respuestas y copias."
+    }
   }
 }

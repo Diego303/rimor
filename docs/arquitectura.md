@@ -21,6 +21,9 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi√
 |---|---|---|
 | `src/app/App.tsx` | Ra√≠z de la isla | 001 |
 | `src/layouts/Base.astro` | HTML base | 001 |
+| `src/rutas/` | Router por hash, `Carcasa`, `Rail`, `Pantalla`, `LimiteErrores` y una carpeta por pantalla | 008 |
+| `src/estado/espacio.ts` | Store de lo que pinta la carcasa (espacio, recuentos, colecciones, copia) | 008 |
+| `src/ui/atajos/` | Gestor de atajos (puro), hook y ayuda | 008 |
 | `src/ui/tema/` | Tokens, Tailwind sin preflight, base, fuentes, preferencia de tema y contraste | 002 |
 | `src/ui/componentes/` | Componentes base con las clases de las pantallas (ADR-0004) | 002 |
 | `src/ui/iconos/` | Iconos de las pantallas y aspecto de cada tipo | 002 |

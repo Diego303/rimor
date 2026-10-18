@@ -112,3 +112,12 @@ class GestorAtajos {
 ## Autorrevisión
 
 Cubre la ficha. Las pantallas son marcadores hasta su IN, con su título y un vacío útil.
+
+## Cambios durante la implementación
+
+- `#/muestras` se sigue pintando fuera del router (en `App.tsx`, solo en desarrollo): es una página a pantalla completa con dos marcos y no debe llevar la carcasa.
+- **Pantalla completa sin marco:** la carcasa ocupa `100dvh`, el raíl es una columna fija y el área principal se desplaza sola. Por eso, en móvil, la barra inferior es una fila propia de la rejilla (no `position: sticky` como en las pantallas) y el compositor (IN-015) se pegará al fondo del área principal, justo encima.
+- Los botones del raíl son enlaces (`<Link>` del router) con la clase `.rb`, para que funcionen el clic central, «abrir en otra pestaña» y el `aria-current`.
+- La barra inferior móvil da 40 px de alto a cada botón (diana táctil de la guía §5.4).
+- Diálogo de ayuda con `<dialog>` nativo y la clase `.dialogo` (sombra flotante, fondo `--grille`).
+- Carga inicial: 112,7 KB comprimidos (TanStack Router suma unos 36 KB); las pantallas van en carga diferida.
