@@ -1,0 +1,10 @@
+# API de pagos
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | uuid | clave |
+| creado | fecha | UTC |
+
+```json
+{"id": "a1"}
+```

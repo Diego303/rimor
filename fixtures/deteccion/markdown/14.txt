@@ -1,0 +1,10 @@
+# Servicio de colas
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | uuid | clave |
+| creado | fecha | UTC |
+
+```json
+{"id": "a1"}
+```

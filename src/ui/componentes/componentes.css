@@ -1125,6 +1125,31 @@ pre.code.prompt-texto {
   align-items: center;
   color: var(--warn);
 }
+/* Documento Markdown (IN-024): la fila de progreso y el índice, como la referencia. */
+.progreso-tareas {
+  justify-content: space-between;
+}
+.lista-secciones {
+  margin-top: 4px;
+}
+.seccion-indice {
+  justify-content: space-between;
+  padding: 5px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line-2);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+.seccion-indice:last-child {
+  border-bottom: 0;
+}
+.seccion-indice:hover .sm {
+  color: var(--accent);
+}
 .tabla-plantillas {
   min-width: 480px;
 }

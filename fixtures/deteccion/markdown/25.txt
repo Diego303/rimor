@@ -1,0 +1,9 @@
+Lista de la compra
+
+- [ ] Pan
+- [x] Leche
+- [ ] Café
+
+| Tienda | Día |
+|---|---|
+| Mercado | sábado |

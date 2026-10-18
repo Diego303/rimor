@@ -1,0 +1,11 @@
+# Changelog
+
+## [1.2.0] - 2026-10-01
+### Añadido
+- Exportar a CSV.
+### Corregido
+- Fallo al abrir archivos grandes.
+
+## [1.1.0] - 2026-09-01
+### Añadido
+- Modo oscuro.

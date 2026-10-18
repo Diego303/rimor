@@ -1,0 +1,15 @@
+# README
+
+Herramienta para convertir CSV a JSON.
+
+## Instalación
+
+```bash
+pnpm add csv2json
+```
+
+## Uso
+
+```bash
+csv2json datos.csv
+```

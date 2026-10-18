@@ -6,6 +6,9 @@ import { AlmacenMemoria } from '../almacen/memoria';
 import type { Cerrojos } from '../almacen/pestanas';
 import { type DependenciasProveedor, ProveedorEspacio, useEspacioAbierto } from '../espacio/Espacio';
 import VistaArchivo from './archivo/Vista';
+import { analizarMarkdown } from './markdown/analisis';
+import { indiceDe } from './markdown/indice';
+import VistaMarkdown from './markdown/Vista';
 import { lectorMediciones } from './mediciones/lector';
 import VistaMediciones from './mediciones/Vista';
 import { analizarPrompt } from './prompt/analisis';
@@ -227,6 +230,50 @@ describe('vista de Mediciones', () => {
     expect(otra.container.querySelectorAll('.legend i')).toHaveLength(0);
     // Los avisos de cada serie llevan su nombre delante.
     expect(screen.getAllByText(/^(Parse|Encode): Solo 5 mediciones/)).toHaveLength(2);
+  });
+});
+
+describe('vista de Documento Markdown', () => {
+  it('progreso, índice con hechas/total que lleva a su encabezado y documento saneado', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const texto = `${readFileSync(join(process.cwd(), 'fixtures/markdown/plan-cliente-http.md'), 'utf8')}\n<script>alert(1)</script>\n`;
+    const el = elementoFalso(13, texto, 'markdown');
+    const datos = analizarMarkdown(texto);
+    const { container } = render(<VistaMarkdown el={el} datos={datos} />);
+    expect(screen.getByText('6 de 14 tareas')).toBeTruthy();
+    expect(container.querySelector('.progreso-tareas .mono')?.textContent).toBe('43 %');
+    expect(container.querySelector('.meter')?.getAttribute('aria-valuenow')).toBe('43');
+    const filas = [...container.querySelectorAll('.seccion-indice')].map((b) => b.textContent);
+    expect(filas).toEqual([
+      '1. Objetivo',
+      '2. Cliente HTTP3/5',
+      '3. Streaming2/5',
+      '4. Dependencias1/2',
+      '5. Pruebas0/2',
+    ]);
+    // Cada entrada del índice tiene su encabezado con el mismo ancla en el documento pintado.
+    for (const s of indiceDe(datos)) expect(container.querySelector(`#rimor-${s.ancla}`), s.ancla).toBeTruthy();
+    const original = Element.prototype.scrollIntoView;
+    const desplazar = vi.fn();
+    Element.prototype.scrollIntoView = desplazar;
+    fireEvent.click(screen.getByRole('button', { name: /3\. Streaming/ }));
+    expect(desplazar).toHaveBeenCalledTimes(1);
+    Element.prototype.scrollIntoView = original;
+    // Saneado: sin scripts; las casillas de las tareas, deshabilitadas.
+    expect(container.querySelector('script')).toBeNull();
+    expect(container.querySelectorAll('input[type="checkbox"]').length).toBe(14);
+    expect(screen.getByText('Detalles')).toBeTruthy();
+  });
+
+  it('sin tareas, la tarjeta es solo el índice', () => {
+    const texto = '# Arquitectura\n\n## Capas\n\nTexto.\n\n## Datos\n\nMás texto.\n';
+    const { container } = render(
+      <VistaMarkdown el={elementoFalso(14, texto, 'markdown')} datos={analizarMarkdown(texto)} />,
+    );
+    expect(screen.getByText('Índice')).toBeTruthy();
+    expect(container.querySelector('.meter')).toBeNull();
+    expect(container.querySelectorAll('.seccion-indice')).toHaveLength(2);
   });
 });
 

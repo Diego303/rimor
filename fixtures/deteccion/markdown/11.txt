@@ -1,0 +1,11 @@
+# Refactor del parser
+
+## Contexto
+
+Necesitamos ordenar el trabajo de refactor del parser antes de fin de mes.
+
+## Tareas
+
+- [x] Escribir el borrador
+- [ ] Revisarlo con el equipo
+- [ ] Publicarlo

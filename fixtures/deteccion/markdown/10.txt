@@ -1,0 +1,11 @@
+# Lanzamiento v2
+
+## Contexto
+
+Necesitamos ordenar el trabajo de lanzamiento v2 antes de fin de mes.
+
+## Tareas
+
+- [x] Escribir el borrador
+- [ ] Revisarlo con el equipo
+- [ ] Publicarlo

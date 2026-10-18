@@ -92,6 +92,24 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
       ],
     },
   },
+  "markdown": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Document with 5 sections and 14 tasks (6 done).",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Documento con 5 secciones y 14 tareas (6 hechas).",
+        },
+      ],
+    },
+  },
   "mediciones": {
     "en": {
       "texto": [

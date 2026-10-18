@@ -49,10 +49,10 @@ Señales por línea: encabezados ATX (`# …`), tareas, vallas de código, tabla
 
 ## Tareas
 
-- [ ] Deriva índice de secciones (ancla estable por título normalizado), palabras, tareas por sección y en total, enlaces y bloques de código.
-- [ ] Vista: progreso de tareas, índice (con el hueco para las marcas de IN-029), documento renderizado y saneado.
-- [ ] Cifras: `tareas_hechas`, `tareas_total`, `palabras`.
-- [ ] Respuesta: «Documento con 6 secciones y 18 tareas (7 hechas).»
+- [x] Deriva índice de secciones (ancla estable por título normalizado), palabras, tareas por sección y en total, enlaces y bloques de código.
+- [x] Vista: progreso de tareas, índice (con el hueco para las marcas de IN-029), documento renderizado y saneado.
+- [x] Cifras: `tareas_hechas`, `tareas_total`, `palabras`.
+- [x] Respuesta: «Documento con 6 secciones y 18 tareas (7 hechas).»
 
 ## Pruebas previstas
 
@@ -78,3 +78,14 @@ Señales por línea: encabezados ATX (`# …`), tareas, vallas de código, tabla
 ## Autorrevisión
 
 Cubre las cuatro tareas. Versiones, diff por secciones y marcas en el índice son de IN-029 (CMP-02). Con lo aprendido en IN-021 a IN-023: la detección lee las líneas a mano o con expresiones sin retroceso (nada de `\s+(.+?)\s*$`), mira solo el principio del texto y se prueba con el detector real contra los demás corpus y contra documentos reales del disco; los documentos con varios encabezados que no son prompts ya dan 0 en Prompt (IN-023), así que no compiten.
+
+## Cambios durante la implementación
+
+- **Índice plano**, como la pantalla de referencia: el nivel más alto presente; si el primer encabezado es el único de su nivel, es el título del documento y no cuenta como sección (el índice es el nivel siguiente). Lo más profundo suma sus tareas y palabras en su sección.
+- Anclas en `src/ui/anclas.ts` (las comparten el análisis y `MarkdownSeguro`, que gana la opción `anclas`): normalización NFKD (letras de cualquier alfabeto; «2.º» da `2-o`), repetidas con `-2`, y el HTML en línea no cuenta.
+- Los tipos y `indiceDe` van en `indice.ts`, sin el parser: el lector y la vista no cargan remark; el análisis se importa solo al derivar (la carga inicial sube 1,8 KB).
+- Detección: también encabezados Setext, y dos señales fuertes (tareas, código, tabla) bastan sin encabezado.
+- Las menciones usan `mencionesDe` del lector Texto.
+- Rendimiento: unos 0,45 s por cada 100 KB de documento en el Worker (remark); dentro del plazo de la cola de derivados.
+- La prueba de estilo de las respuestas sobre el corpus pasa a ser una por lector (el producto de lectores por ejemplos crece con cada uno).
+

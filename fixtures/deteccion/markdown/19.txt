@@ -1,0 +1,7 @@
+## Retrospectiva
+
+- Hablamos de los plazos y de quién revisa qué.
+- Quedó pendiente la parte de datos.
+- Próxima reunión el jueves.
+
+Más contexto en [el acta](https://ejemplo.org/acta).

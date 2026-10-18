@@ -9,6 +9,10 @@ import { Repositorio } from '../almacen/repositorio';
 import { leerAjustes, respuestaDesactivada } from '../espacio/ajustes';
 import type { Idioma } from '../i18n/formatos';
 import { lectorPlantilla } from '../lectores/_plantilla/lector';
+
+// El análisis de Markdown (remark) se carga al derivar: aquí, al recoger las pruebas, para no gastar su tiempo de
+// carga dentro de una de ellas.
+import '../lectores/markdown/analisis';
 import type { Contexto, Lector } from '../lectores/contrato';
 import { elementoFalso, lectorFalso } from '../lectores/pruebas/falsos';
 import { REGISTRO } from '../lectores/registro';
@@ -184,8 +188,10 @@ describe('respuestas de los lectores sobre el corpus', () => {
     };
   };
 
-  it('ninguna incumple las reglas de estilo, en es ni en en, con el contexto vacío o lleno', async () => {
-    for (const lector of lectores)
+  // Una prueba por lector: el producto de lectores por ejemplos crece con cada uno que entra.
+  it.each(lectores.map((l) => [l.nombre, l] as const))(
+    '%s: ninguna incumple las reglas de estilo, en es ni en en, con el contexto vacío o lleno',
+    async (_nombre, lector) => {
       for (const [i, texto] of ejemplos.entries()) {
         const el = con(elementoFalso(i + 1, texto), { tipo: lector.tipo, hash: hashOriginal(texto) });
         const datos = await lector.derivar(el);
@@ -193,7 +199,8 @@ describe('respuestas de los lectores sobre el corpus', () => {
           for (const contexto of [ctx(idioma), lleno(idioma)])
             expect(comprobarEstilo(lector.respuesta(el, datos, contexto)), `${lector.nombre} ${i}`).toEqual([]);
       }
-  });
+    },
+  );
 
   it('instantánea de la respuesta de cada lector con su primer ejemplo', async () => {
     const instantaneas: Record<string, unknown> = {};
