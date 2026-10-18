@@ -43,8 +43,8 @@
 | IN-021 | Lector Error y huella | v0.1 | 4 | hecha | 40322cb 2ab9520 d363617 | docs/features/IN-021-error.md |
 | IN-022 | Lector Mediciones | v0.1 | 4 | hecha | b310e37 6a1cf43 9b9c796 | docs/features/IN-022-mediciones.md |
 | IN-023 | Lector Prompt | v0.1 | 4 | hecha | 7b6580a bc9fa85 5498fa1 | docs/features/IN-023-prompt.md |
-| IN-024 | Lector Documento Markdown | v0.1 | 4 | hecha | 77638b0 39b2632 | docs/features/IN-024-markdown.md |
-| IN-025 | Lector Código | v0.1 | 4 | pendiente | — | — |
+| IN-024 | Lector Documento Markdown | v0.1 | 4 | hecha | 77638b0 39b2632 5a6c03e | docs/features/IN-024-markdown.md |
+| IN-025 | Lector Código | v0.1 | 4 | en análisis y diseño | — | docs/features/IN-025-codigo.md |
 | IN-026 | Inicio: feed y triaje | v0.1 | 5 | pendiente | — | — |
 | IN-027 | Vista de elemento, estados, fijar y papelera | v0.1 | 5 | pendiente | — | — |
 | IN-028 | Comparaciones de logs y mediciones | v0.1 | 5 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-19 | IN-024 | verificación | OK (898 pruebas; 13 hallazgos de la revisión corregidos) | … |
+| 2026-10-19 | IN-025 | análisis y diseño | 12 lenguajes por densidad y extensión, resaltado con Lezer bajo demanda | … |
+| 2026-10-19 | IN-024 | verificación | OK (898 pruebas; 13 hallazgos de la revisión corregidos) | 5a6c03e |
 | 2026-10-18 | IN-024 | implementación | OK (883 pruebas; matriz 225/225) | 39b2632 |
 | 2026-10-18 | IN-024 | análisis y diseño | índice con anclas estables, palabras, tareas por sección, enlaces y código; vista como la referencia | 77638b0 |
 | 2026-10-18 | IN-023 | verificación | OK (858 pruebas; 13 grupos de hallazgos de la revisión corregidos) | 5498fa1 |
