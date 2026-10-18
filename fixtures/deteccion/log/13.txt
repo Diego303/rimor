@@ -1,0 +1,3 @@
+{"ts":1760774400,"lvl":"info","message":"job started","job":"sync"}
+{"ts":1760774460,"lvl":"info","message":"job progress","job":"sync","pct":50}
+{"ts":1760774520,"lvl":"error","message":"job failed","job":"sync","reason":"quota"}

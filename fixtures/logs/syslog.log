@@ -1,0 +1,5 @@
+Oct 17 06:25:01 servidor CRON[2211]: (root) CMD (test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily ))
+Oct 17 06:25:03 servidor systemd[1]: Started Daily apt download activities.
+Oct 17 06:30:12 servidor sshd[3301]: Accepted publickey for diego from 192.168.1.40 port 52314 ssh2
+Oct 17 06:31:45 servidor kernel: [12345.678901] ERROR: I/O error, dev sda, sector 123456
+Oct 17 06:32:00 servidor sshd[3305]: Failed password for invalid user admin from 203.0.113.9 port 40022 ssh2

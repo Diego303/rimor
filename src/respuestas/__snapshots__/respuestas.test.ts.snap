@@ -56,6 +56,24 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
       ],
     },
   },
+  "log": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Log of 7 lines, with 3 errors between 17:40 and 17:43.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Log de 7 líneas, con 3 errores entre 17:40 y 17:43.",
+        },
+      ],
+    },
+  },
   "plantilla": {
     "en": {
       "texto": [

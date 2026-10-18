@@ -1028,6 +1028,47 @@ details.more > div {
 .lista-enlaces a {
   overflow-wrap: anywhere;
 }
+.histograma-log {
+  min-width: 440px;
+}
+.histograma-log .barra-otros {
+  fill: var(--line);
+}
+.histograma-log .barra-avisos {
+  fill: var(--warn);
+}
+.histograma-log .barra-errores {
+  fill: var(--bad);
+}
+.histograma-log .eje {
+  fill: var(--muted);
+}
+.tabla-plantillas {
+  min-width: 480px;
+}
+.tabla-plantillas td.n {
+  width: 48px;
+}
+.tabla-plantillas .plantilla {
+  white-space: pre;
+}
+.boton-plantilla {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  white-space: pre;
+  cursor: pointer;
+}
+.lineas-log {
+  max-height: 300px;
+  overflow: auto;
+}
+.stat .v.bad {
+  color: var(--bad);
+}
 .enlace-url {
   overflow-wrap: anywhere;
 }

@@ -1,0 +1,82 @@
+{
+  "texto-iso.log": {
+    "lineas": 7,
+    "formato": "texto",
+    "errores": 3,
+    "avisos": 1,
+    "desde": "17:22:01",
+    "hasta": "17:44:00",
+    "plantillas": 5,
+    "primerError": 4
+  },
+  "python.log": {
+    "lineas": 5,
+    "formato": "texto",
+    "errores": 1,
+    "avisos": 1,
+    "desde": "09:00:00",
+    "hasta": "09:02:45",
+    "plantillas": 4,
+    "primerError": 4
+  },
+  "go.log": {
+    "lineas": 5,
+    "formato": "texto",
+    "errores": 1,
+    "avisos": 0,
+    "desde": "11:15:00",
+    "hasta": "11:16:31",
+    "plantillas": 4,
+    "primerError": 4
+  },
+  "java.log": {
+    "lineas": 6,
+    "formato": "texto",
+    "errores": 2,
+    "avisos": 1,
+    "desde": "14:03:11",
+    "hasta": "14:06:00",
+    "plantillas": 5,
+    "primerError": 4
+  },
+  "logfmt.log": {
+    "lineas": 5,
+    "formato": "logfmt",
+    "errores": 1,
+    "avisos": 1,
+    "desde": "08:00:00",
+    "hasta": "08:00:09",
+    "plantillas": 3,
+    "primerError": 4
+  },
+  "json.log": {
+    "lineas": 5,
+    "formato": "json",
+    "errores": 2,
+    "avisos": 1,
+    "desde": "10:00:00",
+    "hasta": "10:03:00",
+    "plantillas": 3,
+    "primerError": 4
+  },
+  "syslog.log": {
+    "lineas": 5,
+    "formato": "syslog",
+    "errores": 1,
+    "avisos": 0,
+    "desde": "06:25:01",
+    "hasta": "06:32:00",
+    "plantillas": 5,
+    "primerError": 4
+  },
+  "apache.log": {
+    "lineas": 4,
+    "formato": "apache",
+    "errores": 1,
+    "avisos": 1,
+    "desde": "13:55:36",
+    "hasta": "13:56:10",
+    "plantillas": 3,
+    "primerError": 3
+  }
+}

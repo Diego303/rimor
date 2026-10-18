@@ -1,0 +1,4 @@
+17:40:01 ERROR read timeout
+17:40:02 ERROR read timeout
+17:40:05 INFO retry 1
+17:40:09 INFO retry 2

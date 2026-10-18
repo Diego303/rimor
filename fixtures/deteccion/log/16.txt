@@ -1,0 +1,3 @@
+2026-10-18T15:00:00+02:00 [INFO] build: compilando 412 módulos
+2026-10-18T15:00:09+02:00 [INFO] build: 412 módulos en 9.1 s
+2026-10-18T15:00:09+02:00 [WARN] build: el paquete chart.js pesa 210 KB

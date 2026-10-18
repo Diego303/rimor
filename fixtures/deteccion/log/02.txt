@@ -1,0 +1,5 @@
+2026-10-17 09:00:00,001 - app.worker - INFO - Iniciando worker 1
+2026-10-17 09:00:00,250 - app.worker - INFO - Iniciando worker 2
+2026-10-17 09:01:13,512 - app.db - WARNING - Consulta lenta: 812 ms
+2026-10-17 09:02:44,733 - app.db - ERROR - No se pudo conectar a 192.168.1.20:5432
+2026-10-17 09:02:45,001 - app.worker - INFO - Reintentando en 5 s

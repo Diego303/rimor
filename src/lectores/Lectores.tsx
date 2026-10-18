@@ -7,12 +7,14 @@ import { Component, createContext, type ReactNode, Suspense, useContext, useEffe
 import type { Repositorio } from '../almacen/repositorio';
 import { type Previa, previsualizar } from '../captura/previa';
 import { useEspacioOpcional } from '../espacio/Espacio';
+import type { Idioma } from '../i18n/formatos';
+import { traducir } from '../i18n/i18n';
 import { useT } from '../i18n/useT';
 import { ErrorTarjeta, IconoTipo } from '../ui/componentes';
 import { Senal } from '../ui/marca/Senal';
 import { useEsperaVisible } from '../ui/marca/useEsperaVisible';
 import type { Lector } from './contrato';
-import { ColaDerivados, type Ejecutor, esCancelado } from './derivados';
+import { ColaDerivados, type Ejecutor, esCancelado, type Progreso } from './derivados';
 import { crearEjecutor } from './ejecutor';
 import { REGISTRO, type Registro } from './registro';
 import { olvidarVistas, tarjetaDe, vistaDe } from './vistas';
@@ -70,6 +72,8 @@ export function ProveedorLectores({ children, registro = REGISTRO, ejecutar }: P
       },
       // Un Worker atascado se termina; lo siguiente abre otro.
       alAgotarPlazo: ejecutor.reiniciar,
+      // Un texto de más de 2 MB va como adjunto: se lee del espacio para que el Worker lo analice.
+      ...(espacio ? { cargarOriginal: (el: Elemento) => cargarTextoAdjunto(espacio.repositorio, el) } : {}),
     });
     setValor({ registro, cola: nueva, previsualizar: ejecutor.previsualizar });
     return () => ejecutor.cerrar();
@@ -109,8 +113,16 @@ export function useLectores(): ValorLectores {
   return v;
 }
 
+/** El texto de un adjunto de texto (`text/*`), o `null` si no lo es o no está. */
+async function cargarTextoAdjunto(repositorio: Repositorio, el: Elemento): Promise<string | null> {
+  const a = el.frontmatter.adjunto;
+  if (!a || !(a.mime ?? '').startsWith('text/')) return null;
+  const bytes = await repositorio.leerAdjunto(a.ruta);
+  return bytes ? new TextDecoder().decode(bytes) : null;
+}
+
 export type EstadoDerivado<D> =
-  | { estado: 'calculando' }
+  | { estado: 'calculando'; progreso?: Progreso }
   | { estado: 'listo'; datos: D }
   | { estado: 'error' }
   | { estado: 'sin-lector' };
@@ -132,7 +144,11 @@ export function useDerivado<D = unknown>(el: Elemento): EstadoDerivado<D> {
     const parar = new AbortController();
     setEstado({ clave, valor: { estado: 'calculando' } });
     cola
-      .pedir<D>(el, { prioridad: 'visible', senal: parar.signal })
+      .pedir<D>(el, {
+        prioridad: 'visible',
+        senal: parar.signal,
+        alProgreso: (progreso) => setEstado({ clave, valor: { estado: 'calculando', progreso } }),
+      })
       .then((datos) => setEstado({ clave, valor: { estado: 'listo', datos } }))
       .catch((e) => {
         if (!esCancelado(e)) setEstado({ clave, valor: { estado: 'error' } });
@@ -186,6 +202,17 @@ class LimiteLector extends Component<
   }
 }
 
+/** Lo que se está calculando y, si el lector lo da, cuánto lleva: «Analizando 100.000 de 340.000 líneas». */
+function textoAnalizando(lector: Lector, idioma: Idioma, d: EstadoDerivado<unknown>): string {
+  const progreso = d.estado === 'calculando' ? d.progreso : undefined;
+  if (!progreso) return lector.textos.t(idioma, 'analizando');
+  const vars = { hechas: progreso.hechas, total: progreso.total };
+  // El lector puede decirlo en su unidad (líneas, filas…) con su texto `progreso`; si no, el genérico.
+  return 'progreso' in lector.textos.es
+    ? (lector.textos.t as (i: Idioma, c: string, v: typeof vars) => string)(idioma, 'progreso', vars)
+    : traducir(idioma, 'lectores.progreso', { texto: lector.textos.t(idioma, 'analizando'), ...vars });
+}
+
 /** Vista completa de un elemento: la del lector con sus derivados, o lo que se sepa mientras tanto. */
 export function VistaElemento({ el }: { el: Elemento }) {
   const { t, idioma } = useT();
@@ -207,7 +234,7 @@ export function VistaElemento({ el }: { el: Elemento }) {
     return (
       <div className="vista-elemento">
         <ResumenFrontmatter el={el} lector={lector} />
-        {analizando && <Senal estado="analizando" etiqueta={lector.textos.t(idioma, 'analizando')} />}
+        {analizando && <Senal estado="analizando" etiqueta={textoAnalizando(lector, idioma, derivado)} />}
       </div>
     );
   const Vista = vistaDe(lector.nombre);

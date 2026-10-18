@@ -1,0 +1,7 @@
+2026-10-17T17:22:01.104Z INFO  gateway: arrancando en 0.0.0.0:8080
+2026-10-17T17:22:01.390Z INFO  gateway: conectado a ollama en 10.0.0.12:11434
+2026-10-17T17:40:12.002Z WARN  gateway: respuesta lenta de ollama: 2310 ms
+2026-10-17T17:40:15.871Z ERROR gateway: read timeout tras 30000 ms (petición 7f3c9a2e-1b2c-4d5e-8f90-123456789abc)
+2026-10-17T17:41:02.553Z ERROR gateway: read timeout tras 30000 ms (petición 1a2b3c4d-5e6f-4a1b-9c2d-abcdefabcdef)
+2026-10-17T17:43:44.090Z ERROR gateway: read timeout tras 30000 ms (petición 9e8d7c6b-5a49-4382-b716-fedcba987654)
+2026-10-17T17:44:00.000Z INFO  gateway: reintentos agotados para 3 peticiones

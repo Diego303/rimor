@@ -130,6 +130,8 @@ describe('contexto', () => {
     ]);
     expect(c.colecciones).toEqual(['backend']);
     expect(c.respondeA?.ref).toBe('TXT-0003');
+    // Todo lo guardado el mismo día (en las 24 h) está cerca, del más próximo al más lejano.
+    expect(c.cercanos?.map((f) => f.ref)).toEqual(['TXT-0003']);
   });
 
   it('la huella sale del resumen de los derivados; los alias no son versiones', async () => {

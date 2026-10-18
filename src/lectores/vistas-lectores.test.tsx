@@ -138,3 +138,33 @@ describe('vista de Enlace', () => {
     expect(screen.getByText('https://docs.rs/ureq?utm_source=hn')).toBeTruthy();
   });
 });
+
+describe('vista de Log', () => {
+  it('cifras, histograma, plantillas que filtran sus líneas y «Ver las N»', async () => {
+    const { default: VistaLog } = await import('./log/Vista');
+    const { analizar } = await import('./log/analisis');
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const texto = readFileSync(join(process.cwd(), 'fixtures/logs/texto-iso.log'), 'utf8');
+    const el = elementoFalso(8, texto, 'log');
+    const datos = analizar(texto, { anio: 2026 });
+    const { container } = render(<VistaLog el={el} datos={datos} />);
+    expect(container.querySelector('.stat .v.bad')?.textContent).toBe('3');
+    expect(container.querySelector('.stat .v.warn')?.textContent).toBe('1');
+    expect(container.querySelectorAll('.histograma-log .barra-errores').length).toBeGreaterThan(0);
+    expect(screen.getByText(/Los errores se concentran entre/).textContent).toBe(
+      'Los errores se concentran entre 17:40 y 17:43.',
+    );
+    const filas = container.querySelectorAll('.tabla-plantillas tr');
+    expect(filas).toHaveLength(5);
+    // Con 5 plantillas no hace falta «Ver las N»: solo sale cuando hay más.
+    expect(screen.queryByRole('button', { name: /Ver las/ })).toBeNull();
+    const deError = [...filas].find((f) => f.textContent?.includes('read timeout')) as HTMLElement;
+    expect(deError.querySelector('.lv-ERROR')).toBeTruthy();
+    expect(deError.querySelector('.ph')?.textContent).toBe('N');
+    fireEvent.click(deError.querySelector('button') as HTMLElement);
+    expect(deError.querySelector('button')?.getAttribute('aria-pressed')).toBe('true');
+    const lineas = container.querySelector('pre.lineas-plantilla')?.textContent ?? '';
+    expect(lineas.split('\n').filter(Boolean)).toHaveLength(3);
+  });
+});

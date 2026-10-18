@@ -1,0 +1,5 @@
+2026/10/17 11:15:00 servidor escuchando en :9090
+2026/10/17 11:15:02 GET /api/salud 200 1.2ms
+2026/10/17 11:15:07 GET /api/items 200 14.7ms
+2026/10/17 11:16:30 ERROR: panic recuperado en /api/items: index out of range [3] with length 3
+2026/10/17 11:16:31 GET /api/items 500 0.4ms

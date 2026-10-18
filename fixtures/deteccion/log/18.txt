@@ -1,0 +1,3 @@
+2026-10-18 18:22:01 [pool-1-thread-3] ERROR com.ejemplo.Pagos - Fallo al cobrar pedido 9921
+2026-10-18 18:22:01 [pool-1-thread-3] ERROR com.ejemplo.Pagos - Fallo al cobrar pedido 9922
+2026-10-18 18:22:05 [pool-1-thread-1] INFO  com.ejemplo.Pagos - Cola vacía

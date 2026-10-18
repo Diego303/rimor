@@ -166,7 +166,8 @@
     "error": {
       "titulo": "Could not analyse it",
       "texto": "The reader failed on this item. Here is the original as it is."
-    }
+    },
+    "progreso": "{texto}: {hechas} of {total}"
   },
   "captura": {
     "guardado": {

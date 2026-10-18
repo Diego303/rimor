@@ -71,6 +71,8 @@ export interface Contexto {
   colecciones: string[];
   /** Elemento al que responde esta captura, si es una respuesta en un hilo. */
   respondeA?: FrontmatterComun;
+  /** Lo guardado en las 24 h de antes y de después (para «a la vez que ERR-0015»), del más cercano al más lejano. */
+  cercanos?: FrontmatterComun[];
 }
 
 /**
@@ -78,6 +80,11 @@ export interface Contexto {
  * guarda lectores de datos distintos) aunque `cifras` sea un mapa de funciones.
  */
 type Bivariante<A, R> = { metodo(a: A): R }['metodo'];
+
+export interface OpcionesDerivar {
+  /** Cuánto lleva hecho de cuánto (en la unidad del lector: líneas, filas…). */
+  alProgreso?: (hechas: number, total: number) => void;
+}
 
 export interface Lector<D = unknown> {
   /** Igual que el nombre de su carpeta y que `frontmatter.lector.nombre`. */
@@ -90,8 +97,11 @@ export interface Lector<D = unknown> {
   /** Confianza entre 0 y 1; barata y síncrona. */
   detectar(e: Entrada): number;
   leer(e: Entrada): Promise<Borrador>;
-  /** Se ejecuta en el Worker de derivados: `D` debe poder copiarse con structured clone. Regenerable. */
-  derivar(el: Elemento): Promise<D>;
+  /**
+   * Se ejecuta en el Worker de derivados: `D` debe poder copiarse con structured clone. Regenerable. Con mucho
+   * trabajo (un log enorme), avisa del progreso con `alProgreso`.
+   */
+  derivar(el: Elemento, opciones?: OpcionesDerivar): Promise<D>;
   resumen(d: D): ResumenLector;
   /** Una línea con el resumen del frontmatter, para enseñar mientras se deriva o en la tarjeta. */
   resumenLegible?(r: ResumenLector, idioma: Idioma): string;

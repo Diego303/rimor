@@ -10,6 +10,8 @@ import type { Contexto, Nota } from '../lectores/contrato';
 
 const MAX_COLECCIONES = 3;
 const MAX_NOTAS = 3;
+/** Lo que se considera «a la vez»: lo guardado en las 24 h de antes o de después. */
+export const VENTANA_CERCANOS_MS = 24 * 60 * 60 * 1000;
 
 /** La huella que escribe el lector de Error (IN-021) en su resumen. */
 export const huellaDe = (fm: FrontmatterComun): string | undefined => {
@@ -78,6 +80,13 @@ export async function construirContexto(
     if (linea) notas.push({ ref: o.ref, texto: linea.trim(), fecha: o.modificado });
   }
 
+  const instante = Date.parse(fm.creado);
+  const cercanos = Number.isFinite(instante)
+    ? todos
+        .filter((o) => o.id !== fm.id && Math.abs(Date.parse(o.creado) - instante) <= VENTANA_CERCANOS_MS)
+        .sort((a, b) => Math.abs(Date.parse(a.creado) - instante) - Math.abs(Date.parse(b.creado) - instante))
+    : [];
+
   const respondido = respondeA ? repositorio.frontmatter(respondeA) : undefined;
   return {
     idioma,
@@ -85,6 +94,7 @@ export async function construirContexto(
     versiones,
     notas,
     colecciones: coleccionesCandidatas(fm, todos),
+    cercanos,
     ...(respondido ? { respondeA: respondido } : {}),
   };
 }

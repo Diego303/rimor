@@ -1,0 +1,3 @@
+2026-10-18 12:30:00 INFO  Descargando paquetes
+2026-10-18 12:30:42 INFO  Paquetes descargados: 312
+2026-10-18 12:31:10 ERROR La instalación falló con código 1

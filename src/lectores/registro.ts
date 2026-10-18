@@ -10,6 +10,7 @@ import { lectorArchivo } from './archivo/lector';
 import type { Lector } from './contrato';
 import { lectorEnlace } from './enlace/lector';
 import { lectorIdea } from './idea/lector';
+import { lectorLog } from './log/lector';
 import { lectorTexto } from './texto/lector';
 
 /**
@@ -40,6 +41,7 @@ export const ORDEN_DETECCION: readonly (readonly string[])[] = [
 export const LECTORES: readonly Lector[] = [
   lectorArchivo, // 2
   lectorEnlace, // 3
+  lectorLog, // 5
   lectorIdea, // 16
   lectorTexto, // 17
 ];

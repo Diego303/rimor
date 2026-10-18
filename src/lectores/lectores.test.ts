@@ -237,6 +237,42 @@ describe('ColaDerivados', () => {
     expect(m.empezados).toEqual(['TXT-0001', 'TXT-0003', 'TXT-0002']);
   });
 
+  it('reenvía el progreso a quien espera, también al que llega a mitad', async () => {
+    let avanzar: (h: number, t: number) => void = () => undefined;
+    let terminar: () => void = () => undefined;
+    const lector = lectorFalso({
+      derivar: (_el, opciones) =>
+        new Promise((ok) => {
+          avanzar = (h, t) => opciones?.alProgreso?.(h, t);
+          terminar = () => ok({ largo: 1 });
+        }),
+    });
+    const registro = crearRegistro([lector]);
+    const cola = new ColaDerivados({ registro, ejecutar: ejecutorEnHilo(registro) });
+    const vistos: string[] = [];
+    const a = cola.pedir(elementoFalso(1), { alProgreso: (p) => vistos.push(`a ${p.hechas}/${p.total}`) });
+    await vi.waitFor(() => expect(lector).toBeTruthy());
+    await esperarVuelta();
+    avanzar(50, 120);
+    const b = cola.pedir(elementoFalso(1), { alProgreso: (p) => vistos.push(`b ${p.hechas}/${p.total}`) });
+    avanzar(100, 120);
+    terminar();
+    await Promise.all([a, b]);
+    expect(vistos).toEqual(['a 50/120', 'b 50/120', 'a 100/120', 'b 100/120']);
+  });
+
+  it('carga el original de un adjunto antes de derivar', async () => {
+    const lector = lectorFalso();
+    const registro = crearRegistro([lector]);
+    const cola = new ColaDerivados({
+      registro,
+      ejecutar: ejecutorEnHilo(registro),
+      cargarOriginal: async () => 'texto del adjunto',
+    });
+    const el = { ...elementoFalso(1), original: null };
+    expect(await cola.pedir(el)).toEqual({ largo: 17 });
+  });
+
   it('sin lector para el elemento, rechaza', async () => {
     const cola = new ColaDerivados({ registro: crearRegistro([]), ejecutar: async () => 0 });
     await expect(cola.pedir(elementoFalso(1))).rejects.toThrow('lector.desconocido');

@@ -180,6 +180,23 @@ describe('lector de punta a punta', () => {
     expect(await screen.findByText('texto raro')).toBeTruthy();
   });
 
+  it('mientras deriva, enseña el progreso junto a «analizando»', async () => {
+    let terminar: () => void = () => undefined;
+    const lento = crearRegistro([
+      lectorFalso({
+        derivar: (_el, opciones) =>
+          new Promise((ok) => {
+            opciones?.alProgreso?.(100_000, 340_000);
+            terminar = () => ok({ largo: 1 });
+          }),
+      }),
+    ]);
+    montar(lento, ejecutorEnHilo(lento), elementoFalso(5, 'algo largo'));
+    const senal = await screen.findByRole('status', {}, { timeout: 2000 });
+    expect(senal.textContent).toBe('Calculando lo falso: 100.000 de 340.000');
+    terminar();
+  });
+
   it('sin lector para el elemento, el original tal cual', async () => {
     const vacio = crearRegistro([]);
     montar(vacio, ejecutorEnHilo(vacio), elementoFalso(3, 'sin lector'));

@@ -45,12 +45,12 @@ Como la pantalla de referencia: tarjeta de cifras + histograma + frase de concen
 
 ## Tareas
 
-- [ ] Detecta marcas de tiempo, niveles, JSON por línea, syslog y logfmt.
-- [ ] Deriva líneas, rango y niveles; plantillas; pares `clave=valor`; primer y último error; histograma por minuto o por hora.
-- [ ] Más de 50.000 líneas: por bloques con progreso.
-- [ ] Vista: resumen e histograma; 5 plantillas («ver todas»); filtrar por plantilla; líneas y detalles plegados.
-- [ ] Cifras citables: `lineas`, `errores`, `avisos`, `duracion`, `plantillas`.
-- [ ] Respuesta: «Log de 1042 líneas. 16 errores entre 17:40 y 17:43, a la vez que ERR-0015. ¿Lo añado a su hilo?» (en dos frases).
+- [x] Detecta marcas de tiempo, niveles, JSON por línea, syslog y logfmt.
+- [x] Deriva líneas, rango y niveles; plantillas; pares `clave=valor`; primer y último error; histograma por minuto o por hora.
+- [x] Más de 50.000 líneas: por bloques con progreso.
+- [x] Vista: resumen e histograma; 5 plantillas («ver todas»); filtrar por plantilla; líneas y detalles plegados.
+- [x] Cifras citables: `lineas`, `errores`, `avisos`, `duracion`, `plantillas`.
+- [x] Respuesta: «Log de 1042 líneas. 16 errores entre 17:40 y 17:43, a la vez que ERR-0015. ¿Lo añado a su hilo?» (en dos frases).
 
 ## Pruebas previstas
 
@@ -81,3 +81,13 @@ Como la pantalla de referencia: tarjeta de cifras + histograma + frase de concen
 ## Autorrevisión
 
 Cubre las seis tareas y las pruebas de la ficha. Amplía el contrato (progreso y carga del adjunto) de forma compatible: los demás lectores no cambian. Comparar logs (IN-028) e hilos (IN-030) se apoyarán en `plantillas` y `lineaPlantilla`.
+
+## Cambios durante la implementación
+
+- Además de los 8 formatos de la ficha, se reconocen **klog** (Kubernetes: `E1018 16:00:01.123456 …`, con el nivel en la letra) y el **log de PHP** (`[18-Oct-2026 21:00:01 UTC] PHP Warning: …`), que aparecieron en el corpus de detección.
+- Las expresiones regulares globales se compilan una vez (crearlas por línea multiplicaba por seis el tiempo de 50.000 líneas).
+- En la tabla de plantillas, la fila se pulsa con el ratón y la plantilla es un botón (con `aria-pressed`) para el teclado.
+- El progreso del análisis y la carga del adjunto quedan en el contrato para cualquier lector: `derivar(el, { alProgreso })`, `pedir(el, { alProgreso })`, `cargarOriginal` en la cola y el texto `progreso` opcional de cada lector (si no lo tiene, «{analizando}: {hechas} de {total}»).
+- El contexto de las respuestas gana `cercanos` (lo guardado en las 24 h de alrededor).
+- La sintaxis de cita de las cifras (`{{REF.nombre}}`) va en los textos del lector.
+

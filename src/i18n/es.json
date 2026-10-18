@@ -166,7 +166,8 @@
     "error": {
       "titulo": "No se pudo analizar",
       "texto": "El lector falló con este elemento. Aquí tienes el original tal cual."
-    }
+    },
+    "progreso": "{texto}: {hechas} de {total}"
   },
   "captura": {
     "guardado": {

@@ -1,0 +1,4 @@
+2026-10-18T23:59:58.001Z worker-1 INFO tick 1
+2026-10-18T23:59:59.001Z worker-1 INFO tick 2
+2026-10-19T00:00:00.001Z worker-1 INFO tick 3
+2026-10-19T00:00:01.001Z worker-1 ERROR tick failed

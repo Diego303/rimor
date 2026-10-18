@@ -1,0 +1,4 @@
+12:00:01.123 DEBUG cache: miss clave=usuario:42
+12:00:01.130 DEBUG cache: set clave=usuario:42 ttl=60
+12:00:02.001 INFO  http: GET /perfil 200
+12:00:02.410 WARN  http: GET /perfil tardó 410ms

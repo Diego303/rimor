@@ -1,0 +1,3 @@
+level=debug ts=2026-10-18T20:00:00Z caller=main.go:12 msg="config loaded" path=/etc/app.yaml
+level=info ts=2026-10-18T20:00:01Z caller=server.go:40 msg="listening" addr=:8080
+level=warn ts=2026-10-18T20:01:00Z caller=server.go:77 msg="client closed connection" remote=10.2.3.4:5566

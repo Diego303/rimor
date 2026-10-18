@@ -1,0 +1,5 @@
+{"time":"2026-10-17T10:00:00.000Z","level":"info","msg":"user login","user":"ana","ip":"10.1.2.3"}
+{"level":"info","time":"2026-10-17T10:00:05.000Z","msg":"user login","ip":"10.1.2.4","user":"luis"}
+{"time":"2026-10-17T10:01:00.000Z","level":"warn","msg":"token about to expire","user":"ana"}
+{"time":"2026-10-17T10:02:30.000Z","level":"error","msg":"payment declined","user":"luis","code":402}
+{"time":"2026-10-17T10:03:00.000Z","level":"ERROR","msg":"payment declined","user":"marta","code":402}

@@ -4,7 +4,7 @@
  */
 
 import type { Elemento } from '@rimor/formato';
-import { type Remote, wrap } from 'comlink';
+import { proxy, type Remote, wrap } from 'comlink';
 import { type Previa, previsualizar } from '../captura/previa';
 import type { ApiDerivados } from '../workers/derivados.worker';
 import type { Ejecutor } from './derivados';
@@ -12,10 +12,10 @@ import type { Registro } from './registro';
 
 /** Deriva en este mismo hilo. */
 export function ejecutorEnHilo(registro: Registro): Ejecutor {
-  return async (nombre, el) => {
+  return async (nombre, el, alProgreso) => {
     const lector = registro.porNombre(nombre);
     if (!lector) throw new Error(`lector.desconocido: ${nombre}`);
-    return lector.derivar(el);
+    return lector.derivar(el, alProgreso ? { alProgreso } : {});
   };
 }
 
@@ -82,10 +82,11 @@ export function crearEjecutor(registro: Registro): EjecutorCerrable {
   }
 
   return {
-    ejecutar: (nombre: string, el: Elemento) => {
+    ejecutar: (nombre: string, el: Elemento, alProgreso?: (hechas: number, total: number) => void) => {
       if (cerrado) return Promise.reject(new Error('derivados.cerrado'));
-      if (averiado) return enHilo(nombre, el);
-      return vigilada((api) => api.derivar(nombre, el));
+      if (averiado) return enHilo(nombre, el, alProgreso);
+      // El aviso de progreso cruza al Worker como proxy de Comlink (una función no se puede copiar).
+      return vigilada((api) => api.derivar(nombre, el, alProgreso ? proxy(alProgreso) : undefined));
     },
     previsualizar: (texto: string) => {
       if (cerrado) return Promise.reject(new Error('derivados.cerrado'));

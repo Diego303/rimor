@@ -9,7 +9,13 @@ import type { Registro } from './registro';
 export type Prioridad = 'visible' | 'fondo';
 
 /** Quien hace el cálculo: el Worker de derivados o, sin él, el hilo principal. */
-export type Ejecutor = (nombre: string, el: Elemento) => Promise<unknown>;
+export type Ejecutor = (
+  nombre: string,
+  el: Elemento,
+  alProgreso?: (hechas: number, total: number) => void,
+) => Promise<unknown>;
+
+export type Progreso = { hechas: number; total: number };
 
 /** Lo que la cola usa de `CacheEspacio`. */
 export interface CacheDerivados {
@@ -30,6 +36,11 @@ export interface OpcionesCola {
   plazoMs?: number;
   /** Se llama al agotarse un plazo: el ejecutor puede terminar el Worker atascado. */
   alAgotarPlazo?: () => void;
+  /**
+   * El original de un elemento que va como adjunto (`original: null`, más de 2 MB): se carga antes de derivar,
+   * porque el Worker no tiene el almacén. `null` si no se puede (o no es texto).
+   */
+  cargarOriginal?: (el: Elemento) => Promise<string | null>;
 }
 
 /** Plazo por defecto de un cálculo: un log de 50.000 líneas debe tardar menos de 2 s (plan §14.7). */
@@ -38,12 +49,15 @@ export const PLAZO_DERIVAR_MS = 60_000;
 export interface OpcionesPedir {
   prioridad?: Prioridad;
   senal?: AbortSignal;
+  /** El progreso del cálculo, si el lector lo da (también el último, si ya iba por la mitad). */
+  alProgreso?: (p: Progreso) => void;
 }
 
 interface Peticion {
   prioridad: Prioridad;
   resolver(d: unknown): void;
   rechazar(e: unknown): void;
+  alProgreso?: ((p: Progreso) => void) | undefined;
 }
 
 interface Trabajo {
@@ -53,6 +67,7 @@ interface Trabajo {
   prioridad: Prioridad;
   fase: 'consultando' | 'en-cola' | 'en-marcha';
   esperando: Set<Peticion>;
+  progreso?: Progreso;
 }
 
 /** Error de una petición cancelada (como el de `fetch`). */
@@ -78,7 +93,7 @@ export class ColaDerivados {
    * Derivados de `el` con la versión vigente de su lector. Si una petición visible llega a un trabajo de fondo,
    * lo adelanta. Cancelar (`senal`) solo rechaza esta petición; el trabajo sale de la cola si ya nadie lo espera.
    */
-  pedir<D>(el: Elemento, { prioridad = 'fondo', senal }: OpcionesPedir = {}): Promise<D> {
+  pedir<D>(el: Elemento, { prioridad = 'fondo', senal, alProgreso }: OpcionesPedir = {}): Promise<D> {
     const lector = this.opciones.registro.paraElemento(el);
     if (!lector) return Promise.reject(new Error(`lector.desconocido: ${el.frontmatter.lector.nombre}`));
     if (senal?.aborted) return Promise.reject(errorCancelado());
@@ -86,7 +101,7 @@ export class ColaDerivados {
     const clave = `${fm.id}|${lector.nombre}|${lector.version}|${fm.hash}`;
 
     return new Promise<D>((resolver, rechazar) => {
-      const peticion: Peticion = { prioridad, resolver: resolver as (d: unknown) => void, rechazar };
+      const peticion: Peticion = { prioridad, resolver: resolver as (d: unknown) => void, rechazar, alProgreso };
       let trabajo = this.trabajos.get(clave);
       if (!trabajo) {
         trabajo = { clave, el, lector, prioridad, fase: 'consultando', esperando: new Set() };
@@ -94,6 +109,7 @@ export class ColaDerivados {
         void this.consultar(trabajo);
       } else if (prioridad === 'visible') trabajo.prioridad = 'visible';
       trabajo.esperando.add(peticion);
+      if (trabajo.progreso) alProgreso?.(trabajo.progreso);
 
       const t = trabajo;
       senal?.addEventListener(
@@ -152,7 +168,15 @@ export class ColaDerivados {
           ko(new Error('derivados.tiempoAgotado'));
         }, this.opciones.plazoMs ?? PLAZO_DERIVAR_MS);
       });
-      const datos = await Promise.race([this.opciones.ejecutar(t.lector.nombre, t.el), plazo]);
+      const el =
+        t.el.original === null && this.opciones.cargarOriginal
+          ? { ...t.el, original: await this.opciones.cargarOriginal(t.el).catch(() => null) }
+          : t.el;
+      const avisar = (hechas: number, total: number) => {
+        t.progreso = { hechas, total };
+        for (const p of t.esperando) p.alProgreso?.(t.progreso);
+      };
+      const datos = await Promise.race([this.opciones.ejecutar(t.lector.nombre, el, avisar), plazo]);
       // Aunque ya nadie lo espere, el resultado vale para la próxima vez.
       await this.opciones.cache
         ?.guardarDerivado(fm.id, t.lector.nombre, t.lector.version, fm.hash, datos)

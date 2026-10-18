@@ -1,0 +1,4 @@
+E1018 16:00:01.123456   12345 controller.go:114] error syncing pod: timeout
+I1018 16:00:02.000001   12345 controller.go:98] synced pod default/web-1
+I1018 16:00:03.000001   12345 controller.go:98] synced pod default/web-2
+W1018 16:00:04.000001   12345 controller.go:120] slow sync: 1.2s
