@@ -1,1 +1,1 @@
-https://www.npmjs.com/package/react
+https://crates.io/crates/serde

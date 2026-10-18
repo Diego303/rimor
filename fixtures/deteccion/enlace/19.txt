@@ -1,1 +1,1 @@
-https://docs.python.org/3/library/asyncio.html
+https://superuser.com/questions/1185/how-to-measure-time-of-program-execution

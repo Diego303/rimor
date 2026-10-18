@@ -61,9 +61,10 @@ export const lectorEnlace: Lector<DatosEnlace> = {
     const vars = { nombre: d.nombre ?? '', sitio: d.sitio, numero: String(d.numero ?? '') };
     const clave =
       (d.clase === 'paper' || d.clase === 'documentacion') && !d.nombre ? (`${d.clase}SinNombre` as const) : d.clase;
-    const frase = d.sitio ? t(ctx.idioma, `respuesta.${clave}`, vars) : t(ctx.idioma, 'clases.otro');
-    // Si ya se guardó la misma dirección (misma huella), se dice cuándo: la vez más antigua.
-    const antes = ctx.mismaHuella.at(-1);
+    const frase = d.sitio ? t(ctx.idioma, `respuesta.${clave}`, vars) : t(ctx.idioma, 'sinDireccion');
+    // Si ya se guardó la misma dirección (misma huella) antes que este, se dice cuándo: la vez más antigua.
+    const propio = Date.parse(_el.frontmatter.creado);
+    const antes = ctx.mismaHuella.filter((o) => !(Date.parse(o.creado) >= propio)).at(-1);
     const fecha = antes ? new Date(antes.creado) : null;
     const recuerdo =
       fecha && !Number.isNaN(fecha.getTime())

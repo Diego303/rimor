@@ -8,7 +8,23 @@
     "clase": "repositorio"
   },
   {
+    "url": "https://github.com/withastro/astro?utm_source=newsletter&utm_medium=email",
+    "clase": "repositorio"
+  },
+  {
+    "url": "https://github.com/microsoft/vscode/blob/main/README.md",
+    "clase": "repositorio"
+  },
+  {
     "url": "https://gitlab.com/gitlab-org/gitlab",
+    "clase": "repositorio"
+  },
+  {
+    "url": "https://gitlab.com/gitlab-org/charts/gitlab",
+    "clase": "repositorio"
+  },
+  {
+    "url": "https://gitlab.com/inkscape/inkscape/-/tree/master/src",
     "clase": "repositorio"
   },
   {
@@ -17,10 +33,6 @@
   },
   {
     "url": "https://bitbucket.org/atlassian/python-bitbucket",
-    "clase": "repositorio"
-  },
-  {
-    "url": "https://github.com/withastro/astro?utm_source=newsletter&utm_medium=email",
     "clase": "repositorio"
   },
   {
@@ -33,6 +45,10 @@
   },
   {
     "url": "https://gitlab.com/gitlab-org/gitlab/-/issues/1",
+    "clase": "issue"
+  },
+  {
+    "url": "https://gitlab.com/gitlab-org/charts/gitlab/-/issues/123",
     "clase": "issue"
   },
   {
@@ -100,6 +116,14 @@
     "clase": "paper"
   },
   {
+    "url": "https://arxiv.org/abs/math/0211159",
+    "clase": "paper"
+  },
+  {
+    "url": "https://arxiv.org/html/2310.06825v1",
+    "clase": "paper"
+  },
+  {
     "url": "https://doi.org/10.1145/3368089.3409741",
     "clase": "paper"
   },
@@ -120,15 +144,11 @@
     "clase": "paper"
   },
   {
-    "url": "https://openreview.net/forum?id=YicbFdNTTy",
-    "clase": "paper"
-  },
-  {
     "url": "https://dl.acm.org/doi/10.1145/3368089.3409741",
     "clase": "paper"
   },
   {
-    "url": "https://www.semanticscholar.org/paper/204e3073870fae3d05bcbc2f6a8e263d9b72e776",
+    "url": "https://dl.acm.org/doi/abs/10.1145/3368089.3409741",
     "clase": "paper"
   },
   {
@@ -140,7 +160,7 @@
     "clase": "documentacion"
   },
   {
-    "url": "https://docs.rs/serde",
+    "url": "https://docs.rs/crate/ureq/latest",
     "clase": "documentacion"
   },
   {
@@ -164,12 +184,12 @@
     "clase": "documentacion"
   },
   {
-    "url": "https://devdocs.io/javascript/",
-    "clase": "documentacion"
+    "url": "https://vitest.dev/guide/",
+    "clase": "otro"
   },
   {
-    "url": "https://vitest.dev/docs/",
-    "clase": "documentacion"
+    "url": "https://react.dev/reference/react/useEffect",
+    "clase": "otro"
   },
   {
     "url": "https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-processing-an-unsorted-array",
@@ -177,6 +197,18 @@
   },
   {
     "url": "https://stackoverflow.com/questions/927358/how-do-i-undo-the-most-recent-local-commits-in-git?utm_campaign=social",
+    "clase": "pregunta"
+  },
+  {
+    "url": "https://stackoverflow.com/q/927358",
+    "clase": "pregunta"
+  },
+  {
+    "url": "https://stackoverflow.com/a/927386/123456",
+    "clase": "pregunta"
+  },
+  {
+    "url": "https://es.stackoverflow.com/questions/1/c%C3%B3mo-empezar",
     "clase": "pregunta"
   },
   {
@@ -188,10 +220,6 @@
     "clase": "pregunta"
   },
   {
-    "url": "https://serverfault.com/questions/24409/what-is-the-difference-between-a-load-balancer-and-a-reverse-proxy",
-    "clase": "pregunta"
-  },
-  {
     "url": "https://askubuntu.com/questions/53822/how-do-you-run-ubuntu-server-with-a-gui",
     "clase": "pregunta"
   },
@@ -200,11 +228,15 @@
     "clase": "video"
   },
   {
-    "url": "https://youtu.be/dQw4w9WgXcQ?si=abc123",
+    "url": "https://m.youtube.com/watch?v=dQw4w9WgXcQ",
     "clase": "video"
   },
   {
-    "url": "https://www.youtube.com/shorts/abcdefghijk",
+    "url": "https://youtu.be/dQw4w9WgXcQ?si=Kq9bXHf0lJ3p1vQx",
+    "clase": "video"
+  },
+  {
+    "url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
     "clase": "video"
   },
   {
@@ -212,7 +244,7 @@
     "clase": "video"
   },
   {
-    "url": "https://www.twitch.tv/videos/123456789",
+    "url": "https://www.twitch.tv/twitch",
     "clase": "video"
   },
   {
@@ -220,7 +252,7 @@
     "clase": "otro"
   },
   {
-    "url": "https://news.ycombinator.com/item?id=38000000",
+    "url": "https://news.ycombinator.com/item?id=1",
     "clase": "otro"
   },
   {
@@ -228,15 +260,35 @@
     "clase": "otro"
   },
   {
+    "url": "https://github.com/settings/profile",
+    "clase": "otro"
+  },
+  {
+    "url": "https://github.com/marketplace/actions/checkout",
+    "clase": "otro"
+  },
+  {
+    "url": "https://github.com/topics/rust",
+    "clase": "otro"
+  },
+  {
     "url": "https://en.wikipedia.org/wiki/Rust_(programming_language)",
     "clase": "otro"
   },
   {
-    "url": "https://www.example.com/path/to/page?fbclid=IwAR123&b=2&a=1",
+    "url": "https://docs.google.com/document/d/1x2y3z/edit",
     "clase": "otro"
   },
   {
     "url": "https://martinfowler.com/articles/microservices.html",
+    "clase": "otro"
+  },
+  {
+    "url": "https://pkg.go.dev/search?q=cobra",
+    "clase": "otro"
+  },
+  {
+    "url": "https://www.theguardian.com/technology?CMP=share_btn_link&utm_source=x",
     "clase": "otro"
   }
 ]

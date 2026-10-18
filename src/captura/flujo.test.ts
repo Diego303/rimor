@@ -294,6 +294,24 @@ describe('capturar', () => {
     expect(repositorio.buscar(c.elemento.frontmatter.ref)).toBeTruthy();
   });
 
+  it('un lector que falla al leer no hace perder la captura', async () => {
+    const { repositorio } = efectos();
+    const registro = crearRegistro([
+      lectorFalso({
+        nombre: 'texto',
+        tipo: 'texto',
+        leer: async () => {
+          throw new URIError('URI malformed');
+        },
+      }),
+    ]);
+    const c = creado(
+      await capturar({ texto: 'https://example.com/rebajas-50%', origen: 'pegado' }, { repositorio, registro }),
+    );
+    expect(c.elemento.original).toBe('https://example.com/rebajas-50%');
+    expect(c.elemento.frontmatter.titulo).toBe('https://example.com/rebajas-50%');
+  });
+
   it('20 pegados seguidos, sin esperar, dan 20 elementos con refs distintas', async () => {
     const { repositorio, efectos: ef } = efectos();
     const capturador = crearCapturador(ef);

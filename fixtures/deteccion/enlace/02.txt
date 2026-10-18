@@ -1,1 +1,1 @@
-https://gitlab.com/gitlab-org/gitlab
+https://github.com/microsoft/vscode/blob/main/README.md

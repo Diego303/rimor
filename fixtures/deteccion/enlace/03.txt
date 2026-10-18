@@ -1,1 +1,1 @@
-https://bitbucket.org/atlassian/python-bitbucket
+https://gitlab.com/inkscape/inkscape/-/tree/master/src

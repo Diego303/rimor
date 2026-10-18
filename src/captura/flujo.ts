@@ -20,7 +20,7 @@ import {
   utf8,
 } from '@rimor/formato';
 import { ErrorSoloLectura, type Repositorio } from '../almacen/repositorio';
-import type { Entrada, Lector } from '../lectores/contrato';
+import type { Borrador, Entrada, Lector } from '../lectores/contrato';
 import type { ColaDerivados } from '../lectores/derivados';
 import type { Registro } from '../lectores/registro';
 import { type OpcionesOcultar, ocultar } from '../seguridad/secretos/ocultar';
@@ -171,7 +171,12 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
   const etiquetas = unicos(entrada.etiquetas);
 
   // 6. Leer y escribir (la ref se asigna aquí: el capturador serializa las capturas).
-  const borrador = await lector.leer(vista);
+  // Un lector que falla al leer no puede hacer perder lo capturado: se guarda con lo mínimo (título y original)
+  // y su derivado dirá que no pudo analizarlo.
+  const borrador: Borrador = await lector.leer(vista).catch(() => ({
+    titulo: '',
+    original: bytes ? null : (texto ?? null),
+  }));
   const ahora = isoConZona(reloj());
   const tipo = entrada.tipo ?? lector.tipo;
   const ref = asignarRef(tipo, repositorio.refs());

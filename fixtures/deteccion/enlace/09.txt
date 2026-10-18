@@ -1,1 +1,1 @@
-https://pypi.org/project/numpy/
+https://packagist.org/packages/laravel/framework

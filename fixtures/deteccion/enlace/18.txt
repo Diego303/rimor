@@ -1,1 +1,1 @@
-https://docs.rs/ureq/latest/ureq/
+https://stackoverflow.com/a/927386/123456

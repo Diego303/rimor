@@ -33,7 +33,7 @@ Guardar URL y DOI limpios, saber a qué apuntan y recordar si ya se guardaron, s
 ### Corpus
 
 - `fixtures/deteccion/enlace/`: 25 URL y DOI (para la matriz).
-- `fixtures/enlaces/clasificacion.json`: **60 URL reales** con su clase esperada (y, para algunas, su forma normalizada), que la prueba recorre.
+- `fixtures/enlaces/clasificacion.json`: **73 URL reales** con su clase esperada, con las formas corrientes de cada destino (subgrupos de GitLab, `/q/` de Stack Overflow, `m.youtube.com`, arXiv antiguo, ACM `/doi/abs/`…), que la prueba recorre.
 
 ## Tareas
 
@@ -76,4 +76,35 @@ Cubre las cinco tareas y la aceptación. Reusa la huella del contexto (IN-016) p
 - El número de una issue o un PR va tal cual («#57465»), no como cantidad con separador de miles.
 - `detectar` puntúa 0,95 con un texto que es entero una URL o un DOI (además del atajo del detector) y 0 con archivos.
 - Lo forzado con `/enlace` que no es una URL se guarda como «otro», sin dirección.
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 20:07): tipos 0 errores; Biome, colores y textos, OK; Vitest 49 archivos y 608 pruebas, OK; construcción OK; carga inicial 181,7 KB. **`pnpm deteccion`**: 100 % de 100 ejemplos (archivo, enlace, idea y texto).
+
+| Criterio | Evidencia |
+|---|---|
+| Normaliza sin seguimiento y con los parámetros ordenados | Pruebas de `normalizar` (también DOI, `?flag`, barras, fragmentos e idempotencia sobre todo el corpus) |
+| Clasifica por destino | Las 73 URL del corpus, todas bien, más los nombres de las formas corrientes |
+| Título provisional legible | Pruebas por clase (y dominios IDN en Unicode) |
+| Sin red | Ninguna llamada de red en el lector; la CSP tampoco las permitiría |
+| Respuesta y «Ya lo guardaste el …» | Pruebas por clase en es y en, y de punta a punta con la misma URL pegada con otro seguimiento |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Una URL con un `%` suelto o en Latin-1 hacía perder la captura** (`decodeURIComponent` lanzaba): se decodifica sin lanzar y, además, la captura sobrevive a un lector que falla al leer (se guarda con lo mínimo).
+2. **Los DOI no se limpiaban**: pasan por la misma normalización que cualquier URL.
+3. **`docs.google.com` salía como documentación**: es «otro» (Google Docs).
+4. **Forjas**: los subgrupos de GitLab dan el repositorio entero (y sus issues y merge requests); las páginas propias de GitHub (`settings`, `marketplace`, `topics`…) no son repositorios.
+5. **Stack Overflow**: también `/q/ID`, `/a/ID` y los sitios por idioma.
+6. **YouTube y Twitch**: `m.youtube.com`, `live`, `embed` y los canales de Twitch.
+7. **arXiv y ACM**: identificadores antiguos con categoría, `/html/` y `/doi/abs|pdf|full/`.
+8. **El corpus estaba hecho a medida**: ahora tiene 73 URL reales con esas variantes corrientes, y la carpeta de detección sale de él.
+9. **«Ya lo guardaste el …» podía citar una vez posterior**: solo cuentan las anteriores al propio elemento.
+10. Más seguimiento: `si`, `srsltid`, `share_id`, `gbraid`, `wbraid` y los de boletines.
+11. **La normalización alteraba `?flag` y no era idempotente con `//`**: la consulta se rehace sin tocarla y las barras finales se quitan todas; el resaltado de texto dentro de un fragmento se quita.
+12. Forzado con `/enlace` sin URL: «Enlace guardado.»
+13. **Dominios IDN** se enseñan en Unicode.
+14. `docs.rs/crate/…`, la raíz de docs.rs y las páginas de pkg.go.dev (`search`…) dan nombres correctos o ninguno.
 

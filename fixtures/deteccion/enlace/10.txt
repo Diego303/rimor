@@ -1,1 +1,1 @@
-https://central.sonatype.com/artifact/com.google.guava/guava
+https://arxiv.org/abs/2310.06825

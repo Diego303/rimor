@@ -1,1 +1,1 @@
-https://packagist.org/packages/laravel/framework
+https://arxiv.org/html/2310.06825v1

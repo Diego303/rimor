@@ -1,1 +1,1 @@
-https://gitlab.com/gitlab-org/gitlab/-/issues/1
+https://gitlab.com/gitlab-org/charts/gitlab/-/issues/123

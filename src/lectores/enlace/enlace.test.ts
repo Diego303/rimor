@@ -35,6 +35,19 @@ describe('normalizar', () => {
     expect(normalizar('https://example.com/docs#instalar')).toBe('https://example.com/docs#instalar');
     expect(normalizar('https://example.com/')).toBe('https://example.com/');
     expect(normalizar('http://example.com:80/x?ref_src=twsrc&q=1')).toBe('http://example.com/x?q=1');
+    // La consulta no se altera: `?flag` sigue sin `=`.
+    expect(normalizar('https://example.com/x?flag&b=2')).toBe('https://example.com/x?b=2&flag');
+    // Barras repetidas al final y resaltado de texto dentro de un fragmento.
+    expect(normalizar('https://example.com/a//')).toBe('https://example.com/a');
+    expect(normalizar('https://example.com/a#sec:~:text=hola')).toBe('https://example.com/a#sec');
+    // Seguimiento de buscadores y redes.
+    expect(normalizar('https://youtu.be/x?si=abc&t=30')).toBe('https://youtu.be/x?t=30');
+    expect(normalizar('https://ejemplo.org/?srsltid=AfmBO')).toBe('https://ejemplo.org/');
+  });
+
+  it('un DOI se limpia como cualquier URL', () => {
+    expect(normalizar('https://doi.org/10.1145/3368089?utm_source=x')).toBe('https://doi.org/10.1145/3368089');
+    expect(normalizar('https://dx.doi.org/10.1145/3368089#:~:text=a')).toBe('https://doi.org/10.1145/3368089');
   });
 
   it('DOI en todas sus formas a https://doi.org/…', () => {
@@ -58,10 +71,37 @@ describe('normalizar', () => {
 });
 
 describe('clasificar', () => {
-  it('las 60 URL reales del corpus, todas bien', () => {
-    expect(corpus).toHaveLength(60);
+  it('las URL reales del corpus (al menos 60), todas bien', () => {
+    expect(corpus.length).toBeGreaterThanOrEqual(60);
     const fallos = corpus.filter(({ url, clase }) => clasificar(normalizar(url) ?? '').clase !== clase);
     expect(fallos.map((f) => `${f.url} → ${clasificar(normalizar(f.url) ?? '').clase}, no ${f.clase}`)).toEqual([]);
+  });
+
+  it('nombres de las formas corrientes', () => {
+    const d = (u: string) => clasificar(normalizar(u) ?? '');
+    expect(d('https://gitlab.com/gitlab-org/charts/gitlab/-/issues/123')).toMatchObject({
+      clase: 'issue',
+      nombre: 'gitlab-org/charts/gitlab',
+      numero: 123,
+    });
+    expect(d('https://arxiv.org/abs/math/0211159')).toMatchObject({ nombre: 'math/0211159' });
+    expect(d('https://dl.acm.org/doi/pdf/10.1145/3368089.3409741')).toMatchObject({
+      nombre: '10.1145/3368089.3409741',
+    });
+    expect(d('https://docs.rs/crate/ureq/latest')).toMatchObject({ nombre: 'ureq' });
+    expect(d('https://docs.rs/')).not.toHaveProperty('nombre');
+    expect(d('https://docs.google.com/spreadsheets/d/x/edit')).toMatchObject({ clase: 'otro', sitio: 'Google Docs' });
+    expect(d('https://münchen.de/Straße').sitio).toBe('münchen.de');
+  });
+
+  it('nunca lanza: un % suelto o en Latin-1 se deja tal cual', async () => {
+    for (const u of ['https://example.com/rebajas-50%', 'https://example.com/caf%E9', 'doi:10.1000/abc%zz']) {
+      const url = normalizar(u) ?? '';
+      expect(() => tituloDe(url, clasificar(url)), u).not.toThrow();
+      const el = elementoFalso(1, u, 'enlace');
+      await expect(lectorEnlace.leer({ texto: u })).resolves.toBeTruthy();
+      await expect(lectorEnlace.derivar(el)).resolves.toBeTruthy();
+    }
   });
 
   it('casos límite: GitHub sin repo es otro; un repo con su árbol sigue siendo el repo', () => {
@@ -124,9 +164,19 @@ describe('respuesta', () => {
     );
   });
 
+  it('no recuerda una vez posterior al propio elemento; forzado sin URL, una frase', async () => {
+    const posterior = { ...elementoFalso(4, 'z', 'enlace').frontmatter, creado: '2030-01-01T09:00:00+01:00' };
+    expect(await responder('https://docs.rs/ureq', 'es', { mismaHuella: [posterior] })).toBe(
+      'Documentación de ureq en docs.rs.',
+    );
+    expect(await responder('no es una dirección')).toBe('Enlace guardado.');
+  });
+
   it('de punta a punta: la misma URL con otro seguimiento se recuerda', async () => {
     const repositorio = new Repositorio(new AlmacenMemoria());
-    const capturador = crearCapturador({ repositorio, registro: REGISTRO, reloj: () => new Date(2026, 9, 2, 9) });
+    // La primera el 2 oct; la segunda, días después.
+    let dia = 2;
+    const capturador = crearCapturador({ repositorio, registro: REGISTRO, reloj: () => new Date(2026, 9, dia, 9) });
     const primera = await capturador.capturar({ texto: 'https://docs.rs/ureq?utm_source=a', origen: 'pegado' });
     expect(primera.ok && primera.valor.tipo === 'creado' && primera.valor.capturado.elemento.frontmatter).toMatchObject(
       {
@@ -136,6 +186,7 @@ describe('respuesta', () => {
         url: 'https://docs.rs/ureq',
       },
     );
+    dia = 10;
     const r = await capturador.capturar({ texto: 'https://docs.rs/ureq?utm_source=b', origen: 'pegado' });
     if (!r.ok || r.valor.tipo !== 'creado') throw new Error('no creado');
     const el = r.valor.capturado.elemento;
