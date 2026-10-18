@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type Elemento, hashOriginal } from '@rimor/formato';
 import { describe, expect, it } from 'vitest';
-import { leerTexto } from '../almacen/contrato';
+import { escribirTexto, leerTexto } from '../almacen/contrato';
 import { AlmacenMemoria } from '../almacen/memoria';
 import { Repositorio } from '../almacen/repositorio';
 import { leerAjustes, respuestaDesactivada } from '../espacio/ajustes';
@@ -47,6 +47,22 @@ describe('reglas de estilo', () => {
     const r = { texto: bien.texto, acciones: [tres, tres, tres] } as unknown as Parameters<typeof comprobarEstilo>[0];
     expect(comprobarEstilo(r).join()).toContain('más de 2 acciones');
     expect(comprobarEstilo({ texto: [{ t: 'cifra', v: '' }] }).join()).toContain('fragmento vacío');
+    expect(comprobarEstilo({ texto: [{ t: 'texto', v: 'España 🇪🇸' }] }).join()).toContain('emoji');
+  });
+
+  it('no cuentan el contenido del usuario (citas, mono, refs) ni las abreviaturas', () => {
+    const r: Parameters<typeof comprobarEstilo>[0] = {
+      texto: [
+        { t: 'texto', v: 'Es la tercera vez. El 15 oct escribiste: ' },
+        { t: 'cita', v: 'Subí el pool. Ya no pasa. ¡Por fin!', fecha: '2026-10-15' },
+        { t: 'texto', v: ', p. ej. con ' },
+        { t: 'mono', v: 'a != b' },
+        { t: 'texto', v: ' © y ' },
+        { t: 'ref', ref: 'ERR-0015' },
+        { t: 'texto', v: '.' },
+      ],
+    };
+    expect(comprobarEstilo(r)).toEqual([]);
   });
 });
 
@@ -107,13 +123,27 @@ describe('contexto', () => {
     await repo.guardarElemento(con(elementoFalso(3, 'c'), { etiquetas: ['rust'], colecciones: ['backend'] }));
     const nuevo = con(elementoFalso(4, 'd'), { lector: huella, etiquetas: ['rust'], titulo: 'Timeout en el gateway' });
     await repo.guardarElemento(nuevo);
-    const c = await construirContexto(nuevo, repo, 'es', 'TXT-0003');
+    const c = await construirContexto(nuevo, repo, 'es', { respondeA: 'TXT-0003' });
     expect(c.mismaHuella.map((f) => f.ref)).toEqual(['TXT-0002', 'TXT-0001']);
     expect(c.notas).toEqual([
       { ref: 'TXT-0001', texto: 'Pasa cuando el pool se queda sin conexiones.', fecha: antiguo.frontmatter.modificado },
     ]);
     expect(c.colecciones).toEqual(['backend']);
     expect(c.respondeA?.ref).toBe('TXT-0003');
+  });
+
+  it('la huella sale del resumen de los derivados; los alias no son versiones', async () => {
+    const repo = new Repositorio(new AlmacenMemoria());
+    const conHuella = { nombre: 'falso', version: 1, resumen: { huella: 'h9' } };
+    await repo.guardarElemento(con(elementoFalso(1, 'a'), { lector: conHuella }));
+    await repo.guardarElemento(elementoFalso(2, 'ajeno'));
+    // Captura nueva: su frontmatter trae el resumen provisional, sin huella, y un alias de una importación.
+    const nuevo = con(elementoFalso(3, 'c'), { alias: ['TXT-0002'] });
+    await repo.guardarElemento(nuevo);
+    const c = await construirContexto(nuevo, repo, 'es', { resumen: { huella: 'h9' } });
+    expect(c.mismaHuella.map((f) => f.ref)).toEqual(['TXT-0001']);
+    expect(c.versiones).toEqual([]);
+    expect((await construirContexto(nuevo, repo, 'es')).mismaHuella).toEqual([]);
   });
 
   it('colecciones por palabras del título si no comparten etiquetas', () => {
@@ -133,20 +163,49 @@ describe('respuestas de los lectores sobre el corpus', () => {
   );
   const lectores: Lector[] = [...REGISTRO.lectores, lectorPlantilla];
 
-  it('ninguna incumple las reglas de estilo, en es ni en en', async () => {
+  /** Un contexto lleno: lo que el lector puede recordar (misma huella, notas, colecciones, a qué responde). */
+  const lleno = (idioma: Idioma): Contexto => {
+    const otro = con(elementoFalso(90, 'x'), { estado: 'resuelto', colecciones: ['gateway'] }).frontmatter;
+    return {
+      idioma,
+      mismaHuella: [otro, elementoFalso(91, 'y').frontmatter],
+      versiones: [],
+      notas: [
+        {
+          ref: otro.ref,
+          texto: 'Pasa cuando el pool se queda sin conexiones. Subí el límite.',
+          fecha: otro.modificado,
+        },
+      ],
+      colecciones: ['gateway', 'backend'],
+      respondeA: otro,
+    };
+  };
+
+  it('ninguna incumple las reglas de estilo, en es ni en en, con el contexto vacío o lleno', async () => {
     for (const lector of lectores)
       for (const [i, texto] of ejemplos.entries()) {
         const el = con(elementoFalso(i + 1, texto), { tipo: lector.tipo, hash: hashOriginal(texto) });
         const datos = await lector.derivar(el);
         for (const idioma of ['es', 'en'] as const)
-          expect(comprobarEstilo(lector.respuesta(el, datos, ctx(idioma))), `${lector.nombre} ${i}`).toEqual([]);
+          for (const contexto of [ctx(idioma), lleno(idioma)])
+            expect(comprobarEstilo(lector.respuesta(el, datos, contexto)), `${lector.nombre} ${i}`).toEqual([]);
       }
   });
 
   it('instantánea de la respuesta de cada lector con su primer ejemplo', async () => {
-    const texto = ejemplos[0] ?? '';
     const instantaneas: Record<string, unknown> = {};
     for (const lector of lectores) {
+      // Su propio ejemplo (el primero de su carpeta del corpus) o, si aún no tiene, el primero de todos.
+      let propios: string[] = [];
+      try {
+        propios = readdirSync(join(raiz, lector.tipo))
+          .filter((f) => f.endsWith('.txt'))
+          .sort();
+      } catch {
+        propios = [];
+      }
+      const texto = propios[0] ? readFileSync(join(raiz, lector.tipo, propios[0]), 'utf8') : (ejemplos[0] ?? '');
       const el = con(elementoFalso(1, texto), { tipo: lector.tipo });
       const datos = await lector.derivar(el);
       instantaneas[lector.nombre] = {
@@ -167,7 +226,7 @@ describe('ajustes y contadores', () => {
     expect(leerAjustes('roto').respuestas.desactivadas).toEqual([]);
   });
 
-  it('contadores por día, que se releen al reabrir; una pestaña lectora no escribe', async () => {
+  it('contadores por día, que se releen al reabrir', async () => {
     const almacen = new AlmacenMemoria();
     let dia = new Date(2026, 9, 18, 10);
     const c = await abrirContadores(
@@ -183,15 +242,33 @@ describe('ajustes y contadores', () => {
     expect(c.total('erroresReconocidos', '2026-10-19')).toBe(1);
     const otra = await abrirContadores(almacen, () => true);
     expect(otra.datos().dias['2026-10-18']).toEqual({ duplicadosEvitados: 3 });
-    const lectora = await abrirContadores(almacen, () => false);
-    await lectora.contar('copiasConValores');
-    expect(leerContadores(await leerTexto(almacen, RUTA_CONTADORES)).dias['2026-10-19']).toEqual({
-      erroresReconocidos: 1,
-    });
-    expect(
-      leerContadores('{"dias":{"mal":{"x":1},"2026-01-01":{"duplicadosEvitados":-2,"copiasConValores":4}}}').dias,
-    ).toEqual({
-      '2026-01-01': { copiasConValores: 4 },
-    });
+    const raro = '{"dias":{"mal":{"x":1},"2026-01-01":{"duplicadosEvitados":-2,"copiasConValores":4}}}';
+    expect(leerContadores(raro)?.dias).toEqual({ '2026-01-01': { copiasConValores: 4 } });
+  });
+
+  it('dos pestañas no se pisan: lo que cuenta la lectora espera y se suma al pasar a escribir', async () => {
+    const almacen = new AlmacenMemoria();
+    const dia = () => new Date(2026, 9, 18, 10);
+    const a = await abrirContadores(almacen, () => true, dia);
+    let bEscribe = false;
+    const b = await abrirContadores(almacen, () => bEscribe, dia);
+    for (let i = 0; i < 7; i++) await a.contar('duplicadosEvitados');
+    await b.contar('duplicadosEvitados');
+    expect(b.total('duplicadosEvitados')).toBe(1);
+    const enArchivo = async () => leerContadores(await leerTexto(almacen, RUTA_CONTADORES))?.dias['2026-10-18'];
+    expect(await enArchivo()).toEqual({ duplicadosEvitados: 7 });
+    bEscribe = true;
+    await b.recargar();
+    expect(await enArchivo()).toEqual({ duplicadosEvitados: 8 });
+    expect(b.total('duplicadosEvitados')).toBe(8);
+  });
+
+  it('un archivo de contadores ilegible no se sobrescribe', async () => {
+    const almacen = new AlmacenMemoria();
+    await escribirTexto(almacen, RUTA_CONTADORES, '{ roto');
+    const c = await abrirContadores(almacen, () => true);
+    await c.contar('duplicadosEvitados');
+    expect(await leerTexto(almacen, RUTA_CONTADORES)).toBe('{ roto');
+    expect(c.total('duplicadosEvitados')).toBe(1);
   });
 });

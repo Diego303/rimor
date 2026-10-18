@@ -46,25 +46,35 @@ export function coleccionesCandidatas(fm: FrontmatterComun, otros: readonly Fron
     .map(([c]) => c);
 }
 
+export interface OpcionesContexto {
+  /** Ref del elemento al que responde la captura. */
+  respondeA?: string;
+  /**
+   * El resumen calculado con los derivados (`lector.resumen(datos)`): en una captura nueva, el del frontmatter
+   * aún es el provisional de `leer` y no trae la huella.
+   */
+  resumen?: Record<string, unknown>;
+}
+
 export async function construirContexto(
   el: Elemento,
   repositorio: Repositorio,
   idioma: Idioma,
-  respondeA?: string,
+  { respondeA, resumen }: OpcionesContexto = {},
 ): Promise<Contexto> {
   const fm = el.frontmatter;
   const todos = repositorio.elementos();
-  const huella = huellaDe(fm);
+  const huella = huellaDe(resumen ? { ...fm, lector: { ...fm.lector, resumen } } : fm);
   const mismaHuella = huella ? todos.filter((o) => o.id !== fm.id && huellaDe(o) === huella).sort(porFechaDesc) : [];
-  const versiones = (fm.alias ?? [])
-    .map((ref) => repositorio.frontmatter(ref))
-    .filter((o): o is FrontmatterComun => Boolean(o))
-    .sort(porFechaDesc);
+  // Las versiones viven en `historial/` y en `version` (IN-029); `alias` son refs antiguas de importaciones, que
+  // hoy pueden ser de otro elemento: no se usan aquí.
+  const versiones: FrontmatterComun[] = [];
 
   const notas: Nota[] = [];
   for (const o of mismaHuella.filter((x) => x.estado === 'resuelto').slice(0, MAX_NOTAS)) {
-    const leido = await repositorio.leerElemento(o.id);
-    const linea = leido.ok ? leido.valor.notas.split('\n').find((l) => l.trim()) : undefined;
+    // Una nota que no se puede leer se omite: no invalida el resto del contexto.
+    const leido = await repositorio.leerElemento(o.id).catch(() => null);
+    const linea = leido?.ok ? leido.valor.notas.split('\n').find((l) => l.trim()) : undefined;
     if (linea) notas.push({ ref: o.ref, texto: linea.trim(), fecha: o.modificado });
   }
 

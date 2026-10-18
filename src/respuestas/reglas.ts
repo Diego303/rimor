@@ -25,14 +25,26 @@ export function contarFrases(texto: string): number {
   return /[.?…]$/.test(t) ? cortes : cortes + 1;
 }
 
+/** Abreviaturas que no cierran frase. */
+const ABREVIATURAS = /\b(?:p\.\s?ej|e\.\s?g|i\.\s?e|etc|aprox|núm|pág)\./gi;
+/** Emojis de verdad (con presentación de emoji, banderas o selector de emoji), no «©» ni «™». */
+const EMOJI = /\p{Emoji_Presentation}|\p{Regional_Indicator}|\uFE0F/u;
+
+/**
+ * Faltas de estilo de lo que dice el lector. Las citas, los fragmentos `mono` y las refs son contenido del
+ * usuario (una nota, un nombre de variable): no cuentan para frases, exclamaciones ni emojis.
+ */
 export function comprobarEstilo(r: Respuesta): string[] {
   const faltas: string[] = [];
-  const texto = r.texto.map(textoDe).join('');
+  const texto = r.texto
+    .map((f) => (f.t === 'texto' || f.t === 'fuerte' || f.t === 'cifra' ? f.v : f.t === 'ref' ? 'REF' : '«…»'))
+    .join('')
+    .replace(ABREVIATURAS, 'abrev');
   if (r.texto.some((f) => !textoDe(f).trim() && f.t !== 'texto')) faltas.push('fragmento vacío');
-  if (!texto.trim()) faltas.push('sin texto');
+  if (!r.texto.map(textoDe).join('').trim()) faltas.push('sin texto');
   if (contarFrases(texto) > 2) faltas.push(`más de 2 frases: «${texto}»`);
   if (/[!¡]/.test(texto)) faltas.push(`exclamación: «${texto}»`);
-  if (/\p{Extended_Pictographic}/u.test(texto)) faltas.push(`emoji: «${texto}»`);
+  if (EMOJI.test(texto)) faltas.push(`emoji: «${texto}»`);
   if ((r.acciones?.filter(Boolean).length ?? 0) > 2) faltas.push('más de 2 acciones');
   return faltas;
 }

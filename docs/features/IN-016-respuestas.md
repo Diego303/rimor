@@ -53,7 +53,7 @@ src/espacio/ajustes.ts         ← lo mínimo de .rimor/ajustes.json que hace fa
 </div>
 ```
 
-Fragmentos: `texto` tal cual; `fuerte` en `<b>`; `cifra` en `<b class="cifra">` (mono tabular); `ref` como `Ref` pulsable (abre el elemento); `cita` entre comillas latinas con su fecha relativa («El 15 oct escribiste: «…»»); `mono` en `<span class="mono">`. Mientras se compone, el avatar es `<Senal estado="contestando" decorativa>` y el texto «Leyendo…» (con `aria-live`); las acciones las pinta quien la usa (el feed, IN-026), con `principal` como `btn key`.
+Fragmentos: `texto` tal cual; `fuerte` en `<b>`; `cifra` en `<b class="dato">` (negrita con cifras tabulares, como la pantalla de referencia); `ref` como `Ref` pulsable (abre el elemento); `cita` entre comillas latinas con su fecha relativa («El 15 oct escribiste: «…»»); `mono` en `<span class="mono">`. Mientras se compone, el avatar es `<Senal estado="contestando" decorativa>` y el texto «Leyendo…» (con `aria-live`); las acciones las pinta quien la usa (el feed, IN-026), con `principal` como `btn key`.
 
 `useRespuesta(capturado)` espera `capturado.derivados`; si fallan, una respuesta de reserva sin datos («Guardado como Log. No pude analizarlo: se ve el original.»). Si el tipo tiene las respuestas desactivadas (D14), devuelve `null` y no se pinta nada.
 
@@ -105,4 +105,35 @@ Cubre las seis tareas y los criterios. Lo que depende de lectores que aún no ex
 - La frase de secretos dice cuántos, no cuáles: la captura solo guarda `ocultados`.
 - `RespuestaRimor` pinta las refs como texto mono si no le dan `alAbrir`; la cita va en `<q>` con comillas latinas y su fecha en el `title`.
 - Las instantáneas de respuestas cubren hoy la plantilla (los lectores llegan con la ola 4 y se añadirán solas, porque la prueba recorre `REGISTRO`).
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 18:00): tipos 0 errores; Biome, colores y textos, OK; Vitest 43 archivos y 567 pruebas, OK; construcción OK; carga inicial 174,6 KB.
+
+| Criterio | Evidencia |
+|---|---|
+| `construirContexto` | Pruebas de misma huella (también con la huella de los derivados), notas de los resueltos, colecciones candidatas y respondeA |
+| `RespuestaRimor` con avatar mono y «Leyendo…» | `RespuestaRimor.test.tsx` |
+| Reglas de estilo por prueba | `comprobarEstilo` con casos buenos y malos; propiedad sobre todas las respuestas de los lectores registrados y la plantilla, con el corpus, en es y en, con contexto vacío y lleno |
+| Frase común de secretos | Singular y plural, en es y en |
+| Respuestas desactivadas por tipo (D14) | `useRespuesta` con `.rimor/ajustes.json`; se vuelve a mirar con cada aviso del espacio |
+| Contadores locales | Por día, releídos al reabrir, dos pestañas sin pisarse, archivo ilegible sin sobrescribir, duplicado contado en la captura |
+| Ninguna respuesta del corpus incumple las reglas | Prueba de propiedad |
+| Los contadores sobreviven a exportar e importar | Viven en `.rimor/contadores.json` y se releen al reabrir; el ZIP (IN-035) incluirá `.rimor/` (se comprobará allí) |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **`versiones` salía de `alias`**, que son refs antiguas de importaciones (pueden ser de otro elemento): queda vacía hasta IN-029, que las lee de `historial/` y `version`.
+2. **La huella se leía del resumen provisional** de la captura: `useRespuesta` pasa a `construirContexto` el resumen de los derivados.
+3. **Los contadores se pisaban entre pestañas**: cada recuento lee, suma y escribe en orden; lo que cuenta una pestaña que lee espera en memoria y se vuelca al pasar a escribir, ya releído todo.
+4. **Las reglas miraban el contenido del usuario** (citas, `mono`, refs) y fallaban con «©» o «p. ej.»: solo cuentan los fragmentos del lector, con abreviaturas; los emojis se buscan por su presentación (y las banderas, que antes pasaban).
+5. **Lecturas sin protección** de ajustes y contadores: un fallo de lectura ya no impide abrir; al pasar a escribir, la pestaña solo escribe si la relectura sale bien (se reintenta una vez).
+6. **Una nota que no se lee tumbaba el contexto**: se omite.
+7. **`cerrar()` no esperaba a los contadores**: espera.
+8. **Un archivo de contadores ilegible se sobrescribía**: no se toca; lo contado espera en memoria.
+9. **Instantáneas y propiedad**: cada lector con su propio ejemplo y la propiedad también con contexto lleno. `correccionesDeTipo` y `respuestasDescartadas` se cuentan en IN-026 (triaje: «No» y archivar sin actuar) e IN-049 (correcciones de tipo), anotado en «Notas para funcionalidades futuras».
+10. **`cifra` usaba la ficha de cifra de los documentos**: va en negrita con cifras tabulares.
+11. **Las respuestas desactivadas no se repintaban** al cambiar los ajustes: se vuelve a mirar con cada aviso del espacio.
 

@@ -116,8 +116,16 @@ export async function abrirEspacio(
       return pendiente;
     };
 
-    let ajustes = leerAjustes(await leerTexto(dep.almacen, RUTA_AJUSTES));
-    const contadores = await abrirContadores(dep.almacen, () => escribe() && !cerrado, reloj);
+    // Los ajustes que no se pueden leer (E/S) toman los iniciales: nunca impiden abrir.
+    const leerAjustesSeguro = async () => {
+      try {
+        return leerAjustes(await leerTexto(dep.almacen, RUTA_AJUSTES));
+      } catch {
+        return null;
+      }
+    };
+    let ajustes = (await leerAjustesSeguro()) ?? leerAjustes(null);
+    const contadores = await abrirContadores(dep.almacen, () => escribe() && alDia && !cerrado, reloj);
 
     const abierta = await abrirCache(dep);
     cache = abierta;
@@ -138,25 +146,25 @@ export async function abrirEspacio(
 
     // Relee estado y elementos: al recibir un cambio de la otra pestaña o al pasar a escribir. En orden, y los
     // avisos que llegan mientras ya hay una relectura esperando se juntan en ella.
-    let relectura = Promise.resolve();
+    let relectura: Promise<boolean> = Promise.resolve(true);
     let enEspera = false;
-    const releer = (antes?: () => Promise<unknown>) => {
+    /** Relee todo; devuelve si lo consiguió (una lectura que falla deja lo anterior). */
+    const releer = (antes?: () => Promise<unknown>): Promise<boolean> => {
       if (enEspera && !antes) return relectura;
       enEspera = true;
-      relectura = relectura
-        .then(async () => {
-          enEspera = false;
-          if (cerrado) return;
-          await antes?.();
-          const nuevo = await leerTodo();
-          estado = leerEstado(await leerTexto(dep.almacen, RUTA_ESTADO));
-          ajustes = leerAjustes(await leerTexto(dep.almacen, RUTA_AJUSTES));
-          await contadores.recargar();
-          fallidos = nuevo.fallidos;
-          repositorio.cargarDesde(nuevo.entradas);
-          avisar();
-        })
-        .catch(() => undefined);
+      const turno = relectura.then(async () => {
+        enEspera = false;
+        if (cerrado) return false;
+        await antes?.();
+        const nuevo = await leerTodo();
+        repositorio.cargarDesde(nuevo.entradas);
+        fallidos = nuevo.fallidos;
+        estado = leerEstado(await leerTexto(dep.almacen, RUTA_ESTADO));
+        ajustes = (await leerAjustesSeguro()) ?? ajustes;
+        avisar();
+        return true;
+      });
+      relectura = turno.catch(() => false);
       return relectura;
     };
     coordinacion.alCambiarEnOtra(() => {
@@ -165,17 +173,25 @@ export async function abrirEspacio(
     coordinacion.alCambiarModo((modo) => {
       if (modo !== 'escritor') return;
       alDia = false;
-      void releer(async () => {
+      const preparar = async () => {
         await dep.almacen.limpiarHuerfanos?.();
         // Si la otra pestaña no llegó a crearlos, se crean ahora.
         if ((await leerTexto(dep.almacen, RUTA_MANIFEST)) === null)
           await escribirTexto(dep.almacen, RUTA_MANIFEST, json(manifest));
         if ((await leerTexto(dep.almacen, RUTA_ESTADO)) === null)
           await escribirTexto(dep.almacen, RUTA_ESTADO, json(estado));
-      }).finally(() => {
-        alDia = true;
-        avisar();
-      });
+      };
+      // Solo se escribe con todo releído; si la relectura falla dos veces, la pestaña sigue sin escribir (mejor
+      // que escribir sobre un índice viejo).
+      void releer(preparar)
+        .then((bien) => bien || releer(preparar))
+        .then(async (bien) => {
+          if (!bien) return;
+          alDia = true;
+          // Lo que se contó mientras solo se leía, ahora sí, sobre lo que contó la otra pestaña.
+          await contadores.recargar();
+          avisar();
+        });
     });
 
     return ok({
@@ -196,6 +212,7 @@ export async function abrirEspacio(
         if (cerrado) return;
         // Primero lo que ya estaba pedido; después nada más se escribe y se sueltan cerrojo y caché.
         await pendiente.catch(() => undefined);
+        await contadores.esperar();
         await dep.almacen.esperar?.().catch(() => undefined);
         cerrado = true;
         coordinacion.cerrar();

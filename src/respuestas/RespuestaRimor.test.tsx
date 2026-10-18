@@ -38,7 +38,7 @@ describe('RespuestaRimor', () => {
     );
     expect(container.querySelector('.rimor .av svg.simbolo.mono')).toBeTruthy();
     expect(container.querySelector('b')?.textContent).toBe('tercera vez');
-    expect(container.querySelector('b.cifra')?.textContent).toBe('16');
+    expect(container.querySelector('b.dato')?.textContent).toBe('16');
     expect(container.querySelector('q')?.textContent).toBe('Pasa cuando…');
     expect(container.querySelector('p span.mono')?.textContent).toBe(' pool');
     fireEvent.click(screen.getByRole('button', { name: 'ERR-0015' }));

@@ -19,7 +19,17 @@ export function useRespuesta(
   const { idioma } = useT();
   const espacio = useEspacioOpcional();
   const lectores = useLectoresOpcional();
-  const desactivada = espacio ? respuestaDesactivada(espacio.ajustes(), el.frontmatter.tipo) : false;
+  const tipo = el.frontmatter.tipo;
+  const [desactivada, setDesactivada] = useState(() =>
+    espacio ? respuestaDesactivada(espacio.ajustes(), tipo) : false,
+  );
+  // Los ajustes pueden cambiar (Ajustes, otra pestaña): se vuelve a mirar con cada aviso del espacio.
+  useEffect(() => {
+    if (!espacio) return undefined;
+    const mirar = () => setDesactivada(respuestaDesactivada(espacio.ajustes(), tipo));
+    mirar();
+    return espacio.alCambiar(mirar);
+  }, [espacio, tipo]);
   const [respuesta, setRespuesta] = useState<Respuesta | null>(null);
   const { derivados, respondeA } = opciones;
 
@@ -31,7 +41,17 @@ export function useRespuesta(
     (async () => {
       if (!lector || !lectores || !espacio) return respuestaSinDatos(el, idioma);
       const datos = await (derivados ?? lectores.cola.pedir(el, { prioridad: 'fondo' }));
-      const ctx = await construirContexto(el, espacio.repositorio, idioma, respondeA);
+      // La huella y lo demás salen del resumen definitivo, el de los derivados.
+      let resumen: Record<string, unknown> | undefined;
+      try {
+        resumen = lector.resumen(datos);
+      } catch {
+        resumen = undefined;
+      }
+      const ctx = await construirContexto(el, espacio.repositorio, idioma, {
+        ...(respondeA ? { respondeA } : {}),
+        ...(resumen ? { resumen } : {}),
+      });
       return componer(el, lector, datos, ctx);
     })()
       .catch(() => respuestaSinDatos(el, idioma))

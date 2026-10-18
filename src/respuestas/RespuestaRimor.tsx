@@ -46,7 +46,8 @@ function Pieza({ f, alAbrir }: { f: Fragmento; alAbrir: Props['alAbrir'] }): Rea
     case 'fuerte':
       return <b>{f.v}</b>;
     case 'cifra':
-      return <b className="cifra">{f.v}</b>;
+      // Como en la pantalla de referencia, el dato va en negrita (no con la ficha de cifra de los documentos).
+      return <b className="dato">{f.v}</b>;
     case 'mono':
       return <span className="mono">{f.v}</span>;
     case 'ref':
