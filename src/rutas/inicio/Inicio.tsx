@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { TarjetaPersistencia } from '../../espacio/Avisos';
 import { useT } from '../../i18n/useT';
+import { IdeasQueVuelven } from '../../lectores/idea/IdeasQueVuelven';
 import { Vacio } from '../../ui/componentes';
 import { Compositor } from '../../ui/componentes/Compositor';
 import { Pantalla } from '../Pantalla';
@@ -13,6 +14,7 @@ export function Inicio() {
     <>
       <Pantalla>
         <TarjetaPersistencia />
+        <IdeasQueVuelven />
         <Vacio titulo={t('pantallas.inicio.vacioTitulo')}>{t('pantallas.inicio.vacio')}</Vacio>
       </Pantalla>
       <div className="col ccol">

@@ -1,0 +1,1 @@
+Idea for the talk: failure modes of distributed caches

@@ -1,0 +1,1 @@
+Separar las métricas de negocio de las técnicas

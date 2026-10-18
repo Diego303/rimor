@@ -1,0 +1,1 @@
+Probar si comprimir el índice con zstd mejora la apertura

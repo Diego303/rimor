@@ -1,0 +1,78 @@
+/**
+ * Lector Idea (LEC-02): un texto corto sin señales de otro tipo, o lo que se marca con `/idea`. Nace en
+ * «semilla» y vuelve a los 7 días si no se hace nada con ella (ver `resurgir.ts`).
+ */
+import type { Elemento } from '@rimor/formato';
+import type { Borrador, Entrada, Lector } from '../contrato';
+import { textos } from './textos';
+
+export const ESTADOS_IDEA = ['semilla', 'explorando', 'aparcada', 'descartada', 'convertida'] as const;
+export type EstadoIdea = (typeof ESTADOS_IDEA)[number];
+/** Los que se pueden elegir a mano; «convertida» la pone IN-070 al convertirla en investigación. */
+export const ESTADOS_ELEGIBLES: readonly EstadoIdea[] = ['semilla', 'explorando', 'aparcada', 'descartada'];
+
+/** Menos de esto (y sin otras señales) es una idea (plan §8.8). */
+export const LARGO_IDEA = 280;
+
+/** Señales de que un texto corto es otra cosa: un enlace, un log, una traza, mediciones, código, un comando o Markdown. */
+const SENALES_DE_OTRO = [
+  /https?:\/\//i,
+  /\b\d{1,2}:\d{2}(?::\d{2})?\b/, // hora
+  /\b(?:ERROR|WARN|WARNING|INFO|DEBUG|TRACE|FATAL)\b/,
+  /\b(?:Traceback|panicked at|Exception|at \S+\(|stack trace)\b/i,
+  /\d+(?:[.,]\d+)?\s*(?:ns|µs|us|ms|s|KB|MB|GB|%)\b.*\d+(?:[.,]\d+)?\s*(?:ns|µs|us|ms|s|KB|MB|GB|%)\b/i, // mediciones
+  /[{};]\s*$|=>|\b(?:def|function|fn|const|let|var|import|return|class)\s/m, // código
+  /^\s*(?:\$|>\s|(?:sudo|git|npm|pnpm|docker|kubectl|curl|ssh|cd|ls|cat|grep)\s)/m, // comando
+  /^\s*(?:#{1,6}\s|[-*+]\s|\d+\.\s|```)/m, // Markdown
+];
+
+export function pareceIdea(texto: string): boolean {
+  const t = texto.trim();
+  if (!t || t.length >= LARGO_IDEA) return false;
+  if (t.split(/\r?\n/).length > 3) return false;
+  return !SENALES_DE_OTRO.some((r) => r.test(t));
+}
+
+export interface DatosIdea {
+  palabras: number;
+  lineas: number;
+}
+
+const primeraLinea = (texto: string) => (texto.split(/\r?\n/).find((l) => l.trim()) ?? '').trim();
+
+export const lectorIdea: Lector<DatosIdea> = {
+  nombre: 'idea',
+  tipo: 'idea',
+  version: 1,
+  textos,
+
+  detectar: (e: Entrada) => (e.texto !== undefined && pareceIdea(e.texto) ? 0.7 : 0),
+
+  async leer(e: Entrada): Promise<Borrador> {
+    const texto = e.texto ?? '';
+    return {
+      titulo: primeraLinea(texto).slice(0, 120),
+      original: texto,
+      resumen: { palabras: texto.split(/\s+/).filter(Boolean).length },
+      // Sin `vuelve`: la primera vuelta se cuenta desde `creado` (con el reloj de la captura).
+      metadatos: { estado: 'semilla' },
+    };
+  },
+
+  async derivar(el: Elemento): Promise<DatosIdea> {
+    const texto = el.original ?? '';
+    return {
+      palabras: texto.split(/\s+/).filter(Boolean).length,
+      lineas: texto.trim() ? texto.trim().split(/\r?\n/).length : 0,
+    };
+  },
+
+  resumen: (d) => ({ palabras: d.palabras }),
+
+  resumenLegible: (r, idioma) =>
+    typeof r.palabras === 'number' ? textos.t(idioma, 'palabras', { n: r.palabras }) : '',
+
+  respuesta: (_el, _d, ctx) => ({ texto: [{ t: 'texto', v: textos.t(ctx.idioma, 'guardada') }] }),
+
+  cifras: { palabras: (d) => ({ texto: String(d.palabras), valor: d.palabras }) },
+};

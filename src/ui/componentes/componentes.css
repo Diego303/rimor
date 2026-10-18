@@ -897,6 +897,68 @@ details.more > div {
   gap: 8px;
 }
 
+/* ---------- Mensaje del feed (guía §7.5; IN-018 para las ideas que vuelven, IN-026 para el feed) ---------- */
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid transparent;
+  box-shadow: var(--shadow);
+}
+.msg.fresh {
+  border-color: var(--key);
+}
+.mhead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.mhead .tt {
+  font-weight: 600;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.mhead .tt:hover {
+  color: var(--accent);
+}
+.mhead .time {
+  font-size: 0.75rem;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.mprev {
+  font-family: var(--f-m);
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 40px;
+}
+.mact {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-left: 40px;
+}
+.mact .sp {
+  flex: 1;
+}
+
 /* ---------- Respuesta de Rimor (la pinta RespuestaRimor, IN-016) ---------- */
 .rimor {
   display: flex;

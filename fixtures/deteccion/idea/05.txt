@@ -1,0 +1,1 @@
+Medir cuánto tarda el arranque en frío con la caché vacía

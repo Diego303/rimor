@@ -323,8 +323,10 @@ describe('capturar', () => {
 describe('capturar el corpus de detección', () => {
   it('cada ejemplo se guarda con su tipo y se relee igual', async () => {
     const raiz = join(process.cwd(), 'fixtures/deteccion');
-    const { repositorio, efectos: ef } = efectos();
-    const capturador = crearCapturador(ef);
+    // Con los lectores de la app: cada carpeta del corpus es el tipo que debe salir.
+    const { REGISTRO } = await import('../lectores/registro');
+    const repositorio = new Repositorio(new AlmacenMemoria());
+    const capturador = crearCapturador({ repositorio, registro: REGISTRO });
     for (const tipo of readdirSync(raiz)) {
       for (const f of readdirSync(join(raiz, tipo)).filter((x) => x.endsWith('.txt'))) {
         const texto = readFileSync(join(raiz, tipo, f), 'utf8');
@@ -343,7 +345,10 @@ describe('con los lectores de la app (red de seguridad)', () => {
     const repositorio = new Repositorio(new AlmacenMemoria());
     const capturador = crearCapturador({ repositorio, registro: REGISTRO });
     const casos = [
-      { texto: 'Una nota cualquiera sobre la reunión de hoy.', origen: 'pegado' as const },
+      {
+        texto: `Notas de la reunión de hoy, largas y sin formato. ${'Hablamos de plazos y de prioridades. '.repeat(10)}`,
+        origen: 'pegado' as const,
+      },
       { archivo: new File([new Uint8Array([0, 1, 2, 3, 255])], 'raro.bin'), origen: 'soltado' as const },
       {
         archivo: new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])], 'foto.png', {
@@ -351,11 +356,20 @@ describe('con los lectores de la app (red de seguridad)', () => {
         }),
         origen: 'soltado' as const,
       },
-      { archivo: new File(['texto suelto en un archivo'], 'sin-tipo'), origen: 'soltado' as const },
+      {
+        archivo: new File(
+          [`Un texto suelto en un archivo sin tipo. ${'Más contenido de prueba. '.repeat(15)}`],
+          'sin-tipo',
+        ),
+        origen: 'soltado' as const,
+      },
     ];
     const refs: string[] = [];
     for (const caso of casos) refs.push(creado(await capturador.capturar(caso)).elemento.frontmatter.ref);
     expect(refs).toEqual(['TXT-0001', 'ARC-0001', 'ARC-0002', 'TXT-0002']);
+    // Y lo corto sin señales es una idea.
+    const corto = creado(await capturador.capturar({ texto: 'Probar zstd en el índice', origen: 'pegado' }));
+    expect(corto.elemento.frontmatter).toMatchObject({ ref: 'IDE-0001', estado: 'semilla' });
     for (const ref of refs) expect((await repositorio.leerElemento(ref)).ok).toBe(true);
     expect(repositorio.frontmatter('ARC-0001')).toMatchObject({
       lector: { nombre: 'archivo' },

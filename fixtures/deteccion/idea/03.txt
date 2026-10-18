@@ -1,0 +1,1 @@
+Una vista que agrupe los errores por la hora en que pasan

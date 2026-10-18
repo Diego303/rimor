@@ -16,7 +16,7 @@ Guardar ideas sueltas sin fricción y que vuelvan solas si no se hace nada con e
 ### `src/lectores/idea/`
 
 - `detectar`: 0,7 si el texto, sin espacios alrededor, tiene menos de 280 caracteres, como mucho 3 líneas, y ninguna señal de otro tipo: URL, marca de hora o nivel de log (`ERROR`, `WARN`, `17:40:01`), traza (`at `, `Traceback`, `panicked`), números con unidad repetidos, sintaxis de código (`{`, `}`, `;` al final de línea, `=>`, `def `, `function`), una línea que empieza por `$` o por un comando conocido, o Markdown con encabezados o listas. Si no, 0. Con `/idea` la elige el compositor.
-- `leer`: título de la primera línea; cuerpo opcional (el resto); `metadatos: { estado: 'semilla', vuelve: creado + 7 días }`.
+- `leer`: título de la primera línea; cuerpo opcional (el resto); `metadatos: { estado: 'semilla' }`. La primera vuelta se cuenta desde `creado`.
 - `derivar`: `{ palabras, lineas }`; `resumen`: `{ palabras }`; `resumenLegible`: «Semilla · 12 palabras».
 - `respuesta`: «Idea guardada. Volverá dentro de 7 días si no haces nada con ella.» (es y en).
 - Estados (`ESTADOS_IDEA`): `semilla`, `explorando`, `aparcada`, `descartada` y `convertida` (esta, solo la pone IN-070; la vista no la ofrece).
@@ -35,10 +35,10 @@ Por cada idea que vuelve, un `article.msg` como el de la pantalla de referencia:
 
 ## Tareas
 
-- [ ] Detecta texto corto (< 280 caracteres) sin otras señales, o `/idea`.
-- [ ] Estados: semilla, explorando, aparcada, descartada y convertida (esta última, activa desde IN-070).
-- [ ] Resurgimiento mínimo: a los 7 días y, si se pospone, a los 30, con «Más adelante» y «Descartar».
-- [ ] Respuesta: «Idea guardada. Volverá dentro de 7 días si no haces nada con ella.»
+- [x] Detecta texto corto (< 280 caracteres) sin otras señales, o `/idea`.
+- [x] Estados: semilla, explorando, aparcada, descartada y convertida (esta última, activa desde IN-070).
+- [x] Resurgimiento mínimo: a los 7 días y, si se pospone, a los 30, con «Más adelante» y «Descartar».
+- [x] Respuesta: «Idea guardada. Volverá dentro de 7 días si no haces nada con ella.»
 
 ## Pruebas previstas
 
@@ -64,3 +64,11 @@ Por cada idea que vuelve, un `article.msg` como el de la pantalla de referencia:
 ## Autorrevisión
 
 Cubre las cuatro tareas y la aceptación, con el alcance de la incoherencia 1 (solo ideas, 7 y 30 días). «Convertir en investigación» queda fuera hasta IN-070, como manda la incoherencia 2.
+
+## Cambios durante la implementación
+
+- **`vuelve` solo se escribe al posponer**: la primera vuelta se calcula desde `creado` (`cuandoVuelve`), que lleva el reloj de la captura. Así el lector no necesita reloj y el reloj simulado de las pruebas manda.
+- Cambiar el estado desde la vista quita `vuelve`; si vuelve a semilla, cuenta otra vez desde que se guardó.
+- Las reglas `.msg`, `.mhead`, `.mprev` y `.mact` de la pantalla de referencia (con su «Estilo Instrumento»: radio 14, sin borde, sombra) quedan en `componentes.css` para el feed de IN-026.
+- Dos pruebas de la captura usaban textos cortos como ejemplo de Texto; ahora son ideas, y se ajustaron con textos largos (y una prueba nueva de que lo corto sin señales es una idea).
+

@@ -41,6 +41,7 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi�
 | `src/espacio/` | `abrirEspacio` (pestañas, huérfanos, manifest, caché y repositorio), `.rimor/estado.json`, persistencia, `ProveedorEspacio` con la pantalla de arranque y los avisos del almacenamiento | 007 |
 | `src/lectores/` | Contrato `Lector<D>` (núcleo puro), textos por lector, registro en el orden del Anexo D, `ColaDerivados`, ejecutor en Worker, vistas por convención (`import.meta.glob` + `React.lazy`), `VistaElemento`, `TarjetaElemento` y `_plantilla/` | 012 |
 | `src/lectores/texto/`, `src/lectores/archivo/` | Lectores Texto (Markdown saneado, enlaces, menciones) y genérico de archivo (adjunto, descarga, `pendiente_lector`) | 017 |
+| `src/lectores/idea/` | Lector Idea (textos cortos sin señales, estados) y resurgimiento mínimo (`resurgir.ts`, `IdeasQueVuelven` en Inicio) | 018 |
 | `src/respuestas/` | Tipos de la respuesta (012); contexto, composición con la frase de secretos, reglas de estilo, `RespuestaRimor`, `useRespuesta` y contadores locales (`.rimor/contadores.json`) | 012, 016 |
 | `src/espacio/ajustes.ts` | `.rimor/ajustes.json` (por ahora, respuestas desactivadas por tipo) | 016 |
 | `src/workers/derivados.worker.ts` | `derivar` de cada lector fuera del hilo principal, con Comlink | 012 |
