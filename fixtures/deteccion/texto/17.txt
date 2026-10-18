@@ -1,0 +1,1 @@
+La conclusión del experimento es menos clara de lo que esperaba. La versión nueva parece algo más rápida, pero la diferencia es del mismo orden que la variación entre una ejecución y otra, así que no me atrevería a decir que es mejor. Habrá que repetir las mediciones con más muestras y en una máquina que no esté haciendo otras cosas.

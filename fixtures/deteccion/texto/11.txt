@@ -1,0 +1,1 @@
+Al final no cambiamos de base de datos. Las pruebas mostraron que la mejora era pequeña para nuestro patrón de uso y que el coste de migrar, sobre todo el de formar a todo el mundo, no compensaba. Lo que sí haremos es revisar los índices, porque varios llevan años sin usarse y ralentizan las escrituras sin que nadie lo note.

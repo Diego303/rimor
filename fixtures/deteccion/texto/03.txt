@@ -1,0 +1,1 @@
+Me he dado cuenta de que llevo meses usando la misma estructura para escribir los informes de incidencias y que casi nadie lee la parte de causas. Quizá tendría más sentido empezar por lo que cambia para el lector, qué tiene que hacer distinto mañana, y dejar el análisis detallado para un anexo que solo consulte quien lo necesite.

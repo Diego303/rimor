@@ -18,6 +18,7 @@
     "lint:arreglar": "biome check --write .",
     "test": "vitest run",
     "tamano": "node scripts/tamano-carga.mjs",
+    "deteccion": "node scripts/deteccion.mjs",
     "verificar": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm tamano && pnpm comprobar:dist",
     "marca": "node scripts/marca.mjs",
     "comprobar:dist": "node scripts/comprobar-dist.mjs"

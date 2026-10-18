@@ -42,6 +42,8 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi�
 | `src/lectores/` | Contrato `Lector<D>` (núcleo puro), textos por lector, registro en el orden del Anexo D, `ColaDerivados`, ejecutor en Worker, vistas por convención (`import.meta.glob` + `React.lazy`), `VistaElemento`, `TarjetaElemento` y `_plantilla/` | 012 |
 | `src/respuestas/tipos.ts` | `Fragmento`, `Accion` y `Respuesta` de Rimor (CAP-14) | 012 |
 | `src/workers/derivados.worker.ts` | `derivar` de cada lector fuera del hilo principal, con Comlink | 012 |
+| `src/captura/` | Detector de tipo (atajos del Anexo D y arbitraje con duda), firmas de binarios y arnés de la matriz de detección | 013 |
+| `fixtures/deteccion/` | Corpus de detección: una carpeta por tipo con sus ejemplos | 013 |
 | `src/i18n/motor.ts` | Motor de textos sin catálogos (plurales, `{x}`, números), común a la app y los lectores | 012 |
 | `paquetes/formato` | Esquemas Valibot, `.md` de elementos (frontmatter fiel, notas y original), ULID, refs, rutas, SHA-256 y migraciones | 004 |
 | `paquetes/estadistica` | Descriptiva, IC de la mediana, Mann-Whitney, comparación, avisos de método; referencias de SciPy | 011 |

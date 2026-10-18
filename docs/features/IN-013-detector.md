@@ -60,10 +60,10 @@ El sobre de terminal (puesto 1) lo detecta su propio lector con la puntuación m
 
 ## Tareas
 
-- [ ] Arbitraje: gana el mayor por encima de 0,6; si el segundo queda a menos de 0,15, se ofrecen los dos; si nadie pasa de 0,6, Texto.
-- [ ] Atajos previos (Anexo D): binarios por tipo MIME o firma; URL o DOI completos.
-- [ ] Corpus `fixtures/deteccion/<tipo>/*.txt` (texto ahora; cada lector, el suyo).
-- [ ] Script `pnpm deteccion` con la matriz de confusión y el acierto por tipo, en la integración continua.
+- [x] Arbitraje: gana el mayor por encima de 0,6; si el segundo queda a menos de 0,15, se ofrecen los dos; si nadie pasa de 0,6, Texto.
+- [x] Atajos previos (Anexo D): binarios por tipo MIME o firma; URL o DOI completos.
+- [x] Corpus `fixtures/deteccion/<tipo>/*.txt` (texto ahora; cada lector, el suyo).
+- [x] Script `pnpm deteccion` con la matriz de confusión y el acierto por tipo, en la integración continua.
 
 ## Pruebas previstas
 
@@ -91,3 +91,11 @@ El sobre de terminal (puesto 1) lo detecta su propio lector con la puntuación m
 ## Autorrevisión
 
 Cubre las cuatro tareas y la aceptación. El detector no conoce ningún lector concreto: los atajos se activan por tipo y solo si su lector existe, así que el arnés no cambia al entrar lectores. Deja a IN-014 leer la cabecera de los archivos y presentar la duda, y a IN-038 el ajuste del margen.
+
+## Cambios durante la implementación
+
+- La distancia entre ganador y segundo se redondea a 9 decimales antes de compararla con el margen: en coma flotante, 0,70 − 0,55 da 0,1499… y se dudaba donde no tocaba.
+- Un archivo con MIME de texto (`text/*`, JSON, XML, YAML, CSV, JavaScript) no se trata como binario: decide el arbitraje.
+- `pnpm deteccion` es `scripts/deteccion.mjs`, que lanza la prueba del corpus con `DETECCION_INFORME=1` (la app y sus lectores son TypeScript con alias del workspace: Vitest ya sabe cargarlos). La integración continua tiene un paso «Matriz de detección» tras `pnpm verificar`.
+- Los porcentajes del informe van con coma decimal.
+

@@ -1,0 +1,1 @@
+I am not convinced that the new dashboard is helping. People open it every morning, but nobody seems to change what they do based on what it shows. Perhaps it would be better to send a short message only when something actually moves outside the usual range, instead of asking everyone to look at twenty charts.

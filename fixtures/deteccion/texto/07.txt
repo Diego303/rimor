@@ -1,0 +1,1 @@
+I keep coming back to the same question about the search feature. Users say they want fuzzy matching, but when we tried it in the prototype they complained that results felt random. Maybe what they actually want is better ranking of exact matches, with typos handled only when nothing else is found.

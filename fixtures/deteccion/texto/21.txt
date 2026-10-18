@@ -1,0 +1,1 @@
+The best part of the conference was a talk about failure modes in distributed caches. The speaker showed how a cache that is supposed to make things faster can turn a small database hiccup into a complete outage, because every client retries at the same moment. The fix was not clever code but simply adding a bit of randomness to the retries.

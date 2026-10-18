@@ -1,0 +1,1 @@
+Estuve leyendo el artículo sobre colas con prioridad que me pasó Marta y la idea principal es sencilla: si todo es urgente, nada lo es. Lo que proponen es limitar el número de tareas que pueden saltarse la cola y medir cuántas veces se usa ese atajo, porque cuando crece suele ser señal de que algo más profundo no va bien.

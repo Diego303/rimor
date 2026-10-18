@@ -1,0 +1,1 @@
+El fin de semana intenté reproducir el fallo de memoria en mi portátil y no hubo manera. En el servidor aparece siempre después de unas seis horas, así que sospecho que tiene que ver con algo que se acumula muy despacio, quizá las conexiones que no se cierran bien cuando el cliente se va sin despedirse. El lunes lo miro con más calma.

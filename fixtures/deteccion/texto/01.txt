@@ -1,0 +1,1 @@
+Hoy he estado revisando por qué el despliegue de la semana pasada tardó tanto. Creo que el problema no estaba en el código sino en la caché de dependencias, que se invalidaba cada vez que alguien tocaba el archivo de bloqueo aunque no cambiara nada importante. Habría que hablarlo con el equipo de plataforma antes de proponer una solución.

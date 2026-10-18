@@ -1,0 +1,1 @@
+La reunión con el cliente fue mejor de lo esperado. Les preocupaba sobre todo la latencia en horas punta, pero cuando les enseñamos que el cuello de botella estaba en su propia red se relajaron bastante. Quedamos en volver a medir dentro de dos semanas, ya con el balanceador nuevo funcionando y con datos de una semana completa.

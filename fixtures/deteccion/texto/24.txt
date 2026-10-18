@@ -1,0 +1,1 @@
+Después de varias pruebas he llegado a la conclusión de que el problema del informe no está en los datos, sino en cómo se agrupan. Si se agrupa por semana, los picos de los lunes desaparecen y parece que todo va bien; si se agrupa por día, se ve claramente que cada lunes hay un retraso que se arrastra durante horas.

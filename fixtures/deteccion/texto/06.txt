@@ -1,0 +1,1 @@
+After a week of trying different approaches, I think the simplest option is still the best one: keep the old endpoint running for a while, add the new one next to it, and move clients over gradually. It is less elegant than a big switch, but it gives us room to roll back without anyone noticing that something went wrong.

@@ -1,0 +1,1 @@
+Yesterday's discussion about code review got a bit heated. Part of the team feels that reviews are too slow and block them, while others think that skipping them is how the last two incidents happened. I suspect both are right and that the real issue is that reviews arrive all at once on Friday afternoons.

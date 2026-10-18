@@ -1,0 +1,1 @@
+One thing I learned from the migration is that documentation written during the work is far more useful than documentation written afterwards. When I wrote things down as they happened, I captured the dead ends and the reasons behind each decision, which are exactly what the next person needs and what everybody forgets a month later.

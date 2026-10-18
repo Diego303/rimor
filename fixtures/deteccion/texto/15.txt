@@ -1,0 +1,1 @@
+We spent most of the afternoon arguing about naming, which sounds silly but probably saved us a lot of confusion later. The old name suggested that the service stored data permanently, when in fact it only keeps it for a few hours. Changing it now is cheap; changing it after other teams depend on it would be painful.

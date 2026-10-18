@@ -1,0 +1,1 @@
+Hablé con el equipo de seguridad sobre el almacenamiento de las claves de acceso y me explicaron que el riesgo principal no es que alguien rompa el cifrado, sino que las claves acaben copiadas en sitios donde no deberían estar, como registros, capturas de pantalla o conversaciones de chat. Tiene sentido que la herramienta las oculte antes de guardarlas.

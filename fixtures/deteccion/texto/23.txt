@@ -1,0 +1,1 @@
+Our retrospective kept circling around the same point: we commit to too many things at the start of each cycle and then quietly drop half of them. Nobody is surprised anymore, which is the worrying part. Next time we will try picking only three goals and writing down explicitly what we are choosing not to do.

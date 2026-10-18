@@ -22,9 +22,11 @@ Rimor es una app web, local y privada, para técnicos e investigadores: pegas cu
 | `pnpm build` | Construcción estática en `dist/` |
 | `pnpm preview` | Sirve `dist/` para probar la construcción |
 | `pnpm typecheck` | Tipos (`astro check` y cada paquete) |
-| `pnpm lint` | Biome y la comprobación de colores fuera de los tokens |
+| `pnpm lint` | Biome, colores fuera de los tokens y textos sin traducir |
 | `pnpm test` | Pruebas de Vitest de la app y los paquetes |
 | `pnpm verificar` | Todo lo anterior más el tamaño de la carga inicial |
+| `pnpm deteccion` | Matriz de confusión y acierto por tipo del detector sobre `fixtures/deteccion/` |
+| `pnpm marca` | Optimiza los SVG de marca y genera PNG y logotipo en contornos |
 
 ## Estructura
 

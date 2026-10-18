@@ -16,6 +16,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm verificar
+      - name: Matriz de detección
+        run: pnpm deteccion
       - name: Vista previa de la rama
         uses: actions/upload-artifact@v4
         with:
