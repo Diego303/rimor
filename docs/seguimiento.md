@@ -2,7 +2,7 @@
 
 **Estado global:** EN CURSO
 **Última actualización:** 2026-10-18 19:48
-**Ahora:** IN-019 · Lector Enlace básico · fase análisis y diseño
+**Ahora:** IN-019 · Lector Enlace básico · fase implementación
 **Siguiente:** IN-020 · Lector Log
 **Progreso:** F0 9/9 · v0.1 20/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 29/99
 
@@ -37,8 +37,8 @@
 | IN-015 | Compositor | v0.1 | 3 | hecha | df7d8c3 3531022 871224d | docs/features/IN-015-compositor.md |
 | IN-016 | Respuestas de Rimor y contadores locales | v0.1 | 3 | hecha | c521a65 5b52db2 674f816 | docs/features/IN-016-respuestas.md |
 | IN-017 | Lector Texto y lector genérico de archivo | v0.1 | 3 | hecha | ecade38 19869f2 d231066 | docs/features/IN-017-texto-archivo.md |
-| IN-018 | Lector Idea y resurgimiento mínimo | v0.1 | 4 | hecha | 42c27b3 1f5f2dc | docs/features/IN-018-idea.md |
-| IN-019 | Lector Enlace básico | v0.1 | 4 | pendiente | — | — |
+| IN-018 | Lector Idea y resurgimiento mínimo | v0.1 | 4 | hecha | 42c27b3 1f5f2dc 8c171e4 | docs/features/IN-018-idea.md |
+| IN-019 | Lector Enlace básico | v0.1 | 4 | en análisis y diseño | — | docs/features/IN-019-enlace.md |
 | IN-020 | Lector Log | v0.1 | 4 | pendiente | — | — |
 | IN-021 | Lector Error y huella | v0.1 | 4 | pendiente | — | — |
 | IN-022 | Lector Mediciones | v0.1 | 4 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-018 | verificación | OK (592 pruebas; 11 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-019 | análisis y diseño | normalización sin seguimiento, clasificación por destino, título y huella por URL | … |
+| 2026-10-18 | IN-018 | verificación | OK (592 pruebas; 11 hallazgos de la revisión corregidos) | 8c171e4 |
 | 2026-10-18 | IN-018 | implementación | OK (589 pruebas; matriz 75/75) | 1f5f2dc |
 | 2026-10-18 | IN-018 | análisis y diseño | detección de ideas cortas, estados, vuelta a los 7 y 30 días | 42c27b3 |
 | 2026-10-18 | IN-017 | verificación | OK (581 pruebas; 7 hallazgos de la revisión corregidos) | d231066 |
