@@ -48,13 +48,13 @@ Como la pantalla de referencia. La tarjeta de ocurrencias sale si hay alguna ant
 
 ## Tareas
 
-- [ ] Analizadores de trazas: Rust, Python, JavaScript y Node, Java y Kotlin, Go y .NET.
-- [ ] Marcos de tu código frente a librerías y sistema.
-- [ ] Huella versionada.
-- [ ] Ocurrencias anteriores con la misma huella y su nota «así lo resolví».
-- [ ] Vista: mensaje; «3.ª vez» con la nota; tus marcos; librerías y traza original, plegadas.
-- [ ] Cifras: `ocurrencias`, `primera_vez`, `ultima_vez`.
-- [ ] Respuesta: «Es la tercera vez. El 15 oct escribiste: «…».» o «Error de Rust nuevo. 2 marcos de tu código.»
+- [x] Analizadores de trazas: Rust, Python, JavaScript y Node, Java y Kotlin, Go y .NET.
+- [x] Marcos de tu código frente a librerías y sistema.
+- [x] Huella versionada.
+- [x] Ocurrencias anteriores con la misma huella y su nota «así lo resolví».
+- [x] Vista: mensaje; «3.ª vez» con la nota; tus marcos; librerías y traza original, plegadas.
+- [x] Cifras: `ocurrencias`, `primera_vez`, `ultima_vez`.
+- [x] Respuesta: «Es la tercera vez. El 15 oct escribiste: «…».» o «Error de Rust nuevo. 2 marcos de tu código.»
 
 ## Pruebas previstas
 
@@ -80,3 +80,13 @@ Como la pantalla de referencia. La tarjeta de ocurrencias sale si hay alguna ant
 ## Autorrevisión
 
 Cubre las siete tareas y las pruebas de la ficha. «Así lo resolví» se apoya en las notas y el estado que ya existen; los hilos (IN-030) y la comparación de errores no son de esta IN.
+
+## Cambios durante la implementación
+
+- Las cifras reciben el contexto **y el propio elemento** (`FuncionCifra<D> = (d, ctx?, el?) => Cifra`): `ocurrencias`, `primera_vez` y `ultima_vez` cuentan también la captura actual.
+- La fecha de la nota citada es la del elemento resuelto (`modificado`: cuando se escribió la nota).
+- «Errores reconocidos» (contadores de IN-016) se cuenta en la captura cuando, con sus derivados, la huella ya estaba en otro elemento.
+- Un texto forzado con `/error` que no es una traza ni un error conocido se guarda con su primera línea como mensaje (lenguaje «código»).
+- En Rust solo es propio un marco con ruta (los de la librería estándar a menudo no la llevan); en Go, los de `main.` y los de módulos con punto en su primera parte fuera de `pkg/mod`.
+- El corpus de detección `error` toma 4 trazas de cada lenguaje y una más de Rust.
+

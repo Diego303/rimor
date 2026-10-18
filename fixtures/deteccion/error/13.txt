@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.NullPointerException: Cannot invoke "String.length()" because "nombre" is null
+	at com.ejemplo.tienda.Cliente.validar(Cliente.java:27)
+	at com.ejemplo.tienda.Pedidos.crear(Pedidos.java:54)
+	at com.ejemplo.tienda.App.main(App.java:12)

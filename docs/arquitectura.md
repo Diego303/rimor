@@ -42,6 +42,7 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi�
 | `src/lectores/` | Contrato `Lector<D>` (núcleo puro), textos por lector, registro en el orden del Anexo D, `ColaDerivados`, ejecutor en Worker, vistas por convención (`import.meta.glob` + `React.lazy`), `VistaElemento`, `TarjetaElemento` y `_plantilla/` | 012 |
 | `src/lectores/texto/`, `src/lectores/archivo/` | Lectores Texto (Markdown saneado, enlaces, menciones) y genérico de archivo (adjunto, descarga, `pendiente_lector`) | 017 |
 | `src/lectores/enlace/` | Lector Enlace básico: normalización sin seguimiento, clasificación por destino, título provisional y huella por URL (sin red) | 019 |
+| `src/lectores/error/` | Lector Error: trazas de Rust, Python, JavaScript, Java/Kotlin, Go y .NET; marcos propios; huella versionada; ocurrencias y «así lo resolví» | 021 |
 | `src/lectores/log/` | Lector Log: marcas y niveles de 10 formatos, plantillas, pares, histograma y concentración de errores, por bloques con progreso | 020 |
 | `src/lectores/idea/` | Lector Idea (textos cortos sin señales, estados) y resurgimiento mínimo (`resurgir.ts`, `IdeasQueVuelven` en Inicio) | 018 |
 | `src/respuestas/` | Tipos de la respuesta (012); contexto, composición con la frase de secretos, reglas de estilo, `RespuestaRimor`, `useRespuesta` y contadores locales (`.rimor/contadores.json`) | 012, 016 |

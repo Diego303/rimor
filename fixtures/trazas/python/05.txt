@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/opt/etl/cargar.py", line 54, in <module>
+    df = pd.read_csv(ruta, parse_dates=["fecha"])
+  File "/opt/etl/venv/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
+    return _read(filepath_or_buffer, kwds)
+  File "/opt/etl/venv/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 626, in _read
+    return parser.read(nrows)
+KeyError: 'fecha'

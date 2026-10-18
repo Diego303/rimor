@@ -1,0 +1,8 @@
+panic: runtime error: index out of range [3] with length 3
+
+goroutine 1 [running]:
+main.procesar({0xc000012345, 0x3, 0x3})
+	/home/ana/go/src/ejemplo.org/etl/main.go:27 +0x1d4
+main.main()
+	/home/ana/go/src/ejemplo.org/etl/main.go:12 +0x65
+exit status 2

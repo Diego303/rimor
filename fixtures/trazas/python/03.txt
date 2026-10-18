@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "analisis.py", line 15, in <module>
+    media = total / len(valores)
+ZeroDivisionError: division by zero

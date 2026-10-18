@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { IDBFactory } from 'fake-indexeddb';
 import { describe, expect, it, vi } from 'vitest';
 import { AlmacenMemoria } from '../almacen/memoria';
@@ -166,5 +166,76 @@ describe('vista de Log', () => {
     expect(deError.querySelector('button')?.getAttribute('aria-pressed')).toBe('true');
     const lineas = container.querySelector('pre.lineas-plantilla')?.textContent ?? '';
     expect(lineas.split('\n').filter(Boolean)).toHaveLength(3);
+  });
+});
+
+describe('vista de Error', () => {
+  it('mensaje, «3.ª vez» con la nota, tus marcos, plegados y «Añadir cómo lo resolví»', async () => {
+    const { default: VistaError } = await import('./error/Vista');
+    const { analizarError } = await import('./error/lector');
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { ProveedorAvisos } = await import('../ui/componentes');
+    const texto = readFileSync(join(process.cwd(), 'fixtures/trazas/rust/01.txt'), 'utf8');
+    const datos = analizarError(texto);
+    const cerrojos: Cerrojos = { request: (_n, _o, fn) => fn({}) };
+    const almacen = new AlmacenMemoria();
+    const dependencias = async (): Promise<DependenciasProveedor> => ({
+      espacioId: 'vista-error',
+      almacen,
+      fabricaIndexedDb: new IDBFactory(),
+      cerrojos,
+      canal: { postMessage: () => undefined, addEventListener: () => undefined, close: () => undefined },
+      enMemoria: false,
+    });
+    const conHuella = (n: number, dia: number, cambios = {}) => {
+      const base = elementoFalso(n, `${texto}\n${n}`, 'error');
+      return {
+        ...base,
+        frontmatter: {
+          ...base.frontmatter,
+          tipo: 'error' as const,
+          ref: `ERR-${String(n).padStart(4, '0')}` as const,
+          creado: `2026-10-${String(dia).padStart(2, '0')}T10:00:00+02:00`,
+          lector: { nombre: 'error', version: 1, resumen: { huella: datos.huella } },
+          ...cambios,
+        },
+      };
+    };
+    const actual = conHuella(3, 17);
+    const abierto: { repo: ReturnType<typeof useEspacioAbierto>['repositorio'] | null } = { repo: null };
+    function Montaje() {
+      const { repositorio } = useEspacioAbierto();
+      abierto.repo = repositorio;
+      return <VistaError el={actual} datos={datos} />;
+    }
+    render(
+      <ProveedorEspacio dependencias={dependencias}>
+        <ProveedorAvisos>
+          <Montaje />
+        </ProveedorAvisos>
+      </ProveedorEspacio>,
+    );
+    await waitFor(() => expect(abierto.repo).toBeTruthy());
+    await act(async () => {
+      await abierto.repo?.guardarElemento({ ...conHuella(1, 2), notas: '' });
+      // La nota se fecha cuando se escribió (al resolverlo): su `modificado`.
+      await abierto.repo?.guardarElemento({
+        ...conHuella(2, 15, { estado: 'resuelto', modificado: '2026-10-15T18:00:00+02:00' }),
+        notas: 'Pasa cuando la respuesta no trae content-length',
+      });
+      await abierto.repo?.guardarElemento(actual);
+    });
+    expect(await screen.findByText('3.ª vez')).toBeTruthy();
+    expect(screen.getByText('Ya te pasó el 2 oct y el 15 oct.')).toBeTruthy();
+    expect(screen.getByText('El 15 oct escribiste: «Pasa cuando la respuesta no trae content-length»')).toBeTruthy();
+    expect(screen.getByText('struo_gateway::stream::next_chunk')).toBeTruthy();
+    expect(screen.getByText('Librerías y sistema (5 marcos)')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir cómo lo resolví' }));
+    fireEvent.change(screen.getByLabelText('Cómo lo resolviste'), { target: { value: 'Subí el timeout a 60 s' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() => expect(abierto.repo?.frontmatter('ERR-0003')?.estado).toBe('resuelto'));
+    const leido = await abierto.repo?.leerElemento('ERR-0003');
+    expect(leido?.ok && leido.valor.notas.startsWith('Subí el timeout a 60 s')).toBe(true);
   });
 });

@@ -9,6 +9,7 @@ import type { Elemento } from '@rimor/formato';
 import { lectorArchivo } from './archivo/lector';
 import type { Lector } from './contrato';
 import { lectorEnlace } from './enlace/lector';
+import { lectorError } from './error/lector';
 import { lectorIdea } from './idea/lector';
 import { lectorLog } from './log/lector';
 import { lectorTexto } from './texto/lector';
@@ -41,6 +42,7 @@ export const ORDEN_DETECCION: readonly (readonly string[])[] = [
 export const LECTORES: readonly Lector[] = [
   lectorArchivo, // 2
   lectorEnlace, // 3
+  lectorError, // 4
   lectorLog, // 5
   lectorIdea, // 16
   lectorTexto, // 17

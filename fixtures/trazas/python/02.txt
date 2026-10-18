@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/srv/app/worker.py", line 88, in procesar
+    r = requests.get(url, timeout=5)
+  File "/srv/app/.venv/lib/python3.12/site-packages/requests/api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+  File "/srv/app/.venv/lib/python3.12/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.ejemplo.org', port=443): Max retries exceeded with url: /v1/items (Caused by NewConnectionError('Failed to establish a new connection: [Errno 111] Connection refused'))

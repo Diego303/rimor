@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 20:56
-**Ahora:** IN-021 · Lector Error y huella · fase implementación
+**Última actualización:** 2026-10-18 21:10
+**Ahora:** IN-021 · Lector Error y huella · fase verificación
 **Siguiente:** IN-022 · Lector Mediciones
 **Progreso:** F0 9/9 · v0.1 22/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 31/99
 
@@ -40,7 +40,7 @@
 | IN-018 | Lector Idea y resurgimiento mínimo | v0.1 | 4 | hecha | 42c27b3 1f5f2dc 8c171e4 | docs/features/IN-018-idea.md |
 | IN-019 | Lector Enlace básico | v0.1 | 4 | hecha | 218e20d bed4c8f d8043f4 | docs/features/IN-019-enlace.md |
 | IN-020 | Lector Log | v0.1 | 4 | hecha | 2dc9a36 070d82c 3710ad0 | docs/features/IN-020-log.md |
-| IN-021 | Lector Error y huella | v0.1 | 4 | en análisis y diseño | — | docs/features/IN-021-error.md |
+| IN-021 | Lector Error y huella | v0.1 | 4 | en verificación | 40322cb | docs/features/IN-021-error.md |
 | IN-022 | Lector Mediciones | v0.1 | 4 | pendiente | — | — |
 | IN-023 | Lector Prompt | v0.1 | 4 | pendiente | — | — |
 | IN-024 | Lector Documento Markdown | v0.1 | 4 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-021 | análisis y diseño | trazas de 6 lenguajes, marcos propios, huella versionada, ocurrencias y «así lo resolví» | … |
+| 2026-10-18 | IN-021 | implementación | OK (684 pruebas; 30 trazas; matriz 150/150) | … |
+| 2026-10-18 | IN-021 | análisis y diseño | trazas de 6 lenguajes, marcos propios, huella versionada, ocurrencias y «así lo resolví» | 40322cb |
 | 2026-10-18 | IN-020 | verificación | OK (646 pruebas; 15 hallazgos de la revisión corregidos) | 3710ad0 |
 | 2026-10-18 | IN-020 | implementación | OK (632 pruebas; 8 formatos; 50.000 líneas en 0,7 s) | 070d82c |
 | 2026-10-18 | IN-020 | análisis y diseño | marcas y niveles de 8 formatos, plantillas, pares, histograma, bloques con progreso y carga de adjuntos | 2dc9a36 |

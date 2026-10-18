@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/runpy.py", line 198, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/luis/tienda/manage.py", line 22, in <module>
+    main()
+  File "/home/luis/tienda/pedidos/views.py", line 31, in detalle
+    return pedido.cliente.nombre
+AttributeError: 'NoneType' object has no attribute 'nombre'

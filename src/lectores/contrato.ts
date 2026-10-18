@@ -76,10 +76,10 @@ export interface Contexto {
 }
 
 /**
- * Función con parámetro bivariante, como un método: así `Lector<Datos>` cabe en `Lector<unknown>` (el registro
- * guarda lectores de datos distintos) aunque `cifras` sea un mapa de funciones.
+ * Una cifra citable. Casi todas salen de los datos; algunas dependen de los demás elementos (las ocurrencias de
+ * un error) y reciben el contexto y el propio elemento.
  */
-type Bivariante<A, R> = { metodo(a: A): R }['metodo'];
+export type FuncionCifra<D> = { metodo(d: D, ctx?: Contexto, el?: Elemento): Cifra }['metodo'];
 
 export interface OpcionesDerivar {
   /** Cuánto lleva hecho de cuánto (en la unidad del lector: líneas, filas…). */
@@ -110,7 +110,7 @@ export interface Lector<D = unknown> {
   /** La frase de Rimor en Inicio (CAP-14). */
   respuesta(el: Elemento, d: D, ctx: Contexto): Respuesta;
   acciones?: AccionLector<D>[];
-  cifras?: Record<string, Bivariante<D, Cifra>>;
+  cifras?: Record<string, FuncionCifra<D>>;
   incrustaciones?: Record<string, Incrustacion<D>>;
   /** Contenido derivado que entra en la búsqueda. */
   textoIndexable?(d: D): string;

@@ -1,0 +1,9 @@
+panic: assignment to entry in nil map
+
+goroutine 7 [running]:
+ejemplo.org/cache.(*Cache).Set(...)
+	/srv/cache/cache.go:33
+ejemplo.org/cache.(*Cache).Cargar(0xc000010018, {0xc00001c030, 0x2, 0x2})
+	/srv/cache/cache.go:52 +0x108
+github.com/robfig/cron/v3.FuncJob.Run(0xc000012030?)
+	/root/go/pkg/mod/github.com/robfig/cron/v3@v3.0.1/cron.go:136 +0x1a

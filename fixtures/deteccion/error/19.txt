@@ -1,0 +1,7 @@
+panic: open config.yaml: no such file or directory
+
+goroutine 1 [running]:
+main.cargarConfig()
+	/home/luis/herramienta/config.go:18 +0x8e
+main.main()
+	/home/luis/herramienta/main.go:9 +0x1b

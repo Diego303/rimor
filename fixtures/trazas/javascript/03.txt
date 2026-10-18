@@ -1,0 +1,3 @@
+Uncaught ReferenceError: totalPrecio is not defined
+    at calcular (https://tienda.ejemplo.org/assets/carrito.js:41:15)
+    at HTMLButtonElement.<anonymous> (https://tienda.ejemplo.org/assets/carrito.js:88:5)

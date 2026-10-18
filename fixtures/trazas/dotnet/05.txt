@@ -1,0 +1,6 @@
+Unhandled exception. System.Net.Http.HttpRequestException: Connection refused (localhost:5001)
+ ---> System.Net.Sockets.SocketException (111): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpConnectionPool.ConnectAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+   at Clientes.Sincronizador.Ejecutar() in /src/Clientes/Sincronizador.cs:line 27

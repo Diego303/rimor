@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/ana/proyectos/api/app/main.py", line 42, in <module>
+    main()
+  File "/home/ana/proyectos/api/app/main.py", line 37, in main
+    datos = cargar_config("config.yaml")
+  File "/home/ana/proyectos/api/app/config.py", line 12, in cargar_config
+    with open(ruta) as f:
+FileNotFoundError: [Errno 2] No such file or directory: 'config.yaml'

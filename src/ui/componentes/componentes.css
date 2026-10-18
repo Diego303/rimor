@@ -1072,6 +1072,21 @@ details.more > div {
 .stat .v.bad {
   color: var(--bad);
 }
+.mensaje-error {
+  overflow-wrap: anywhere;
+}
+.marco-propio {
+  padding: 4px 0;
+}
+.traza-original {
+  max-height: 260px;
+  overflow: auto;
+}
+.nota-resolucion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .enlace-url {
   overflow-wrap: anywhere;
 }

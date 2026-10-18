@@ -1,0 +1,5 @@
+java.lang.ArrayIndexOutOfBoundsException: Index 10 out of bounds for length 10
+	at com.ejemplo.informes.Tabla.celda(Tabla.java:44)
+	at com.ejemplo.informes.Tabla.lambda$imprimir$0(Tabla.java:71)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at com.ejemplo.informes.Tabla.imprimir(Tabla.java:70)

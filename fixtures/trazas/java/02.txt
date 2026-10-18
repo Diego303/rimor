@@ -1,0 +1,6 @@
+java.lang.IllegalStateException: Pool exhausted after 30000 ms
+	at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:696)
+	at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:181)
+	at org.springframework.jdbc.datasource.DataSourceUtils.fetchConnection(DataSourceUtils.java:160)
+	at com.ejemplo.pagos.RepositorioPagos.guardar(RepositorioPagos.java:41)
+	at com.ejemplo.pagos.ServicioPagos.cobrar(ServicioPagos.java:88)

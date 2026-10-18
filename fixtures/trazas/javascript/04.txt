@@ -1,0 +1,5 @@
+SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+    at JSON.parse (<anonymous>)
+    at parseJSONFromBytes (node:internal/deps/undici/undici:5584:19)
+    at successSteps (node:internal/deps/undici/undici:5555:27)
+    at async cargarCatalogo (/home/luis/app/src/catalogo.ts:22:18)

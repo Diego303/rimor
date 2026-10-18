@@ -1,0 +1,6 @@
+Unhandled exception. System.IO.FileNotFoundException: Could not find file '/app/datos/clientes.csv'.
+File name: '/app/datos/clientes.csv'
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.File.ReadAllLines(String path)
+   at Importador.Lector.Cargar(String ruta) in /src/Importador/Lector.cs:line 21
+   at Importador.Program.Main(String[] args) in /src/Importador/Program.cs:line 9

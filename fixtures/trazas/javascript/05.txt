@@ -1,0 +1,5 @@
+RangeError: Maximum call stack size exceeded
+    at recorrer (/home/ana/arbol/src/arbol.js:10:3)
+    at recorrer (/home/ana/arbol/src/arbol.js:12:12)
+    at recorrer (/home/ana/arbol/src/arbol.js:12:12)
+    at recorrer (/home/ana/arbol/src/arbol.js:12:12)

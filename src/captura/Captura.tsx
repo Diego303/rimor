@@ -68,6 +68,25 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
     [espacio, lectores],
   );
 
+  /** Cuenta un error reconocido si, con sus derivados, su huella ya estaba en otro elemento. */
+  const contarSiReconocido = useCallback(
+    async (c: Capturado) => {
+      if (!espacio || !lectores || !c.derivados) return;
+      const lector = lectores.registro.paraElemento(c.elemento);
+      if (lector?.tipo !== 'error') return;
+      const datos = await c.derivados.catch(() => null);
+      const huella = datos ? lector.resumen(datos).huella : undefined;
+      if (
+        huella &&
+        espacio.repositorio
+          .elementos()
+          .some((o) => o.id !== c.elemento.frontmatter.id && o.lector.resumen.huella === huella)
+      )
+        await espacio.contadores.contar('erroresReconocidos');
+    },
+    [espacio, lectores],
+  );
+
   const informar = useCallback(
     (resultados: readonly ResultadoDe[]) => {
       const creados: Capturado[] = [];
@@ -118,8 +137,10 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
           },
         });
       for (const avisarOtro of otros) avisarOtro();
+      // Lo que Rimor ha ahorrado (MET-06): un error que ya había pasado, reconocido por su huella.
+      for (const c of creados) void contarSiReconocido(c);
     },
-    [avisar, t, idioma, alAbrir, capturador, espacio],
+    [avisar, t, idioma, alAbrir, capturador, espacio, contarSiReconocido],
   );
 
   // Pegar fuera de un campo: al compositor (no guarda directamente) y a Inicio.

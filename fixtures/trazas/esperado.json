@@ -1,0 +1,152 @@
+{
+  "rust/01.txt": {
+    "tipo": "Timeout",
+    "mensaje": "called `Result::unwrap()` on an `Err` value: Timeout(ReadTimeout { after: 30s })",
+    "propios": 2
+  },
+  "rust/02.txt": {
+    "tipo": "panic",
+    "mensaje": "index out of bounds: the len is 3 but the index is 5",
+    "propios": 0
+  },
+  "rust/03.txt": {
+    "tipo": "panic",
+    "mensaje": "called `Option::unwrap()` on a `None` value",
+    "propios": 2
+  },
+  "rust/04.txt": {
+    "tipo": "Database",
+    "mensaje": "called `Result::unwrap()` on an `Err` value: Database(PgDatabaseError { severity: Error, code: \"23505\", message: \"duplicate key value violates unique constraint\" })",
+    "propios": 2
+  },
+  "rust/05.txt": {
+    "tipo": "panic",
+    "mensaje": "attempt to subtract with overflow",
+    "propios": 1
+  },
+  "python/01.txt": {
+    "tipo": "FileNotFoundError",
+    "mensaje": "[Errno 2] No such file or directory: 'config.yaml'",
+    "propios": 3
+  },
+  "python/02.txt": {
+    "tipo": "requests.exceptions.ConnectionError",
+    "mensaje": "HTTPSConnectionPool(host='api.ejemplo.org', port=443): Max retries exceeded with url: /v1/items (Caused by NewConnectionError('Failed to establish a new connection: [Errno 111] Connection refused'))",
+    "propios": 1
+  },
+  "python/03.txt": {
+    "tipo": "ZeroDivisionError",
+    "mensaje": "division by zero",
+    "propios": 1
+  },
+  "python/04.txt": {
+    "tipo": "AttributeError",
+    "mensaje": "'NoneType' object has no attribute 'nombre'",
+    "propios": 2
+  },
+  "python/05.txt": {
+    "tipo": "KeyError",
+    "mensaje": "'fecha'",
+    "propios": 1
+  },
+  "javascript/01.txt": {
+    "tipo": "TypeError",
+    "mensaje": "Cannot read properties of undefined (reading 'map')",
+    "propios": 1
+  },
+  "javascript/02.txt": {
+    "tipo": "Error",
+    "mensaje": "connect ECONNREFUSED 127.0.0.1:5432",
+    "propios": 2
+  },
+  "javascript/03.txt": {
+    "tipo": "ReferenceError",
+    "mensaje": "totalPrecio is not defined",
+    "propios": 2
+  },
+  "javascript/04.txt": {
+    "tipo": "SyntaxError",
+    "mensaje": "Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
+    "propios": 1
+  },
+  "javascript/05.txt": {
+    "tipo": "RangeError",
+    "mensaje": "Maximum call stack size exceeded",
+    "propios": 4
+  },
+  "java/01.txt": {
+    "tipo": "java.lang.NullPointerException",
+    "mensaje": "Cannot invoke \"String.length()\" because \"nombre\" is null",
+    "propios": 3
+  },
+  "java/02.txt": {
+    "tipo": "java.lang.IllegalStateException",
+    "mensaje": "Pool exhausted after 30000 ms",
+    "propios": 2
+  },
+  "java/03.txt": {
+    "tipo": "java.net.SocketTimeoutException",
+    "mensaje": "Read timed out",
+    "propios": 2
+  },
+  "java/04.txt": {
+    "tipo": "kotlin.KotlinNullPointerException",
+    "mensaje": "",
+    "propios": 2
+  },
+  "java/05.txt": {
+    "tipo": "java.lang.ArrayIndexOutOfBoundsException",
+    "mensaje": "Index 10 out of bounds for length 10",
+    "propios": 3
+  },
+  "go/01.txt": {
+    "tipo": "runtime error",
+    "mensaje": "runtime error: index out of range [3] with length 3",
+    "propios": 2
+  },
+  "go/02.txt": {
+    "tipo": "runtime error",
+    "mensaje": "runtime error: invalid memory address or nil pointer dereference",
+    "propios": 1
+  },
+  "go/03.txt": {
+    "tipo": "panic",
+    "mensaje": "open config.yaml: no such file or directory",
+    "propios": 2
+  },
+  "go/04.txt": {
+    "tipo": "fatal error",
+    "mensaje": "all goroutines are asleep - deadlock!",
+    "propios": 1
+  },
+  "go/05.txt": {
+    "tipo": "panic",
+    "mensaje": "assignment to entry in nil map",
+    "propios": 2
+  },
+  "dotnet/01.txt": {
+    "tipo": "System.NullReferenceException",
+    "mensaje": "Object reference not set to an instance of an object.",
+    "propios": 2
+  },
+  "dotnet/02.txt": {
+    "tipo": "System.InvalidOperationException",
+    "mensaje": "Sequence contains no elements",
+    "propios": 1
+  },
+  "dotnet/03.txt": {
+    "tipo": "System.IO.FileNotFoundException",
+    "mensaje": "Could not find file '/app/datos/clientes.csv'.",
+    "propios": 2
+  },
+  "dotnet/04.txt": {
+    "tipo": "System.ArgumentOutOfRangeException",
+    "mensaje": "Index was out of range. Must be non-negative and less than the size of the collection. (Parameter 'index')",
+    "propios": 1
+  },
+  "dotnet/05.txt": {
+    "tipo": "System.Net.Http.HttpRequestException",
+    "mensaje": "Connection refused (localhost:5001)",
+    "propios": 1
+  }
+}

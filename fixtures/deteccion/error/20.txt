@@ -1,0 +1,5 @@
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan receive]:
+main.main()
+	/home/ana/canales/main.go:14 +0x45

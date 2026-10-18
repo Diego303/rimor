@@ -1,0 +1,5 @@
+TypeError: Cannot read properties of undefined (reading 'map')
+    at ListaPedidos (/home/ana/web/src/componentes/ListaPedidos.jsx:14:22)
+    at renderWithHooks (/home/ana/web/node_modules/react-dom/cjs/react-dom.development.js:16305:18)
+    at mountIndeterminateComponent (/home/ana/web/node_modules/react-dom/cjs/react-dom.development.js:20074:13)
+    at beginWork (/home/ana/web/node_modules/react-dom/cjs/react-dom.development.js:21587:16)

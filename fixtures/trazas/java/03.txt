@@ -1,0 +1,7 @@
+org.springframework.web.client.HttpServerErrorException$InternalServerError: 500 Internal Server Error: "{"error":"boom"}"
+	at org.springframework.web.client.HttpServerErrorException.create(HttpServerErrorException.java:102)
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:186)
+	at com.ejemplo.envios.ClienteTransportista.cotizar(ClienteTransportista.java:63)
+Caused by: java.net.SocketTimeoutException: Read timed out
+	at java.base/sun.nio.ch.NioSocketImpl.timedRead(NioSocketImpl.java:288)
+	at com.ejemplo.envios.ClienteTransportista.cotizar(ClienteTransportista.java:61)

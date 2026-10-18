@@ -38,6 +38,24 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
       ],
     },
   },
+  "error": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "New Rust error. 2 frames from your code.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Error de Rust nuevo. 2 marcos de tu código.",
+        },
+      ],
+    },
+  },
   "idea": {
     "en": {
       "texto": [
