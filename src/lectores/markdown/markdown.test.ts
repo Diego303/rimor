@@ -151,3 +151,98 @@ describe('lector', () => {
     );
   });
 });
+
+/** Casos de la revisión independiente. */
+describe('revisión: anclas sin repetir', () => {
+  it('`A`, `A`, `A-2` dan tres anclas distintas', () => {
+    const d = analizarMarkdown('## A\n\n## A\n\n## A-2\n');
+    expect(d.secciones.map((s) => s.ancla)).toEqual(['a', 'a-2', 'a-2-2']);
+  });
+});
+
+describe('revisión: frontmatter, CRLF y título', () => {
+  const conFm = '---\ntitle: Mi plan\ndate: 2026-10-18\n---\n# Mi plan\n\n## Uno\n\n- [ ] a\n\n## Dos\n';
+
+  it('el frontmatter no es una sección y su `title` es el título', () => {
+    const d = analizarMarkdown(conFm);
+    expect(d.conTitulo).toBe(true);
+    expect(indiceDe(d).map((s) => s.titulo)).toEqual(['Uno', 'Dos']);
+    expect(frase(d)).toBe('Documento con 2 secciones y 1 tarea (0 hechas).');
+    expect(tituloDeDocumento(conFm)).toBe('Mi plan');
+    expect(tituloDeDocumento('---\nfecha: hoy\n---\nSolo texto.')).toBe('Solo texto.');
+  });
+
+  it('CRLF: las mismas señales y el mismo análisis', () => {
+    const lf = 'Guía\n====\n\n| a | b |\n|---|---|\n| 1 | 2 |\n';
+    expect(confianzaMarkdown(lf.replaceAll('\n', '\r\n'))).toBe(confianzaMarkdown(lf));
+    expect(confianzaMarkdown(lf)).toBe(0.75);
+    expect(analizarMarkdown(conFm.replaceAll('\n', '\r\n')).secciones.map((s) => s.titulo)).toEqual(
+      analizarMarkdown(conFm).secciones.map((s) => s.titulo),
+    );
+  });
+
+  it('título: ni un comentario dentro de un bloque de código ni el segundo encabezado si el primero es Setext', () => {
+    expect(tituloDeDocumento('Instalación:\n```bash\n# instala\n```\n# Proyecto real')).toBe('Proyecto real');
+    expect(tituloDeDocumento('Titulo\n=====\n## A')).toBe('Titulo');
+  });
+});
+
+describe('revisión: lo que no son documentos (con el detector real)', () => {
+  const casos: Record<string, string> = {
+    'script de bash':
+      '#!/bin/bash\n# Instala dependencias\nset -e\napt-get update\n# Copia la configuración\ncp config.yml /etc/app/\necho "listo"\nexport PATH=$PATH:/opt/app/bin\n',
+    Python:
+      '# Utilidades\nimport os\n\n# Lee el archivo\ndef leer(ruta):\n    with open(ruta) as f:\n        return f.read()\n',
+    Dockerfile:
+      '# Imagen base\nFROM node:22-alpine\n# Dependencias\nWORKDIR /app\nCOPY package.json .\nRUN pnpm install\nCMD ["node", "index.js"]\n',
+    'YAML de GitHub Actions':
+      '# Workflow\nname: ci\non: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: pnpm test\n',
+    'YAML corto': '# config\nservers:\n  - a\n  - b\nport: 8080\n',
+  };
+  for (const [nombre, texto] of Object.entries(casos))
+    it(nombre, () => {
+      expect(confianzaMarkdown(texto), nombre).toBe(0);
+      expect(detectar({ texto }, REGISTRO).lector).not.toBe('markdown');
+    });
+
+  it('CLAUDE.md sale como prompt sin ofrecer la duda con Markdown', () => {
+    const texto = readFileSync(join(process.cwd(), 'fixtures/prompts/claude-md.md'), 'utf8');
+    const d = detectar({ texto }, REGISTRO);
+    expect(d.lector).toBe('prompt');
+    expect(d.alternativa).toBeUndefined();
+  });
+});
+
+describe('revisión: recuentos', () => {
+  it('palabras por bloque: `**neg**rita` es una; una URL es una; cada ideograma, uno', () => {
+    expect(analizarMarkdown('**neg**rita y pala*bra*').palabras).toBe(3);
+    expect(analizarMarkdown('Ver https://ejemplo.org/a/b-c?d=1 ya').palabras).toBe(3);
+    expect(analizarMarkdown('日本語のテキスト').palabras).toBe(8);
+  });
+
+  it('enlaces en encabezados y por referencia; «Enlaces» solo lista direcciones web', () => {
+    const d = analizarMarkdown(
+      '# [Doc](https://a.org)\n\nVer [b][1], [rel](./x.md), [s](#sec) y [c](mailto:x@y.z).\n\n[1]: https://b.org\n',
+    );
+    expect(d.enlaces).toEqual(['https://a.org', 'https://b.org']);
+    expect(d.totalEnlaces).toBe(5);
+  });
+
+  it('las tareas del título entran en el índice; un encabezado vacío no es una entrada', () => {
+    const d = analizarMarkdown('# Plan\n\n- [x] previa\n\n## A\n\n- [ ] a\n\n##\n\n- [ ] b\n');
+    const filas = indiceDe(d);
+    expect(filas.map((s) => [s.titulo, s.tareas.total])).toEqual([
+      ['Plan', 1],
+      ['A', 2],
+    ]);
+    expect(filas.reduce((n, s) => n + s.tareas.total, 0)).toBe(d.tareas.total);
+  });
+});
+
+describe('revisión: sin retroceso en la detección', () => {
+  it('filas largas de espacios', () => {
+    const inicio = performance.now();
+    confianzaMarkdown(`# T\n${' '.repeat(19_990)}x\n|---|---${' '.repeat(20_000)}x\n- ${' '.repeat(20_000)}x:`);
+    expect(performance.now() - inicio).toBeLessThan(300);
+  });
+});

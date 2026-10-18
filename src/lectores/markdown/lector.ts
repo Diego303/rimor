@@ -6,8 +6,7 @@
 import type { Elemento } from '@rimor/formato';
 import { fmtNumero, type Idioma } from '../../i18n/formatos';
 import type { Borrador, Entrada, Lector } from '../contrato';
-import { encabezadoDe } from '../prompt/analisis';
-import { confianzaMarkdown, palabrasAprox } from './deteccion';
+import { confianzaMarkdown, palabrasAprox, tituloDeCuerpo } from './deteccion';
 import { type DatosMarkdown, indiceDe } from './indice';
 import { textos } from './textos';
 
@@ -15,11 +14,9 @@ export type { DatosMarkdown } from './indice';
 
 const LARGO_TITULO = 100;
 
-/** Título: el primer encabezado o, si no hay, la primera línea con texto. */
+/** Título: el `title` del frontmatter, el primer encabezado o, si no hay, la primera línea con texto. */
 export function tituloDeDocumento(texto: string): string {
-  const lineas = texto.split('\n');
-  const h = lineas.map(encabezadoDe).find((x) => x)?.titulo;
-  const base = h ?? (lineas.find((l) => l.trim()) ?? '').trim().replace(/^[-*+>]\s+/, '');
+  const base = tituloDeCuerpo(texto);
   if (!base) return textos.t('es', 'titulo');
   return base.length > LARGO_TITULO ? `${base.slice(0, LARGO_TITULO - 1)}…` : base;
 }

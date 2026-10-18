@@ -136,11 +136,11 @@ describe('detección', () => {
     }
   });
 
-  it('skill, agente y roles 0,9; CLAUDE.md 0,85; imperativo con variables 0,8', () => {
+  it('skill, agente, roles y CLAUDE.md 0,9; imperativo con variables 0,8', () => {
     expect(confianzaPrompt(leer('skill.md'))).toBe(0.9);
     expect(confianzaPrompt(leer('agente.md'))).toBe(0.9);
     expect(confianzaPrompt(leer('roles.txt'))).toBe(0.9);
-    expect(confianzaPrompt(leer('claude-md.md'))).toBe(0.85);
+    expect(confianzaPrompt(leer('claude-md.md'))).toBe(0.9);
     expect(confianzaPrompt(leer('revisor-adr.txt'))).toBe(0.8);
   });
 });
@@ -312,7 +312,7 @@ describe('revisión: prompts que no se reconocían', () => {
     const agente =
       'You are a code review agent. Your job is to find bugs in the diff.\n\nRules:\n- Only report real bugs.\n- Be concise.';
     expect(analizarPrompt(agente).forma).toBe('agente');
-    expect(confianzaPrompt('# Proyecto\n\nNotas sueltas del proyecto.', 'CLAUDE.md')).toBe(0.85);
+    expect(confianzaPrompt('# Proyecto\n\nNotas sueltas del proyecto.', 'CLAUDE.md')).toBe(0.9);
     expect(analizarPrompt('# Proyecto\n\nNotas.', 'AGENTS.md').forma).toBe('claude-md');
   });
 

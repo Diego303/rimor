@@ -1144,9 +1144,6 @@ pre.code.prompt-texto {
   cursor: pointer;
   width: 100%;
 }
-.seccion-indice:last-child {
-  border-bottom: 0;
-}
 .seccion-indice:hover .sm {
   color: var(--accent);
 }

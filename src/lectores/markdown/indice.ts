@@ -39,9 +39,14 @@ export type EntradaIndice = Seccion;
  */
 export function indiceDe(d: Pick<DatosMarkdown, 'secciones' | 'nivelIndice' | 'conTitulo'>): EntradaIndice[] {
   const indice: EntradaIndice[] = [];
+  const titulo = d.conTitulo ? d.secciones[0] : undefined;
+  // Las tareas entre el título y la primera sección también cuentan: el título entra en el índice si las tiene,
+  // para que las filas sumen lo mismo que el medidor.
+  if (titulo?.tareas.total) indice.push({ ...titulo, tareas: { ...titulo.tareas } });
   for (const s of d.conTitulo ? d.secciones.slice(1) : d.secciones) {
     const ultima = indice.at(-1);
-    if (s.nivel <= d.nivelIndice || !ultima) indice.push({ ...s, tareas: { ...s.tareas } });
+    // Un encabezado vacío (`##`) no es una entrada: lo suyo suma en la anterior.
+    if ((s.nivel <= d.nivelIndice && s.titulo) || !ultima) indice.push({ ...s, tareas: { ...s.tareas } });
     else {
       ultima.tareas.hechas += s.tareas.hechas;
       ultima.tareas.total += s.tareas.total;

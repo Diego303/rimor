@@ -6,9 +6,9 @@
 import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
-import { crearAnclador, textoPlano } from '../../ui/anclas';
+import { anclarMdast, textoPlano } from '../../ui/anclas';
 import { mencionesDe } from '../texto/lector';
-import { contarPalabras } from './deteccion';
+import { contarPalabras, cuerpoDe } from './deteccion';
 import type { DatosMarkdown, Seccion, Tareas } from './indice';
 
 export type { DatosMarkdown } from './indice';
@@ -19,6 +19,7 @@ interface Nodo {
   depth?: number;
   checked?: boolean | null;
   url?: string;
+  identifier?: string;
   lang?: string | null;
   value?: string;
   children?: Nodo[];
@@ -26,11 +27,28 @@ interface Nodo {
 
 export const MAX_ENLACES = 50;
 
+/** Bloques cuyo texto se cuenta entero (así `**neg**rita` es una palabra, no dos). */
+const BLOQUES_DE_TEXTO = new Set(['paragraph', 'heading', 'tableCell']);
+
 const procesador = unified().use(remarkParse).use(remarkGfm);
 
+/** Las definiciones de los enlaces por referencia (`[a][1]` … `[1]: https://…`). */
+function definicionesDe(n: Nodo, mapa = new Map<string, string>()): Map<string, string> {
+  if (n.type === 'definition' && n.identifier && n.url) mapa.set(n.identifier.toLowerCase(), n.url);
+  for (const hijo of n.children ?? []) definicionesDe(hijo, mapa);
+  return mapa;
+}
+
+/**
+ * Analiza el documento. El frontmatter YAML del principio no forma parte de él (lo enseña «Detalles») y los
+ * finales de línea CRLF se normalizan: la vista pinta exactamente el mismo cuerpo, con las mismas anclas.
+ */
 export function analizarMarkdown(texto: string): DatosMarkdown {
-  const arbol = procesador.parse(texto) as Nodo;
-  const anclar = crearAnclador();
+  const { cuerpo } = cuerpoDe(texto);
+  const arbol = procesador.parse(cuerpo) as Nodo;
+  // Las mismas anclas que pone `MarkdownSeguro` al pintar: la misma función sobre el mismo árbol.
+  const anclas = anclarMdast(arbol);
+  const definiciones = definicionesDe(arbol);
   const secciones: Seccion[] = [];
   const tareas: Tareas = { hechas: 0, total: 0 };
   const enlaces: string[] = [];
@@ -41,23 +59,33 @@ export function analizarMarkdown(texto: string): DatosMarkdown {
   // Las palabras y las tareas van a la última sección abierta (o a ninguna, antes del primer encabezado).
   let actual: Seccion | null = null;
 
+  const sumarPalabras = (n: Nodo) => {
+    const p = contarPalabras(textoPlano(n));
+    palabras += p;
+    if (actual) actual.palabras += p;
+  };
+
+  const anotarEnlace = (url: string) => {
+    totalEnlaces++;
+    // En «Enlaces», solo las direcciones web; los relativos, las anclas y los correos se cuentan sin listarse.
+    if (!/^https?:\/\//i.test(url) || vistos.has(url)) return;
+    vistos.add(url);
+    if (enlaces.length < MAX_ENLACES) enlaces.push(url);
+  };
+
   const recorrer = (n: Nodo) => {
     switch (n.type) {
       case 'heading': {
-        const titulo = textoPlano(n).trim();
         const s: Seccion = {
           nivel: n.depth ?? 1,
-          titulo,
-          ancla: anclar(titulo),
+          titulo: textoPlano(n).trim(),
+          ancla: anclas[secciones.length] ?? '',
           tareas: { hechas: 0, total: 0 },
           palabras: 0,
         };
         secciones.push(s);
         actual = s;
-        const p = contarPalabras(titulo);
-        palabras += p;
-        s.palabras += p;
-        return;
+        break;
       }
       case 'code': {
         bloques.total++;
@@ -66,23 +94,14 @@ export function analizarMarkdown(texto: string): DatosMarkdown {
         return;
       }
       case 'html':
+      case 'definition':
         return;
-      case 'text':
-      case 'inlineCode': {
-        const p = contarPalabras(n.value ?? '');
-        palabras += p;
-        if (actual) actual.palabras += p;
-        return;
-      }
-      case 'link': {
-        totalEnlaces++;
-        const url = n.url ?? '';
-        if (url && !vistos.has(url)) {
-          vistos.add(url);
-          if (enlaces.length < MAX_ENLACES) enlaces.push(url);
-        }
+      case 'link':
+        anotarEnlace(n.url ?? '');
         break;
-      }
+      case 'linkReference':
+        anotarEnlace(definiciones.get((n.identifier ?? '').toLowerCase()) ?? '');
+        break;
       case 'listItem':
         if (typeof n.checked === 'boolean') {
           tareas.total++;
@@ -94,6 +113,7 @@ export function analizarMarkdown(texto: string): DatosMarkdown {
         }
         break;
     }
+    if (BLOQUES_DE_TEXTO.has(n.type)) sumarPalabras(n);
     for (const hijo of n.children ?? []) recorrer(hijo);
   };
   recorrer(arbol);
@@ -113,7 +133,7 @@ export function analizarMarkdown(texto: string): DatosMarkdown {
     tareas,
     enlaces,
     totalEnlaces,
-    menciones: mencionesDe(texto),
+    menciones: mencionesDe(cuerpo),
     bloques,
   };
 }

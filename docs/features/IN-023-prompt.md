@@ -24,7 +24,7 @@ Guardar los prompts que funcionan con sus variables, rellenarlas y copiarlos lis
 ### Detección
 
 - 0,9: skill o agente (frontmatter), o bloques de rol en dos o más líneas.
-- 0,85: `CLAUDE.md` / `AGENTS.md` reconocible.
+- 0,85: `CLAUDE.md` / `AGENTS.md` reconocible (0,9 desde la verificación de IN-024: por encima del margen de duda frente a un documento Markdown).
 - 0,8: imperativo o segunda persona dirigido a un modelo («Actúa como…», «Eres un…», «You are…», «Responde…», «Dime…», «Analiza…», «Write…») **y** al menos una variable o una sección; texto de 60 caracteres o más.
 - 0,7: solo el imperativo dirigido a un modelo (con «modelo», «IA», «asistente», «LLM», «respuesta» cerca o con instrucciones en lista) y 120 caracteres o más.
 - 0 en lo demás: una idea corta o una nota no son prompts. Las pruebas cuidan que los corpus de texto, idea, log y error no cambien.

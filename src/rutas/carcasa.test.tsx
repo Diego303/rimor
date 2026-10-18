@@ -4,6 +4,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { useEspacio } from '../estado/espacio';
 import { crearRouter } from './rutas';
 
+/**
+ * La primera pantalla carga en frío sus módulos (y, con ellos, el registro de lectores, que crece con cada uno):
+ * se le da más tiempo que el segundo por defecto de `findBy`. Se comprueba lo que pinta, no cuánto tarda.
+ */
+const PRIMERA_CARGA = { timeout: 8000 };
+
 function montar(ruta = '/') {
   const router = crearRouter(createMemoryHistory({ initialEntries: [ruta] }));
   render(<RouterProvider router={router} />);
@@ -23,7 +29,7 @@ describe('Carcasa', () => {
       copiaAlDia: true,
     });
     montar('/');
-    const inicio = await screen.findByRole('link', { name: /Inicio/ });
+    const inicio = await screen.findByRole('link', { name: /Inicio/ }, PRIMERA_CARGA);
     expect(inicio.getAttribute('aria-current')).toBe('page');
     expect(inicio.textContent).toContain('7');
     expect(screen.getByRole('link', { name: /gateway/ }).getAttribute('href')).toContain('/c/gateway');
@@ -92,8 +98,8 @@ describe('Carcasa', () => {
 
   it('cada ruta tiene su pantalla', async () => {
     const router = montar('/e/LOG-0042');
-    expect(await screen.findByRole('heading', { name: 'LOG-0042' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'LOG-0042' }, PRIMERA_CARGA)).toBeTruthy();
     await act(() => router.navigate({ to: '/datos' }));
-    expect(await screen.findByRole('heading', { name: 'Datos y copias' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Datos y copias' }, PRIMERA_CARGA)).toBeTruthy();
   });
 });

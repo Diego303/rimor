@@ -9,6 +9,7 @@ import { idDeAncla } from '../../ui/anclas';
 import { Detalles, Medidor, Tarjeta } from '../../ui/componentes';
 import MarkdownSeguro from '../../ui/componentes/MarkdownSeguro';
 import type { PropsVista } from '../contrato';
+import { cuerpoDe } from './deteccion';
 import { type DatosMarkdown, indiceDe } from './indice';
 import { lectorMarkdown } from './lector';
 import { textos } from './textos';
@@ -27,6 +28,8 @@ export default function VistaMarkdown({ el, datos }: PropsVista<DatosMarkdown>) 
   const { idioma } = useT();
   const t = textos.t.bind(textos, idioma) as unknown as T;
   const indice = indiceDe(datos);
+  // El mismo cuerpo que analizó el lector (sin frontmatter, con saltos normalizados): así las anclas coinciden.
+  const { cuerpo, frontmatter } = cuerpoDe(el.original ?? '');
   const { hechas, total } = datos.tareas;
   const cifras = Object.entries(lectorMarkdown.cifras ?? {}).map(([nombre, f]) => [nombre, f(datos).texto] as const);
   const lenguajes = Object.entries(datos.bloques.lenguajes).sort((a, b) => b[1] - a[1]);
@@ -39,9 +42,9 @@ export default function VistaMarkdown({ el, datos }: PropsVista<DatosMarkdown>) 
           type="button"
           className="row seccion-indice"
           onClick={() => irA(s.ancla)}
-          title={t('irA', { titulo: s.titulo })}
+          title={t('irA', { titulo: s.titulo || t('sinTitulo') })}
         >
-          <span className="sm">{s.titulo}</span>
+          <span className="sm">{s.titulo || t('sinTitulo')}</span>
           <span className="mono xs muted">{s.tareas.total ? `${s.tareas.hechas}/${s.tareas.total}` : ''}</span>
         </button>
       ))}
@@ -64,11 +67,13 @@ export default function VistaMarkdown({ el, datos }: PropsVista<DatosMarkdown>) 
       )}
 
       <Tarjeta>
-        <MarkdownSeguro texto={el.original ?? ''} anclas />
+        <MarkdownSeguro texto={cuerpo} anclas />
       </Tarjeta>
 
       <Detalles resumen={t('detalles')}>
         <dl className="kv">
+          <dt>{t('etiquetaSecciones')}</dt>
+          <dd className="mono">{fmtNumero(indice.length, idioma)}</dd>
           <dt>{t('etiquetaPalabras')}</dt>
           <dd className="mono">{fmtNumero(datos.palabras, idioma)}</dd>
           <dt>{t('enlaces')}</dt>
@@ -97,6 +102,12 @@ export default function VistaMarkdown({ el, datos }: PropsVista<DatosMarkdown>) 
             </>
           )}
         </dl>
+        {frontmatter !== null && (
+          <>
+            <p className="xs muted">{t('frontmatter')}</p>
+            <pre className="code">{frontmatter}</pre>
+          </>
+        )}
         <p className="xs muted">
           {t('cifras')} <span className="mono">{t('sintaxisCifra', { ref: el.frontmatter.ref })}</span>:
         </p>

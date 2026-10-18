@@ -266,6 +266,48 @@ describe('vista de Documento Markdown', () => {
     expect(screen.getByText('Detalles')).toBeTruthy();
   });
 
+  it('las anclas del índice coinciden con los id pintados (imágenes, notas, HTML, Setext, repetidas, frontmatter)', () => {
+    const texto = [
+      '---',
+      'title: Casos',
+      '---',
+      '## ![](https://x.com/a.png) Logo',
+      '',
+      '## Título[^1]',
+      '',
+      '## Hola <img alt="pic" src="https://x.com/b.png">',
+      '',
+      '## Hola <script>x</script>',
+      '',
+      'Foo  ',
+      'bar',
+      '===',
+      '',
+      '<h2>Intro</h2>',
+      '',
+      '## Intro',
+      '',
+      '## A',
+      '',
+      '## A',
+      '',
+      '## A-2',
+      '',
+      '[^1]: nota',
+    ].join('\n');
+    const datos = analizarMarkdown(texto);
+    const { container } = render(<VistaMarkdown el={elementoFalso(15, texto, 'markdown')} datos={datos} />);
+    const ids = [...container.querySelectorAll('.md-seguro [id]')].map((e) => e.id);
+    for (const s of datos.secciones) expect(ids, s.titulo).toContain(`rimor-${s.ancla}`);
+    // Ningún id repetido, y el `<h2>` crudo no se queda el ancla de `## Intro`.
+    expect(new Set(ids).size).toBe(ids.length);
+    const intro = datos.secciones.find((s) => s.titulo === 'Intro');
+    expect(container.querySelector(`#rimor-${intro?.ancla}`)?.textContent).toBe('Intro');
+    expect(container.querySelector(`#rimor-${intro?.ancla}`)?.tagName).toBe('H2');
+    // El frontmatter no se pinta como documento (va en «Detalles»).
+    expect(container.querySelector('.md-seguro')?.textContent).not.toContain('title: Casos');
+  });
+
   it('sin tareas, la tarjeta es solo el índice', () => {
     const texto = '# Arquitectura\n\n## Capas\n\nTexto.\n\n## Datos\n\nMás texto.\n';
     const { container } = render(

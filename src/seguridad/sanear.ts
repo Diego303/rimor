@@ -12,6 +12,7 @@ import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
 import { unified } from 'unified';
 import { visit } from 'unist-util-visit';
+import { anclarMdast } from '../ui/anclas';
 
 const PROHIBIDAS = [
   'script',
@@ -109,10 +110,16 @@ const procesadorPara = (idioma: 'es' | 'en') =>
     .use(endurecer);
 const PROCESADORES = { es: procesadorPara('es'), en: procesadorPara('en') };
 
-/** Markdown pegado → árbol hast saneado, listo para pintar. */
-export function markdownAHast(md: string, idioma: 'es' | 'en' = 'es'): Root {
+/**
+ * Markdown pegado → árbol hast saneado, listo para pintar. Con `anclas`, cada encabezado de Markdown lleva el `id`
+ * de su ancla estable (`rimor-<ancla>`), calculada sobre el árbol mdast como el índice del lector Markdown; el HTML
+ * crudo (`<h2>`) no la recibe.
+ */
+export function markdownAHast(md: string, idioma: 'es' | 'en' = 'es', opciones: { anclas?: boolean } = {}): Root {
   const procesador = PROCESADORES[idioma];
-  return procesador.runSync(procesador.parse(md)) as Root;
+  const mdast = procesador.parse(md);
+  if (opciones.anclas) anclarMdast(mdast);
+  return procesador.runSync(mdast) as Root;
 }
 
 const procesadorHtml = unified().use(rehypeSanitize, ESQUEMA).use(endurecer);

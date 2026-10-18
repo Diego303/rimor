@@ -21,14 +21,18 @@ export function anclaDe(titulo: string): string {
   return base || 'seccion';
 }
 
-/** Anclas en orden de aparición: las repetidas llevan `-2`, `-3`… (como GitHub). */
+/**
+ * Anclas en orden de aparición: las repetidas llevan `-2`, `-3`… (como GitHub), sin chocar nunca con otra ya dada
+ * (`A`, `A`, `A-2` dan `a`, `a-2` y `a-2-2`).
+ */
 export function crearAnclador(): (titulo: string) => string {
-  const vistas = new Map<string, number>();
+  const usadas = new Set<string>();
   return (titulo) => {
     const base = anclaDe(titulo);
-    const n = (vistas.get(base) ?? 0) + 1;
-    vistas.set(base, n);
-    return n === 1 ? base : `${base}-${n}`;
+    let ancla = base;
+    for (let n = 2; usadas.has(ancla); n++) ancla = `${base}-${n}`;
+    usadas.add(ancla);
+    return ancla;
   };
 }
 
@@ -45,3 +49,31 @@ export function textoPlano(nodo: unknown): string {
 
 /** El `id` (con el prefijo de los `id` saneados) de un ancla. */
 export const idDeAncla = (ancla: string) => `rimor-${ancla}`;
+
+/** Lo que se usa de un nodo mdast para anclar sus encabezados (sin depender de sus tipos). */
+interface NodoMd {
+  type: string;
+  children?: NodoMd[];
+  data?: { hProperties?: Record<string, unknown> } & Record<string, unknown>;
+}
+
+/**
+ * Pone el ancla a cada encabezado del árbol mdast, en orden, como `id` del elemento que saldrá al pintar (el
+ * saneado le añade el prefijo `rimor-`). Es el mismo árbol, el mismo texto y el mismo orden que usa el índice del
+ * lector Markdown: las anclas coinciden siempre (imágenes, notas al pie, HTML en línea, Setext). Devuelve las anclas.
+ */
+export function anclarMdast(arbol: unknown): string[] {
+  const anclar = crearAnclador();
+  const anclas: string[] = [];
+  const recorrer = (n: NodoMd) => {
+    if (n.type === 'heading') {
+      const ancla = anclar(textoPlano(n).trim());
+      anclas.push(ancla);
+      n.data = { ...n.data, hProperties: { ...n.data?.hProperties, id: ancla } };
+      return;
+    }
+    for (const hijo of n.children ?? []) recorrer(hijo);
+  };
+  recorrer(arbol as NodoMd);
+  return anclas;
+}

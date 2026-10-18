@@ -432,7 +432,9 @@ export function confianzaPrompt(texto: string, nombreArchivo?: string): number {
   if (!t) return 0;
   const forma = formaDe(t, nombreArchivo);
   if (forma === 'skill' || forma === 'agente' || forma === 'roles') return 0.9;
-  if (forma === 'claude-md') return 0.85;
+  // Por encima del margen de duda frente a un documento Markdown (0,75): unas instrucciones con encabezados también
+  // lo parecen.
+  if (forma === 'claude-md') return 0.9;
   // Lo que va en bloques de código (ejemplos dentro de unas instrucciones) no dice que el texto sea código.
   const prosa = sinBloques(t);
   if (NO_ES_PROMPT.test(prosa)) return 0;

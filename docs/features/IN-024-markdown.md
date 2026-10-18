@@ -86,6 +86,39 @@ Cubre las cuatro tareas. Versiones, diff por secciones y marcas en el índice so
 - Los tipos y `indiceDe` van en `indice.ts`, sin el parser: el lector y la vista no cargan remark; el análisis se importa solo al derivar (la carga inicial sube 1,8 KB).
 - Detección: también encabezados Setext, y dos señales fuertes (tareas, código, tabla) bastan sin encabezado.
 - Las menciones usan `mencionesDe` del lector Texto.
-- Rendimiento: unos 0,45 s por cada 100 KB de documento en el Worker (remark); dentro del plazo de la cola de derivados.
+- Rendimiento: de 0,5 a 2,3 s por cada 100 KB de documento en el Worker (remark), según las secciones; dentro del plazo de la cola de derivados.
 - La prueba de estilo de las respuestas sobre el corpus pasa a ser una por lector (el producto de lectores por ejemplos crece con cada uno).
 
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-19 00:15): tipos 0 errores; Biome, colores y textos, OK; Vitest 54 archivos y 898 pruebas, OK; construcción OK; carga inicial 206,1 KB (remark no entra). **`pnpm deteccion`**: 100 % de 225 ejemplos.
+
+| Criterio | Evidencia |
+|---|---|
+| Índice con ancla estable, palabras, tareas por sección y en total, enlaces y bloques | `fixtures/markdown/` (plan como la referencia, repetidos, Setext, sin tareas), frontmatter, CRLF, referencias, enlaces en encabezados, CJK |
+| Las anclas llevan a su encabezado | Prueba de la vista con imágenes sin `alt`, notas al pie, HTML en línea y crudo, Setext con salto duro, repetidas y frontmatter: cada ancla del índice existe como `id`, sin `id` repetidos |
+| Vista | Progreso «6 de 14 tareas», 43 %, medidor, filas `hechas/total` que suman lo mismo que el medidor, ir a la sección, documento saneado, frontmatter en «Detalles» |
+| Cifras | `tareas_hechas`, `tareas_total`, `palabras` |
+| Respuesta | «Documento con 5 secciones y 14 tareas (6 hechas).» en es y en; sin tareas y sin secciones; reglas de estilo |
+| No roba otros tipos | Scripts, Python, Dockerfile y YAML (con comentarios `#`) dan 0; `CLAUDE.md` sale como prompt sin duda; los demás corpus no cambian |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Anclas del índice que no coincidían con los `id` pintados** (imágenes sin `alt`, notas al pie, HTML en línea, Setext con salto duro, `<h2>` crudo): las anclas se ponen en el árbol mdast (`anclarMdast`) antes de pasar a HTML, la misma función sobre el mismo árbol que usa el análisis; el HTML crudo no recibe ninguna.
+2. **Código, YAML y Dockerfile tomados por documentos**: si fuera de los bloques de código el 40 % de las líneas son de código o configuración, no es un documento.
+3. **El frontmatter entraba como sección**: el análisis y la vista trabajan sobre el cuerpo sin frontmatter (que va en «Detalles»; su `title` es el título).
+4. **CRLF anulaba tablas y Setext**: los saltos se normalizan antes de detectar y de analizar.
+5. **Retroceso cuadrático en la fila separadora de tabla** y en la línea de YAML: la fila se lee a mano y sin `[ \t]*` contiguos.
+6. **Anclas repetidas** (`A`, `A`, `A-2`): el anclador nunca da un ancla ya dada.
+7. **Título**: ni comentarios dentro de bloques de código ni el segundo encabezado si el primero es Setext.
+8. **Enlaces**: también los de los encabezados y los de referencia; «Enlaces» solo lista direcciones web (los relativos, anclas y correos se cuentan); «Detalles» enseña las secciones.
+9. **Tareas fuera del índice**: las del título entran en él para que las filas sumen lo mismo que el medidor.
+10. **Palabras**: por bloque (`**neg**rita` es una), una URL es una, cada ideograma o kana cuenta por sí solo.
+11. **Encabezados vacíos**: no son entradas del índice (si no hay otra, «Sin título»).
+12. **Duda Prompt/Markdown en `CLAUDE.md`**: Prompt lo puntúa 0,9 (fuera del margen de duda frente a 0,75).
+13. **Estilo**: todas las filas del índice llevan su borde, como la referencia.
+
+Sin cambiar: un `<h2 id="intro">` crudo y un `## Intro` comparten `id` (el saneado prefija los `id` del usuario); unos 60 documentos reales que mezclan instrucciones y `{{variables}}` salen como Prompt 0,8 con Markdown como alternativa (la duda se ofrece al capturar). El análisis tarda de 0,5 a 2,3 s por cada 100 KB según el número de secciones (dentro del plazo de 60 s de la cola de derivados).
