@@ -15,13 +15,6 @@ export type { DatosLog } from './analisis';
 const MUESTRA_DETECCION = 200;
 const LARGO_TITULO = 100;
 
-/** ¿Tiene esta línea pinta de log? Marca de tiempo, nivel, JSON con nivel o mensaje, o logfmt. */
-function esLineaDeLog(linea: string, anio: number): boolean {
-  const a = analizarLinea(linea, anio);
-  if (a.formato === 'json' || a.formato === 'logfmt' || a.formato === 'apache') return true;
-  return a.marca !== null || /^\s*\[?(?:TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL)\]?[\s:]/.test(linea);
-}
-
 /** Confianza de que un texto es un log: al menos 3 líneas y el 60 % de ellas con pinta de log. */
 export function confianzaLog(texto: string): number {
   const lineas = texto
@@ -30,7 +23,7 @@ export function confianzaLog(texto: string): number {
     .slice(0, MUESTRA_DETECCION);
   if (lineas.length < 3) return 0;
   const anio = new Date().getFullYear();
-  const con = lineas.filter((l) => esLineaDeLog(l, anio)).length;
+  const con = lineas.filter((l) => analizarLinea(l, anio).pareceLog).length;
   return con / lineas.length >= 0.6 ? 0.85 : 0;
 }
 
@@ -40,23 +33,29 @@ const errores = (d: Pick<DatosLog, 'niveles'>) => d.niveles.ERROR + d.niveles.FA
 /** «17:40:01» → «17:40». */
 const hhmm = (pared: string | null) => (pared ? pared.slice(0, 5) : null);
 
-/** Un error capturado durante la ventana de errores del log (si el log tiene fechas completas). */
-function errorALaVez(d: DatosLog, ctx: Contexto, el: Elemento): string | null {
-  const ventana =
-    d.concentracion ??
-    (d.primerError && d.ultimoError ? { desde: d.primerError.pared, hasta: d.ultimoError.pared } : null);
-  if (!ventana?.desde || !ventana.hasta) return null;
-  const captura = new Date(el.frontmatter.creado);
+/** Margen alrededor de la ventana de errores para «a la vez que»: el error se pudo pegar un poco después. */
+const ANTES_MS = 5 * 60_000;
+const DESPUES_MS = 30 * 60_000;
+
+/**
+ * Un error capturado mientras pasaban los errores del log. Solo si el log tiene fechas completas: se comparan
+ * instantes (con su zona), no horas de pared ni días de captura.
+ */
+function errorALaVez(d: DatosLog, ctx: Contexto): string | null {
+  if (!d.fechasCompletas) return null;
+  const desde = d.concentracion?.desdeMs ?? d.primerError?.ms ?? null;
+  const hasta = d.concentracion?.hastaMs ?? d.ultimoError?.ms ?? null;
+  if (desde === null || hasta === null) return null;
   for (const o of ctx.cercanos ?? []) {
     if (o.tipo !== 'error') continue;
-    const cuando = new Date(o.creado);
-    // Mismo día que la captura del log y dentro de su ventana de errores, por la hora de pared.
-    if (cuando.toDateString() !== captura.toDateString()) continue;
-    const hora = `${String(cuando.getHours()).padStart(2, '0')}:${String(cuando.getMinutes()).padStart(2, '0')}`;
-    if (hora >= (ventana.desde ?? '').slice(0, 5) && hora <= (ventana.hasta ?? '').slice(0, 5)) return o.ref;
+    const cuando = Date.parse(o.creado);
+    if (cuando >= desde - ANTES_MS && cuando <= hasta + DESPUES_MS) return o.ref;
   }
   return null;
 }
+
+/** Hasta dónde se busca el primer error para el título (en el hilo principal, al capturar). */
+const LINEAS_PARA_TITULO = 2000;
 
 export const lectorLog: Lector<DatosLog> = {
   nombre: 'log',
@@ -71,7 +70,7 @@ export const lectorLog: Lector<DatosLog> = {
     const lineas = texto.split(/\r?\n/).filter((l) => l.trim());
     // Título: la primera línea de error, o la primera, sin su marca de tiempo.
     const anio = new Date().getFullYear();
-    const primeraError = lineas.find((l) => {
+    const primeraError = lineas.slice(0, LINEAS_PARA_TITULO).find((l) => {
       const n = analizarLinea(l, anio).nivel;
       return n === 'ERROR' || n === 'FATAL';
     });
@@ -83,11 +82,16 @@ export const lectorLog: Lector<DatosLog> = {
     return { titulo, original: texto, resumen: { lineas: lineas.length } };
   },
 
+  // Avisa del progreso (logs de más de 50.000 líneas); solo los lectores que lo hacen reciben el aviso.
+  informaProgreso: true,
+
   async derivar(el: Elemento, opciones = {}): Promise<DatosLog> {
-    const anio = new Date(el.frontmatter.creado).getFullYear();
-    return analizar(el.original ?? '', {
+    // Sin el texto (un adjunto que no se pudo cargar) no hay nada que analizar: nunca «0 líneas».
+    if (el.original === null) throw new Error('log.sinOriginal');
+    const referencia = new Date(el.frontmatter.creado);
+    return analizar(el.original, {
       ...(opciones.alProgreso ? { alProgreso: opciones.alProgreso } : {}),
-      ...(Number.isFinite(anio) ? { anio } : {}),
+      ...(Number.isNaN(referencia.getTime()) ? {} : { referencia }),
     });
   },
 
@@ -107,7 +111,7 @@ export const lectorLog: Lector<DatosLog> = {
     return partes.join(' · ');
   },
 
-  respuesta(el, d, ctx) {
+  respuesta(_el, d, ctx) {
     const i = ctx.idioma;
     const lineas = textos.t(i, 'lineas', { n: d.lineas });
     const nErr = errores(d);
@@ -122,9 +126,11 @@ export const lectorLog: Lector<DatosLog> = {
     const erroresTxt = textos.t(i, 'errores', { n: nErr });
     const inicio =
       desde && hasta
-        ? textos.t(i, 'respuesta.conErrores', { lineas, errores: erroresTxt, desde, hasta })
+        ? desde === hasta
+          ? textos.t(i, 'respuesta.conErroresUnaHora', { lineas, errores: erroresTxt, hora: desde })
+          : textos.t(i, 'respuesta.conErrores', { lineas, errores: erroresTxt, desde, hasta })
         : textos.t(i, 'respuesta.conErroresSinHora', { lineas, errores: erroresTxt });
-    const err = errorALaVez(d, ctx, el);
+    const err = errorALaVez(d, ctx);
     if (!err) return { texto: [{ t: 'texto', v: `${inicio}${textos.t(i, 'respuesta.fin')}` }] };
     // Dos frases (IN-016): «Log de …, con … entre … y …, a la vez que ERR-0015. ¿Lo añado a su hilo?»
     const texto: Fragmento[] = [

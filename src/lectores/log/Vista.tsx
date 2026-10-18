@@ -8,6 +8,7 @@ import { fmtDuracion, fmtNumero } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { Boton, Detalles } from '../../ui/componentes';
 import type { PropsVista } from '../contrato';
+import { useOriginal } from '../useOriginal';
 import type { Barra, DatosLog, Nivel } from './analisis';
 import { lectorLog } from './lector';
 import { textos } from './textos';
@@ -20,8 +21,16 @@ function PlantillaPintada({ plantilla }: { plantilla: string }) {
   const piezas: ReactNode[] = [];
   let resto = plantilla;
   let k = 0;
+  // Como en la pantalla de referencia: todos los marcadores y solo el primer nivel.
+  let nivelPintado = false;
   const patron = /<(N|ID|IP|HEX)>|\b(ERROR|WARN)\b/;
   for (let m = patron.exec(resto); m; m = patron.exec(resto)) {
+    if (m[2] && nivelPintado) {
+      piezas.push(resto.slice(0, m.index + m[0].length));
+      resto = resto.slice(m.index + m[0].length);
+      continue;
+    }
+    if (m[2]) nivelPintado = true;
     if (m.index) piezas.push(resto.slice(0, m.index));
     piezas.push(
       m[1] ? (
@@ -65,7 +74,8 @@ function Histograma({ barras, etiqueta }: { barras: Barra[]; etiqueta: string })
   const W = 720;
   const H = 130;
   const ancho = (W - 40) / Math.max(barras.length, 1);
-  const maximo = Math.max(1, ...barras.map((b) => b.errores + b.avisos + b.otros));
+  // Con un bucle: muchas barras desbordarían la pila de `Math.max(...)`.
+  const maximo = barras.reduce((m, b) => Math.max(m, b.errores + b.avisos + b.otros), 1);
   const cada = Math.max(1, Math.ceil(barras.length / 6 / 5) * 5);
   const escala = (v: number) => (v / maximo) * (H - 34);
   return (
@@ -116,7 +126,9 @@ export default function VistaLog({ el, datos }: PropsVista<DatosLog>) {
   ) => string;
   const [elegida, setElegida] = useState<number | null>(null);
   const [todas, setTodas] = useState(false);
-  const lineas = useMemo(() => (el.original ?? '').replace(/\r\n?/g, '\n').split('\n'), [el.original]);
+  // Un log de más de 2 MB va como adjunto: su texto se lee del espacio.
+  const original = useOriginal(el);
+  const lineas = useMemo(() => (original ?? '').replace(/\r\n?/g, '\n').split('\n'), [original]);
   const nErr = datos.niveles.ERROR + datos.niveles.FATAL;
   const plantillas = todas ? datos.plantillas : datos.plantillas.slice(0, PLANTILLAS_A_LA_VISTA);
   const deLaElegida = useMemo(() => {
@@ -156,13 +168,22 @@ export default function VistaLog({ el, datos }: PropsVista<DatosLog>) {
         {datos.histograma && <Histograma barras={datos.histograma.barras} etiqueta={etiquetaHistograma} />}
         {datos.concentracion && (
           <p className="sm">
-            {t('concentracion')}
-            <b>
-              {datos.concentracion.desde}
-              {t('y')}
-              {datos.concentracion.hasta}
-            </b>
-            .
+            {datos.concentracion.desde === datos.concentracion.hasta ? (
+              <>
+                {t('concentracionUna')}
+                <b>{datos.concentracion.desde}</b>.
+              </>
+            ) : (
+              <>
+                {t('concentracion')}
+                <b>
+                  {datos.concentracion.desde}
+                  {t('y')}
+                  {datos.concentracion.hasta}
+                </b>
+                .
+              </>
+            )}
           </p>
         )}
       </section>

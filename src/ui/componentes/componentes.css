@@ -1066,6 +1066,9 @@ details.more > div {
   max-height: 300px;
   overflow: auto;
 }
+.lineas-log.lineas-plantilla {
+  max-height: 280px;
+}
 .stat .v.bad {
   color: var(--bad);
 }

@@ -241,6 +241,7 @@ describe('ColaDerivados', () => {
     let avanzar: (h: number, t: number) => void = () => undefined;
     let terminar: () => void = () => undefined;
     const lector = lectorFalso({
+      informaProgreso: true,
       derivar: (_el, opciones) =>
         new Promise((ok) => {
           avanzar = (h, t) => opciones?.alProgreso?.(h, t);
@@ -271,6 +272,23 @@ describe('ColaDerivados', () => {
     });
     const el = { ...elementoFalso(1), original: null };
     expect(await cola.pedir(el)).toEqual({ largo: 17 });
+  });
+
+  it('si el adjunto no se puede cargar, el trabajo falla y no se guarda nada en la caché', async () => {
+    const registro = crearRegistro([lectorFalso()]);
+    const cache = await CacheEspacio.abrir('d6', new IDBFactory());
+    const cola = new ColaDerivados({
+      registro,
+      ejecutar: ejecutorEnHilo(registro),
+      cache,
+      cargarOriginal: async () => {
+        throw new Error('almacen.adjuntoNoEncontrado');
+      },
+    });
+    const el = { ...elementoFalso(1), original: null };
+    await expect(cola.pedir(el)).rejects.toThrow('almacen.adjuntoNoEncontrado');
+    expect(await cache.derivado(el.frontmatter.id, 'falso', 1, el.frontmatter.hash)).toBeUndefined();
+    cache.cerrar();
   });
 
   it('sin lector para el elemento, rechaza', async () => {
@@ -337,5 +355,29 @@ describe('ejecutor', () => {
     expect(primero?.terminate).toHaveBeenCalled();
     await expect(ejecutor.ejecutar('falso', elementoFalso(2))).rejects.toThrow('derivados.cerrado');
     expect(WorkerMudo.ultimo).toBe(primero);
+  });
+});
+
+describe('cargar el texto de un adjunto', () => {
+  it('por su contenido: un .jsonl sin MIME de texto sí; un binario, no; si falta, lanza', async () => {
+    const { AlmacenMemoria } = await import('../almacen/memoria');
+    const { Repositorio } = await import('../almacen/repositorio');
+    const { cargarTextoAdjunto } = await import('./adjuntos');
+    const almacen = new AlmacenMemoria();
+    const repo = new Repositorio(almacen);
+    await almacen.escribir('adjuntos/aa/x.jsonl', new TextEncoder().encode('{"level":"info"}\n'));
+    await almacen.escribir('adjuntos/bb/x.bin', new Uint8Array([0, 1, 2, 255]));
+    const con = (ruta: string, mime: string) => ({
+      ...elementoFalso(1),
+      original: null,
+      frontmatter: { ...elementoFalso(1).frontmatter, adjunto: { hash: 'a'.repeat(64), ruta, mime, tam: 1 } },
+    });
+    expect(await cargarTextoAdjunto(repo, con('adjuntos/aa/x.jsonl', 'application/x-ndjson'))).toBe(
+      '{"level":"info"}\n',
+    );
+    expect(await cargarTextoAdjunto(repo, con('adjuntos/bb/x.bin', ''))).toBeNull();
+    await expect(cargarTextoAdjunto(repo, con('adjuntos/cc/no.txt', 'text/plain'))).rejects.toThrow(
+      'adjuntoNoEncontrado',
+    );
   });
 });

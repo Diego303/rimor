@@ -91,3 +91,39 @@ Cubre las seis tareas y las pruebas de la ficha. Amplía el contrato (progreso y
 - El contexto de las respuestas gana `cercanos` (lo guardado en las 24 h de alrededor).
 - La sintaxis de cita de las cifras (`{{REF.nombre}}`) va en los textos del lector.
 
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 20:56): tipos 0 errores; Biome, colores y textos, OK; Vitest 50 archivos y 646 pruebas, OK; construcción OK; carga inicial 188,5 KB. **`pnpm deteccion`**: 100 % de 125 ejemplos (archivo, enlace, idea, log y texto).
+
+| Criterio | Evidencia |
+|---|---|
+| Detecta marcas, niveles, JSON por línea, syslog y logfmt | Los 8 formatos de `fixtures/logs/` (y klog y PHP en el corpus de detección); JSON de datos y CSV con fechas no son logs |
+| Deriva líneas, rango, niveles, plantillas, pares, primer y último error, histograma | Pruebas de los 8 formatos, de plantillas y pares, y del histograma (minuto, hora, día local, tope de barras) |
+| Más de 50.000 líneas por bloques con progreso | 120.000 líneas: avisos a 50.000, 100.000 y 120.000 y el mismo resultado; el progreso llega a la vista |
+| Vista | Prueba de la vista: cifras, histograma, concentración, plantillas que filtran sus líneas |
+| Cifras citables | `lineas`, `errores`, `avisos`, `duracion`, `plantillas` |
+| Respuesta (en dos frases) | Con errores, con un error a la vez (por instantes), sin errores, con un solo error |
+| Normalización estable | Propiedad con fast-check |
+| 50.000 líneas en menos de 2 s | ~0,65 s (el mejor de tres intentos dentro de la batería completa) |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Líneas de texto tomadas por logfmt** (`… ERROR … time=12ms`): logfmt exige que la línea empiece por `clave=`.
+2. **Niveles numéricos de pino y bunyan** (`"level":50`): se traducen.
+3. **Logs de más de 2 MB**: la vista lee el texto del adjunto (`useOriginal`); el adjunto se reconoce como texto por su contenido (también `.jsonl`); si no se puede cargar, el trabajo falla en vez de guardar «0 líneas» en la caché.
+4. **Una fecha dentro del mensaje ganaba a la marca inicial**: gana la marca de más a la izquierda; las fechas fuera de 1970–2200 no cuentan.
+5. **Retroceso cuadrático en los pares `clave=valor`**: la clave no puede ir pegada a otra palabra y solo se miran los primeros 4.000 caracteres.
+6. **Logs sin fecha o sin año**: los cambios de día (solo hora) y de año (syslog, klog) se arrastran, y una fecha sin año posterior a la captura es del año anterior.
+7. **«A la vez que ERR-…»** comparaba horas de pared y días de captura: se comparan instantes, y solo si el log tiene fechas completas.
+8. **Marcas en microsegundos o nanosegundos**: se reconocen por sus cifras; el histograma nunca pasa de 1.500 barras y la vista no usa `Math.max(...)`.
+9. **Detección demasiado amplia**: un JSON cuenta si tiene nivel, mensaje u hora; una marca, si está al principio y la sigue un mensaje con palabras.
+10. **Un campo `level=` del mensaje ganaba a la palabra de nivel del principio**: ahora gana la del principio.
+11. **Histograma por día en UTC**: corta a medianoche local y etiqueta en hora local.
+12. **Proxies de Comlink en todas las derivaciones**: solo los lectores que avisan del progreso (`informaProgreso`) lo reciben.
+13. **La carga del adjunto quedaba fuera del plazo**: va dentro.
+14. **`leer` analizaba todo el log en el hilo principal**: busca el primer error en las 2.000 primeras líneas.
+15. **Un solo error daba «entre 17:40 y 17:40»**: «a las 17:40».
+Además: las expresiones se compilan una vez y la cabeza de la línea se mira sin rehacer las marcas (vuelve a ~0,65 s por 50.000 líneas), y la plantilla resalta solo el primer nivel, como la referencia.
+

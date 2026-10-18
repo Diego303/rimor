@@ -13,6 +13,7 @@ import { useT } from '../i18n/useT';
 import { ErrorTarjeta, IconoTipo } from '../ui/componentes';
 import { Senal } from '../ui/marca/Senal';
 import { useEsperaVisible } from '../ui/marca/useEsperaVisible';
+import { cargarTextoAdjunto } from './adjuntos';
 import type { Lector } from './contrato';
 import { ColaDerivados, type Ejecutor, esCancelado, type Progreso } from './derivados';
 import { crearEjecutor } from './ejecutor';
@@ -111,14 +112,6 @@ export function useLectores(): ValorLectores {
   const v = useContext(Contexto);
   if (!v) throw new Error('useLectores necesita un ProveedorLectores');
   return v;
-}
-
-/** El texto de un adjunto de texto (`text/*`), o `null` si no lo es o no está. */
-async function cargarTextoAdjunto(repositorio: Repositorio, el: Elemento): Promise<string | null> {
-  const a = el.frontmatter.adjunto;
-  if (!a || !(a.mime ?? '').startsWith('text/')) return null;
-  const bytes = await repositorio.leerAdjunto(a.ruta);
-  return bytes ? new TextDecoder().decode(bytes) : null;
 }
 
 export type EstadoDerivado<D> =

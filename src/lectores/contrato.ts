@@ -102,6 +102,8 @@ export interface Lector<D = unknown> {
    * trabajo (un log enorme), avisa del progreso con `alProgreso`.
    */
   derivar(el: Elemento, opciones?: OpcionesDerivar): Promise<D>;
+  /** Si `derivar` avisa del progreso: solo a estos se les pasa el aviso (cruza al Worker como proxy). */
+  informaProgreso?: boolean;
   resumen(d: D): ResumenLector;
   /** Una línea con el resumen del frontmatter, para enseñar mientras se deriva o en la tarjeta. */
   resumenLegible?(r: ResumenLector, idioma: Idioma): string;

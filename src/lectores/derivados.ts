@@ -38,7 +38,7 @@ export interface OpcionesCola {
   alAgotarPlazo?: () => void;
   /**
    * El original de un elemento que va como adjunto (`original: null`, más de 2 MB): se carga antes de derivar,
-   * porque el Worker no tiene el almacén. `null` si no se puede (o no es texto).
+   * porque el Worker no tiene el almacén. `null` si no es texto (un binario); lanza si no se puede leer.
    */
   cargarOriginal?: (el: Elemento) => Promise<string | null>;
 }
@@ -168,15 +168,24 @@ export class ColaDerivados {
           ko(new Error('derivados.tiempoAgotado'));
         }, this.opciones.plazoMs ?? PLAZO_DERIVAR_MS);
       });
-      const el =
-        t.el.original === null && this.opciones.cargarOriginal
-          ? { ...t.el, original: await this.opciones.cargarOriginal(t.el).catch(() => null) }
-          : t.el;
-      const avisar = (hechas: number, total: number) => {
-        t.progreso = { hechas, total };
-        for (const p of t.esperando) p.alProgreso?.(t.progreso);
+      // La carga del adjunto también cuenta en el plazo; si falla, el trabajo falla (nunca se deriva ni se
+      // guarda en la caché un análisis de un texto vacío).
+      const calcular = async () => {
+        let el = t.el;
+        if (el.original === null && this.opciones.cargarOriginal) {
+          const original = await this.opciones.cargarOriginal(el);
+          if (original !== null) el = { ...el, original };
+        }
+        // El aviso de progreso solo va a los lectores que lo dan (en el Worker, cada aviso es un proxy).
+        const avisar = t.lector.informaProgreso
+          ? (hechas: number, total: number) => {
+              t.progreso = { hechas, total };
+              for (const p of t.esperando) p.alProgreso?.(t.progreso);
+            }
+          : undefined;
+        return this.opciones.ejecutar(t.lector.nombre, el, avisar);
       };
-      const datos = await Promise.race([this.opciones.ejecutar(t.lector.nombre, el, avisar), plazo]);
+      const datos = await Promise.race([calcular(), plazo]);
       // Aunque ya nadie lo espere, el resultado vale para la próxima vez.
       await this.opciones.cache
         ?.guardarDerivado(fm.id, t.lector.nombre, t.lector.version, fm.hash, datos)

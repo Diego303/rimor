@@ -184,6 +184,7 @@ describe('lector de punta a punta', () => {
     let terminar: () => void = () => undefined;
     const lento = crearRegistro([
       lectorFalso({
+        informaProgreso: true,
         derivar: (_el, opciones) =>
           new Promise((ok) => {
             opciones?.alProgreso?.(100_000, 340_000);

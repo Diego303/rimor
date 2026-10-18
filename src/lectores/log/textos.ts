@@ -16,6 +16,7 @@ export const textos = definirTextos(
     respuesta: {
       conErrores: 'Log de {lineas}, con {errores} entre {desde} y {hasta}',
       conErroresSinHora: 'Log de {lineas}, con {errores}',
+      conErroresUnaHora: 'Log de {lineas}, con {errores} a las {hora}',
       aLaVez: ', a la vez que ',
       fin: '.',
       sinErrores: 'Log de {lineas} sin errores.',
@@ -25,6 +26,7 @@ export const textos = definirTextos(
       no: 'No',
     },
     concentracion: 'Los errores se concentran entre ',
+    concentracionUna: 'Los errores se concentran a las ',
     y: ' y ',
     histograma: 'Líneas por minuto y nivel',
     histogramaHora: 'Líneas por hora y nivel',
@@ -67,6 +69,7 @@ export const textos = definirTextos(
     respuesta: {
       conErrores: 'Log of {lineas}, with {errores} between {desde} and {hasta}',
       conErroresSinHora: 'Log of {lineas}, with {errores}',
+      conErroresUnaHora: 'Log of {lineas}, with {errores} at {hora}',
       aLaVez: ', at the same time as ',
       fin: '.',
       sinErrores: 'Log of {lineas} with no errors.',
@@ -76,6 +79,7 @@ export const textos = definirTextos(
       no: 'No',
     },
     concentracion: 'Errors are concentrated between ',
+    concentracionUna: 'Errors are concentrated at ',
     y: ' and ',
     histograma: 'Lines per minute and level',
     histogramaHora: 'Lines per hour and level',
