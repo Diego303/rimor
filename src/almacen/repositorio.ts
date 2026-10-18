@@ -5,6 +5,7 @@
 import {
   type Elemento,
   escribirElemento,
+  type FrontmatterComun,
   fallo,
   leerElemento,
   ok,
@@ -29,6 +30,11 @@ export interface EntradaIndice {
 }
 
 const codificador = new TextEncoder();
+
+export interface OpcionesRepositorio {
+  /** Se llama tras cada cambio en los archivos de elementos (guardar, papelera, restaurar, vaciar). */
+  alCambiar?: () => void;
+}
 
 /** Lo que el repositorio necesita de la caché del espacio. */
 export interface CacheRepositorio {
@@ -56,12 +62,20 @@ export async function recuperarOperacion(almacen: Almacen): Promise<void> {
 export class Repositorio {
   private readonly porId = new Map<string, EntradaIndice>();
   private readonly idPorRef = new Map<string, string>();
+  /** Frontmatter de cada elemento conocido: lo que hace falta para listas y recuentos sin abrir archivos. */
+  private readonly fms = new Map<string, FrontmatterComun>();
 
   constructor(
     private readonly almacen: Almacen,
     /** Si se da, se actualiza al guardar, mover y vaciar (IN-006), sin esperar a la próxima reconciliación. */
     private readonly cache?: CacheRepositorio,
+    private readonly opciones: OpcionesRepositorio = {},
   ) {}
+
+  /** Avisa de un cambio (cuenta para el recordatorio de copia, IN-007). */
+  private cambio(): void {
+    this.opciones.alCambiar?.();
+  }
 
   /**
    * Mueve `de` → `a` (o deja `a` escrito y borra `de`) anotándolo antes en el diario: un corte en medio
@@ -119,13 +133,26 @@ export class Repositorio {
   }
 
   /** Arma el índice desde la caché (IN-006), sin abrir archivos. */
-  cargarDesde(entradas: Iterable<{ id: string; ref: string; ruta: string }>): void {
+  cargarDesde(entradas: Iterable<{ id: string; ref: string; ruta: string; frontmatter?: FrontmatterComun }>): void {
     this.porId.clear();
     this.idPorRef.clear();
-    for (const { id, ref, ruta } of entradas) {
+    this.fms.clear();
+    for (const { id, ref, ruta, frontmatter } of entradas) {
       this.porId.set(id, { id, ref, ruta, enPapelera: ruta.startsWith(`${CARPETA_PAPELERA}/`) });
       this.idPorRef.set(ref, id);
+      if (frontmatter) this.fms.set(id, frontmatter);
     }
+  }
+
+  /** Frontmatter de los elementos que no están en la papelera. */
+  elementos(): FrontmatterComun[] {
+    return [...this.fms].filter(([id]) => !this.porId.get(id)?.enPapelera).map(([, fm]) => fm);
+  }
+
+  /** Frontmatter de un elemento por ref o id, sin abrir su archivo. */
+  frontmatter(refOId: string): FrontmatterComun | undefined {
+    const e = this.buscar(refOId);
+    return e ? this.fms.get(e.id) : undefined;
   }
 
   private indexar(el: Elemento, ruta: string): void {
@@ -134,6 +161,7 @@ export class Repositorio {
     if (previa && previa.ref !== ref) this.idPorRef.delete(previa.ref);
     this.porId.set(id, { id, ref, ruta, enPapelera: ruta.startsWith(`${CARPETA_PAPELERA}/`) });
     this.idPorRef.set(ref, id);
+    this.fms.set(id, el.frontmatter);
   }
 
   /** Entrada del índice por ref o por id. */
@@ -170,6 +198,7 @@ export class Repositorio {
     } else await this.almacen.escribir(destino, datos);
     this.indexar(el, destino);
     await this.refrescarCache(el, destino);
+    this.cambio();
     return destino;
   }
 
@@ -189,6 +218,7 @@ export class Repositorio {
     await this.conDiario(e.ruta, destino, () => this.almacen.mover(e.ruta, destino));
     this.porId.set(e.id, { ...e, ruta: destino, enPapelera: true });
     await this.refrescarTrasMover(e.id, destino);
+    this.cambio();
     return ok(destino);
   }
 
@@ -206,6 +236,7 @@ export class Repositorio {
     } else await this.conDiario(e.ruta, destino, () => this.almacen.mover(e.ruta, destino));
     this.porId.set(e.id, { ...e, ruta: destino, enPapelera: false });
     await this.refrescarTrasMover(e.id, destino);
+    this.cambio();
     return ok(destino);
   }
 
@@ -217,10 +248,12 @@ export class Repositorio {
     for (const [id, e] of [...this.porId]) {
       if (!e.enPapelera) continue;
       this.porId.delete(id);
+      this.fms.delete(id);
       borrados.push(id);
       if (this.idPorRef.get(e.ref) === id) this.idPorRef.delete(e.ref);
     }
     await this.cache?.borrarElementos(borrados);
+    if (entradas.length) this.cambio();
     return entradas.length;
   }
 

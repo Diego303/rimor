@@ -1,0 +1,188 @@
+/**
+ * Espacio abierto en la app (IN-007): lo abre al montar (OPFS en un Worker o, si no se puede, en memoria),
+ * enseña la pantalla de arranque si tarda, llena lo que pinta la carcasa y da el espacio a las pantallas.
+ */
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { ColaEscrituras } from '../almacen/cola';
+import { AlmacenMemoria } from '../almacen/memoria';
+import { crearAlmacenOpfs } from '../almacen/opfs/cliente';
+import type { Canal, Cerrojos } from '../almacen/pestanas';
+import { useEspacio } from '../estado/espacio';
+import { useT } from '../i18n/useT';
+import { ErrorTarjeta } from '../ui/componentes';
+import { ESTADOS_SENAL } from '../ui/marca/estadosSenal';
+import { Senal } from '../ui/marca/Senal';
+import { useEsperaVisible } from '../ui/marca/useEsperaVisible';
+import { abrirEspacio, ahoraIso, type DependenciasEspacio, type EspacioAbierto, type FaseApertura } from './abrir';
+import { conPersistencia } from './estado';
+import { estaPersistido, esVentanaPrivada } from './persistencia';
+import { resumenParaCarcasa } from './resumen';
+
+const CLAVE_ESPACIO = 'rimor:espacio';
+
+export interface EspacioEnUso extends EspacioAbierto {
+  /** El navegador no deja guardar: todo está en memoria y se pierde al cerrar. */
+  enMemoria: boolean;
+  ventanaPrivada: boolean;
+}
+
+const Contexto = createContext<EspacioEnUso | null>(null);
+
+/** El espacio abierto, o `null` fuera de `ProveedorEspacio` (pruebas de pantallas sueltas). */
+export function useEspacioOpcional(): EspacioEnUso | null {
+  return useContext(Contexto);
+}
+
+/** El espacio abierto. Solo dentro de `ProveedorEspacio`, que no pinta a sus hijos hasta tenerlo. */
+export function useEspacioAbierto(): EspacioEnUso {
+  const e = useContext(Contexto);
+  if (!e) throw new Error('useEspacioAbierto necesita un ProveedorEspacio');
+  return e;
+}
+
+/** Cerrojos que siempre conceden, para navegadores sin Web Locks (una sola pestaña de confianza). */
+const cerrojoUnico: Cerrojos = { request: (_n, _o, fn) => fn({}) };
+const canalMudo: Canal = { postMessage: () => undefined, addEventListener: () => undefined, close: () => undefined };
+
+function idEspacio(): string {
+  try {
+    const guardado = globalThis.localStorage?.getItem(CLAVE_ESPACIO);
+    if (guardado) return guardado;
+  } catch {
+    // Sin localStorage: el espacio por defecto.
+  }
+  return 'principal';
+}
+
+/** Lo que el proveedor necesita para abrir el espacio; `liberar` suelta lo que no cierra el espacio (el Worker). */
+export type DependenciasProveedor = DependenciasEspacio & { enMemoria: boolean; liberar?: () => void };
+
+/** Dependencias reales del navegador; si OPFS falla, el espacio va en memoria. */
+async function dependenciasDelNavegador(): Promise<DependenciasProveedor> {
+  const espacioId = idEspacio();
+  const cerrojos = (globalThis.navigator?.locks as unknown as Cerrojos | undefined) ?? cerrojoUnico;
+  const canal =
+    typeof BroadcastChannel === 'function'
+      ? (new BroadcastChannel(`rimor:${espacioId}`) as unknown as Canal)
+      : canalMudo;
+  try {
+    const opfs = await crearAlmacenOpfs(espacioId);
+    const cola = new ColaEscrituras(opfs);
+    return {
+      espacioId,
+      cerrojos,
+      canal,
+      enMemoria: false,
+      almacen: Object.assign(cola, { limpiarHuerfanos: () => opfs.limpiarHuerfanos() }),
+      // El Worker se termina cuando la cola ha escrito todo lo pendiente.
+      liberar: () => void cola.esperar().finally(() => opfs.cerrar()),
+    };
+  } catch {
+    return { espacioId, cerrojos, canal, enMemoria: true, almacen: new AlmacenMemoria() };
+  }
+}
+
+type Apertura =
+  | { estado: 'abriendo'; fase: FaseApertura }
+  | { estado: 'listo'; espacio: EspacioEnUso }
+  | { estado: 'fallo'; codigo: string };
+
+interface Props {
+  children: ReactNode;
+  /** Las pruebas inyectan sus dependencias. */
+  dependencias?: () => Promise<DependenciasProveedor>;
+}
+
+export function ProveedorEspacio({ children, dependencias = dependenciasDelNavegador }: Props) {
+  const [apertura, setApertura] = useState<Apertura>({ estado: 'abriendo', fase: { fase: 'abriendo' } });
+
+  useEffect(() => {
+    let vivo = true;
+    // Mientras se abre, el desmontaje solo marca `vivo = false` y la propia apertura suelta todo en su
+    // siguiente paso: terminar el Worker a mitad dejaría promesas colgadas y el cerrojo de escritura cogido.
+    let soltar: (() => void) | null = null;
+    let listo = false;
+    (async () => {
+      const dep = await dependencias();
+      let abierto: EspacioAbierto | null = null;
+      let suelto = false;
+      soltar = () => {
+        if (suelto) return;
+        suelto = true;
+        abierto?.cerrar();
+        dep.liberar?.();
+      };
+      if (!vivo) return soltar();
+      const r = await abrirEspacio(dep, (fase) => vivo && setApertura({ estado: 'abriendo', fase }));
+      if (r.ok) abierto = r.valor;
+      if (!vivo) return soltar();
+      if (!r.ok) {
+        dep.liberar?.();
+        setApertura({ estado: 'fallo', codigo: r.error.codigo });
+        return;
+      }
+      const e = r.valor;
+      const ventanaPrivada = dep.enMemoria || (await esVentanaPrivada());
+      if (!vivo) return soltar();
+      const pintar = () =>
+        useEspacio.setState({
+          ...resumenParaCarcasa(e.manifest, e.repositorio.elementos(), e.estado()),
+          soloLectura: e.coordinacion.modo() === 'lector',
+        });
+      pintar();
+      e.alCambiar(pintar);
+      e.coordinacion.alCambiarModo(pintar);
+      // Una PWA instalada puede tener ya el almacenamiento protegido sin haberlo pedido: se anota.
+      if (!dep.enMemoria && e.estado().persistencia !== 'concedida' && (await estaPersistido()))
+        await e.guardarEstado((x) => conPersistencia(x, 'concedida', ahoraIso()));
+      if (!vivo) return soltar();
+      listo = true;
+      setApertura({ estado: 'listo', espacio: { ...e, enMemoria: dep.enMemoria, ventanaPrivada } });
+    })().catch(() => {
+      soltar?.();
+      if (vivo) setApertura({ estado: 'fallo', codigo: 'espacio.noSeAbre' });
+    });
+    return () => {
+      vivo = false;
+      if (listo) soltar?.();
+    };
+  }, [dependencias]);
+
+  if (apertura.estado === 'listo') return <Contexto.Provider value={apertura.espacio}>{children}</Contexto.Provider>;
+  return <Arranque apertura={apertura} />;
+}
+
+/** Pantalla de arranque: nada antes de 400 ms; después, «arranque» una vez y, si sigue abriendo, «cargando». */
+function Arranque({ apertura }: { apertura: Exclude<Apertura, { estado: 'listo' }> }) {
+  const { t } = useT();
+  const visible = useEsperaVisible(apertura.estado === 'abriendo');
+  const [larga, setLarga] = useState(false);
+  useEffect(() => {
+    if (!visible) return undefined;
+    const tiempo = setTimeout(() => setLarga(true), ESTADOS_SENAL.arranque.duracionS * 1000);
+    return () => clearTimeout(tiempo);
+  }, [visible]);
+
+  if (apertura.estado === 'fallo')
+    return (
+      <div className="arranque">
+        <ErrorTarjeta titulo={t('espacio.fallo.titulo')}>
+          {t(`espacio.fallo.${apertura.codigo === 'espacio.manifestInvalido' ? 'manifest' : 'otro'}`)}
+        </ErrorTarjeta>
+      </div>
+    );
+  if (!visible) return <div className="arranque" />;
+  const texto =
+    apertura.fase.fase === 'indexando'
+      ? t('espacio.indexando', { hechos: apertura.fase.hechos, total: apertura.fase.total })
+      : t('espacio.abriendo');
+  return (
+    <div className="arranque">
+      {larga ? (
+        <Senal estado="cargando" etiqueta={texto} tamano={32} />
+      ) : (
+        <Senal estado="arranque" veces={1} etiqueta={texto} tamano={48} textoOculto />
+      )}
+    </div>
+  );
+}

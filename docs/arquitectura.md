@@ -38,20 +38,29 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi�
 | `src/almacen/` | Contrato `Almacen`, adaptadores en memoria y OPFS, cola de escrituras, `Repositorio` y coordinación de pestañas | 005 |
 | `src/almacen/cache/` | `CacheEspacio` (IndexedDB), `reconciliar` y compresión gzip | 006 |
 | `src/workers/almacen.worker.ts` | OPFS con accesos síncronos, expuesto con Comlink | 005 |
+| `src/espacio/` | `abrirEspacio` (pestañas, huérfanos, manifest, caché y repositorio), `.rimor/estado.json`, persistencia, `ProveedorEspacio` con la pantalla de arranque y los avisos del almacenamiento | 007 |
 | `paquetes/formato` | Esquemas Valibot, `.md` de elementos (frontmatter fiel, notas y original), ULID, refs, rutas, SHA-256 y migraciones | 004 |
 | `paquetes/estadistica` | Descriptiva, IC de la mediana, Mann-Whitney, comparación, avisos de método; referencias de SciPy | 011 |
 | `scripts/` | Comprobación de colores y de textos sin traducir, tamaño de la carga inicial y seguimiento | 001, 003 |
 
 ## Flujos
 
-### Apertura de un espacio (IN-005, IN-006)
+### Apertura de un espacio (IN-005, IN-006, IN-007)
 
 ```
-almacén (OPFS en Worker) ──listar──▶ reconciliar ◀──frontmatters── CacheEspacio (IndexedDB)
-                                        │ lee solo lo nuevo o cambiado (ruta, tamaño, fecha)
-                                        ▼
-                         Repositorio.cargarDesde(entradas)  (índice id/ref → ruta)
+ProveedorEspacio ── dependencias: OPFS (Worker) + ColaEscrituras, o memoria si OPFS falla
+   │
+   ▼ abrirEspacio
+coordinarPestanas (Web Locks) ─▶ escritor: limpiarHuerfanos · manifest.json (se crea si falta)
+   │                                         · .rimor/estado.json (persistencia, copia, cambios)
+   ▼
+almacén ──listar──▶ reconciliar ◀──frontmatters── CacheEspacio (IndexedDB)
+                        │ lee solo lo nuevo o cambiado (ruta, tamaño, fecha), con progreso
+                        ▼
+         Repositorio.cargarDesde(entradas) ──alCambiar──▶ cambios desde la copia + useEspacio (raíl)
 ```
+
+Mientras abre, la pantalla de arranque (`Senal` «arranque» y después «cargando»); si el manifest no se entiende, un error y nada se escribe.
 
 Se describen a medida que llegan: captura (IN-014), derivados (IN-012), búsqueda (IN-032) y exportación (IN-035).
 

@@ -1,9 +1,10 @@
 /**
  * Raíz de la isla de Rimor: el único árbol React de la app (ADR-0002).
- * Monta el router; `#/muestras` (solo en desarrollo) se pinta fuera de la carcasa, a pantalla completa.
+ * Abre el espacio y monta el router; `#/muestras` (solo en desarrollo) se pinta fuera de la carcasa, a pantalla completa.
  */
 import { RouterProvider } from '@tanstack/react-router';
 import { lazy, Suspense, useState } from 'react';
+import { ProveedorEspacio } from '../espacio/Espacio';
 import { iniciarIdioma } from '../i18n/iniciar';
 import { crearRouter } from '../rutas/rutas';
 
@@ -21,5 +22,9 @@ export function App() {
       </Suspense>
     );
   }
-  return <RouterProvider router={router} />;
+  return (
+    <ProveedorEspacio>
+      <RouterProvider router={router} />
+    </ProveedorEspacio>
+  );
 }

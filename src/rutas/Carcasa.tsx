@@ -4,6 +4,7 @@
  */
 import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Suspense, useEffect, useMemo, useState } from 'react';
+import { AvisoAlmacenamiento } from '../espacio/Avisos';
 import { useT } from '../i18n/useT';
 import { AyudaAtajos } from '../ui/atajos/AyudaAtajos';
 import { esCampoDeTexto, GestorAtajos } from '../ui/atajos/atajos';
@@ -57,6 +58,7 @@ export function Carcasa() {
           <div className="shell">
             <Rail />
             <main className="amain" id="principal">
+              <AvisoAlmacenamiento />
               <ProveedorEsperas>
                 <LimiteErrores clave={ruta}>
                   <Suspense fallback={<Espera texto={t('comun.cargandoPantalla')} />}>

@@ -120,5 +120,27 @@
       "texto": "El enlace no lleva a ninguna pantalla de Rimor.",
       "volver": "Ir a Inicio"
     }
+  },
+  "espacio": {
+    "abriendo": "Abriendo el espacio",
+    "indexando": "Indexando {hechos} de {total}",
+    "fallo": {
+      "titulo": "No se pudo abrir el espacio",
+      "manifest": "Su manifest.json no se entiende: puede ser de otra versión de Rimor. No se ha tocado nada.",
+      "otro": "El navegador no dejó abrir los datos. Recarga la página; si sigue, exporta desde otra pestaña."
+    },
+    "persistencia": {
+      "titulo": "Protege tus datos",
+      "texto": "El navegador puede borrar lo que guarda una web si se queda sin espacio. Si lo proteges, no lo hará sin preguntarte.",
+      "boton": "Proteger los datos",
+      "concedida": "Protegido",
+      "denegada": "El navegador no lo ha concedido: haz copias de vez en cuando.",
+      "noDisponible": "Este navegador no permite protegerlos: haz copias de vez en cuando."
+    },
+    "aviso": {
+      "memoria": "Este navegador no deja guardar: lo que captures se perderá al cerrar la pestaña.",
+      "privada": "Parece una ventana privada: todo se borrará al cerrarla.",
+      "soloLectura": "Rimor está abierto en otra pestaña: aquí solo puedes leer."
+    }
   }
 }

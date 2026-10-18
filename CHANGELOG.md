@@ -16,5 +16,6 @@ Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepacha
 - Ocultación de secretos antes de guardar: claves de AWS, GCP y Azure, tokens de GitHub, GitLab y Slack, claves de OpenAI, Anthropic y OpenRouter, JWT, claves privadas, cabeceras `Authorization` y contraseñas en URL y cadenas de conexión, sustituidos por `‹oculto:tipo›` (IN-010).
 - Paquete de estadística de mediciones: mediana, media, desviación, coeficiente de variación, percentiles, intervalo de confianza de la mediana, Mann-Whitney con corrección por empates y de continuidad, atípicos, avisos de método y veredicto, verificados contra NumPy y SciPy (IN-011).
 - Animaciones del símbolo «Señal» para las esperas y los momentos clave (arranque, primer uso, cargando, analizando, indexando, Rimor contesta, exportando, copia al día, guardado, error y comparando), con umbral de 400 ms, bucles que paran a los 20 s y movimiento reducido respetado (IN-090).
+- Espacio de trabajo: al entrar se abre (o se crea) el espacio «Trabajo» guardado en el navegador, con pantalla de arranque si tarda; Inicio ofrece proteger los datos con el almacenamiento persistente, y la carcasa avisa si es una ventana privada, si el navegador no deja guardar o si Rimor está abierto en otra pestaña. Se cuentan los cambios desde la última copia (IN-007).
 ### Cambiado
 ### Corregido

@@ -51,12 +51,12 @@ Mientras se abre el espacio, si tarda más de 400 ms aparece `<Senal estado="arr
 
 ## Tareas
 
-- [ ] Crear espacio: `manifest.json` del Anexo A.
-- [ ] `persist()` con explicación previa; guardar el resultado.
-- [ ] `estimate()` para el espacio usado.
-- [ ] Detección de ventana privada y aviso persistente.
-- [ ] Registro de la última copia y de los cambios desde entonces.
-- [ ] Pantalla de arranque con `arranque` y `cargando`.
+- [x] Crear espacio: `manifest.json` del Anexo A.
+- [x] `persist()` con explicación previa; guardar el resultado.
+- [x] `estimate()` para el espacio usado.
+- [x] Detección de ventana privada y aviso persistente.
+- [x] Registro de la última copia y de los cambios desde entonces.
+- [x] Pantalla de arranque con `arranque` y `cargando`.
 
 ## Pruebas previstas
 
@@ -82,3 +82,15 @@ Mientras se abre el espacio, si tarda más de 400 ms aparece `<Senal estado="arr
 ## Autorrevisión
 
 Cubre la ficha. Conecta por primera vez almacén, caché, repositorio y carcasa.
+
+## Cambios durante la implementación
+
+- **El id del manifest es un ULID propio**, no el nombre de la carpeta: `espacioId` («principal» o el guardado en `localStorage`) solo nombra la carpeta de OPFS y la base de la caché. Con el nombre de carpeta como id, el esquema del Anexo A rechazaba el manifest al reabrir.
+- `leerManifest` va en `@rimor/formato` (junto al esquema) e `isoConZona` también: la app no depende de Valibot directamente y la CLI de v0.3 los reutilizará.
+- `Repositorio` guarda el frontmatter de lo indexado (`elementos()`, `frontmatter()`) y avisa de cada cambio (`alCambiar`), con lo que el espacio cuenta los cambios desde la copia y el raíl se repinta.
+- La versión de la app en el manifest sale de `package.json` (`__VERSION_APP__`, definida en `astro.config.mjs`).
+- `ProveedorEspacio` recibe sus dependencias inyectadas (las pruebas usan `AlmacenMemoria` e IndexedDB aislada) y, al desmontarse a mitad de la apertura, deja que sea la propia apertura quien suelte el cerrojo y termine el Worker en su siguiente paso (cortarlo antes dejaría promesas sin resolver y el cerrojo cogido). `abrirEspacio` suelta cerrojo y caché si algo falla tras cogerlos, y una escritura fallida del estado no bloquea las siguientes.
+- Si el navegador ya tiene el almacenamiento protegido (una PWA instalada), se anota «concedida» al abrir sin pedir nada.
+- Avisos: `AvisoAlmacenamiento` (banner sobre la columna: en memoria, ventana privada o solo lectura) y `TarjetaPersistencia` en Inicio (con «Proteger los datos»; si se deniega, recomienda copias). El estado de persistencia completo se pinta en Datos y copias (IN-037), como en la pantalla de referencia.
+- La carga inicial sube de 115,7 KB a 161,4 KB: abrir el espacio trae el formato (YAML), la caché y Comlink a la primera pantalla, que no puede pintar nada sin ellos.
+

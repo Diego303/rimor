@@ -13,7 +13,9 @@ import {
   esUlid,
   hashOriginal,
   investigacionSchema,
+  isoConZona,
   leerElemento,
+  leerManifest,
   manifestSchema,
   migrar,
   nombreArchivo,
@@ -490,5 +492,29 @@ describe('migrar', () => {
   it('rechaza esquemas futuros o no válidos', () => {
     expect(migrar(espacio, 2).ok).toBe(false);
     expect(migrar(espacio, 0).ok).toBe(false);
+  });
+});
+
+describe('manifest y fechas (IN-007)', () => {
+  const manifest = {
+    formato: 'rimor',
+    esquema: 1,
+    espacio: { id: '01JABCDEFGHJKMNPQRSTVWXYZ0', nombre: 'Trabajo' },
+    app: { version: '0.1.0' },
+  };
+
+  it('leerManifest acepta uno válido y rechaza JSON roto u otro formato', () => {
+    expect(leerManifest(JSON.stringify(manifest))?.espacio.nombre).toBe('Trabajo');
+    expect(leerManifest('{')).toBeNull();
+    expect(leerManifest(JSON.stringify({ ...manifest, formato: 'otro' }))).toBeNull();
+    expect(leerManifest('null')).toBeNull();
+  });
+
+  it('isoConZona escribe la hora local con su desfase y sin milisegundos', () => {
+    const fecha = new Date(2026, 9, 18, 7, 5, 9, 123);
+    const iso = isoConZona(fecha);
+    expect(iso).toMatch(/^2026-10-18T07:05:09[+-]\d{2}:\d{2}$/);
+    // La misma instantánea, leída de vuelta, sin los milisegundos.
+    expect(new Date(iso).getTime()).toBe(fecha.getTime() - 123);
   });
 });

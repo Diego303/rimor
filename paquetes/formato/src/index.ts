@@ -4,7 +4,9 @@
  */
 export * from './elemento';
 export * from './esquemas';
+export * from './fechas';
 export * from './frontmatter';
+export * from './manifest';
 export * from './migraciones';
 export * from './nombres';
 export * from './original';

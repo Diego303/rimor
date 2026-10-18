@@ -120,5 +120,27 @@
       "texto": "This link does not lead to any Rimor screen.",
       "volver": "Go to Home"
     }
+  },
+  "espacio": {
+    "abriendo": "Opening the workspace",
+    "indexando": "Indexing {hechos} of {total}",
+    "fallo": {
+      "titulo": "Could not open the workspace",
+      "manifest": "Its manifest.json cannot be read: it may come from another Rimor version. Nothing was changed.",
+      "otro": "The browser did not let us open the data. Reload the page; if it persists, export from another tab."
+    },
+    "persistencia": {
+      "titulo": "Protect your data",
+      "texto": "The browser may delete what a website stores if it runs out of space. If you protect it, it will not do so without asking.",
+      "boton": "Protect the data",
+      "concedida": "Protected",
+      "denegada": "The browser did not grant it: make backups from time to time.",
+      "noDisponible": "This browser does not allow protecting it: make backups from time to time."
+    },
+    "aviso": {
+      "memoria": "This browser does not allow saving: what you capture will be lost when you close the tab.",
+      "privada": "This looks like a private window: everything will be deleted when you close it.",
+      "soloLectura": "Rimor is open in another tab: here you can only read."
+    }
   }
 }

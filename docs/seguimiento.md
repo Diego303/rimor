@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 15:34
-**Ahora:** IN-007 · Espacio de trabajo y persistencia · fase implementación
+**Última actualización:** 2026-10-18 15:47
+**Ahora:** IN-007 · Espacio de trabajo y persistencia · fase verificación
 **Siguiente:** IN-012 · Contrato y registro de lectores
 **Progreso:** F0 9/9 · v0.1 12/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 21/99
 
@@ -30,7 +30,7 @@
 | IN-010 | Ocultación de secretos | v0.1 | 1 | hecha | a206f2c e8cae1b 34b4ca4 | docs/features/IN-010-secretos.md |
 | IN-011 | Paquete de estadística | v0.1 | 1 | hecha | 5838d9a b2ebf4e afb9e32 | docs/features/IN-011-estadistica.md |
 | IN-090 | Animaciones del símbolo (núcleo) | v0.1 | 1 | hecha | b9e91ee bdd15f6 69e2ee5 | docs/features/IN-090-animaciones.md |
-| IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | en análisis y diseño | — | docs/features/IN-007-espacio.md |
+| IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | en verificación | 39f479a | docs/features/IN-007-espacio.md |
 | IN-012 | Contrato y registro de lectores | v0.1 | 2 | pendiente | — | — |
 | IN-013 | Detector de tipo y corpus | v0.1 | 2 | pendiente | — | — |
 | IN-014 | Flujo de captura | v0.1 | 3 | pendiente | — | — |
@@ -163,7 +163,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-007 | análisis y diseño | abrir o crear, persistencia, última copia y arranque | … |
+| 2026-10-18 | IN-007 | implementación | OK (402 pruebas) | … |
+| 2026-10-18 | IN-007 | análisis y diseño | abrir o crear, persistencia, última copia y arranque | 39f479a |
 | 2026-10-18 | IN-090 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | 69e2ee5 |
 | 2026-10-18 | IN-090 | implementación | pnpm verificar OK (361 pruebas) | bdd15f6 |
 | 2026-10-18 | IN-090 | análisis y diseño | SMIL portado a @keyframes, reposo y umbrales | b9e91ee |

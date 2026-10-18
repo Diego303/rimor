@@ -172,3 +172,20 @@
     bottom: 0;
   }
 }
+
+/* Aviso del almacenamiento encima de la columna (IN-007), con su mismo ancho. */
+.aviso-espacio {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto 16px;
+  flex: none;
+}
+
+/* Pantalla de arranque mientras se abre el espacio (IN-007). */
+.arranque {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--app);
+}
