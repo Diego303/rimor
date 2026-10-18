@@ -12,13 +12,14 @@ function abierto(): AlmacenOpfs {
 }
 
 const api = {
-  /** Abre `espacios/<espacio>/` en OPFS y limpia temporales huérfanos. Devuelve cuántos había. */
-  async abrir(espacio: string): Promise<number> {
+  /** Abre `espacios/<espacio>/` en OPFS. */
+  async abrir(espacio: string): Promise<void> {
     const raiz = await navigator.storage.getDirectory();
     const espacios = await raiz.getDirectoryHandle('espacios', { create: true });
     almacen = new AlmacenOpfs(await espacios.getDirectoryHandle(espacio, { create: true }));
-    return almacen.limpiarHuerfanos();
   },
+  /** Termina o deshace escrituras cortadas. Solo la pestaña que escribe (con el cerrojo de IN-005). */
+  limpiarHuerfanos: () => abierto().limpiarHuerfanos(),
   leer: (ruta: string) => abierto().leer(ruta),
   escribir: (ruta: string, datos: Uint8Array) => abierto().escribir(ruta, datos),
   mover: (de: string, a: string) => abierto().mover(de, a),

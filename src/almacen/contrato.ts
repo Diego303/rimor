@@ -29,6 +29,8 @@ export function validarRuta(ruta: string): string {
   for (const segmento of ruta.split('/')) {
     if (!segmento || segmento === '.' || segmento === '..') throw new Error(`Ruta no válida: «${ruta}»`);
   }
+  // Sufijos reservados para la escritura atómica de OPFS.
+  if (ruta.endsWith('.rimor-tmp') || ruta.endsWith('.rimor-ok')) throw new Error(`Ruta reservada: «${ruta}»`);
   return ruta;
 }
 

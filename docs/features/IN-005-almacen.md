@@ -115,3 +115,27 @@ Cubre la ficha. El índice en memoria del repositorio se sustituirá por la cach
 - `mover` en OPFS es leer, escribir (atómico) en el destino y borrar el origen: `move()` entre carpetas distintas no está en todos los navegadores, y así la operación siempre es segura.
 - El OPFS falso no implementa `createWritable` (el camino de respaldo de los navegadores sin `createSyncAccessHandle`): queda para la validación humana en navegador.
 - El cliente (`crearAlmacenOpfs`) y el Worker aún no los usa ninguna pantalla: los conecta IN-007 al abrir el espacio.
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 05:30): tipos 0 errores; Biome, colores y textos, OK; Vitest 16 archivos y 157 pruebas (43 del almacén), OK; construcción OK; carga inicial 76,5 KB.
+
+| Criterio | Evidencia |
+|---|---|
+| Mismo conjunto de pruebas contra los dos adaptadores | `almacen.suite.ts` contra memoria, OPFS, OPFS sin `move()` y la cola |
+| Interrupción a mitad de escritura: versión anterior o nueva, nunca a medias | Con `move()`: corte al escribir el temporal → versión anterior. Sin `move()`: corte en el temporal → anterior; corte al copiar sobre el destino → `limpiarHuerfanos` termina la copia con el temporal completo |
+| Cola serializada con agrupado | Diez escrituras seguidas → como mucho dos reales y queda la última; no agrupa si hay un borrado o un movimiento en medio; lecturas tras un movimiento ven el destino; movimientos cruzados terminan |
+| Repositorio: guardar, leer por ref o id, papelera, restaurar, adjuntos sin duplicados, renombrado | `repositorio.test.ts`, incluido un renombrado cortado entre escribir y borrar que `cargar` termina con el diario |
+| Dos pestañas no escriben a la vez | `pestanas.test.ts`: la segunda queda en solo lectura y pasa a escribir cuando la primera suelta el cerrojo. La limpieza de huérfanos ya no la hace `abrir()`: solo la pestaña con el cerrojo (IN-007) |
+| 5.000 elementos | Escritos, listados y leídos en memoria y en el OPFS falso en menos de 5 s; la medida en navegador sigue pendiente (F0-1) |
+
+### Revisión independiente
+
+Hallazgos, todos corregidos con prueba:
+
+1. **Sin `move()` la escritura no era atómica** (un corte al copiar sobre el destino lo dejaba a medias y la limpieza borraba la única copia buena): ahora hay un diario de dos fases con la marca `.rimor-ok`; la limpieza rehace la copia si hay marca y borra el temporal si no la hay.
+2. **La cola agrupaba escrituras separadas por un borrado**, **`mover` solo esperaba al origen** (escrituras posteriores al destino se perdían y una lectura veía datos viejos) y **dos movimientos cruzados se bloqueaban**: la cola es ahora una FIFO única; solo agrupa con la última operación de esa ruta si es una escritura que no ha empezado, y las lecturas esperan a las operaciones que tocan su ruta.
+3. **Un archivo legítimo terminado en `.tmp` desaparecía**: los auxiliares usan sufijos reservados (`.rimor-tmp`, `.rimor-ok`) que `validarRuta` rechaza.
+4. **Un corte entre escribir el destino y borrar el origen dejaba dos copias** (renombrar, papelera, restaurar): el repositorio anota cada operación de varios pasos en `.rimor/operacion.json` y `cargar` la termina; `restaurar` sobre una copia del mismo elemento ya no queda bloqueado, y dos archivos con el mismo id se avisan (`almacen.duplicado`) quedándose el que está en su sitio.
+5. **Una pestaña lectora limpiaba temporales de la escritora**: `abrir()` ya no limpia; `limpiarHuerfanos()` es aparte y la llama solo quien tiene el cerrojo.
+6. **El OPFS falso no imitaba el bloqueo exclusivo** de `createSyncAccessHandle`: ahora lanza `NoModificationAllowedError` como el real, y el adaptador ejecuta sus operaciones de una en una (prueba con lecturas y escrituras simultáneas del mismo archivo).

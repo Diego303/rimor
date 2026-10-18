@@ -77,6 +77,40 @@ describe('Repositorio', () => {
     expect(otro.buscar('LOG-0043')?.enPapelera).toBe(true);
   });
 
+  it('un renombrado cortado entre escribir y borrar se termina al cargar', async () => {
+    const almacen = new AlmacenMemoria();
+    const repo = new Repositorio(almacen);
+    const viejo = await repo.guardarElemento(elemento());
+    const original = almacen.borrar.bind(almacen);
+    // Se corta justo al borrar el origen: quedan dos copias y el diario.
+    almacen.borrar = async () => {
+      throw new Error('corte');
+    };
+    await expect(repo.guardarElemento(elemento({ titulo: 'Nuevo' }))).rejects.toThrow('corte');
+    almacen.borrar = original;
+    expect((await listarTodo(almacen)).length).toBe(3);
+    const otro = new Repositorio(almacen);
+    expect(await otro.cargar()).toEqual([]);
+    expect((await listarTodo(almacen)).map((e) => e.ruta)).toEqual(['elementos/2026/10/LOG-0042--nuevo.md']);
+    expect(otro.buscar('LOG-0042')?.ruta).not.toBe(viejo);
+  });
+
+  it('restaurar sobre una copia del mismo elemento no queda bloqueado; dos archivos con el mismo id se avisan', async () => {
+    const almacen = new AlmacenMemoria();
+    const repo = new Repositorio(almacen);
+    const ruta = await repo.guardarElemento(elemento());
+    const texto = (await leerTexto(almacen, ruta)) ?? '';
+    await repo.moverAPapelera('LOG-0042');
+    await almacen.escribir(ruta, new TextEncoder().encode(texto));
+    const r = await repo.restaurar('LOG-0042');
+    expect(r.ok && r.valor).toBe(ruta);
+    expect((await listarTodo(almacen)).map((e) => e.ruta)).toEqual([ruta]);
+    await almacen.escribir('elementos/2026/10/copia.md', new TextEncoder().encode(texto));
+    const otro = new Repositorio(almacen);
+    expect(await otro.cargar()).toEqual([{ ruta: 'elementos/2026/10/copia.md', codigo: 'almacen.duplicado' }]);
+    expect(otro.buscar('LOG-0042')?.ruta).toBe(ruta);
+  });
+
   it('los adjuntos se guardan por hash y no se duplican', async () => {
     const almacen = new AlmacenMemoria();
     const repo = new Repositorio(almacen);

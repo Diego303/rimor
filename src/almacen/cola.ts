@@ -1,87 +1,99 @@
 /**
- * Cola de escrituras: serializa las operaciones de cada ruta y agrupa escrituras seguidas del mismo archivo
- * (si llegan varias mientras una está en curso, solo se escribe la última y todas terminan con ella).
+ * Cola de escrituras: las operaciones que cambian archivos se ejecutan de una en una y en orden de llegada,
+ * así que nunca se adelantan entre sí (tampoco un `mover` con una escritura de su destino). Si llega una
+ * escritura de un archivo cuya última operación en la cola es otra escritura del mismo archivo que aún no ha
+ * empezado, se agrupan: solo se escribe la última y las dos terminan con ella.
+ * Las lecturas esperan a que acaben las operaciones pendientes que tocan esa ruta.
  */
 import type { Almacen, EntradaAlmacen } from './contrato';
 
-interface Pendiente {
-  datos: Uint8Array;
+type Operacion =
+  | { tipo: 'escribir'; ruta: string; datos: Uint8Array }
+  | { tipo: 'borrar'; ruta: string }
+  | { tipo: 'mover'; de: string; a: string };
+
+interface Encolada {
+  op: Operacion;
   esperan: { ok: () => void; ko: (e: unknown) => void }[];
+  hecha: Promise<void>;
 }
 
+const tocaA = (op: Operacion, ruta: string) =>
+  op.tipo === 'mover' ? op.de === ruta || op.a === ruta : op.ruta === ruta;
+
 export class ColaEscrituras implements Almacen {
-  /** Última operación encadenada de cada ruta. */
-  private readonly colas = new Map<string, Promise<void>>();
-  /** Escritura que aún no ha empezado, por ruta: la siguiente que llegue la sustituye. */
-  private readonly pendientes = new Map<string, Pendiente>();
+  private readonly pendientes: Encolada[] = [];
+  private enCurso: Encolada | null = null;
 
   constructor(private readonly base: Almacen) {}
 
-  private encadenar(ruta: string, op: () => Promise<void>): Promise<void> {
-    const anterior = this.colas.get(ruta) ?? Promise.resolve();
-    const siguiente = anterior.catch(() => undefined).then(op);
-    const guardada = siguiente.catch(() => undefined);
-    this.colas.set(ruta, guardada);
-    void guardada.then(() => {
-      if (this.colas.get(ruta) === guardada) this.colas.delete(ruta);
+  private encolar(op: Operacion): Promise<void> {
+    if (op.tipo === 'escribir') {
+      const ultima = [...this.pendientes].reverse().find((e) => tocaA(e.op, op.ruta));
+      if (ultima && ultima.op.tipo === 'escribir') {
+        ultima.op.datos = op.datos;
+        return new Promise((ok, ko) => ultima.esperan.push({ ok, ko }));
+      }
+    }
+    let resolver!: () => void;
+    const hecha = new Promise<void>((r) => {
+      resolver = r;
     });
-    return siguiente;
+    const encolada: Encolada = { op, esperan: [], hecha };
+    const promesa = new Promise<void>((ok, ko) => encolada.esperan.push({ ok, ko }));
+    void promesa.finally(resolver).catch(() => undefined);
+    this.pendientes.push(encolada);
+    if (!this.enCurso) void this.procesar();
+    return promesa;
   }
 
-  /** Espera a que terminen las operaciones en curso de unas rutas. */
-  async esperar(...rutas: string[]): Promise<void> {
-    await Promise.all(rutas.map((r) => this.colas.get(r)));
+  private async procesar(): Promise<void> {
+    while (this.pendientes.length) {
+      const e = this.pendientes.shift() as Encolada;
+      this.enCurso = e;
+      try {
+        const { op } = e;
+        if (op.tipo === 'escribir') await this.base.escribir(op.ruta, op.datos);
+        else if (op.tipo === 'borrar') await this.base.borrar(op.ruta);
+        else await this.base.mover(op.de, op.a);
+        for (const x of e.esperan) x.ok();
+      } catch (error) {
+        for (const x of e.esperan) x.ko(error);
+      }
+    }
+    this.enCurso = null;
+  }
+
+  /** Espera a que terminen las operaciones encoladas que tocan una ruta (todas, si no se da ninguna). */
+  async esperar(ruta?: string): Promise<void> {
+    const todas = [...(this.enCurso ? [this.enCurso] : []), ...this.pendientes];
+    await Promise.all(todas.filter((e) => ruta === undefined || tocaA(e.op, ruta)).map((e) => e.hecha));
   }
 
   escribir(ruta: string, datos: Uint8Array): Promise<void> {
-    const pendiente = this.pendientes.get(ruta);
-    if (pendiente) {
-      pendiente.datos = datos;
-      return new Promise((ok, ko) => pendiente.esperan.push({ ok, ko }));
-    }
-    const nueva: Pendiente = { datos, esperan: [] };
-    this.pendientes.set(ruta, nueva);
-    return new Promise((ok, ko) => {
-      nueva.esperan.push({ ok, ko });
-      this.encadenar(ruta, async () => {
-        this.pendientes.delete(ruta);
-        try {
-          await this.base.escribir(ruta, nueva.datos);
-          for (const e of nueva.esperan) e.ok();
-        } catch (error) {
-          for (const e of nueva.esperan) e.ko(error);
-          throw error;
-        }
-      }).catch(() => undefined);
-    });
-  }
-
-  async leer(ruta: string): Promise<Uint8Array | null> {
-    const pendiente = this.pendientes.get(ruta);
-    if (pendiente) return pendiente.datos.slice();
-    await this.colas.get(ruta);
-    return this.base.leer(ruta);
-  }
-
-  mover(de: string, a: string): Promise<void> {
-    return this.encadenar(de, async () => {
-      await this.esperar(a);
-      await this.base.mover(de, a);
-    });
+    return this.encolar({ tipo: 'escribir', ruta, datos });
   }
 
   borrar(ruta: string): Promise<void> {
-    return this.encadenar(ruta, () => this.base.borrar(ruta));
+    return this.encolar({ tipo: 'borrar', ruta });
   }
 
-  async *listar(prefijo: string): AsyncIterable<EntradaAlmacen> {
-    await Promise.all(this.colas.values());
-    yield* this.base.listar(prefijo);
+  mover(de: string, a: string): Promise<void> {
+    return this.encolar({ tipo: 'mover', de, a });
+  }
+
+  async leer(ruta: string): Promise<Uint8Array | null> {
+    await this.esperar(ruta);
+    return this.base.leer(ruta);
   }
 
   async existe(ruta: string): Promise<boolean> {
-    if (this.pendientes.has(ruta)) return true;
-    await this.colas.get(ruta);
+    await this.esperar(ruta);
     return this.base.existe(ruta);
+  }
+
+  async *listar(prefijo: string): AsyncIterable<EntradaAlmacen> {
+    await this.esperar();
+    yield* this.base.listar(prefijo);
   }
 }

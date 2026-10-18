@@ -8,8 +8,8 @@ import type { ApiAlmacenWorker } from '../../workers/almacen.worker';
 import type { Almacen, EntradaAlmacen } from '../contrato';
 
 export interface AlmacenOpfsRemoto extends Almacen {
-  /** Temporales huérfanos borrados al abrir (escrituras que se cortaron). */
-  readonly huerfanos: number;
+  /** Termina o deshace escrituras cortadas; solo la pestaña que escribe debe llamarlo. Devuelve cuántas había. */
+  limpiarHuerfanos(): Promise<number>;
   cerrar(): void;
 }
 
@@ -17,9 +17,9 @@ export interface AlmacenOpfsRemoto extends Almacen {
 export async function crearAlmacenOpfs(espacio: string): Promise<AlmacenOpfsRemoto> {
   const worker = new Worker(new URL('../../workers/almacen.worker.ts', import.meta.url), { type: 'module' });
   const api = wrap<ApiAlmacenWorker>(worker);
-  const huerfanos = await api.abrir(espacio);
+  await api.abrir(espacio);
   return {
-    huerfanos,
+    limpiarHuerfanos: () => api.limpiarHuerfanos(),
     leer: (ruta) => api.leer(ruta),
     escribir: (ruta, datos) => api.escribir(ruta, datos),
     mover: (de, a) => api.mover(de, a),

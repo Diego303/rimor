@@ -20,6 +20,8 @@ export class ArchivoFalso {
   readonly kind = 'file';
   datos = new Uint8Array(0);
   modificado = 0;
+  /** Como en OPFS real, un acceso síncrono abierto bloquea el archivo para otro acceso y para borrarlo. */
+  bloqueado = false;
   move?: (nombre: string) => Promise<void>;
 
   constructor(
@@ -29,6 +31,9 @@ export class ArchivoFalso {
   ) {
     if (!opciones.sinMove) {
       this.move = async (nombre: string) => {
+        const destino = this.padre.hijos.get(nombre);
+        if (destino instanceof ArchivoFalso && destino.bloqueado)
+          throw error('NoModificationAllowedError', `${nombre} está abierto`);
         this.padre.hijos.delete(this.name);
         this.name = nombre;
         this.padre.hijos.set(nombre, this);
@@ -43,6 +48,8 @@ export class ArchivoFalso {
 
   async createSyncAccessHandle() {
     const archivo = this;
+    if (archivo.bloqueado) throw error('NoModificationAllowedError', `${archivo.name} ya está abierto`);
+    archivo.bloqueado = true;
     let abierto = true;
     const vivo = () => {
       if (!abierto) throw error('InvalidStateError', 'handle cerrado');
@@ -76,6 +83,7 @@ export class ArchivoFalso {
       },
       flush: () => vivo(),
       close: () => {
+        if (abierto) archivo.bloqueado = false;
         abierto = false;
       },
     };
@@ -115,6 +123,7 @@ export class DirectorioFalso {
     const h = this.hijos.get(nombre);
     if (!h) throw error('NotFoundError', `no existe ${nombre}`);
     if (h instanceof DirectorioFalso && h.hijos.size && !recursive) throw error('InvalidModificationError', 'no vacío');
+    if (h instanceof ArchivoFalso && h.bloqueado) throw error('NoModificationAllowedError', `${nombre} está abierto`);
     this.hijos.delete(nombre);
   }
 

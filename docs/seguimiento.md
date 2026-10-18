@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 02:56
-**Ahora:** IN-005 · Almacén OPFS y en memoria · fase verificación
-**Siguiente:** IN-006 · Caché de derivados e índice
-**Progreso:** F0 9/9 · v0.1 5/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 14/99
+**Última actualización:** 2026-10-18 03:04
+**Ahora:** IN-006 · Caché de derivados e índice · fase análisis y diseño
+**Siguiente:** IN-008 · Carcasa, navegación, atajos y diseño adaptable
+**Progreso:** F0 9/9 · v0.1 6/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 15/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -23,7 +23,7 @@
 | IN-003 | Textos, idiomas y formatos | v0.1 | 0 | hecha | e4770f8 2001502 d44efd6 | docs/features/IN-003-textos-idiomas-formatos.md |
 | IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | hecha | eea9cb1 f942aa1 feceb14 | docs/features/IN-004-formato.md |
 | IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | hecha | 4177d63 58a44ca 9c0cb34 | docs/features/IN-089-marca.md |
-| IN-005 | Almacén OPFS y en memoria | v0.1 | 1 | en implementación | 8683837 | docs/features/IN-005-almacen.md |
+| IN-005 | Almacén OPFS y en memoria | v0.1 | 1 | hecha | 8683837 1212e5a | docs/features/IN-005-almacen.md |
 | IN-006 | Caché de derivados e índice | v0.1 | 1 | pendiente | — | — |
 | IN-008 | Carcasa, navegación, atajos y diseño adaptable | v0.1 | 1 | pendiente | — | — |
 | IN-009 | Saneado y política de seguridad de contenido | v0.1 | 1 | pendiente | — | — |
@@ -160,7 +160,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-005 | implementación | pnpm verificar OK (149 pruebas) | … |
+| 2026-10-18 | IN-005 | verificación | pnpm verificar OK; 6 hallazgos de la revisión corregidos | … |
+| 2026-10-18 | IN-005 | implementación | pnpm verificar OK (149 pruebas) | 1212e5a |
 | 2026-10-18 | IN-005 | análisis y diseño | contrato, OPFS en Worker, cola, repositorio y pestañas | 8683837 |
 | 2026-10-18 | IN-089 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | 9c0cb34 |
 | 2026-10-18 | IN-089 | implementación | pnpm verificar OK (112 pruebas) | 58a44ca |
@@ -188,5 +189,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-005: implementado. Falta verificación.
-- Último `pnpm verificar`: OK (2026-10-18 05:00).
+- IN-005 hecha. Siguiente: IN-006 (diseño y código en borrador en el scratchpad in006/; borrador de IN-090 en in090/).
+- Último `pnpm verificar`: OK (2026-10-18 05:30).
