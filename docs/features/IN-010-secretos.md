@@ -79,3 +79,9 @@ function ocultar(texto: string, opciones?: { desactivadas?: ReadonlySet<string> 
 ## Autorrevisión
 
 Cubre la ficha. La interfaz (qué se ocultó, desactivar para un pegado) la ponen IN-015 e IN-038 sobre esta función.
+
+## Cambios durante la implementación
+
+- Las expresiones llevan la bandera `d` (posiciones de los grupos) para ocultar exactamente el grupo `secreto` cuando la regla tiene contexto.
+- Corpus en `src/seguridad/secretos/corpus/` (42 secretos falsos y 125 líneas de log limpias), con los valores armados por concatenación.
+- La comprobación de colores no mira las carpetas `corpus/` (son datos de prueba; un log con «build #4123» no es un color).

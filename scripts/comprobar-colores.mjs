@@ -62,7 +62,8 @@ export function comprobarCarpeta(carpeta) {
   const hallados = [];
   for (const ruta of recorrer(carpeta)) {
     const rel = relative(carpeta, ruta);
-    if (rel === tokens || PRUEBAS.test(rel)) continue;
+    // Los corpus de pruebas son datos (logs con «#4123», hashes…), no estilos.
+    if (rel === tokens || PRUEBAS.test(rel) || rel.split(sep).includes('corpus')) continue;
     for (const h of buscarColores(readFileSync(ruta, 'utf8'))) hallados.push({ archivo: rel, ...h });
   }
   return hallados;
