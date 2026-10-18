@@ -36,8 +36,10 @@ const dependencias = async (): Promise<DependenciasProveedor> => ({
 });
 
 let repositorio: ReturnType<typeof useEspacioAbierto>['repositorio'] | null = null;
+let contadores: ReturnType<typeof useEspacioAbierto>['contadores'] | null = null;
 function Espia() {
   repositorio = useEspacioAbierto().repositorio;
+  contadores = useEspacioAbierto().contadores;
   return <textarea aria-label="campo" />;
 }
 
@@ -134,6 +136,8 @@ describe('captura en la interfaz', () => {
     expect(document.querySelector('.toast')).toBeNull();
     expect(alAbrir).toHaveBeenCalledWith(existente.frontmatter.ref);
     expect(repositorio?.elementos()).toHaveLength(1);
+    // Cuenta como duplicado evitado (MET-06).
+    expect(contadores?.total('duplicadosEvitados')).toBe(1);
   });
 
   it('un archivo de más de 50 MB se rechaza con un aviso que lo explica', async () => {

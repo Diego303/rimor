@@ -40,7 +40,8 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi�
 | `src/workers/almacen.worker.ts` | OPFS con accesos síncronos, expuesto con Comlink | 005 |
 | `src/espacio/` | `abrirEspacio` (pestañas, huérfanos, manifest, caché y repositorio), `.rimor/estado.json`, persistencia, `ProveedorEspacio` con la pantalla de arranque y los avisos del almacenamiento | 007 |
 | `src/lectores/` | Contrato `Lector<D>` (núcleo puro), textos por lector, registro en el orden del Anexo D, `ColaDerivados`, ejecutor en Worker, vistas por convención (`import.meta.glob` + `React.lazy`), `VistaElemento`, `TarjetaElemento` y `_plantilla/` | 012 |
-| `src/respuestas/tipos.ts` | `Fragmento`, `Accion` y `Respuesta` de Rimor (CAP-14) | 012 |
+| `src/respuestas/` | Tipos de la respuesta (012); contexto, composición con la frase de secretos, reglas de estilo, `RespuestaRimor`, `useRespuesta` y contadores locales (`.rimor/contadores.json`) | 012, 016 |
+| `src/espacio/ajustes.ts` | `.rimor/ajustes.json` (por ahora, respuestas desactivadas por tipo) | 016 |
 | `src/workers/derivados.worker.ts` | `derivar` de cada lector fuera del hilo principal, con Comlink | 012 |
 | `src/captura/` | Detector de tipo (atajos del Anexo D y arbitraje con duda), firmas de binarios y arnés de la matriz de detección; flujo de captura (`capturar`, `crearCapturador`, deshacer), borrador del compositor, indicaciones, vista previa y `ProveedorCaptura` (pegar y soltar) | 013, 014, 015 |
 | `src/ui/componentes/Compositor.tsx` | Compositor de Inicio: área que crece, Enter guarda, vista previa, autocompletar, adjuntos, modo respuesta | 015 |

@@ -209,5 +209,15 @@
       "nuevaLinea": "Shift+Enter: new line"
     },
     "sugerencia": "Suggestion: {opcion}. Arrows to change, Enter to choose."
+  },
+  "respuestas": {
+    "secretos": {
+      "one": "I hid a secret before saving.",
+      "other": "I hid {n} secrets before saving."
+    },
+    "reserva": "Saved as {tipo}.",
+    "sinDatos": "Saved as {tipo}. I could not analyse it: the original is shown.",
+    "leyendo": "Reading…",
+    "rimor": "Rimor"
   }
 }

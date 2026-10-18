@@ -11,6 +11,8 @@ import { type Progreso, reconciliar } from '../almacen/cache/reconciliar';
 import { type Almacen, escribirTexto, leerTexto } from '../almacen/contrato';
 import { type Canal, type Cerrojos, type Coordinacion, coordinarPestanas } from '../almacen/pestanas';
 import { Repositorio } from '../almacen/repositorio';
+import { abrirContadores, type Contadores } from '../respuestas/contadores';
+import { type Ajustes, leerAjustes, RUTA_AJUSTES } from './ajustes';
 import { conCambios, type EstadoCuidado, leerEstado, RUTA_ESTADO } from './estado';
 import { crearManifest, NOMBRE_ESPACIO_INICIAL, RUTA_MANIFEST } from './manifest';
 
@@ -40,6 +42,10 @@ export interface EspacioAbierto {
   guardarEstado(cambio: (e: EstadoCuidado) => EstadoCuidado): Promise<void>;
   /** Se llama tras cada cambio del estado o de los elementos (también los que relee de otra pestaña). */
   alCambiar(fn: (e: EstadoCuidado) => void): () => void;
+  /** Ajustes del espacio (`.rimor/ajustes.json`). */
+  ajustes(): Ajustes;
+  /** Contadores locales de lo ahorrado (IN-016). */
+  contadores: Contadores;
   /** Escribe lo pendiente y suelta el cerrojo y la caché. */
   cerrar(): Promise<void>;
 }
@@ -110,6 +116,9 @@ export async function abrirEspacio(
       return pendiente;
     };
 
+    let ajustes = leerAjustes(await leerTexto(dep.almacen, RUTA_AJUSTES));
+    const contadores = await abrirContadores(dep.almacen, () => escribe() && !cerrado, reloj);
+
     const abierta = await abrirCache(dep);
     cache = abierta;
     const leerTodo = (progreso?: (p: Progreso) => void) =>
@@ -141,6 +150,8 @@ export async function abrirEspacio(
           await antes?.();
           const nuevo = await leerTodo();
           estado = leerEstado(await leerTexto(dep.almacen, RUTA_ESTADO));
+          ajustes = leerAjustes(await leerTexto(dep.almacen, RUTA_AJUSTES));
+          await contadores.recargar();
           fallidos = nuevo.fallidos;
           repositorio.cargarDesde(nuevo.entradas);
           avisar();
@@ -175,6 +186,8 @@ export async function abrirEspacio(
       fallidos: () => fallidos,
       estado: () => estado,
       guardarEstado,
+      ajustes: () => ajustes,
+      contadores,
       alCambiar: (fn) => {
         oyentes.add(fn);
         return () => oyentes.delete(fn);

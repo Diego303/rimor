@@ -79,6 +79,8 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
           if (r.valor.tipo === 'creado') creados.push(r.valor.capturado);
           else {
             const ref = r.valor.ref;
+            // Lo que Rimor ha ahorrado (MET-06): un duplicado que no se creó.
+            void espacio?.contadores.contar('duplicadosEvitados');
             otros.push(() =>
               avisar(t('captura.duplicado', { ref }), {
                 ...(alAbrir ? { accion: { etiqueta: t('captura.ver'), alPulsar: () => alAbrir(ref) } } : {}),
@@ -117,7 +119,7 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
         });
       for (const avisarOtro of otros) avisarOtro();
     },
-    [avisar, t, idioma, alAbrir, capturador],
+    [avisar, t, idioma, alAbrir, capturador, espacio],
   );
 
   // Pegar fuera de un campo: al compositor (no guarda directamente) y a Inicio.

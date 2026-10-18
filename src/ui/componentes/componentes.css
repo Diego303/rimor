@@ -921,6 +921,12 @@ details.more > div {
 .rimor p {
   min-width: 0;
 }
+.rimor .cifra {
+  font-variant-numeric: tabular-nums;
+}
+.rimor q {
+  quotes: "«" "»";
+}
 
 /* ---------- Diálogo ---------- */
 .dialogo {

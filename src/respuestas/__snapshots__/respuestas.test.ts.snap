@@ -1,0 +1,24 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`respuestas de los lectores sobre el corpus > instantánea de la respuesta de cada lector con su primer ejemplo 1`] = `
+{
+  "plantilla": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Text with 1 line and 59 words.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Texto de 1 línea y 59 palabras.",
+        },
+      ],
+    },
+  },
+}
+`;

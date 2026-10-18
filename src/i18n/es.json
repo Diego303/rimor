@@ -209,5 +209,15 @@
       "nuevaLinea": "Mayús+Enter: nueva línea"
     },
     "sugerencia": "Sugerencia: {opcion}. Flechas para cambiar, Enter para elegir."
+  },
+  "respuestas": {
+    "secretos": {
+      "one": "He ocultado un secreto antes de guardar.",
+      "other": "He ocultado {n} secretos antes de guardar."
+    },
+    "reserva": "Guardado como {tipo}.",
+    "sinDatos": "Guardado como {tipo}. No pude analizarlo: se ve el original.",
+    "leyendo": "Leyendo…",
+    "rimor": "Rimor"
   }
 }

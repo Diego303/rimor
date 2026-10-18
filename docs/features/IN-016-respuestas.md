@@ -63,12 +63,12 @@ Fragmentos: `texto` tal cual; `fuerte` en `<b>`; `cifra` en `<b class="cifra">` 
 
 ## Tareas
 
-- [ ] `construirContexto(elemento)`: misma huella, versiones previas, notas de solución, colecciones candidatas y elemento al que se responde.
-- [ ] `RespuestaRimor` que pinta los fragmentos según la guía (§7.6), con el `SimboloRimor` mono como avatar y `contestando` + «Leyendo…» mientras se compone.
-- [ ] Reglas de estilo comprobadas por prueba: como mucho 2 frases, sin `!`, sin emojis y como mucho 2 acciones.
-- [ ] Frase añadida común: secretos ocultados.
-- [ ] Desactivar respuestas por tipo (D14), leído de ajustes.
-- [ ] Contadores locales por día en `.rimor/contadores.json`.
+- [x] `construirContexto(elemento)`: misma huella, versiones previas, notas de solución, colecciones candidatas y elemento al que se responde.
+- [x] `RespuestaRimor` que pinta los fragmentos según la guía (§7.6), con el `SimboloRimor` mono como avatar y `contestando` + «Leyendo…» mientras se compone.
+- [x] Reglas de estilo comprobadas por prueba: como mucho 2 frases, sin `!`, sin emojis y como mucho 2 acciones.
+- [x] Frase añadida común: secretos ocultados.
+- [x] Desactivar respuestas por tipo (D14), leído de ajustes.
+- [x] Contadores locales por día en `.rimor/contadores.json`.
 
 ## Pruebas previstas
 
@@ -97,3 +97,12 @@ Fragmentos: `texto` tal cual; `fuerte` en `<b>`; `cifra` en `<b class="cifra">` 
 ## Autorrevisión
 
 Cubre las seis tareas y los criterios. Lo que depende de lectores que aún no existen (huella, versiones, notas de solución) se calcula sobre los campos que esos lectores escribirán, sin inventarlos: hoy dan listas vacías y las pruebas los fabrican.
+
+## Cambios durante la implementación
+
+- Ajustes y contadores se abren con el espacio (`EspacioAbierto.ajustes()` y `.contadores`) y se releen al pasar a escribir, como el estado: una pestaña que estaba leyendo no pisa lo que contó la otra.
+- `ajustes.ts` conserva las claves que no conoce (las que añadirá IN-038).
+- La frase de secretos dice cuántos, no cuáles: la captura solo guarda `ocultados`.
+- `RespuestaRimor` pinta las refs como texto mono si no le dan `alAbrir`; la cita va en `<q>` con comillas latinas y su fecha en el `title`.
+- Las instantáneas de respuestas cubren hoy la plantilla (los lectores llegan con la ola 4 y se añadirán solas, porque la prueba recorre `REGISTRO`).
+
