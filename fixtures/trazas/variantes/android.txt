@@ -1,0 +1,7 @@
+FATAL EXCEPTION: main
+Process: com.acme.notas, PID: 12345
+java.lang.RuntimeException: Unable to start activity ComponentInfo{com.acme.notas/com.acme.notas.MainActivity}: java.lang.NullPointerException
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3449)
+Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'int java.lang.String.length()' on a null object reference
+	at com.acme.notas.MainActivity.onCreate(MainActivity.kt:21)
+	at android.app.Activity.performCreate(Activity.java:8051)

@@ -111,17 +111,19 @@ interface PropsVeredicto {
   cifra: string;
   frase: ReactNode;
   explicacion?: ReactNode;
+  /** La explicación en gris (la comparación) o con el color del texto (lo que escribiste, en el error). */
+  explicacionAtenuada?: boolean;
   tono: 'ok' | 'warn' | 'bad';
 }
 
 /** Un veredicto por pantalla: cifra grande y frase (E3). */
-export function Veredicto({ cifra, frase, explicacion, tono }: PropsVeredicto) {
+export function Veredicto({ cifra, frase, explicacion, explicacionAtenuada = true, tono }: PropsVeredicto) {
   return (
     <div className={clases('verdict', tono)}>
       <span className="big">{cifra}</span>
       <div className="txt">
         <b>{frase}</b>
-        {explicacion && <span className="sm muted">{explicacion}</span>}
+        {explicacion && <p className={clases('sm', explicacionAtenuada && 'muted')}>{explicacion}</p>}
       </div>
     </div>
   );

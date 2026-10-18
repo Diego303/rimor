@@ -1,0 +1,3 @@
+TypeError: can't access property "map", datos is undefined
+calcular@https://tienda.ejemplo.org/assets/carrito.js:41:15
+onclick@https://tienda.ejemplo.org/assets/carrito.js:88:5

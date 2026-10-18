@@ -1,0 +1,19 @@
+Error: no se pudo cargar
+    at cargar (/home/u/app/src/carga.js:10:11)
+    at async main (/home/u/app/src/index.js:4:3) {
+  [cause]: TypeError: fetch failed
+      at node:internal/deps/undici/undici:13502:13
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async cargar (/home/u/app/src/carga.js:8:5) {
+    [cause]: Error: connect ECONNREFUSED 127.0.0.1:3000
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1607:16) {
+      errno: -111,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 3000
+    }
+  }
+}
+
+Node.js v22.3.0

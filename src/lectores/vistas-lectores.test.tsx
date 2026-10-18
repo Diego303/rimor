@@ -170,6 +170,21 @@ describe('vista de Log', () => {
 });
 
 describe('vista de Error', () => {
+  it('fechas: del mismo mes, «el 2 y el 15 de octubre»; de meses distintos, cada una con su mes', async () => {
+    const { listaDeFechas } = await import('./error/Vista');
+    const { textos } = await import('./error/textos');
+    const ahora = new Date('2026-10-18T12:00:00+02:00');
+    const t = (idioma: 'es' | 'en') =>
+      textos.t.bind(textos, idioma) as unknown as (c: string, v?: Record<string, string | number>) => string;
+    const mismas = ['2026-10-02T10:00:00+02:00', '2026-10-09T10:00:00+02:00', '2026-10-15T10:00:00+02:00'];
+    expect(listaDeFechas(mismas, 'es', t('es'), ahora)).toBe('el 2, el 9 y el 15 de octubre');
+    expect(listaDeFechas(mismas.slice(0, 2), 'en', t('en'), ahora)).toBe('on October 2 and 9');
+    expect(listaDeFechas(['2026-09-28T10:00:00+02:00', '2026-10-02T10:00:00+02:00'], 'es', t('es'), ahora)).toBe(
+      'el 28 sep y el 2 oct',
+    );
+    expect(listaDeFechas(['2025-10-02T10:00:00+02:00'], 'es', t('es'), ahora)).toBe('el 2 de octubre de 2025');
+  });
+
   it('mensaje, «3.ª vez» con la nota, tus marcos, plegados y «Añadir cómo lo resolví»', async () => {
     const { default: VistaError } = await import('./error/Vista');
     const { analizarError } = await import('./error/lector');
@@ -204,18 +219,19 @@ describe('vista de Error', () => {
     };
     const actual = conHuella(3, 17);
     const abierto: { repo: ReturnType<typeof useEspacioAbierto>['repositorio'] | null } = { repo: null };
-    function Montaje() {
+    function Montaje({ el }: { el: typeof actual }) {
       const { repositorio } = useEspacioAbierto();
       abierto.repo = repositorio;
-      return <VistaError el={actual} datos={datos} />;
+      return <VistaError el={el} datos={datos} />;
     }
-    render(
+    const montar = (el: typeof actual) => (
       <ProveedorEspacio dependencias={dependencias}>
         <ProveedorAvisos>
-          <Montaje />
+          <Montaje el={el} />
         </ProveedorAvisos>
-      </ProveedorEspacio>,
+      </ProveedorEspacio>
     );
+    const { rerender } = render(montar(actual));
     await waitFor(() => expect(abierto.repo).toBeTruthy());
     await act(async () => {
       await abierto.repo?.guardarElemento({ ...conHuella(1, 2), notas: '' });
@@ -227,7 +243,8 @@ describe('vista de Error', () => {
       await abierto.repo?.guardarElemento(actual);
     });
     expect(await screen.findByText('3.ª vez')).toBeTruthy();
-    expect(screen.getByText('Ya te pasó el 2 oct y el 15 oct.')).toBeTruthy();
+    // Como la pantalla de referencia: «el 2 y el 15 de octubre».
+    expect(screen.getByText('Ya te pasó el 2 y el 15 de octubre.')).toBeTruthy();
     expect(screen.getByText('El 15 oct escribiste: «Pasa cuando la respuesta no trae content-length»')).toBeTruthy();
     expect(screen.getByText('struo_gateway::stream::next_chunk')).toBeTruthy();
     expect(screen.getByText('Librerías y sistema (5 marcos)')).toBeTruthy();
@@ -237,5 +254,12 @@ describe('vista de Error', () => {
     await waitFor(() => expect(abierto.repo?.frontmatter('ERR-0003')?.estado).toBe('resuelto'));
     const leido = await abierto.repo?.leerElemento('ERR-0003');
     expect(leido?.ok && leido.valor.notas.startsWith('Subí el timeout a 60 s')).toBe(true);
+    // Ya resuelto, enseña lo que se escribió y no ofrece añadirlo otra vez.
+    if (!leido?.ok) throw new Error('sin leer');
+    rerender(
+      montar({ ...actual, frontmatter: { ...actual.frontmatter, estado: 'resuelto' }, notas: leido.valor.notas }),
+    );
+    expect(await screen.findByText('Lo resolviste así: «Subí el timeout a 60 s»')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Añadir cómo lo resolví' })).toBeNull();
   });
 });

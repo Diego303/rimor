@@ -1,0 +1,7 @@
+panic: boom
+
+goroutine 1 [running]:
+main.Map[...]({0xc000012345, 0x3, 0x3}, 0x4b2c40)
+	/home/u/g/main.go:7 +0x5a
+main.main()
+	/home/u/g/main.go:14 +0x45

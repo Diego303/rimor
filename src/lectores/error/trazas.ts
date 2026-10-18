@@ -24,11 +24,11 @@ export interface Traza {
 
 /** Rutas de librerías y del sistema (heurísticas del plan). */
 const RUTA_DE_LIBRERIA =
-  /node_modules|site-packages|dist-packages|\/usr\/lib\/python|\/lib\/python\d|<frozen|\.cargo\/registry|\/rustc\/|\/usr\/local\/go\/|\/go\/pkg\/mod\/|\/pkg\/mod\/|^node:|\binternal\/|^<anonymous>$|^native$/;
+  /node_modules|site-packages|dist-packages|\/usr\/lib\/python|[\\/]lib[\\/]python\d|[\\/]Lib[\\/]|<frozen|\.cargo[\\/]registry|\/rustc\/|\/usr\/local\/go\/|\/usr\/lib\/go(?:-[\d.]+)?\/|\/Cellar\/go\/|\/libexec\/src\/|\/go\/pkg\/mod\/|\/pkg\/mod\/|@v\d+\.\d+|^node:|\binternal\/|^<anonymous>$|^native$|^index \d+$/;
 
 /** Funciones de librerías y del sistema, por su espacio de nombres. */
 const FUNCION_DE_LIBRERIA =
-  /^(?:java\.|javax\.|jdk\.|sun\.|com\.sun\.|kotlin\.|kotlinx\.|android\.|androidx\.|org\.springframework\.|org\.apache\.|org\.hibernate\.|com\.fasterxml\.|com\.zaxxer\.|io\.netty\.|reactor\.|scala\.|org\.junit\.|org\.gradle\.|System\.|Microsoft\.|Newtonsoft\.|Npgsql\.|std::|core::|alloc::|tokio::|futures::|hyper::|rust_begin_unwind|__rust|<core::|<alloc::|<std::|runtime\.|net\/http\.|sync\.|reflect\.|testing\.|JSON\.parse|process\.processTicksAndRejections)/;
+  /^(?:java\.|javax\.|jdk\.|sun\.|com\.sun\.|kotlin\.|kotlinx\.|android\.|androidx\.|jakarta\.|org\.springframework\.|org\.apache\.|org\.hibernate\.|org\.postgresql\.|com\.mysql\.|org\.h2\.|com\.fasterxml\.|com\.zaxxer\.|com\.google\.|io\.grpc\.|io\.netty\.|io\.micrometer\.|io\.quarkus\.|io\.micronaut\.|io\.vertx\.|io\.reactivex\.|reactor\.|okhttp3\.|okio\.|retrofit2\.|org\.eclipse\.|org\.glassfish\.|org\.jboss\.|org\.slf4j\.|ch\.qos\.|org\.jetbrains\.|org\.codehaus\.|groovy\.|com\.amazonaws\.|software\.amazon\.|scala\.|org\.junit\.|org\.testng\.|org\.mockito\.|org\.gradle\.|System\.|Microsoft\.|Newtonsoft\.|Npgsql\.|std::|core::|alloc::|tokio::|futures::|hyper::|rust_begin_unwind|__rust|<core::|<alloc::|<std::|runtime\.|net\/http\.|sync\.|reflect\.|testing\.|JSON\.parse|process\.processTicksAndRejections)/;
 
 const esDeLibreria = (funcion: string, ruta: string) =>
   RUTA_DE_LIBRERIA.test(ruta) || FUNCION_DE_LIBRERIA.test(funcion);
@@ -65,7 +65,7 @@ function rust(texto: string): Traza | null {
   for (let k = bt < 0 ? ls.length : bt + 1; k < ls.length; k++) {
     const m = RUST_MARCO.exec(ls[k] ?? '');
     if (!m) continue;
-    const funcion = (m[2] ?? '').trim();
+    const funcion = (m[2] ?? '').trim().replace(/^0x[0-9a-f]+ - /, '');
     const en = RUST_EN.exec(ls[k + 1] ?? '');
     const ruta = en?.[1]?.trim() ?? '';
     if (en) k++;
@@ -89,32 +89,54 @@ function rust(texto: string): Traza | null {
 
 // ---------- Python ----------
 
+const PY_CABECERA = /^(?:Traceback \(most recent call last\):|[A-Za-z_][\w.]*\s+Traceback \(most recent call last\))$/;
 const PY_MARCO = /^\s*File "(.+?)", line (\d+), in (.+)$/;
+/** Marco de IPython y Jupyter: `Cell In[3], line 1` o `File /ruta/x.py:12, in función()`. */
+const PY_MARCO_IPYTHON = /^(?:Cell In\[(\d+)\], line (\d+)|File (.+?):(\d+)(?:, in (.+))?)$/;
 const PY_FINAL = /^([A-Za-z_][\w.]*)(?:: ?(.*))?$/;
+
+function marcoPython(l: string): Marco | null {
+  const m = PY_MARCO.exec(l);
+  if (m) {
+    const ruta = m[1] ?? '';
+    const funcion = m[3] ?? '';
+    return { funcion, ruta, linea: Number(m[2]), propio: !esDeLibreria(funcion, ruta) };
+  }
+  const ip = PY_MARCO_IPYTHON.exec(l.trim());
+  if (!ip) return null;
+  if (ip[1]) return { funcion: '<cell>', ruta: `In[${ip[1]}]`, linea: Number(ip[2]), propio: true };
+  const ruta = ip[3] ?? '';
+  const funcion = ip[5]?.replace(/\(.*\)$/, '') ?? '<module>';
+  return { funcion, ruta, linea: Number(ip[4]), propio: !esDeLibreria(funcion, ruta) };
+}
 
 function python(texto: string): Traza | null {
   const ls = lineas(texto);
-  const inicio = ls.findIndex((l) => l.trim() === 'Traceback (most recent call last):');
+  // Con excepciones encadenadas hay varios bloques: el último es el de la que llegó arriba.
+  let inicio = -1;
+  ls.forEach((l, k) => {
+    if (PY_CABECERA.test(l.trim())) inicio = k;
+  });
   if (inicio < 0) return null;
   const marcos: Marco[] = [];
   let tipo = '';
   let mensaje = '';
   for (let k = inicio + 1; k < ls.length; k++) {
     const l = ls[k] ?? '';
-    const m = PY_MARCO.exec(l);
-    if (m) {
-      const ruta = m[1] ?? '';
-      const funcion = m[3] ?? '';
-      marcos.push({ funcion, ruta, linea: Number(m[2]), propio: !esDeLibreria(funcion, ruta) });
+    const marco = marcoPython(l);
+    if (marco) {
+      marcos.push(marco);
       continue;
     }
-    // La última línea sin sangría es `Tipo: mensaje` (la de la excepción que se lanzó).
-    if (!/^\s/.test(l) && l.trim()) {
+    // La primera línea sin sangría tras los marcos es `Tipo: mensaje`; lo que sigue (un mensaje de varias
+    // líneas, el log de después) ya no cuenta. En IPython, la cabecera lleva el tipo y hay líneas `---->`.
+    if (marcos.length && !/^\s/.test(l) && l.trim() && !/^-*>|^-{10,}$/.test(l.trim())) {
       const f = PY_FINAL.exec(l.trim());
       if (f) {
         tipo = f[1] ?? '';
         mensaje = f[2] ?? '';
       }
+      break;
     }
   }
   if (!tipo) return null;
@@ -133,11 +155,46 @@ function python(texto: string): Traza | null {
 
 const JS_CABECERA =
   /^(?:Uncaught (?:\(in promise\) )?)?([A-Za-z_$][\w$.]*(?:Error|Exception)|Error)(?: \[[\w-]+\])?: (.*)$/;
-const JS_MARCO = /^\s+at (?:async )?(?:(.+?) \((.+?)\)|(.+))$/;
+/** Lo que puede ir entre paréntesis en un marco de V8 además de `ruta:línea:columna`. */
+const JS_UBICACION_ESPECIAL = /^(?:<anonymous>|native|index \d+|eval at .+)$/;
+/** Marco de Firefox y Safari: `función@ruta:línea:columna`. */
+const JS_MARCO_ARROBA = /^([^@\s]*)@(.+?):(\d+):\d+$/;
 
-function partirRutaJs(s: string): { ruta: string; linea?: number } {
-  const m = /^(.*?):(\d+):(\d+)$/.exec(s);
-  return m ? { ruta: m[1] ?? '', linea: Number(m[2]) } : { ruta: s };
+function partirRutaJs(s: string): { ruta: string; linea?: number } | null {
+  const m = /^(.*?):(\d+)(?::\d+)?$/.exec(s);
+  if (m) return { ruta: m[1] ?? '', linea: Number(m[2]) };
+  return JS_UBICACION_ESPECIAL.test(s) ? { ruta: s } : null;
+}
+
+/** Un marco de JavaScript, o `null` si la línea no lo es («  at least…» en un texto no es un marco). */
+function marcoJs(linea: string): Marco | null {
+  const arroba = JS_MARCO_ARROBA.exec(linea.trim());
+  if (arroba) {
+    const funcion = arroba[1] ?? '';
+    const ruta = arroba[2] ?? '';
+    return { funcion, ruta, linea: Number(arroba[3]), propio: !esDeLibreria(funcion, ruta) };
+  }
+  // Un error con propiedades (`{ code: … }`) deja ` {` al final del último marco.
+  const l = linea.replace(/\s*\{$/, '');
+  const at = /^\s+at (?:async )?(.+)$/.exec(l);
+  if (!at) return null;
+  const cuerpo = (at[1] ?? '').trim();
+  let funcion = '';
+  let ubicacion = cuerpo;
+  // `función (ubicación)`: el último « (» abre la ubicación (sin expresiones que retrocedan).
+  const abre = cuerpo.lastIndexOf(' (');
+  if (cuerpo.endsWith(')') && abre > 0) {
+    funcion = cuerpo.slice(0, abre).trim();
+    ubicacion = cuerpo.slice(abre + 2, -1);
+  }
+  const r = partirRutaJs(ubicacion);
+  if (!r) return null;
+  return {
+    funcion,
+    ruta: r.ruta,
+    ...(r.linea !== undefined ? { linea: r.linea } : {}),
+    propio: !esDeLibreria(funcion, r.ruta),
+  };
 }
 
 function javascript(texto: string): Traza | null {
@@ -147,11 +204,11 @@ function javascript(texto: string): Traza | null {
   const cab = JS_CABECERA.exec(ls[i]?.trim() ?? '');
   const marcos: Marco[] = [];
   for (let k = i + 1; k < ls.length; k++) {
-    const m = JS_MARCO.exec(ls[k] ?? '');
-    if (!m) continue;
-    const funcion = m[1]?.trim() ?? '';
-    const { ruta, linea } = partirRutaJs((m[2] ?? m[3] ?? '').trim());
-    marcos.push({ funcion, ruta, ...(linea !== undefined ? { linea } : {}), propio: !esDeLibreria(funcion, ruta) });
+    const l = ls[k] ?? '';
+    // Los marcos de la causa (`[cause]: …`) son de otro error: los del que se lanzó van antes.
+    if (/^\s*\[cause\]:/.test(l)) break;
+    const marco = marcoJs(l);
+    if (marco) marcos.push(marco);
   }
   // Sin ningún marco `at …` no es una traza de JavaScript (sería un mensaje suelto).
   if (!marcos.length) return null;
@@ -160,10 +217,10 @@ function javascript(texto: string): Traza | null {
 
 // ---------- Java y Kotlin ----------
 
-const JAVA_TIPO = String.raw`((?:[a-z_][\w$]*\.)+[A-Z][\w$]*(?:Exception|Error|Throwable))`;
-const JAVA_CABECERA = new RegExp(String.raw`^(?:Exception in thread "[^"]*" )?${JAVA_TIPO}(?:: (.*))?$`);
-const JAVA_CAUSA = new RegExp(String.raw`^Caused by: ${JAVA_TIPO}(?:: (.*))?$`);
-const JAVA_MARCO = /^\s*at (?:[\w.]+\/)?([\w$.<>]+)\.([\w$<>]+)\(([^)]*)\)/;
+const JAVA_TIPO = String.raw`((?:[a-z_][\w$]*\.)+(?:[A-Z][\w$]*)?(?:Exception|Error|Throwable))`;
+const JAVA_CABECERA = new RegExp(`^(?:Exception in thread "[^"]*" )?${JAVA_TIPO}(?:: (.*))?$`);
+const JAVA_CAUSA = new RegExp(`^Caused by: ${JAVA_TIPO}(?:: (.*))?$`);
+const JAVA_MARCO = /^\s*at (?:[\w.@-]*\/+)?([\w$.<>]+)\.([\w$<>]+)\(([^)]*)\)/;
 
 function java(texto: string): Traza | null {
   const ls = lineas(texto);
@@ -192,7 +249,11 @@ function java(texto: string): Traza | null {
       funcion,
       ruta,
       ...(archivo ? { linea: Number(archivo[2]) } : {}),
-      propio: !esDeLibreria(funcion, ''),
+      // Las clases que genera un framework (proxies de Spring, `<generated>`) no son tu código.
+      propio:
+        !esDeLibreria(funcion, ruta) &&
+        !/\$\$(?:SpringCGLIB|EnhancerBy)|\$Proxy\d/.test(funcion) &&
+        ruta !== '<generated>',
     });
   }
   if (!marcos.length && !/^Exception in thread/.test(ls[i]?.trim() ?? '')) return null;
@@ -202,16 +263,18 @@ function java(texto: string): Traza | null {
 // ---------- Go ----------
 
 const GO_CABECERA = /^(panic|fatal error): (.*)$/;
-const GO_FUNCION = /^([\w./*()-]+?)\((?:.*)\)$|^created by (.+)$/;
+const GO_FUNCION = /^(\S.*?)\([^()]*\)$|^created by (.+?)(?: in goroutine \d+)?$/;
 const GO_RUTA = /^\t(.+?\.go):(\d+)(?: \+0x[0-9a-f]+)?$/;
 
-/** En Go, la librería estándar no lleva punto en la primera parte de su ruta (`net/http`); un módulo, sí. */
+/**
+ * En Go, la librería estándar no lleva punto en la primera parte de su ruta de paquete (`fmt.Println`,
+ * `net/http.(*conn).serve`); un módulo, sí (`github.com/x/y.F`). Lo de `main` es tuyo.
+ */
 function goPropio(funcion: string, ruta: string): boolean {
   if (esDeLibreria(funcion, ruta)) return false;
-  const primera = funcion.split('/')[0] ?? '';
-  return (
-    funcion.startsWith('main.') || (primera.includes('.') && !/^(?:runtime|sync|net|reflect|internal)\b/.test(primera))
-  );
+  if (funcion.startsWith('main.')) return true;
+  const barra = funcion.indexOf('/');
+  return barra > 0 && funcion.slice(0, barra).includes('.');
 }
 
 function go(texto: string): Traza | null {
@@ -238,7 +301,8 @@ function go(texto: string): Traza | null {
 
 // ---------- .NET ----------
 
-const NET_CABECERA = /^(?:Unhandled exception\. )?((?:[A-Z][\w]*\.)+[A-Z]\w*(?:Exception|Error))(?: \(\d+\))?: (.*)$/;
+const NET_CABECERA =
+  /^(?:Unhandled [Ee]xception[.:] )?((?:[A-Z]\w*\.)+(?:[A-Z]\w*)?(?:Exception|Error))(?: \(0x[0-9A-Fa-f]+\)| \(\d+\))?: (.*)$/;
 const NET_MARCO = /^\s+at (.+?)\((.*?)\)(?: in (.+?):line (\d+))?\s*$/;
 
 function dotnet(texto: string): Traza | null {
@@ -256,7 +320,7 @@ function dotnet(texto: string): Traza | null {
     const ruta = m[3] ?? '';
     marcos.push({ funcion, ruta, ...(m[4] ? { linea: Number(m[4]) } : {}), propio: !esDeLibreria(funcion, ruta) });
   }
-  if (!marcos.length && !/^Unhandled exception\./.test(ls[i]?.trim() ?? '')) return null;
+  if (!marcos.length && !/^Unhandled [Ee]xception[.:]/.test(ls[i]?.trim() ?? '')) return null;
   return { lenguaje: 'dotnet', tipo: cab?.[1] ?? '', mensaje: cab?.[2] ?? '', donde: dondeDe(marcos), marcos };
 }
 

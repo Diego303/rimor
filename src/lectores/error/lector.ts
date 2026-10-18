@@ -3,9 +3,10 @@
  * la huella que reconoce el mismo error otra vez, con lo que escribiste al resolverlo.
  */
 import type { Elemento, FrontmatterComun } from '@rimor/formato';
-import { fmtDia, type Idioma } from '../../i18n/formatos';
+import { fmtDia, fmtOrdinal, type Idioma } from '../../i18n/formatos';
 import type { Fragmento } from '../../respuestas/tipos';
 import type { Borrador, Contexto, Entrada, Lector } from '../contrato';
+import { confianzaLog } from '../log/lector';
 import { huellaDe, VERSION_HUELLA } from './huella';
 import { textos } from './textos';
 import { analizarTraza, ERROR_SUELTO, type Marco, type Traza } from './trazas';
@@ -48,11 +49,21 @@ const anteriores = (el: Elemento, ctx: Contexto | undefined): FrontmatterComun[]
     .sort((a, b) => Date.parse(a.creado) - Date.parse(b.creado));
 };
 
-/** «tercera» (es), «third» (en); de la undécima en adelante, «11.ª» / «11th». */
+/** «tercera» (es), «third» (en); de la undécima en adelante, «11.ª» / «11th», «21st». */
 export function ordinal(n: number, idioma: Idioma): string {
-  const t = textos.t as (i: Idioma, c: string, v?: Record<string, number>) => string;
-  return n >= 2 && n <= 10 ? t(idioma, `ordinales.${n}`) : t(idioma, 'ordinalNumero', { n });
+  const t = textos.t as (i: Idioma, c: string) => string;
+  return n >= 2 && n <= 10 ? t(idioma, `ordinales.${n}`) : fmtOrdinal(n, idioma);
 }
+
+/** «Tipo: mensaje», sin repetir el tipo si el mensaje ya empieza por él (`runtime error: index out of range`). */
+export function tituloDe(d: Pick<DatosError, 'tipo' | 'mensaje'>): string {
+  if (!d.mensaje) return d.tipo;
+  return d.mensaje.startsWith(`${d.tipo}:`) ? d.mensaje : `${d.tipo}: ${d.mensaje}`;
+}
+
+/** Confianza con una traza: si el texto es sobre todo un log que la contiene, menos que la de Log (0,85). */
+const CON_TRAZA = 0.9;
+const TRAZA_DENTRO_DE_LOG = 0.75;
 
 /** Ocurrencias en total (esta incluida) y la primera y la última vez, para las cifras. */
 function ocurrencias(el: Elemento | null, ctx: Contexto | undefined) {
@@ -72,14 +83,15 @@ export const lectorError: Lector<DatosError> = {
   detectar: (e: Entrada) => {
     const texto = e.texto ?? '';
     if (!texto.trim()) return 0;
-    if (analizarTraza(texto)) return 0.9;
+    // Un log con una traza en medio sigue siendo un log; la duda (0,85 frente a 0,75) se ofrece al capturar.
+    if (analizarTraza(texto)) return confianzaLog(texto) > 0 ? TRAZA_DENTRO_DE_LOG : CON_TRAZA;
     return ERROR_SUELTO.test(primera(texto)) ? 0.7 : 0;
   },
 
   async leer(e: Entrada): Promise<Borrador> {
     const texto = e.texto ?? '';
     const d = analizarError(texto);
-    const titulo = d.mensaje ? `${d.tipo}: ${d.mensaje}` : d.tipo;
+    const titulo = tituloDe(d);
     return {
       titulo: titulo.length > LARGO_TITULO ? `${titulo.slice(0, LARGO_TITULO - 1)}…` : titulo,
       original: texto,
@@ -112,7 +124,8 @@ export const lectorError: Lector<DatosError> = {
       const texto: Fragmento[] = [
         { t: 'texto', v: textos.t(i, 'respuesta.repetido', { ordinal: ordinal(previas.length + 1, i) }) },
       ];
-      const nota = ctx.notas[0];
+      // Solo lo que se escribió en una ocurrencia anterior (no en una posterior, si se mira una antigua).
+      const nota = ctx.notas.find((n) => previas.some((p) => p.ref === n.ref));
       const fecha = nota ? new Date(nota.fecha) : null;
       if (nota && fecha && !Number.isNaN(fecha.getTime())) {
         texto.push({ t: 'texto', v: textos.t(i, 'respuesta.nota', { fecha: fmtDia(fecha, new Date(), i) }) });

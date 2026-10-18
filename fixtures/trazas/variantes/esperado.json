@@ -1,0 +1,152 @@
+{
+  "android.txt": {
+    "lenguaje": "java",
+    "tipo": "java.lang.NullPointerException",
+    "mensaje": "Attempt to invoke virtual method 'int java.lang.String.length()' on a null object reference",
+    "propios": ["com.acme.notas.MainActivity.onCreate"]
+  },
+  "firefox.txt": {
+    "lenguaje": "javascript",
+    "tipo": "TypeError",
+    "mensaje": "can't access property \"map\", datos is undefined",
+    "propios": ["calcular", "onclick"]
+  },
+  "go-apt.txt": {
+    "lenguaje": "go",
+    "tipo": "runtime error",
+    "mensaje": "runtime error: invalid memory address or nil pointer dereference",
+    "propios": ["main.main"]
+  },
+  "go-created-b.txt": {
+    "lenguaje": "go",
+    "tipo": "runtime error",
+    "mensaje": "runtime error: integer divide by zero",
+    "propios": ["main.trabajador", "main.lanzar"]
+  },
+  "go-created.txt": {
+    "lenguaje": "go",
+    "tipo": "runtime error",
+    "mensaje": "runtime error: integer divide by zero",
+    "propios": ["main.trabajador", "main.main"]
+  },
+  "go-generic.txt": {
+    "lenguaje": "go",
+    "tipo": "panic",
+    "mensaje": "boom",
+    "propios": ["main.Map[...]", "main.main"]
+  },
+  "go-trimpath.txt": {
+    "lenguaje": "go",
+    "tipo": "panic",
+    "mensaje": "boom",
+    "propios": ["github.com/acme/api/handlers.Crear"]
+  },
+  "gradle-app.txt": {
+    "lenguaje": "java",
+    "tipo": "org.opentest4j.AssertionFailedError",
+    "mensaje": "expected: <2> but was: <3>",
+    "propios": ["com.acme.CalcTest.suma"]
+  },
+  "java-caused-more.txt": {
+    "lenguaje": "java",
+    "tipo": "org.postgresql.util.PSQLException",
+    "mensaje": "ERROR: duplicate key value violates unique constraint \"uk_email\"",
+    "propios": ["com.acme.usuarios.ServicioUsuarios.crear"]
+  },
+  "java-module-ver.txt": {
+    "lenguaje": "java",
+    "tipo": "java.lang.RuntimeException",
+    "mensaje": "boom",
+    "propios": ["com.acme.app.Main.run"]
+  },
+  "kotlin-coroutine.txt": {
+    "lenguaje": "java",
+    "tipo": "java.lang.IllegalStateException",
+    "mensaje": "Fallo",
+    "propios": ["com.acme.MainKt$main$1.invokeSuspend", "com.acme.MainKt.main", "com.acme.MainKt.main"]
+  },
+  "net-framework.txt": {
+    "lenguaje": "dotnet",
+    "tipo": "System.NullReferenceException",
+    "mensaje": "Object reference not set to an instance of an object.",
+    "propios": ["Tienda.Program.Main"]
+  },
+  "net-inner.txt": {
+    "lenguaje": "dotnet",
+    "tipo": "System.InvalidOperationException",
+    "mensaje": "Fallo al guardar",
+    "propios": ["Tienda.Disco.Escribir", "Tienda.Servicio.Guardar"]
+  },
+  "net-lambda.txt": {
+    "lenguaje": "dotnet",
+    "tipo": "System.Exception",
+    "mensaje": "x",
+    "propios": ["Tienda.Servicio.<>c__DisplayClass3_0.<Guardar>b__0", "Tienda.Servicio.Guardar"]
+  },
+  "node-cause.txt": {
+    "lenguaje": "javascript",
+    "tipo": "Error",
+    "mensaje": "no se pudo cargar",
+    "propios": ["cargar", "main"]
+  },
+  "node-enoent.txt": {
+    "lenguaje": "javascript",
+    "tipo": "Error",
+    "mensaje": "ENOENT: no such file or directory, open 'datos.json'",
+    "propios": ["Object.<anonymous>"]
+  },
+  "node-promiseall.txt": {
+    "lenguaje": "javascript",
+    "tipo": "TypeError",
+    "mensaje": "x is not a function",
+    "propios": ["main"]
+  },
+  "py-chain.txt": {
+    "lenguaje": "python",
+    "tipo": "app.errores.ErrorDeBase",
+    "mensaje": "no hay base",
+    "propios": ["<module>", "iniciar", "conectar"]
+  },
+  "py-during.txt": {
+    "lenguaje": "python",
+    "tipo": "ValueError",
+    "mensaje": "mal",
+    "propios": ["<module>"]
+  },
+  "py-jupyter.txt": {
+    "lenguaje": "python",
+    "tipo": "ZeroDivisionError",
+    "mensaje": "division by zero",
+    "propios": ["<cell>"]
+  },
+  "py-pydantic.txt": {
+    "lenguaje": "python",
+    "tipo": "pydantic_core._pydantic_core.ValidationError",
+    "mensaje": "1 validation error for User",
+    "propios": ["<module>"]
+  },
+  "py-win-stdlib.txt": {
+    "lenguaje": "python",
+    "tipo": "RuntimeError",
+    "mensaje": "x",
+    "propios": ["<module>", "main"]
+  },
+  "py311-carets.txt": {
+    "lenguaje": "python",
+    "tipo": "ZeroDivisionError",
+    "mensaje": "division by zero",
+    "propios": ["<module>"]
+  },
+  "rust-full.txt": {
+    "lenguaje": "rust",
+    "tipo": "panic",
+    "mensaje": "boom",
+    "propios": ["miapp::cargar::h1a2b3c4d5e6f7a8b", "miapp::main::h9f8e7d6c5b4a3210"]
+  },
+  "rust-old.txt": {
+    "lenguaje": "rust",
+    "tipo": "panic",
+    "mensaje": "called `Option::unwrap()` on a `None` value",
+    "propios": []
+  }
+}

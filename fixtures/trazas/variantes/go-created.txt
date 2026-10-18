@@ -1,0 +1,8 @@
+panic: runtime error: integer divide by zero
+
+goroutine 18 [running]:
+main.trabajador(0x0)
+	/home/u/w/main.go:9 +0x7c
+created by main.main in goroutine 1
+	/home/u/w/main.go:15 +0x2f
+exit status 2

@@ -1,0 +1,2 @@
+Unhandled Exception: System.NullReferenceException: Object reference not set to an instance of an object.
+   at Tienda.Program.Main(String[] args) in C:\src\Tienda\Program.cs:line 15

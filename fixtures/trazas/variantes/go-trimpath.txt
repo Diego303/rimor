@@ -1,0 +1,7 @@
+panic: boom
+
+goroutine 1 [running]:
+github.com/gin-gonic/gin.(*Context).Next(...)
+	github.com/gin-gonic/gin@v1.9.1/context.go:174
+github.com/acme/api/handlers.Crear(0xc000184000)
+	github.com/acme/api/handlers/crear.go:22 +0x1b

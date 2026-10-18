@@ -43,10 +43,13 @@ function Espia() {
   return <textarea aria-label="campo" />;
 }
 
-function montar(alRecibir = vi.fn(), alAbrir = vi.fn()) {
+function montar(alRecibir = vi.fn(), alAbrir = vi.fn(), conRegistro = registro) {
   render(
     <ProveedorEspacio dependencias={dependencias}>
-      <ProveedorLectores registro={registro} ejecutar={ejecutar}>
+      <ProveedorLectores
+        registro={conRegistro}
+        ejecutar={conRegistro === registro ? ejecutar : ejecutorEnHilo(conRegistro)}
+      >
         <ProveedorAvisos>
           <ProveedorCaptura alRecibir={alRecibir} alAbrir={alAbrir}>
             <Espia />
@@ -138,6 +141,26 @@ describe('captura en la interfaz', () => {
     expect(repositorio?.elementos()).toHaveLength(1);
     // Cuenta como duplicado evitado (MET-06).
     expect(contadores?.total('duplicadosEvitados')).toBe(1);
+  });
+
+  it('dos errores iguales soltados a la vez cuentan un solo «error reconocido»', async () => {
+    const { lectorError } = await import('../lectores/error/lector');
+    const conError = crearRegistro([...registro.lectores.slice(0, 1), lectorError, ...registro.lectores.slice(1)]);
+    montar(vi.fn(), vi.fn(), conError);
+    await screen.findByLabelText('campo');
+    await act(async () => undefined);
+    // La misma traza con otro número de línea: no es un duplicado, pero sí el mismo error.
+    const traza = (linea: number) =>
+      `TypeError: x is not a function\n    at cargar (/app/src/carga.js:${linea}:3)\n    at main (/app/src/index.js:4:3)`;
+    arrastrar('drop', [
+      new File([traza(10)], 'a.txt', { type: 'text/plain' }),
+      new File([traza(11)], 'b.txt', { type: 'text/plain' }),
+    ]);
+    await waitFor(() => expect(repositorio?.elementos().filter((f) => f.tipo === 'error')).toHaveLength(2));
+    await waitFor(() => expect(contadores?.total('erroresReconocidos')).toBe(1));
+    // Y no pasa a 2 cuando el otro termina de derivar.
+    await act(async () => new Promise((r) => setTimeout(r, 50)));
+    expect(contadores?.total('erroresReconocidos')).toBe(1);
   });
 
   it('un archivo de más de 50 MB se rechaza con un aviso que lo explica', async () => {

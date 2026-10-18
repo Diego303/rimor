@@ -90,3 +90,43 @@ Cubre las siete tareas y las pruebas de la ficha. «Así lo resolví» se apoya 
 - En Rust solo es propio un marco con ruta (los de la librería estándar a menudo no la llevan); en Go, los de `main.` y los de módulos con punto en su primera parte fuera de `pkg/mod`.
 - El corpus de detección `error` toma 4 trazas de cada lenguaje y una más de Rust.
 
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 21:50): tipos 0 errores; Biome, colores y textos, OK; Vitest 51 archivos y 724 pruebas, OK; construcción OK; carga inicial 193,5 KB. **`pnpm deteccion`**: 100 % de 150 ejemplos.
+
+| Criterio | Evidencia |
+|---|---|
+| Analizadores de seis lenguajes | Las 30 trazas del corpus y 25 variantes reales de `fixtures/trazas/variantes/`, con tipo, mensaje y **nombre** de cada marco propio |
+| Marcos de tu código frente a librerías y sistema | Variantes con Spring, PostgreSQL, Gradle, la librería estándar de Go fuera de `/usr/local/go`, `-trimpath`, Python en Windows y `Promise.all` |
+| Huella estable | Otras rutas, números, direcciones (`RUST_BACKTRACE=full`), goroutines y celdas de Jupyter dan la misma huella |
+| Huellas distintas con marcos propios distintos | Métodos de Go con receptor, Python con los mismos marcos externos, funciones anónimas de archivos distintos, Java con otra clase |
+| Ocurrencias y «así lo resolví» | Respuesta y vista citan solo notas de ocurrencias anteriores; ya resuelto, la vista enseña lo que escribiste y no ofrece añadirlo otra vez |
+| Vista | Prueba de la vista: «3.ª vez», «el 2 y el 15 de octubre», la nota, tus marcos, plegados; guardar la nota y verla después |
+| Cifras | `ocurrencias`, `primera_vez`, `ultima_vez` con el contexto y el propio elemento |
+| Respuesta | Nueva y repetida (con nota) en es y en; ordinales ingleses correctos |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Go: los métodos con receptor puntero perdían el nombre** (y dos métodos distintos compartían huella): el nombre llega hasta el paréntesis de los argumentos.
+2. **`java.lang.Exception`, `java.lang.Error` y `System.Exception` no se reconocían**: el prefijo antes del sufijo es opcional.
+3. **La cabecera de .NET Framework y Mono** (`Unhandled Exception: …`) se reconoce.
+4. **Un log con una traza en medio pasaba a Error**: si el texto es sobre todo log, Error baja a 0,75 (Log gana con 0,85 y se ofrece la duda).
+5. **Python tomaba los dos marcos más externos para la huella**: se toman los dos propios más internos, en cualquier lenguaje.
+6. **Direcciones de `RUST_BACKTRACE=full` y «in goroutine N» de `created by`** ya no entran en la función.
+7. **Node con ` {` al final del marco o con `[cause]`**: se quita la llave; los marcos de la causa no cuentan; `Promise.all (index 0)` es de sistema.
+8. **Funciones anónimas que chocaban**: cada marco entra en la huella con su archivo (sin carpetas); la celda de Jupyter, sin su número.
+9. **Python tomaba como tipo la última línea sin sangría** (pydantic, uvicorn): es la primera tras los marcos; con excepciones encadenadas manda el último bloque.
+10. **Librerías tomadas por tuyas**: más espacios de nombres de Java, proxies de Spring, la librería estándar de Go por su paquete (sin punto antes de la barra), módulos con versión (`@v1.9.1`) y `\Lib\` de Python en Windows.
+11. **Formatos que no se leían**: Gradle (`app//`), módulos de Java (`modulo@1.0/`), genéricos de Go, IPython y Jupyter, pilas de Firefox y Safari.
+12. **Título repetido en Go**: «runtime error: …» sin repetir el tipo.
+13. **Ordinales ingleses**: «2nd», «21st», «22nd» con `fmtOrdinal`.
+14. **«Así lo resolví» no se veía en el propio elemento**: ya resuelto, la vista enseña la nota y no ofrece añadir otra; solo se citan notas de ocurrencias anteriores.
+15. **«Errores reconocidos» contaba de más con dos errores iguales a la vez**: cuenta solo si la huella está en un elemento anterior (por ULID).
+16. **Un texto con «  at least…» se tomaba por traza**: un marco de JavaScript necesita una ubicación (`ruta:línea` o una de sistema).
+17. **Expresión cuadrática en los marcos de JavaScript**: se parten a mano por el último « (».
+18. **Diferencias con la referencia**: la nota del veredicto va con el color del texto (`p.sm`) y las fechas del mismo mes se dicen «el 2 y el 15 de octubre».
+
+Sin cambiar: la fecha de la nota citada es `modificado` del elemento resuelto (una edición posterior la mueve); deshacer una captura no descuenta «errores reconocidos». La versión de la huella sigue en 1: no se ha publicado ninguna versión con la anterior.

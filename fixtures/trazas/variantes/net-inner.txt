@@ -1,0 +1,5 @@
+System.InvalidOperationException: Fallo al guardar
+ ---> System.IO.IOException: Disk full
+   at Tienda.Disco.Escribir() in /src/Disco.cs:line 9
+   --- End of inner exception stack trace ---
+   at Tienda.Servicio.Guardar() in /src/Servicio.cs:line 20

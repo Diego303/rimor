@@ -68,7 +68,10 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
     [espacio, lectores],
   );
 
-  /** Cuenta un error reconocido si, con sus derivados, su huella ya estaba en otro elemento. */
+  /**
+   * Cuenta un error reconocido si, con sus derivados, su huella ya estaba en un elemento anterior (los ULID se
+   * ordenan por su creación: de dos errores iguales soltados a la vez, solo cuenta el segundo).
+   */
   const contarSiReconocido = useCallback(
     async (c: Capturado) => {
       if (!espacio || !lectores || !c.derivados) return;
@@ -80,7 +83,7 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
         huella &&
         espacio.repositorio
           .elementos()
-          .some((o) => o.id !== c.elemento.frontmatter.id && o.lector.resumen.huella === huella)
+          .some((o) => o.id < c.elemento.frontmatter.id && o.lector.resumen.huella === huella)
       )
         await espacio.contadores.contar('erroresReconocidos');
     },

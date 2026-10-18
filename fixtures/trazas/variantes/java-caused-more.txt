@@ -1,0 +1,12 @@
+org.springframework.dao.DataIntegrityViolationException: could not execute statement; SQL [n/a]; constraint [uk_email]
+	at org.springframework.orm.jpa.vendor.HibernateJpaDialect.convertHibernateAccessException(HibernateJpaDialect.java:276)
+	at com.acme.usuarios.ServicioUsuarios.crear(ServicioUsuarios.java:31)
+	at com.acme.usuarios.ServicioUsuarios$$SpringCGLIB$$0.crear(<generated>)
+Caused by: org.hibernate.exception.ConstraintViolationException: could not execute statement
+	at org.hibernate.exception.internal.SQLStateConversionDelegate.convert(SQLStateConversionDelegate.java:97)
+	... 45 more
+Caused by: org.postgresql.util.PSQLException: ERROR: duplicate key value violates unique constraint "uk_email"
+  Detail: Key (email)=(a@b.com) already exists.
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2713)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2401)
+	... 60 more

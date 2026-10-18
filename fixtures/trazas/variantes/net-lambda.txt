@@ -1,0 +1,3 @@
+System.Exception: x
+   at Tienda.Servicio.<>c__DisplayClass3_0.<Guardar>b__0() in /src/Servicio.cs:line 20
+   at Tienda.Servicio.Guardar() in /src/Servicio.cs:line 18

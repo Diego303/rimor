@@ -7,7 +7,7 @@ import { type FrontmatterComun, isoConZona } from '@rimor/formato';
 import { useEffect, useState } from 'react';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
-import { fmtDia, type Idioma } from '../../i18n/formatos';
+import { fmtDia, fmtOrdinal, type Idioma } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { construirContexto } from '../../respuestas/contexto';
 import { Boton, Detalles, Tarjeta, Veredicto } from '../../ui/componentes';
@@ -18,10 +18,33 @@ import { textos } from './textos';
 
 type T = (c: string, v?: Record<string, string | number>) => string;
 
-/** «el 2 oct y el 15 oct». */
-function listaDeFechas(fechas: string[], idioma: Idioma, t: T): string {
-  const partes = fechas.map((f) => t('fechaEl', { fecha: fmtDia(new Date(f), new Date(), idioma) }));
-  return partes.length > 1 ? `${partes.slice(0, -1).join(', ')}${t('y')}${partes.at(-1)}` : (partes[0] ?? '');
+const enLista = (partes: string[], t: T) =>
+  partes.length > 1 ? `${partes.slice(0, -1).join(', ')}${t('y')}${partes.at(-1)}` : (partes[0] ?? '');
+
+/**
+ * «el 2 y el 15 de octubre» si todas son del mismo mes (como la pantalla de referencia); si no, «el 28 sep y
+ * el 2 oct».
+ */
+export function listaDeFechas(fechas: string[], idioma: Idioma, t: T, ahora = new Date()): string {
+  const dias = fechas.map((f) => new Date(f)).filter((d) => !Number.isNaN(d.getTime()));
+  const primera = dias[0];
+  if (!primera) return '';
+  const mismoMes = dias.every((d) => d.getMonth() === primera.getMonth() && d.getFullYear() === primera.getFullYear());
+  if (!mismoMes)
+    return enLista(
+      dias.map((d) => t('fechaEl', { fecha: fmtDia(d, ahora, idioma) })),
+      t,
+    );
+  const formato: Intl.DateTimeFormatOptions =
+    primera.getFullYear() === ahora.getFullYear() ? { month: 'long' } : { month: 'long', year: 'numeric' };
+  const mes = new Intl.DateTimeFormat(idioma, formato).format(primera);
+  return t('diasDe', {
+    dias: enLista(
+      dias.map((d) => t('dia', { dia: d.getDate() })),
+      t,
+    ),
+    mes,
+  });
 }
 
 export default function VistaError({ el, datos }: PropsVista<DatosError>) {
@@ -56,7 +79,15 @@ export default function VistaError({ el, datos }: PropsVista<DatosError>) {
     .sort((a, b) => Date.parse(a.creado) - Date.parse(b.creado));
   const propios = datos.marcos.filter((m) => m.propio);
   const ajenos = datos.marcos.filter((m) => !m.propio);
-  const primeraNota = ctx?.notas[0];
+  // Lo que se escribió al resolver una ocurrencia anterior; y lo que se escribió en esta, si ya está resuelta.
+  const primeraNota = ctx?.notas.find((n) => anteriores.some((o) => o.ref === n.ref));
+  const notaPropia =
+    el.frontmatter.estado === 'resuelto'
+      ? (el.notas
+          .split('\n')
+          .find((l) => l.trim())
+          ?.trim() ?? null)
+      : null;
 
   async function guardarNota() {
     const texto = nota.trim();
@@ -95,7 +126,7 @@ export default function VistaError({ el, datos }: PropsVista<DatosError>) {
         <Tarjeta>
           <Veredicto
             tono="bad"
-            cifra={t('vez', { n: anteriores.length + 1 })}
+            cifra={t('vez', { ordinal: fmtOrdinal(anteriores.length + 1, idioma) })}
             frase={t('yaTePaso', {
               fechas: listaDeFechas(
                 anteriores.map((o) => o.creado),
@@ -111,8 +142,11 @@ export default function VistaError({ el, datos }: PropsVista<DatosError>) {
                   })
                 : undefined
             }
+            explicacionAtenuada={false}
           />
+          {notaPropia && <p className="sm">{t('loResolviste', { nota: notaPropia })}</p>}
           {!soloLectura &&
+            !notaPropia &&
             (escribiendo ? (
               <div className="nota-resolucion">
                 <textarea

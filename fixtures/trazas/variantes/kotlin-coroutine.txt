@@ -1,0 +1,7 @@
+Exception in thread "main" java.lang.IllegalStateException: Fallo
+	at com.acme.MainKt$main$1.invokeSuspend(Main.kt:9)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)
+	at kotlinx.coroutines.BlockingEventLoop.processNextEvent(EventLoop.common.kt:280)
+	at com.acme.MainKt.main(Main.kt:5)
+	at com.acme.MainKt.main(Main.kt)

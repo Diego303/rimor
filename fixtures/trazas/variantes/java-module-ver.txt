@@ -1,0 +1,3 @@
+java.lang.RuntimeException: boom
+	at com.acme.app@1.0/com.acme.app.Main.run(Main.java:10)
+	at java.base/java.lang.Thread.run(Thread.java:1583)

@@ -1,0 +1,4 @@
+org.opentest4j.AssertionFailedError: expected: <2> but was: <3>
+	at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+	at app//com.acme.CalcTest.suma(CalcTest.kt:12)

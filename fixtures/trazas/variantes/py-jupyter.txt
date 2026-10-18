@@ -1,0 +1,6 @@
+---------------------------------------------------------------------------
+ZeroDivisionError                         Traceback (most recent call last)
+Cell In[3], line 1
+----> 1 1/0
+
+ZeroDivisionError: division by zero

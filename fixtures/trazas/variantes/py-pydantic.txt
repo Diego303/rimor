@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/home/u/app/main.py", line 8, in <module>
+    User(age="x")
+  File "/home/u/app/.venv/lib/python3.12/site-packages/pydantic/main.py", line 193, in __init__
+    self.__pydantic_validator__.validate_python(data, self_instance=self)
+pydantic_core._pydantic_core.ValidationError: 1 validation error for User
+age
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='x', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.5/v/int_parsing

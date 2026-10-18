@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "C:\Users\ana\proyecto\main.py", line 4, in <module>
+    asyncio.run(main())
+  File "C:\Users\ana\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+  File "C:\Users\ana\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 653, in run_until_complete
+    return future.result()
+  File "C:\Users\ana\proyecto\main.py", line 2, in main
+    raise RuntimeError("x")
+RuntimeError: x
