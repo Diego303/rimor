@@ -6,12 +6,17 @@ import { avisosDeMetodo, comparar, describir, icMediana, mannWhitney, ordenados 
 const TOL_ESTADISTICO = 1e-9;
 const TOL_P = 1e-6;
 
+/** Estadísticos: tolerancia relativa con un mínimo absoluto igual a ella (valores grandes y cercanos a 0). */
 const cerca = (real: number, esperado: number | null, tol: number, nombre: string) => {
   if (esperado === null) return expect(Number.isNaN(real), nombre).toBe(true);
   expect(Math.abs(real - esperado), `${nombre}: ${real} frente a ${esperado}`).toBeLessThanOrEqual(
     tol * Math.max(1, Math.abs(esperado)),
   );
 };
+
+/** p: tolerancia relativa pura, para que un p de 1e-8 no pase si sale 0. */
+const cercaP = (real: number, esperado: number) =>
+  expect(Math.abs(real - esperado), `p: ${real} frente a ${esperado}`).toBeLessThanOrEqual(TOL_P * esperado);
 
 describe('referencias de NumPy y SciPy', () => {
   it('hay al menos 30 casos', () => {
@@ -39,10 +44,11 @@ describe('referencias de NumPy y SciPy', () => {
           'p95',
         ] as const)
           cerca(d[campo], ref[campo], TOL_ESTADISTICO, campo);
+        expect([d.icBajo, d.icAlto]).toEqual(ref.ic);
       }
       const mw = mannWhitney(c.a, c.b);
       cerca(mw.u, c.mw.u, TOL_ESTADISTICO, 'U');
-      cerca(mw.p, c.mw.p, TOL_P, 'p');
+      cercaP(mw.p, c.mw.p);
     });
   }
 });
@@ -60,6 +66,33 @@ describe('el ejemplo del plan', () => {
 
   it('IC 95 % de la mediana de reqwest: 38,11 – 39,02 (pantallas de referencia)', () => {
     expect(icMediana(ordenados(plan?.a ?? []))).toEqual([38.11, 39.02]);
+  });
+});
+
+describe('casos límite de la revisión', () => {
+  it('el sentido sale de la diferencia aunque las medianas sean negativas o cero', () => {
+    const neg = comparar(
+      Array.from({ length: 20 }, (_, i) => -11 + (i % 3) * 0.1),
+      Array.from({ length: 20 }, (_, i) => -6 + (i % 3) * 0.1),
+    );
+    expect(neg.cambio).toBeGreaterThan(0);
+    expect(neg.sentido).toBe('sube');
+    const cero = comparar([...Array(11).fill(0), ...Array(10).fill(1)], [...Array(10).fill(-1), ...Array(11).fill(0)]);
+    expect(Number.isNaN(cero.cambio)).toBe(true);
+    expect(cero.sentido).toBe('baja');
+  });
+
+  it('un NaN en la entrada no da resultados engañosos', () => {
+    const d = describir([3, Number.NaN, 1, 2]);
+    expect(Number.isNaN(d.mediana) && Number.isNaN(d.minimo) && Number.isNaN(d.icBajo)).toBe(true);
+    expect(Number.isNaN(mannWhitney([1, 2, Number.NaN, 4, 5], [6, 7, 8, 9, 10]).p)).toBe(true);
+    expect(comparar([1, Number.NaN], [2, 3]).significativo).toBe(false);
+  });
+
+  it('media 0 con dispersión avisa de ruido', () => {
+    expect(avisosDeMetodo(Array.from({ length: 12 }, (_, i) => (i % 2 ? 1 : -1))).map((a) => a.tipo)).toContain(
+      'ruido',
+    );
   });
 });
 

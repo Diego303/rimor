@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 04:08
-**Ahora:** IN-011 · Paquete de estadística · fase verificación
-**Siguiente:** IN-090 · Animaciones del símbolo (núcleo)
-**Progreso:** F0 9/9 · v0.1 10/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 19/99
+**Última actualización:** 2026-10-18 04:15
+**Ahora:** IN-090 · Animaciones del símbolo (núcleo) · fase análisis y diseño
+**Siguiente:** IN-007 · Espacio de trabajo y persistencia
+**Progreso:** F0 9/9 · v0.1 11/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 20/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -28,7 +28,7 @@
 | IN-008 | Carcasa, navegación, atajos y diseño adaptable | v0.1 | 1 | hecha | bd270d9 f9cda52 daacb69 | docs/features/IN-008-carcasa.md |
 | IN-009 | Saneado y política de seguridad de contenido | v0.1 | 1 | hecha | f63fd83 ae2a843 d0c9d58 | docs/features/IN-009-saneado-csp.md |
 | IN-010 | Ocultación de secretos | v0.1 | 1 | hecha | a206f2c e8cae1b 34b4ca4 | docs/features/IN-010-secretos.md |
-| IN-011 | Paquete de estadística | v0.1 | 1 | en implementación | 5838d9a | docs/features/IN-011-estadistica.md |
+| IN-011 | Paquete de estadística | v0.1 | 1 | hecha | 5838d9a b2ebf4e | docs/features/IN-011-estadistica.md |
 | IN-090 | Animaciones del símbolo (núcleo) | v0.1 | 1 | pendiente | — | — |
 | IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | pendiente | — | — |
 | IN-012 | Contrato y registro de lectores | v0.1 | 2 | pendiente | — | — |
@@ -163,7 +163,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-011 | implementación | pnpm verificar OK (30 referencias de SciPy) | … |
+| 2026-10-18 | IN-011 | verificación | pnpm verificar OK; 7 hallazgos de la revisión corregidos | … |
+| 2026-10-18 | IN-011 | implementación | pnpm verificar OK (30 referencias de SciPy) | b2ebf4e |
 | 2026-10-18 | IN-011 | análisis y diseño | métodos documentados y referencias de SciPy | 5838d9a |
 | 2026-10-18 | IN-010 | verificación | pnpm verificar OK; 10 hallazgos de seguridad corregidos | 34b4ca4 |
 | 2026-10-18 | IN-010 | implementación | pnpm verificar OK (272 pruebas) | e8cae1b |
@@ -206,5 +207,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-011: implementado. Falta verificación.
-- Último `pnpm verificar`: OK (2026-10-18 08:50).
+- IN-011 hecha. Siguiente: IN-090 (diseño y código en borrador en el scratchpad in090/; también borradores de IN-007 e IN-012).
+- Último `pnpm verificar`: OK (2026-10-18 09:10).

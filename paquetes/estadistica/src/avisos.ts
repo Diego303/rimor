@@ -15,7 +15,9 @@ export function avisosDeMetodo(valores: readonly number[]): AvisoMetodo[] {
   const d = describir(valores);
   const avisos: AvisoMetodo[] = [];
   if (d.n < MINIMO_REPETICIONES) avisos.push({ tipo: 'pocas', n: d.n, minimo: MINIMO_REPETICIONES });
-  if (Number.isFinite(d.cv) && Math.abs(d.cv) > CV_MAXIMO) avisos.push({ tipo: 'ruido', cv: d.cv, maximo: CV_MAXIMO });
+  // Con media 0 el CV es infinito: si hay dispersión, es ruido igualmente.
+  const ruidoso = Number.isFinite(d.cv) ? Math.abs(d.cv) > CV_MAXIMO : d.desviacion > 0;
+  if (d.n > 1 && ruidoso) avisos.push({ tipo: 'ruido', cv: d.cv, maximo: CV_MAXIMO });
   const fuera = d.n >= 4 ? atipicos(valores) : [];
   if (fuera.length) avisos.push({ tipo: 'atipicos', valores: fuera });
   return avisos;

@@ -83,3 +83,30 @@ Cubre la ficha. TS puro, sin dependencias, utilizable desde la CLI.
 
 - `generar.py` se ejecutó con NumPy 2.2.6 y SciPy 1.15.3 en un entorno virtual fuera del repositorio; `casos.json` guarda los 30 casos y las versiones con que se generaron.
 - La prueba compara con tolerancia relativa (con un mínimo absoluto igual a la tolerancia) para que los casos con valores de un millón no exijan precisión imposible en coma flotante.
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 09:10): tipos 0 errores; Biome, colores y textos, OK; Vitest 25 archivos y 327 pruebas (42 del paquete), OK; construcción OK; carga inicial 113,6 KB.
+
+| Criterio | Evidencia |
+|---|---|
+| Mediana, media, desviación, CV, mínimo, máximo, percentiles 5 y 95 | 33 casos de NumPy/SciPy con tolerancia 10⁻⁹; método 7 documentado |
+| IC 95 % de la mediana por estadísticos de orden | En `casos.json` (fórmula de las pantallas) y comparado en cada caso, también con n = 1, 2, 3 y 4 |
+| Mann-Whitney U con empates y continuidad, p bilateral | Igual que SciPy `method='asymptotic'`: U exacta y p con **tolerancia relativa** 10⁻⁶ (incluido p = 3,6·10⁻²¹ con 60 frente a 60 sin solape) |
+| Atípicos (IQR × 1,5) y avisos (n < 10, CV > 5 %, atípicos) | Pruebas de avisos, también con media 0 |
+| Veredicto: cambio de medianas y significación (0,05) | `comparar`; sentido correcto con medianas negativas, nulas o iguales |
+| Hodges-Lehmann como firma | `hodgesLehmann.ts` (tipo; lo implementa IN-047) |
+| El ejemplo del plan da 38,535 y 36,795, −4,5 % y p < 0,001 | Prueba «el ejemplo del plan»; IC 38,11 – 39,02 |
+| Propiedades | Mediana, percentiles e IC dentro de [mín, máx] y en orden; Mann-Whitney con p en [0, 1], U₁ + U₂ = n₁·n₂ y simétrica |
+
+### Revisión independiente
+
+Contrastó 400 casos aleatorios con SciPy (U exacta, p dentro de 8·10⁻⁸). Hallazgos corregidos con prueba:
+
+1. Con mediana A negativa el cambio y el sentido salían al revés: el cambio se divide por |A| y el sentido sale de la diferencia.
+2. Con mediana A = 0 el cambio era NaN y el sentido «sube» por defecto: el sentido sale de la diferencia y, si las medianas son iguales pero la prueba ve diferencia, del estadístico U.
+3. Un NaN en la entrada daba estadísticos incoherentes y un p finito: con valores no finitos, todo es NaN y la comparación no es significativa.
+4. Con media 0 no salía el aviso de ruido: ahora sí, si hay dispersión.
+5. p muy pequeños perdían precisión (`2·(1 − Φ)`): se usa `erfc` directamente.
+6. La tolerancia de p era absoluta (un p de 4·10⁻⁸ habría pasado como 0): ahora es relativa.
+7. El IC de la mediana solo se probaba con el ejemplo: ahora en los 33 casos y con n pequeño.

@@ -57,8 +57,31 @@ export function icMediana(orden: readonly number[], z = 1.96): [number, number] 
   return [orden[j - 1] as number, orden[k - 1] as number];
 }
 
-/** Todas las medidas descriptivas de una serie. Con menos de dos valores, desviación y CV son NaN. */
+const VACIA: Descriptiva = {
+  n: 0,
+  mediana: Number.NaN,
+  media: Number.NaN,
+  desviacion: Number.NaN,
+  cv: Number.NaN,
+  minimo: Number.NaN,
+  maximo: Number.NaN,
+  p5: Number.NaN,
+  p95: Number.NaN,
+  q1: Number.NaN,
+  q3: Number.NaN,
+  icBajo: Number.NaN,
+  icAlto: Number.NaN,
+};
+
+/** ¿Son todos números finitos? Con un NaN o un infinito, ningún estadístico tiene sentido. */
+export const todosFinitos = (valores: readonly number[]): boolean => valores.every(Number.isFinite);
+
+/**
+ * Todas las medidas descriptivas de una serie. Con menos de dos valores, desviación y CV son NaN; si algún
+ * valor no es finito, todo es NaN (salvo `n`), en vez de un resultado engañoso.
+ */
 export function describir(valores: readonly number[]): Descriptiva {
+  if (!todosFinitos(valores)) return { ...VACIA, n: valores.length };
   const orden = ordenados(valores);
   const n = orden.length;
   const media = n ? orden.reduce((s, x) => s + x, 0) / n : Number.NaN;

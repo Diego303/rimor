@@ -16,6 +16,14 @@ from scipy import stats
 rng = np.random.default_rng(20261018)
 
 
+def ic_mediana(v, z=1.96):
+    a = np.sort(np.asarray(v, dtype=float))
+    n = len(a)
+    j = max(1, math.floor(n / 2 - z * math.sqrt(n) / 2))
+    k = min(n, math.ceil(1 + n / 2 + z * math.sqrt(n) / 2))
+    return [float(a[j - 1]), float(a[k - 1])]
+
+
 def describir(v):
     a = np.asarray(v, dtype=float)
     sd = float(np.std(a, ddof=1)) if len(a) > 1 else None
@@ -32,6 +40,8 @@ def describir(v):
         "q1": float(np.percentile(a, 25)),
         "q3": float(np.percentile(a, 75)),
         "p95": float(np.percentile(a, 95)),
+        # Fórmula de los rangos de las pantallas de referencia (no hay equivalente en SciPy).
+        "ic": ic_mediana(a),
     }
 
 
@@ -74,6 +84,9 @@ casos.append(("microsegundos", (rng.normal(850, 40, 18) / 1000).round(5).tolist(
 casos.append(("negativos y ceros", [-3.0, -1.5, 0.0, 0.0, 2.5, 4.0, -0.5], [-2.0, 0.0, 1.0, 1.0, 3.5, 5.0, 0.5, 2.0]))
 casos.append(("grandes", rng.normal(1e6, 5e4, 33).round(1).tolist(), rng.normal(1.02e6, 5e4, 29).round(1).tolist()))
 casos.append(("dos valores", [10.0, 12.0], [11.0, 13.0]))
+casos.append(("un valor", [7.0], [8.0, 9.0, 10.0]))
+casos.append(("tres y cuatro", [3.0, 1.0, 2.0], [4.0, 6.0, 5.0, 7.0]))
+casos.append(("sin solape grande", list(range(60)), list(range(100, 160))))
 
 salida = []
 for nombre, a, b in casos:

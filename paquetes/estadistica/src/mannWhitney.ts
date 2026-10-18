@@ -3,7 +3,8 @@
  * por empates y corrección de continuidad; p bilateral. Coincide con
  * `scipy.stats.mannwhitneyu(x, y, alternative='two-sided', method='asymptotic', use_continuity=True)`.
  */
-import { fda } from './normal';
+import { todosFinitos } from './descriptiva';
+import { erfc } from './normal';
 
 export interface ResultadoMannWhitney {
   /** U de la primera muestra (suma de rangos de x − n₁(n₁+1)/2). */
@@ -14,7 +15,7 @@ export interface ResultadoMannWhitney {
 export function mannWhitney(x: readonly number[], y: readonly number[]): ResultadoMannWhitney {
   const n1 = x.length;
   const n2 = y.length;
-  if (!n1 || !n2) return { u: Number.NaN, p: Number.NaN };
+  if (!n1 || !n2 || !todosFinitos(x) || !todosFinitos(y)) return { u: Number.NaN, p: Number.NaN };
   const todos = [...x.map((v) => [v, 0] as const), ...y.map((v) => [v, 1] as const)].sort((a, b) => a[0] - b[0]);
   const n = n1 + n2;
   let empates = 0;
@@ -36,5 +37,6 @@ export function mannWhitney(x: readonly number[], y: readonly number[]): Resulta
   const desvio = Math.abs(u - media);
   // Corrección de continuidad hacia la media, sin pasarse de ella.
   const zc = Math.max(0, desvio - 0.5) / sigma;
-  return { u, p: Math.min(1, 2 * (1 - fda(zc))) };
+  // 2·(1 − Φ(z)) = erfc(z/√2), sin la cancelación de restar a 1 cuando p es muy pequeño.
+  return { u, p: Math.min(1, erfc(zc / Math.SQRT2)) };
 }
