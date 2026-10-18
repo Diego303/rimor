@@ -112,3 +112,30 @@ Cubre la ficha; dos tareas dependen de componentes de IN posteriores y se anotan
 - SVGO pasa los trazados a coordenadas relativas (`M7 24c3.5-11.5…`): mismo dibujo, menos bytes. El favicon no lleva `<title>` (no lo traía el original).
 - `scripts/comprobar-dist.mjs` (`pnpm comprobar:dist`, dentro de `verificar`): comprueba que el HTML construido enlaza el favicon, el PNG de 32 y el `apple-touch-icon` con la `BASE` del entorno, que existen en `dist/` y que están los dos `theme-color`.
 - Biome no revisa `public/marca/` ni `docs/marca/` (salidas generadas); las pruebas de `marca.test.ts` sí.
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 04:45): tipos 0 errores; Biome, colores y textos, OK; Vitest 13 archivos y 114 pruebas, OK; construcción, OK; carga inicial 76,5 KB; `comprobar:dist` OK. Con `BASE=/rimor/` el HTML enlaza `/rimor/marca/favicon.svg` y la comprobación de la construcción pasa.
+
+| Criterio | Evidencia |
+|---|---|
+| Originales en `docs/marca/originales/` con sus LEEME | Copiados en el arranque, sin cambios |
+| `pnpm marca` con SVGO: sin metadatos, con `viewBox`, `<title>`, `<style>` y clases, < 1 KB | `marca.test.ts`: los 12 SVG de `public/marca/` y `docs/marca/svg/` sin `<metadata>`, con `viewBox` y por debajo de 1 KB; `optimizarSvg` falla si se pierde algo de eso o se pasa del peso |
+| Publicar solo lo que se usa | `public/marca/`: `favicon.svg`, PNG de app claro 32, 180, 192 y 512, maskable 192 y 512, y `manifest-iconos.json` (rutas comprobadas) |
+| Favicon con `<style>` y `prefers-color-scheme` tras SVGO | Prueba: estilo oscuro, clases `i` y `k`, trazo de 3,6. El cambio de color en la pestaña con `emulateMedia` queda pendiente de Playwright |
+| `<link rel="icon">`, `apple-touch-icon` y `theme-color` por tema | `Base.astro`; `scripts/comprobar-dist.mjs` lo comprueba en la construcción |
+| `geometria.ts` como única fuente | Prueba contra `rimor-simbolo.svg` original |
+| `SimboloRimor` (tokens, variante, tamaño, título, 3,6 bajo 20 px) y `Logotipo` (texto vivo) | `SimboloRimor.test.tsx` y prueba de `marca.css`/`estilos.css` |
+| Logotipo en contornos | `docs/marca/rimor-logotipo-contornos-{claro,oscuro}.svg`, misma caja y composición que el original (2,6 KB: no se publica en la app) |
+| Contraste del punto sobre `--panel` y de `#191919` sobre `#EE4F1F` | `contraste.test.ts` (≥ 3:1 gráfico en los dos temas; 4,8:1) |
+| Sin rastro del símbolo antiguo | Nada en `src/` ni `public/` lo dibuja; el avatar de las muestras ya usa «Señal» |
+| Raíl y avatar de Rimor | Se conectan en IN-008 e IN-016 (anotado en el seguimiento) |
+
+### Revisión independiente
+
+Hallazgos corregidos:
+
+1. Ninguna prueba comprobaba que el símbolo sigue al tema: prueba de las reglas de `marca.css` y de su importación; además, onda y guion llevan `fill="none"` como atributo, para que nunca salgan rellenos sin estilos.
+2. `optimizarSvg` no comprobaba que SVGO conservara las clases: ahora falla si se pierde alguna.
+3. El logotipo en contornos había perdido el `width`/`height` del original: restaurado y probado.
+4. Las rutas de `manifest-iconos.json` son relativas a `marca/`: anotado para IN-050.

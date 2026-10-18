@@ -60,6 +60,9 @@ export function optimizarSvg(svg, nombre) {
   if (!data.includes('viewBox')) problemas.push('ha perdido el viewBox');
   if (svg.includes('<title') && !data.includes('<title')) problemas.push('ha perdido el <title>');
   if (svg.includes('<style') && !data.includes('<style')) problemas.push('ha perdido el <style>');
+  const clases = (texto) => new Set([...texto.matchAll(/class="([^"]+)"/g)].flatMap((m) => m[1].split(/\s+/)));
+  const perdidas = [...clases(svg)].filter((c) => !clases(data).has(c));
+  if (perdidas.length) problemas.push(`ha perdido las clases ${perdidas.join(', ')}`);
   return { data, problemas };
 }
 
@@ -78,7 +81,7 @@ function logotipoEnContornos(fuente, tinta, senal) {
     })
     .join('');
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" role="img"><title>Rimor</title>` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" width="240" height="96" role="img"><title>Rimor</title>` +
     `<path d="M7 24 C10.5 12.5 13.5 12.5 17 24 S23.5 35.5 27 24" fill="none" stroke="${tinta}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>` +
     `<circle cx="33" cy="15.5" r="3.1" fill="${senal}"/>` +
     `<path d="M40 24 H41" fill="none" stroke="${tinta}" stroke-width="3" stroke-linecap="round"/>` +

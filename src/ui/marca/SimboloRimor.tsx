@@ -24,9 +24,10 @@ export function SimboloRimor({ variante = 'color', tamano = 24, titulo }: Props)
       focusable="false"
     >
       {titulo && <title>{titulo}</title>}
-      <path className="onda" d={ONDA} strokeWidth={trazo} />
+      {/* fill="none" también como atributo: sin la hoja de estilos, la onda nunca sale rellena. */}
+      <path className="onda" d={ONDA} strokeWidth={trazo} fill="none" />
       <circle className="punto" cx={PUNTO.cx} cy={PUNTO.cy} r={PUNTO.r} />
-      <path className="guion" d={GUION} strokeWidth={trazo} />
+      <path className="guion" d={GUION} strokeWidth={trazo} fill="none" />
     </svg>
   );
 }

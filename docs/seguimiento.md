@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 02:44
-**Ahora:** IN-089 · Símbolo «Señal», iconos de app y favicon · fase verificación
-**Siguiente:** IN-005 · Almacén OPFS y en memoria
-**Progreso:** F0 9/9 · v0.1 4/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 13/99
+**Última actualización:** 2026-10-18 02:50
+**Ahora:** IN-005 · Almacén OPFS y en memoria · fase análisis y diseño
+**Siguiente:** IN-006 · Caché de derivados e índice
+**Progreso:** F0 9/9 · v0.1 5/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 14/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -22,7 +22,7 @@
 | IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | hecha | 3f75c99 4b3c27c 63afa3a | docs/features/IN-002-tema-y-componentes.md |
 | IN-003 | Textos, idiomas y formatos | v0.1 | 0 | hecha | e4770f8 2001502 d44efd6 | docs/features/IN-003-textos-idiomas-formatos.md |
 | IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | hecha | eea9cb1 f942aa1 feceb14 | docs/features/IN-004-formato.md |
-| IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | en implementación | 4177d63 | docs/features/IN-089-marca.md |
+| IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | hecha | 4177d63 58a44ca | docs/features/IN-089-marca.md |
 | IN-005 | Almacén OPFS y en memoria | v0.1 | 1 | pendiente | — | — |
 | IN-006 | Caché de derivados e índice | v0.1 | 1 | pendiente | — | — |
 | IN-008 | Carcasa, navegación, atajos y diseño adaptable | v0.1 | 1 | pendiente | — | — |
@@ -137,6 +137,10 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **Tipo `archivo` (prefijo `ARC`)** para el lector genérico de archivo de IN-017, que el plan no nombra (IN-004).
 - **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
 
+## Notas para funcionalidades futuras
+- **IN-050:** las rutas de `public/marca/manifest-iconos.json` son relativas a `marca/`; al copiar el bloque `icons` al manifest de la PWA, hay que anteponer `marca/` (revisión de IN-089).
+- **IN-008 e IN-016:** el raíl usa `Logotipo` de 18 px y el avatar de `RespuestaRimor`, `SimboloRimor` mono de 13 px (IN-089).
+
 ## Pendientes de validación humana
 - **Licencia (D5):** no se ha añadido archivo de licencia. La propuesta del plan es «la misma que Struo». Ojo: pandoc-wasm (IN-084) es GPL-2.0-or-later (F0-3).
 - **Pruebas en navegador real** (Playwright en Chromium, Firefox y WebKit, capturas en claro, oscuro y 400 px, axe y fidelidad de animaciones): aplazadas por instrucción del autor hasta el final.
@@ -156,7 +160,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-089 | implementación | pnpm verificar OK (112 pruebas) | … |
+| 2026-10-18 | IN-089 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | … |
+| 2026-10-18 | IN-089 | implementación | pnpm verificar OK (112 pruebas) | 58a44ca |
 | 2026-10-18 | IN-089 | análisis y diseño | SVGO, publicación, componentes y contornos | 4177d63 |
 | 2026-10-18 | IN-004 | verificación | pnpm verificar OK; 5 hallazgos de la revisión corregidos | feceb14 |
 | 2026-10-18 | IN-004 | implementación | pnpm verificar OK (84 pruebas) | f942aa1 |
@@ -181,5 +186,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-089: implementado. Falta verificación.
-- Último `pnpm verificar`: OK (2026-10-18 04:20).
+- IN-089 hecha; ola 0 completa. Siguiente: IN-005 (diseño y código en borrador en el scratchpad in005/; también borradores de IN-006 e IN-090).
+- Último `pnpm verificar`: OK (2026-10-18 04:45).

@@ -44,8 +44,33 @@ describe('SVG de marca publicados', () => {
   it('optimizarSvg avisa si un SVG pierde lo que debe conservar o pesa demasiado', () => {
     const grande = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><title>x</title><text>${'Rimor '.repeat(300)}</text></svg>`;
     expect(optimizarSvg(grande, 'x.svg').problemas.join()).toMatch(/pesa \d+ B/);
+    const sinClases = optimizarSvg(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><style>.k{fill:red}</style><circle class="k" r="3"/></svg>',
+      'x.svg',
+    );
+    expect(sinClases.problemas).toEqual([]);
     const limpio = optimizarSvg(leer('docs/marca/originales/rimor-icono/svg/rimor-simbolo.svg'), 'x.svg');
     expect(limpio.problemas).toEqual([]);
+  });
+});
+
+describe('el símbolo sigue al tema', () => {
+  it('marca.css pinta onda y guion con --ink, el punto con --key (--ink en mono) y estilos.css lo importa', () => {
+    const css = leer('src/ui/marca/marca.css');
+    expect(css).toMatch(/\.simbolo \.onda,\s*\.simbolo \.guion \{[^}]*fill: none;[^}]*stroke: var\(--ink\);/);
+    expect(css).toMatch(/\.simbolo \.punto \{\s*fill: var\(--key\);/);
+    expect(css).toMatch(/\.simbolo\.mono \.punto \{\s*fill: var\(--ink\);/);
+    expect(leer('src/ui/tema/estilos.css')).toContain('@import "../marca/marca.css"');
+  });
+});
+
+describe('logotipo en contornos (fuera de la app)', () => {
+  it('conserva la caja del original y no lleva texto vivo', () => {
+    for (const tema of ['claro', 'oscuro']) {
+      const svg = leer(`docs/marca/rimor-logotipo-contornos-${tema}.svg`);
+      expect(svg).toContain('viewBox="0 0 120 48" width="240" height="96"');
+      expect(svg).not.toContain('<text');
+    }
   });
 });
 
