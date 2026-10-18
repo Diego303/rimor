@@ -2,7 +2,7 @@
 
 **Estado global:** EN CURSO
 **Última actualización:** 2026-10-18 18:00
-**Ahora:** IN-017 · Lector Texto y lector genérico de archivo · fase análisis y diseño
+**Ahora:** IN-017 · Lector Texto y lector genérico de archivo · fase implementación
 **Siguiente:** IN-018 · Lector Idea y resurgimiento mínimo
 **Progreso:** F0 9/9 · v0.1 18/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 27/99
 
@@ -35,8 +35,8 @@
 | IN-013 | Detector de tipo y corpus | v0.1 | 2 | hecha | 9e3e067 6697076 e6f4ac8 | docs/features/IN-013-detector.md |
 | IN-014 | Flujo de captura | v0.1 | 3 | hecha | 683703f 9830443 02b7548 | docs/features/IN-014-captura.md |
 | IN-015 | Compositor | v0.1 | 3 | hecha | df7d8c3 3531022 871224d | docs/features/IN-015-compositor.md |
-| IN-016 | Respuestas de Rimor y contadores locales | v0.1 | 3 | hecha | c521a65 5b52db2 | docs/features/IN-016-respuestas.md |
-| IN-017 | Lector Texto y lector genérico de archivo | v0.1 | 3 | pendiente | — | — |
+| IN-016 | Respuestas de Rimor y contadores locales | v0.1 | 3 | hecha | c521a65 5b52db2 674f816 | docs/features/IN-016-respuestas.md |
+| IN-017 | Lector Texto y lector genérico de archivo | v0.1 | 3 | en análisis y diseño | — | docs/features/IN-017-texto-archivo.md |
 | IN-018 | Lector Idea y resurgimiento mínimo | v0.1 | 4 | pendiente | — | — |
 | IN-019 | Lector Enlace básico | v0.1 | 4 | pendiente | — | — |
 | IN-020 | Lector Log | v0.1 | 4 | pendiente | — | — |
@@ -172,7 +172,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-016 | verificación | OK (567 pruebas; 11 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-017 | análisis y diseño | Texto con enlaces y menciones, Archivo con descarga y marca de pendiente, corpus de binarios | … |
+| 2026-10-18 | IN-016 | verificación | OK (567 pruebas; 11 hallazgos de la revisión corregidos) | 674f816 |
 | 2026-10-18 | IN-016 | implementación | OK (563 pruebas) | 5b52db2 |
 | 2026-10-18 | IN-016 | análisis y diseño | contexto, composición con frase de secretos, reglas de estilo, RespuestaRimor y contadores | c521a65 |
 | 2026-10-18 | IN-015 | verificación | OK (548 pruebas; 10 hallazgos de la revisión corregidos) | 871224d |
