@@ -1,0 +1,569 @@
+/* Animaciones del símbolo «Señal» (IN-090, D18): cada estado porta su SVG de rimor-animaciones.
+   Los porcentajes son los keyTimes; la curva, la de los keySplines (.4 0 .2 1) o lineal en los recorridos.
+   Los estilos sin animación de cada estado son su fotograma de reposo: es lo que se ve con movimiento
+   reducido (base.css anula toda animación), al acabar una animación de una vez y al cortar un bucle a los 20 s. */
+
+.senal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.senal svg {
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+.senal .onda,
+.senal .guion,
+.senal .tenue,
+.senal .tramo,
+.senal .referencia {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.senal .punto {
+  fill: var(--key);
+}
+.senal .tenue {
+  opacity: 0.18;
+}
+.senal .anillo {
+  fill: none;
+  stroke: var(--key);
+  stroke-width: 1.4;
+  opacity: 0;
+}
+.senal .referencia {
+  stroke: var(--apagado);
+}
+.senal .nombre {
+  fill: var(--ink);
+  font-family: var(--f-d);
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: -0.4px;
+}
+.senal .frase {
+  fill: var(--muted);
+  font-family: var(--f-m);
+  font-size: 6.4px;
+}
+.senal .escala {
+  transform-box: view-box;
+  transform-origin: 0 24px;
+}
+.senal .anima {
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+  /* «infinite» en bucle; en una vez, la fracción del ciclo donde está el reposo (Senal.tsx). */
+  animation-iteration-count: var(--senal-veces, infinite);
+}
+
+/* 01 · arranque (3,6 s; reposo: logotipo completo, 88 %) */
+.senal-arranque .anima {
+  animation-duration: 3.6s;
+}
+.senal-arranque .onda {
+  stroke-dasharray: 100;
+  animation-name: senal-arranque-onda;
+}
+.senal-arranque .punto {
+  animation-name: senal-arranque-punto;
+}
+.senal-arranque .guion {
+  animation-name: senal-arranque-guion;
+}
+.senal-arranque .nombre {
+  animation-name: senal-arranque-nombre;
+}
+@keyframes senal-arranque-onda {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 1;
+  }
+  40% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  88% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+@keyframes senal-arranque-punto {
+  0% {
+    opacity: 0;
+    r: 1px;
+  }
+  38% {
+    opacity: 0;
+    r: 1px;
+  }
+  50% {
+    opacity: 1;
+    r: 3.1px;
+  }
+  88% {
+    opacity: 1;
+    r: 3.1px;
+  }
+  100% {
+    opacity: 0;
+    r: 3.1px;
+  }
+}
+@keyframes senal-arranque-guion {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0;
+  }
+  58% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes senal-arranque-nombre {
+  0% {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  50% {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  65% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+
+/* 02 · primer uso (5,5 s; reposo: logotipo con la frase, 90 %) */
+.senal-primer-uso .anima {
+  animation-duration: 5.5s;
+}
+.senal-primer-uso .onda {
+  stroke-dasharray: 100;
+  animation-name: senal-primer-uso-onda;
+}
+.senal-primer-uso .punto {
+  animation-name: senal-primer-uso-punto;
+}
+.senal-primer-uso .guion {
+  animation-name: senal-primer-uso-guion;
+}
+.senal-primer-uso .nombre {
+  animation-name: senal-primer-uso-nombre;
+}
+.senal-primer-uso .frase {
+  animation-name: senal-primer-uso-frase;
+}
+@keyframes senal-primer-uso-onda {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 1;
+  }
+  25% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  90% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+@keyframes senal-primer-uso-punto {
+  0% {
+    opacity: 0;
+    r: 1px;
+  }
+  24% {
+    opacity: 0;
+    r: 1px;
+  }
+  33% {
+    opacity: 1;
+    r: 3.1px;
+  }
+  90% {
+    opacity: 1;
+    r: 3.1px;
+  }
+  100% {
+    opacity: 0;
+    r: 3.1px;
+  }
+}
+@keyframes senal-primer-uso-guion {
+  0% {
+    opacity: 0;
+  }
+  33% {
+    opacity: 0;
+  }
+  38% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes senal-primer-uso-nombre {
+  0% {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  38% {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+@keyframes senal-primer-uso-frase {
+  0% {
+    opacity: 0;
+  }
+  55% {
+    opacity: 0;
+  }
+  68% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 04 · cargando (1,4 s, lineal, bucle; reposo: símbolo con la onda tenue) */
+.senal-cargando .tramo {
+  stroke-dasharray: 26 74;
+  opacity: 0;
+  animation-name: senal-cargando-tramo;
+  animation-duration: 1.4s;
+  animation-timing-function: linear;
+}
+@keyframes senal-cargando-tramo {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+/* 06 · indexando (2,4 s, lineal, bucle; reposo: símbolo) */
+.senal-indexando .tenue {
+  opacity: 0.22;
+}
+.senal-indexando .onda {
+  stroke-dasharray: 100;
+  animation-name: senal-indexando-onda;
+  animation-duration: 2.4s;
+  animation-timing-function: linear;
+}
+.senal-indexando .punto {
+  offset-path: path("M7 24 C10.5 12.5 13.5 12.5 17 24 S23.5 35.5 27 24 C28.8 19 30.5 15.5 33 15.5");
+  offset-rotate: 0deg;
+  offset-distance: 100%;
+  animation-name: senal-indexando-punto;
+  animation-duration: 2.4s;
+  animation-timing-function: linear;
+}
+@keyframes senal-indexando-onda {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  68% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes senal-indexando-punto {
+  0% {
+    offset-distance: 0%;
+  }
+  75% {
+    offset-distance: 100%;
+  }
+  100% {
+    offset-distance: 100%;
+  }
+}
+
+/* 09 · guardado (1,8 s, una vez; reposo: símbolo) */
+.senal-guardado .anillo {
+  animation-name: senal-guardado-anillo;
+  animation-duration: 1.8s;
+}
+@keyframes senal-guardado-anillo {
+  0% {
+    r: 3.1px;
+    opacity: 0.9;
+  }
+  70% {
+    r: 10px;
+    opacity: 0;
+  }
+  100% {
+    r: 10px;
+    opacity: 0;
+  }
+}
+
+/* 11 · analizando (1,6 s, bucle; reposo: símbolo) */
+.senal-analizando .escala {
+  animation-name: senal-analizando-onda;
+  animation-duration: 1.6s;
+}
+@keyframes senal-analizando-onda {
+  0% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1, 0.4);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+
+/* 14 · copia al día (3 s, una vez; reposo: punto encendido, 88 %) */
+.senal-copia-al-dia .punto {
+  animation-name: senal-copia-al-dia-punto;
+  animation-duration: 3s;
+}
+@keyframes senal-copia-al-dia-punto {
+  0% {
+    fill: var(--apagado);
+  }
+  30% {
+    fill: var(--apagado);
+  }
+  42% {
+    fill: var(--key);
+  }
+  88% {
+    fill: var(--key);
+  }
+  100% {
+    fill: var(--apagado);
+  }
+}
+
+/* 15 · error (3,2 s, una vez; reposo: onda normal y punto en --bad, no la línea plana, que parecería «vacío»).
+   Sin fill-mode: al acabar el ciclo (punto en --key de nuevo) queda el reposo de la base. */
+.senal-error .punto {
+  fill: var(--bad);
+  animation-name: senal-error-punto;
+  animation-duration: 3.2s;
+  animation-fill-mode: none;
+}
+.senal-error .escala {
+  animation-name: senal-error-onda;
+  animation-duration: 3.2s;
+  animation-fill-mode: none;
+}
+@keyframes senal-error-onda {
+  0% {
+    transform: scale(1, 1);
+  }
+  20% {
+    transform: scale(1, 1);
+  }
+  40% {
+    transform: scale(1, 0.06);
+  }
+  80% {
+    transform: scale(1, 0.06);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+@keyframes senal-error-punto {
+  0% {
+    fill: var(--key);
+  }
+  20% {
+    fill: var(--key);
+  }
+  40% {
+    fill: var(--bad);
+  }
+  80% {
+    fill: var(--bad);
+  }
+  100% {
+    fill: var(--key);
+  }
+}
+
+/* 17 · comparando (3 s, una vez; reposo: ondas alineadas y punto, 75 %) */
+.senal-comparando .referencia {
+  animation-name: senal-comparando-referencia;
+  animation-duration: 3s;
+}
+.senal-comparando .punto {
+  animation-name: senal-comparando-punto;
+  animation-duration: 3s;
+}
+@keyframes senal-comparando-referencia {
+  0% {
+    transform: translateX(6px);
+  }
+  40% {
+    transform: translateX(0);
+  }
+  75% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(6px);
+  }
+}
+@keyframes senal-comparando-punto {
+  0% {
+    opacity: 0;
+  }
+  38% {
+    opacity: 0;
+  }
+  48% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 19 · exportando (2,4 s, bucle; reposo: símbolo). Junta los tiempos de las dos animaciones del punto. */
+.senal-exportando .punto {
+  animation-name: senal-exportando-punto;
+  animation-duration: 2.4s;
+}
+@keyframes senal-exportando-punto {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  15% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  45% {
+    transform: translateX(9px);
+    opacity: 0;
+  }
+  46% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  60% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  80% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 20 · Rimor contesta (2,4 s, bucle; reposo: símbolo mono). El punto solo se enciende mientras anima. */
+.senal-contestando .punto {
+  fill: var(--ink);
+  animation-name: senal-contestando-punto;
+  animation-duration: 2.4s;
+}
+@keyframes senal-contestando-punto {
+  0% {
+    fill: var(--key);
+    opacity: 1;
+  }
+  10% {
+    fill: var(--key);
+    opacity: 0.3;
+  }
+  20% {
+    fill: var(--key);
+    opacity: 1;
+  }
+  30% {
+    fill: var(--key);
+    opacity: 0.3;
+  }
+  40% {
+    fill: var(--key);
+    opacity: 1;
+  }
+  50% {
+    fill: var(--key);
+    opacity: 0.3;
+  }
+  60% {
+    fill: var(--key);
+    opacity: 1;
+  }
+  100% {
+    fill: var(--key);
+    opacity: 1;
+  }
+}
+
+/* Al cortar un bucle a los 20 s: el fotograma de reposo (va al final, con la especificidad más alta). */
+.senal.reposo .anima {
+  animation: none;
+}

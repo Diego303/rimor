@@ -34,7 +34,9 @@ import {
   Veredicto,
 } from '../componentes';
 import { ASPECTO_TIPO, type TipoVisual } from '../iconos/tipos';
+import type { EstadoSenal } from '../marca/estadosSenal';
 import { Logotipo } from '../marca/Logotipo';
+import { Senal } from '../marca/Senal';
 import { SimboloRimor } from '../marca/SimboloRimor';
 import { aplicarTema } from '../tema/tema';
 
@@ -73,6 +75,49 @@ function ValorToken({ token }: { token: string }) {
     <span className="mono xs muted">
       {token} · {valor}
     </span>
+  );
+}
+
+const ESTADOS: [EstadoSenal, string][] = [
+  ['arranque', 'Abriendo el espacio'],
+  ['primer-uso', 'Bienvenida'],
+  ['cargando', 'DuckDB, solo la primera vez'],
+  ['analizando', 'Analizando 340.000 líneas'],
+  ['indexando', 'Indexando 4.210 de 10.000'],
+  ['contestando', 'Leyendo…'],
+  ['exportando', 'Exportando 62 %'],
+  ['copia-al-dia', 'Copia al día'],
+  ['guardado', 'Importado'],
+  ['error', 'No se pudo leer el ZIP'],
+  ['comparando', 'Comparando las dos series'],
+];
+
+/** Cada estado de «Señal», con botón para repetir y un interruptor de movimiento reducido (IN-090). */
+function Animaciones() {
+  const [vuelta, setVuelta] = useState(0);
+  const [quieto, setQuieto] = useState(false);
+  return (
+    <Tarjeta titulo="Animaciones del símbolo">
+      <div className="row">
+        <Boton pequeno onClick={() => setVuelta((v) => v + 1)}>
+          Repetir
+        </Boton>
+        <Filtro activo={quieto} onClick={() => setQuieto((q) => !q)}>
+          Movimiento reducido
+        </Filtro>
+      </div>
+      <div className={quieto ? 'muestras-senales muestras-sin-movimiento' : 'muestras-senales'}>
+        {ESTADOS.map(([estado, texto]) => (
+          <Senal
+            key={`${estado}-${vuelta}`}
+            estado={estado}
+            etiqueta={texto}
+            tamano={48}
+            frase="del rumor a la conclusión"
+          />
+        ))}
+      </div>
+    </Tarjeta>
   );
 }
 
@@ -189,6 +234,7 @@ function Galeria() {
             <img src={`${BASE}marca/favicon.svg`} alt="favicon.svg" width={32} height={32} />
           </div>
         </Tarjeta>
+        <Animaciones />
         <Tarjeta titulo="Respuesta de Rimor">
           <div className="rimor muestra-rimor">
             <span className="av" aria-hidden="true">

@@ -15,5 +15,6 @@ Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepacha
 - Todo lo pegado se pinta saneado (sin scripts, estilos, formularios ni protocolos peligrosos; las imágenes remotas no se cargan) y la web lleva una política de seguridad de contenido estricta con los hashes de sus scripts (IN-009).
 - Ocultación de secretos antes de guardar: claves de AWS, GCP y Azure, tokens de GitHub, GitLab y Slack, claves de OpenAI, Anthropic y OpenRouter, JWT, claves privadas, cabeceras `Authorization` y contraseñas en URL y cadenas de conexión, sustituidos por `‹oculto:tipo›` (IN-010).
 - Paquete de estadística de mediciones: mediana, media, desviación, coeficiente de variación, percentiles, intervalo de confianza de la mediana, Mann-Whitney con corrección por empates y de continuidad, atípicos, avisos de método y veredicto, verificados contra NumPy y SciPy (IN-011).
+- Animaciones del símbolo «Señal» para las esperas y los momentos clave (arranque, primer uso, cargando, analizando, indexando, Rimor contesta, exportando, copia al día, guardado, error y comparando), con umbral de 400 ms, bucles que paran a los 20 s y movimiento reducido respetado (IN-090).
 ### Cambiado
 ### Corregido

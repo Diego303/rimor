@@ -23,12 +23,11 @@ let texto = readFileSync(RUTA, 'utf8');
 const lineas = texto.split('\n');
 
 /** Commits cuyo asunto lleva el ID como ámbito, del más antiguo al más reciente. */
+let historial = null;
 function commitsDe(id) {
-  const salida = execFileSync('git', ['log', '--reverse', '--format=%h %s'], { encoding: 'utf8' });
-  return salida
-    .split('\n')
-    .filter((l) => l.includes(`(${id})`))
-    .map((l) => l.split(' ')[0]);
+  // Un solo `git log` por ejecución: en discos lentos, uno por fila tarda minutos.
+  historial ??= execFileSync('git', ['log', '--reverse', '--format=%h %s'], { encoding: 'utf8' }).split('\n');
+  return historial.filter((l) => l.includes(`(${id})`)).map((l) => l.split(' ')[0]);
 }
 
 function celdas(linea) {

@@ -8,7 +8,7 @@ import { useT } from '../i18n/useT';
 import { AyudaAtajos } from '../ui/atajos/AyudaAtajos';
 import { esCampoDeTexto, GestorAtajos } from '../ui/atajos/atajos';
 import { ContextoAtajos } from '../ui/atajos/useAtajos';
-import { Cargando, ProveedorAvisos } from '../ui/componentes';
+import { Espera, ProveedorAvisos } from '../ui/componentes';
 import { LimiteErrores } from './LimiteErrores';
 import { Rail } from './Rail';
 
@@ -58,7 +58,7 @@ export function Carcasa() {
             <Rail />
             <main className="amain" id="principal">
               <LimiteErrores clave={ruta}>
-                <Suspense fallback={<Cargando texto={t('comun.cargandoPantalla')} />}>
+                <Suspense fallback={<Espera texto={t('comun.cargandoPantalla')} />}>
                   <Outlet />
                 </Suspense>
               </LimiteErrores>

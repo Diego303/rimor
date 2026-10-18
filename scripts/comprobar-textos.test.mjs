@@ -42,6 +42,7 @@ describe('buscarTextos', () => {
     expect(textos("const A = () => <b>{t('acciones.guardar')}</b>;")).toEqual([]);
     expect(textos('const A = () => <span>· › − 42</span>;')).toEqual([]);
     expect(textos('const A = () => <span>&nbsp;&middot;&#183;</span>;')).toEqual([]);
+    expect(textos("const A = ({ e }) => <g>{e === 'cargando' && <path />}{e !== 'x' ? null : <b />}</g>;")).toEqual([]);
     expect(
       textos("const A = () => <Segmentado opciones={[{ valor: 'claro', etiqueta: t('tema.claro') }]} />;"),
     ).toEqual([]);

@@ -103,3 +103,13 @@ Devuelve `visible`: pasa a `true` si `activo` sigue siéndolo a los 400 ms; una 
 ## Autorrevisión
 
 Cubre la ficha. La prueba de fidelidad se adapta a la ausencia de navegador sin rebajar lo que comprueba en tiempos, valores y curvas.
+
+## Cambios durante la implementación
+
+- **Una vez = iteraciones fraccionarias:** con `veces={1}`, `animation-iteration-count` es la fracción del ciclo del reposo (0,88 en arranque y copia al día, 0,9 en primer uso, 0,75 en comparando) y `fill-mode: both` deja el fotograma ahí. Error no usa `fill-mode`: al acabar vuelve a la base, que es su reposo (onda normal y punto en `--bad`).
+- Los estilos sin animación de cada estado **son** su reposo, así que el movimiento reducido (que `base.css` ya anula) y el corte de los bucles a los 20 s (clase `reposo`) enseñan el fotograma correcto sin reglas aparte.
+- `Senal` admite `decorativa` (sin rol ni texto, oculta al lector) para `ErrorTarjeta`, que ya se anuncia con `role="alert"` y su título.
+- **`Espera`** (en `Estados.tsx`): `Cargando` detrás de `useEsperaVisible`; la usa el `Suspense` de la carcasa para que una pantalla que tarda menos de 400 ms no enseñe nada.
+- La barra indeterminada de `Cargando` desaparece (su `@keyframes` también): la espera indeterminada es la señal y la barra queda para el progreso.
+- La regla de textos de IN-003 ya no confunde comparaciones (`estado === 'cargando'`) con texto visible: en `cond && x` solo mira la derecha.
+- La prueba de fidelidad se comprobó con una mutación (cambiar un 42 % por 43 % y una escala de 0,4 por 0,5 la hace fallar).

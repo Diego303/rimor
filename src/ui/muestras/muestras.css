@@ -51,3 +51,12 @@
   gap: 16px;
   align-items: flex-end;
 }
+
+.muestras-senales {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.muestras-sin-movimiento .senal .anima {
+  animation: none !important;
+}

@@ -43,7 +43,14 @@ function textosDe(e, nombrePropiedad) {
   if (ts.isParenthesizedExpression(e) || ts.isAsExpression(e) || ts.isSatisfiesExpression(e))
     return textosDe(e.expression);
   if (ts.isConditionalExpression(e)) return [...textosDe(e.whenTrue), ...textosDe(e.whenFalse)];
-  if (ts.isBinaryExpression(e)) return [...textosDe(e.left), ...textosDe(e.right)];
+  if (ts.isBinaryExpression(e)) {
+    const op = e.operatorToken.kind;
+    // `cond && 'texto'`: solo se ve la derecha; `a ?? 'b'` y `a || 'b'`: cualquiera; las comparaciones no se ven.
+    if (op === ts.SyntaxKind.AmpersandAmpersandToken) return textosDe(e.right);
+    if (op === ts.SyntaxKind.BarBarToken || op === ts.SyntaxKind.QuestionQuestionToken)
+      return [...textosDe(e.left), ...textosDe(e.right)];
+    return [];
+  }
   if (ts.isArrayLiteralExpression(e)) return e.elements.flatMap((x) => textosDe(x, nombrePropiedad));
   if (ts.isObjectLiteralExpression(e)) {
     return e.properties.flatMap((p) =>
