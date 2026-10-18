@@ -3,7 +3,7 @@
 **Estado global:** EN CURSO
 **Última actualización:** 2026-10-18 23:23
 **Ahora:** IN-024 · Lector Documento Markdown · fase análisis y diseño
-**Siguiente:** IN-025 · Lector Datos tabulares
+**Siguiente:** IN-025 · Lector Código
 **Progreso:** F0 9/9 · v0.1 25/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 34/99
 
 ## Tablero
@@ -42,8 +42,8 @@
 | IN-020 | Lector Log | v0.1 | 4 | hecha | 2dc9a36 070d82c 3710ad0 | docs/features/IN-020-log.md |
 | IN-021 | Lector Error y huella | v0.1 | 4 | hecha | 40322cb 2ab9520 d363617 | docs/features/IN-021-error.md |
 | IN-022 | Lector Mediciones | v0.1 | 4 | hecha | b310e37 6a1cf43 9b9c796 | docs/features/IN-022-mediciones.md |
-| IN-023 | Lector Prompt | v0.1 | 4 | hecha | 7b6580a bc9fa85 | docs/features/IN-023-prompt.md |
-| IN-024 | Lector Documento Markdown | v0.1 | 4 | pendiente | — | — |
+| IN-023 | Lector Prompt | v0.1 | 4 | hecha | 7b6580a bc9fa85 5498fa1 | docs/features/IN-023-prompt.md |
+| IN-024 | Lector Documento Markdown | v0.1 | 4 | en análisis y diseño | — | docs/features/IN-024-markdown.md |
 | IN-025 | Lector Código | v0.1 | 4 | pendiente | — | — |
 | IN-026 | Inicio: feed y triaje | v0.1 | 5 | pendiente | — | — |
 | IN-027 | Vista de elemento, estados, fijar y papelera | v0.1 | 5 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-023 | verificación | OK (858 pruebas; 13 grupos de hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-024 | análisis y diseño | índice con anclas estables, palabras, tareas por sección, enlaces y código; vista como la referencia | … |
+| 2026-10-18 | IN-023 | verificación | OK (858 pruebas; 13 grupos de hallazgos de la revisión corregidos) | 5498fa1 |
 | 2026-10-18 | IN-023 | implementación | OK (829 pruebas; matriz 200/200) | bc9fa85 |
 | 2026-10-18 | IN-023 | análisis y diseño | variables en tres sintaxis, copiar con valores, resultados en historial/ | 7b6580a |
 | 2026-10-18 | IN-022 | verificación | OK (798 pruebas; 13 hallazgos de la revisión corregidos) | 9b9c796 |
