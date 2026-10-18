@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 02:36
-**Ahora:** IN-089 · Símbolo «Señal», iconos de app y favicon · fase análisis y diseño
+**Última actualización:** 2026-10-18 02:37
+**Ahora:** IN-089 · Símbolo «Señal», iconos de app y favicon · fase implementación
 **Siguiente:** IN-005 · Almacén OPFS y en memoria
 **Progreso:** F0 9/9 · v0.1 4/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 13/99
 
@@ -21,8 +21,8 @@
 | IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | hecha | 4088155 b31670c d8ece75 | docs/features/IN-001-repositorio.md |
 | IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | hecha | 3f75c99 4b3c27c 63afa3a | docs/features/IN-002-tema-y-componentes.md |
 | IN-003 | Textos, idiomas y formatos | v0.1 | 0 | hecha | e4770f8 2001502 d44efd6 | docs/features/IN-003-textos-idiomas-formatos.md |
-| IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | hecha | eea9cb1 f942aa1 | docs/features/IN-004-formato.md |
-| IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | pendiente | — | — |
+| IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | hecha | eea9cb1 f942aa1 feceb14 | docs/features/IN-004-formato.md |
+| IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | en análisis y diseño | — | docs/features/IN-089-marca.md |
 | IN-005 | Almacén OPFS y en memoria | v0.1 | 1 | pendiente | — | — |
 | IN-006 | Caché de derivados e índice | v0.1 | 1 | pendiente | — | — |
 | IN-008 | Carcasa, navegación, atajos y diseño adaptable | v0.1 | 1 | pendiente | — | — |
@@ -156,7 +156,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-004 | verificación | pnpm verificar OK; 5 hallazgos de la revisión corregidos | … |
+| 2026-10-18 | IN-089 | análisis y diseño | SVGO, publicación, componentes y contornos | … |
+| 2026-10-18 | IN-004 | verificación | pnpm verificar OK; 5 hallazgos de la revisión corregidos | feceb14 |
 | 2026-10-18 | IN-004 | implementación | pnpm verificar OK (84 pruebas) | f942aa1 |
 | 2026-10-18 | IN-004 | análisis y diseño | modelo, formato del .md y migraciones | eea9cb1 |
 | 2026-10-18 | IN-003 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | d44efd6 |
