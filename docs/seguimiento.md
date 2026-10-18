@@ -2,7 +2,7 @@
 
 **Estado global:** EN CURSO
 **Última actualización:** 2026-10-18 16:05
-**Ahora:** IN-012 · Contrato y registro de lectores · fase análisis y diseño
+**Ahora:** IN-012 · Contrato y registro de lectores · fase implementación
 **Siguiente:** IN-013 · Detector de tipo y corpus
 **Progreso:** F0 9/9 · v0.1 13/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 22/99
 
@@ -30,8 +30,8 @@
 | IN-010 | Ocultación de secretos | v0.1 | 1 | hecha | a206f2c e8cae1b 34b4ca4 | docs/features/IN-010-secretos.md |
 | IN-011 | Paquete de estadística | v0.1 | 1 | hecha | 5838d9a b2ebf4e afb9e32 | docs/features/IN-011-estadistica.md |
 | IN-090 | Animaciones del símbolo (núcleo) | v0.1 | 1 | hecha | b9e91ee bdd15f6 69e2ee5 | docs/features/IN-090-animaciones.md |
-| IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | hecha | 39f479a 86e9ce2 | docs/features/IN-007-espacio.md |
-| IN-012 | Contrato y registro de lectores | v0.1 | 2 | pendiente | — | — |
+| IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | hecha | 39f479a 86e9ce2 d410b16 | docs/features/IN-007-espacio.md |
+| IN-012 | Contrato y registro de lectores | v0.1 | 2 | en análisis y diseño | — | docs/features/IN-012-lectores.md |
 | IN-013 | Detector de tipo y corpus | v0.1 | 2 | pendiente | — | — |
 | IN-014 | Flujo de captura | v0.1 | 3 | pendiente | — | — |
 | IN-015 | Compositor | v0.1 | 3 | pendiente | — | — |
@@ -123,6 +123,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Desviaciones del plan
 - **Astro en lugar de Vite + React a secas.** El repositorio ya tenía una web base de Astro (plantilla vacía). La app vive dentro de ella como una isla React (ADR-0001, ADR-0002). Las rutas del plan `app/src/…` pasan a `src/…`.
 - **Commits del agente y autorrevisión.** Se hace un commit por fase (nunca push) y la aprobación humana (GATE#1) se sustituye por la autorrevisión documentada en cada ficha (prompt maestro §6).
+- **Lectores con núcleo y vistas separados** (IN-012): el plan pone `Vista` y `Tarjeta` dentro del objeto `Lector`; aquí van en `Vista.tsx` y `Tarjeta.tsx` de su carpeta, que se encuentran por convención, para que el Worker de derivados no cargue React. El prefijo de la ref sale de `PREFIJOS[tipo]`, el contexto de la respuesta lleva frontmatters y el idioma, cada lector trae sus textos y la etiqueta de sus acciones llega traducida.
 - **Datos y copias adelanta su primera tarjeta** (IN-007): espacio usado, persistencia y última copia, como en la pantalla de referencia, para que la persistencia concedida «se muestre». IN-037 completa la pantalla.
 - **Despliegue en GitHub Pages** (instrucción del autor del 2026-10-18). Sin cabeceras HTTP propias: la CSP va solo en `<meta>` y la ruta base es configurable (`BASE_URL`).
 - **Sin Playwright por ahora** (instrucción del autor del 2026-10-18: «por ahora no testees con Playwright, cuando esté todo hecho ya vemos»). `pnpm verificar` ejecuta tipos, lint, unidades y construcción. Las pruebas de extremo a extremo, visuales, de axe y de fidelidad de animaciones del plan se sustituyen, mientras tanto, por pruebas de componentes con Vitest y happy-dom donde aportan, y quedan apuntadas en «Pendientes de validación humana».
@@ -167,7 +168,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-007 | verificación | OK (412 pruebas; 11 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-012 | análisis y diseño | núcleo y vistas por carpeta, cola de derivados en Worker, contenedores y plantilla | … |
+| 2026-10-18 | IN-007 | verificación | OK (412 pruebas; 11 hallazgos de la revisión corregidos) | d410b16 |
 | 2026-10-18 | IN-007 | implementación | OK (402 pruebas) | 86e9ce2 |
 | 2026-10-18 | IN-007 | análisis y diseño | abrir o crear, persistencia, última copia y arranque | 39f479a |
 | 2026-10-18 | IN-090 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | 69e2ee5 |
@@ -217,4 +219,4 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-007 hecha. Siguiente: IN-012 (diseño en docs/features/IN-012-lectores.md, pendiente de commit).
+- IN-012 en implementación (diseño en docs/features/IN-012-lectores.md).
