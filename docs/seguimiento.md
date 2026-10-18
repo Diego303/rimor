@@ -2,7 +2,7 @@
 
 **Estado global:** EN CURSO
 **Última actualización:** 2026-10-18 17:04
-**Ahora:** IN-015 · Compositor · fase análisis y diseño
+**Ahora:** IN-015 · Compositor · fase implementación
 **Siguiente:** IN-016 · Respuestas de Rimor y contadores locales
 **Progreso:** F0 9/9 · v0.1 16/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 25/99
 
@@ -33,8 +33,8 @@
 | IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | hecha | 39f479a 86e9ce2 d410b16 | docs/features/IN-007-espacio.md |
 | IN-012 | Contrato y registro de lectores | v0.1 | 2 | hecha | fa7e527 00d01e5 aa34b1e | docs/features/IN-012-lectores.md |
 | IN-013 | Detector de tipo y corpus | v0.1 | 2 | hecha | 9e3e067 6697076 e6f4ac8 | docs/features/IN-013-detector.md |
-| IN-014 | Flujo de captura | v0.1 | 3 | hecha | 683703f 9830443 | docs/features/IN-014-captura.md |
-| IN-015 | Compositor | v0.1 | 3 | pendiente | — | — |
+| IN-014 | Flujo de captura | v0.1 | 3 | hecha | 683703f 9830443 02b7548 | docs/features/IN-014-captura.md |
+| IN-015 | Compositor | v0.1 | 3 | en análisis y diseño | — | docs/features/IN-015-compositor.md |
 | IN-016 | Respuestas de Rimor y contadores locales | v0.1 | 3 | pendiente | — | — |
 | IN-017 | Lector Texto y lector genérico de archivo | v0.1 | 3 | pendiente | — | — |
 | IN-018 | Lector Idea y resurgimiento mínimo | v0.1 | 4 | pendiente | — | — |
@@ -170,7 +170,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-014 | verificación | OK (485 pruebas; 9 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-015 | análisis y diseño | indicaciones con exclusiones, vista previa con debounce, autocompletar, adjuntos y atajo global | … |
+| 2026-10-18 | IN-014 | verificación | OK (485 pruebas; 9 hallazgos de la revisión corregidos) | 02b7548 |
 | 2026-10-18 | IN-014 | implementación | OK (479 pruebas; 100 KB en < 300 ms p95 en memoria) | 9830443 |
 | 2026-10-18 | IN-014 | análisis y diseño | ocho pasos con efectos inyectados, pegar al compositor, soltar, límite y deshacer | 683703f |
 | 2026-10-18 | IN-013 | verificación | OK (457 pruebas; 5 hallazgos de la revisión corregidos) | e6f4ac8 |
