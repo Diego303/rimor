@@ -23,7 +23,6 @@ export const textos = definirTextos(
     grafico: 'Distribución de {etiquetas}',
     serieSinNombre: 'Serie {n}',
     columnas: {
-      n: 'n',
       mediana: 'Mediana',
       ic: 'IC 95 %',
       variacion: 'Variación',
@@ -78,7 +77,6 @@ export const textos = definirTextos(
     grafico: 'Distribution of {etiquetas}',
     serieSinNombre: 'Series {n}',
     columnas: {
-      n: 'n',
       mediana: 'Median',
       ic: '95% CI',
       variacion: 'Variation',

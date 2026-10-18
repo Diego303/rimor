@@ -9,7 +9,14 @@ import { useT } from '../../i18n/useT';
 import { Detalles, Hueco, Huecos, Tabla, Tarjeta, Veredicto } from '../../ui/componentes';
 import type { PropsVista } from '../contrato';
 import { GraficoPuntos } from './GraficoPuntos';
-import { type DatosMediciones, formatosDe, lectorMediciones, type SerieDerivada } from './lector';
+import {
+  type DatosMediciones,
+  type Escala,
+  escalaDe,
+  formatosDe,
+  lectorMediciones,
+  type SerieDerivada,
+} from './lector';
 import { textos } from './textos';
 
 type T = (c: string, v?: Record<string, string | number>) => string;
@@ -22,8 +29,8 @@ interface FilaSerie {
   s: SerieDerivada;
 }
 
-function textoAviso(a: AvisoMetodo, s: SerieDerivada, idioma: Idioma, t: T): string {
-  const f = formatosDe(s, idioma);
+function textoAviso(a: AvisoMetodo, s: SerieDerivada, escala: Escala, idioma: Idioma, t: T): string {
+  const f = formatosDe(s, idioma, escala);
   switch (a.tipo) {
     case 'pocas':
       return t('aviso.pocas', { mediciones: t('mediciones', { n: a.n }), minimo: a.minimo });
@@ -46,8 +53,13 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
   }));
   const primera = filas[0];
   const varias = filas.length > 1;
+  // Una sola escala para todo (gráfico, tabla y avisos): µs o ns si los valores son de menos de 1 ms.
+  const escala = escalaDe(datos.series);
+  const fmt = (s: SerieDerivada) => formatosDe(s, idioma, escala);
   const avisos = filas.flatMap(({ nombre, s }) =>
-    s.avisos.map((a) => `${varias ? t('aviso.prefijo', { etiqueta: nombre }) : ''}${textoAviso(a, s, idioma, t)}`),
+    s.avisos.map(
+      (a) => `${varias ? t('aviso.prefijo', { etiqueta: nombre }) : ''}${textoAviso(a, s, escala, idioma, t)}`,
+    ),
   );
   const cifras = Object.entries(lectorMediciones.cifras ?? {}).map(([nombre, f]) => [nombre, f(datos).texto] as const);
 
@@ -59,7 +71,8 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
     );
   }
 
-  const fp = formatosDe(primera.s, idioma);
+  const fp = fmt(primera.s);
+  const escalar = (v: number) => v * escala.factor;
 
   return (
     <>
@@ -80,20 +93,24 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
         />
         <div className="tbl-wrap">
           <GraficoPuntos
-            filas={filas.map((f) => ({ etiqueta: f.nombre, valores: f.s.valores, d: f.s.d }))}
-            unidad={primera.s.unidad}
+            filas={filas.map((f) => ({
+              etiqueta: f.nombre,
+              valores: f.s.valores.map(escalar),
+              d: { mediana: escalar(f.s.d.mediana), icBajo: escalar(f.s.d.icBajo), icAlto: escalar(f.s.d.icAlto) },
+            }))}
+            unidad={escala.unidad}
             idioma={idioma}
             titulo={t('grafico', { etiquetas: filas.map((f) => f.nombre).join(', ') })}
           />
         </div>
         <div className="legend">
-          {filas.map((f, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: dos series pueden llamarse igual; el orden es fijo.
-            <span key={i}>
+          {/* Con varias series, cada fila del gráfico ya lleva su nombre: el color no las distinguiría. */}
+          {!varias && (
+            <span>
               <i className="clave" />
-              {f.nombre}
+              {primera.nombre}
             </span>
-          ))}
+          )}
           <span>{t('leyenda')}</span>
         </div>
         <Tabla<FilaSerie>
@@ -103,19 +120,18 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
           clave={(f) => `${filas.indexOf(f)}`}
           columnas={[
             { id: 'serie', titulo: '', celda: (f) => <b>{f.nombre}</b> },
-            { id: 'n', titulo: t('columnas.n'), numerica: true, celda: (f) => f.s.d.n },
             {
               id: 'mediana',
               titulo: t('columnas.mediana'),
               numerica: true,
-              celda: (f) => formatosDe(f.s, idioma).conUnidad(f.s.d.mediana),
+              celda: (f) => fmt(f.s).conUnidad(f.s.d.mediana),
             },
             {
               id: 'ic',
               titulo: t('columnas.ic'),
               numerica: true,
               celda: (f) => {
-                const ff = formatosDe(f.s, idioma);
+                const ff = fmt(f.s);
                 return f.s.d.n > 1 ? `${ff.numero(f.s.d.icBajo)} – ${ff.numero(f.s.d.icAlto)}` : '—';
               },
             },
@@ -123,7 +139,7 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
               id: 'cv',
               titulo: t('columnas.variacion'),
               numerica: true,
-              celda: (f) => (f.s.d.n > 1 ? formatosDe(f.s, idioma).porcentaje(f.s.d.cv) : '—'),
+              celda: (f) => (f.s.d.n > 1 ? fmt(f.s).porcentaje(f.s.d.cv) : '—'),
             },
           ]}
         />
@@ -146,7 +162,7 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
           <dd>{t(`formatos.${datos.formato}`)}</dd>
         </dl>
         {filas.map(({ nombre, s }, i) => {
-          const f = formatosDe(s, idioma);
+          const f = fmt(s);
           return (
             // biome-ignore lint/suspicious/noArrayIndexKey: dos series pueden llamarse igual; el orden es fijo.
             <div key={i}>

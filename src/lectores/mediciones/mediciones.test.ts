@@ -2,13 +2,15 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { avisosDeMetodo, describir } from '@rimor/estadistica';
 import { describe, expect, it } from 'vitest';
+import { detectar } from '../../captura/detector';
 import { comprobarEstilo, textoDe } from '../../respuestas/reglas';
 import type { Respuesta } from '../../respuestas/tipos';
 import type { Contexto } from '../contrato';
 import { lectorLog } from '../log/lector';
 import { elementoFalso } from '../pruebas/falsos';
-import { marcasEje, pasoBonito } from './GraficoPuntos';
-import { type DatosMediciones, decimalesPara, lectorMediciones } from './lector';
+import { REGISTRO } from '../registro';
+import { MAX_PUNTOS, marcasEje, pasoBonito, puntosADibujar } from './GraficoPuntos';
+import { type DatosMediciones, decimalesPara, escalaDe, lectorMediciones } from './lector';
 import { confianzaMediciones, leerSeries, medidaDeLinea } from './series';
 
 const raiz = join(process.cwd(), 'fixtures/mediciones');
@@ -285,5 +287,129 @@ describe('formato de números y eje', () => {
     expect([0.7, 1.4, 2.2, 4, 8, 0.025, 0.03].map(pasoBonito)).toEqual([0.5, 1, 2, 5, 10, 0.02, 0.05]);
     expect(marcasEje(37.3, 42.1, 1)).toEqual([38, 39, 40, 41, 42]);
     expect(marcasEje(0.05, 0.31, 0.1).length).toBe(3);
+  });
+});
+
+/** Casos de la revisión independiente: falsos positivos, lecturas engañosas y valores extremos. */
+describe('revisión: lo que no son mediciones (con el detector real)', () => {
+  const casos: Record<string, string> = {
+    csv: 'a,b\n1,2\n3,4\n5,6',
+    'acceso tipo morgan':
+      'GET /api/users 200 12.345 ms - 512\nGET /api/items 200 8.120 ms - 1024\nPOST /api/login 401 3.002 ms - 64',
+    'resumen de go test': 'ok  \texample.com/a\t0.012s\nok  \texample.com/b\t1.234s\nok  \texample.com/c\t0.500s',
+    vitest: ' ✓ src/a.test.ts (5 tests) 12ms\n ✓ src/b.test.ts (3 tests) 8ms\n ✓ src/c.test.ts (10 tests) 120ms',
+    años: '2024\n2025\n2026',
+    ids: '1001\n1002\n1003\n1004',
+    versiones: '1.2\n1.3\n1.4',
+    'nota corta': 'Bajar el timeout a 30 s\nprobar 5 s\ny 10 s',
+    lista: '- 30 s de espera\n- 5 ms de latencia\n- 2 s de arranque',
+    configuración: 'timeout: 30s\nretry: 5s\ninterval: 10s\nname: api',
+    'log con una línea de benchmark':
+      '2026-10-18 12:00:01 INFO start\n2026-10-18 12:00:02 INFO running\nBenchmarkFoo-8   1000   1234 ns/op\n2026-10-18 12:00:03 ERROR boom\n2026-10-18 12:00:04 INFO end',
+    'documento con un benchmark':
+      '# Resultados\n\nHemos medido el parser con go test:\n\n```\nBenchmarkParse-8   1000   1234 ns/op\n```\n\nConclusión: va bien y lo dejamos así por ahora, con varias frases más de texto para que sea un documento.',
+  };
+  for (const [nombre, texto] of Object.entries(casos))
+    it(nombre, () => {
+      expect(confianzaMediciones(texto)).toBe(0);
+      expect(detectar({ texto }, REGISTRO).lector).not.toBe('mediciones');
+    });
+
+  it('una traza de pánico de Go con una línea de benchmark es un error', () => {
+    const texto =
+      'panic: runtime error: index out of range [5] with length 3\n\ngoroutine 1 [running]:\nmain.foo(...)\n\t/home/u/main.go:10 +0x1d\nmain.main()\n\t/home/u/main.go:5 +0x25\nBenchmarkFoo-8   1000   1234 ns/op\nexit status 2';
+    expect(detectar({ texto }, REGISTRO).lector).toBe('error');
+  });
+
+  it('números sueltos con decimales y sin paso fijo sí parecen tiempos', () => {
+    expect(confianzaMediciones('20,8\n20,8\n21,0\n20,6')).toBe(0.88);
+    expect(confianzaMediciones('1.2\n1.3\n1.4\n1.5')).toBe(0);
+  });
+
+  it('una lista de números con un comentario que la presenta sí son mediciones', () => {
+    expect(confianzaMediciones('# latencia en ms\n12\n13\n14')).toBe(0.88);
+    expect(confianzaMediciones('tiempo: 12 ms\ntiempo: 13 ms\ntiempo: 14 ms')).toBe(0.88);
+  });
+});
+
+describe('revisión: lecturas', () => {
+  const valores = (texto: string) => leerSeries(texto).series.map((s) => s.valores);
+
+  it('un CSV no se lee como una serie (su coma separa columnas)', () => {
+    expect(leerSeries('a,b\n1,2\n3,4\n5,6').series).toEqual([]);
+    // Una columna con coma decimal y su cabecera comentada, sí.
+    expect(valores('# tiempo\n12,5\n13,1\n12,9')).toEqual([[12.5, 13.1, 12.9]]);
+  });
+
+  it('miles a la inglesa y a la española; un solo separador es el decimal; «.5»', () => {
+    expect(valores('1,234.5 ms\n1,456.1 ms')).toEqual([[1234.5, 1456.1]]);
+    expect(valores('1.234,5 ms\n1.456,1 ms')).toEqual([[1234.5, 1456.1]]);
+    expect(valores('1,234 ms')).toEqual([[1.234]]);
+    expect(valores('.5 ms\n0,5 ms')).toEqual([[0.5, 0.5]]);
+  });
+
+  it('rangos, negativos, dos medidas en la línea y valores fuera de rango no son medidas', () => {
+    expect(valores('10-12 ms\n11-13 ms')).toEqual([]);
+    expect(valores('-5 ms\n-3 ms\n4 ms')).toEqual([[4]]);
+    expect(valores('2 min 3 s')).toEqual([]);
+    expect(valores('1e306 s\n1 s\n2 s')).toEqual([[1000, 2000]]);
+    expect(valores('2 min\n3 min')).toEqual([[120, 180]]);
+  });
+
+  it('cada comentario tras unas medidas empieza otra serie', () => {
+    const { series } = leerSeries('# a\n1 ms\n2 ms\n# b\n10 ms\n20 ms');
+    expect(series.map((s) => [s.etiqueta, s.valores])).toEqual([
+      ['a', [1, 2]],
+      ['b', [10, 20]],
+    ]);
+  });
+
+  it('go: `-cpu=1,2,4` son series distintas; el mismo benchmark en dos paquetes, también', () => {
+    const cpu = leerSeries(
+      'BenchmarkX     100  1000 ns/op\nBenchmarkX-2   100  600 ns/op\nBenchmarkX-4   100  400 ns/op',
+    );
+    expect(cpu.series.map((s) => s.etiqueta)).toEqual(['X', 'X-2', 'X-4']);
+    const pkgs = leerSeries(
+      'pkg: ejemplo.org/a\nBenchmarkParse-8 100 1000 ns/op\nok a 1s\npkg: ejemplo.org/b\nBenchmarkParse-8 100 9000 ns/op\nok b 1s',
+    );
+    expect(pkgs.series.map((s) => [s.etiqueta, s.valores.length])).toEqual([
+      ['Parse (a)', 1],
+      ['Parse (b)', 1],
+    ]);
+  });
+});
+
+describe('revisión: escala y valores extremos', () => {
+  it('menos de 1 µs se enseña en ns, menos de 1 ms en µs (el valor citable sigue en ms)', async () => {
+    const go = Array.from({ length: 10 }, (_, i) => `BenchmarkAdd-8 1000000000 0.25${60 + i} ns/op`).join('\n');
+    const d = await derivar(go);
+    expect(textoRespuesta(lectorMediciones.respuesta(elementoFalso(1), d, ctx()))).toBe(
+      '10 mediciones · mediana 0,2565 ns (IC 95 %: 0,2560 – 0,2569).',
+    );
+    expect(escalaDe(d.series)).toEqual({ unidad: 'ns', factor: 1e6 });
+    const mediana = lectorMediciones.cifras?.mediana?.(d);
+    expect(mediana?.texto).toBe(`0,2565${NBSP}ns`);
+    expect(mediana?.unidad).toBe('ms');
+    expect(escalaDe((await derivar(leer('mezcla.txt'))).series).unidad).toBe('µs');
+    expect(escalaDe((await derivar(leer('reqwest.txt'))).series).unidad).toBe('ms');
+  });
+
+  it('el eje nunca se queda en un bucle: valores enormes o casi iguales', () => {
+    expect(marcasEje(1e20, 1e20 + 1e5, 1).length).toBeLessThanOrEqual(50);
+    expect(marcasEje(0, Number.POSITIVE_INFINITY, 1)).toEqual([]);
+    expect(marcasEje(0, 10, 0)).toEqual([]);
+  });
+
+  it('con cientos de miles de valores se dibuja una muestra', () => {
+    const indices = puntosADibujar(150_000);
+    expect(indices).toHaveLength(MAX_PUNTOS);
+    expect(indices[0]).toBe(0);
+    expect(indices.at(-1)).toBeLessThan(150_000);
+  });
+});
+
+describe('revisión: título', () => {
+  it('de hyperfine, «Mediciones de {comando}»', async () => {
+    expect((await lectorMediciones.leer({ texto: leer('hyperfine.json') })).titulo).toBe('Mediciones de rg TODO src');
   });
 });

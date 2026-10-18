@@ -69,6 +69,7 @@ Que una serie de tiempos diga cuánto tarda de verdad y con qué confianza, sin 
 | Riesgo o duda | Decisión |
 |---|---|
 | Una línea con varios números (`run 3: 38.4 ms`) | Cuenta el número con unidad; si no tiene unidad y hay más de un número, la línea no es una medida |
+| Listas de números sueltos (años, IDs, versiones) | Al detectar, sin unidad ni comentario solo cuentan si tienen decimales y no avanzan de paso fijo (añadido en la verificación) |
 | Varias series en un pegado | Se guardan todas; la respuesta y las cifras hablan de la primera; comparar es IN-028 |
 | Un log con duraciones (`tardó 410ms`) | Log puntúa por sus marcas y niveles; mediciones exige que casi todas las líneas sean solo medidas |
 
@@ -84,3 +85,37 @@ Cubre las seis tareas. Los formatos de v0.2 (pytest-benchmark, JMH, criterion, C
 - `Tabla` admite `className` (la de mediciones lleva `min-width: 420px`, como la de la referencia).
 - Varias series: cada aviso lleva delante el nombre de su serie; las series sin nombre se llaman «Serie N».
 
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 22:40): tipos 0 errores; Biome, colores y textos, OK; Vitest 52 archivos y 798 pruebas, OK; construcción OK; carga inicial 197,8 KB. **`pnpm deteccion`**: 100 % de 175 ejemplos (archivo, enlace, error, idea, log, mediciones y texto).
+
+| Criterio | Evidencia |
+|---|---|
+| Formatos v0.1 | `fixtures/mediciones/` (líneas con y sin unidad, unidades mezcladas, coma decimal, `go test -bench` y hyperfine); miles, `.5`, `min`, grupos con etiqueta, `-cpu` y varios paquetes de Go |
+| Unidades a ms (o s) | Pruebas de paso a s (todas las series del pegado en la misma unidad); por debajo de 1 ms la vista escribe µs o ns |
+| Estadísticas y avisos de IN-011 | `describir` y `avisosDeMetodo` iguales a los del paquete; pocas, ruido y atípicos |
+| Vista | Prueba de la vista: veredicto, gráfico (banda, mediana, puntos, unidad), tabla de la referencia, avisos plegados con su número, varias series |
+| Cifras | `mediana`, `ic_bajo`, `ic_alto`, `n`, `cv` (texto en la escala de la vista; valor en ms o s) |
+| Respuesta | El ejemplo de la ficha exacto; «Son pocas…» con n < 10; varias series; una sola medición; en es y en; reglas de estilo |
+| No roba otros tipos | CSV, accesos HTTP, `go test`, vitest, años, IDs, versiones, configuración, notas, listas, un log o un documento con una línea de benchmark |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Un CSV se detectaba y se leía como mediciones** (la coma de columna como decimal): si casi todas las líneas tienen separadores y hay cabecera o varias columnas, no es una serie.
+2. **`Math.min(...)` con cientos de miles de valores desbordaba la pila**: extremos con un bucle, y el gráfico dibuja como mucho 2.000 puntos por fila (a intervalos regulares; banda y mediana son de todos).
+3. **Bucle sin fin con valores enormes**: sin gráfico si el rango no es finito, eje con tope de 50 marcas y parada si `k` deja de avanzar; los valores que se salen de lo representable no son medidas.
+4. **Go por debajo de 1 µs salía «0,000000 ms»**: la vista, la respuesta y las cifras escriben µs o ns por debajo de 1 ms (el valor citable sigue en ms).
+5. **Go mezclaba configuraciones**: el sufijo `-N` solo se quita si todos los benchmarks lo llevan igual; el mismo benchmark en dos paquetes va por separado, con el paquete entre paréntesis.
+6. **Una línea de benchmark suelta decidía todo el texto**: hacen falta un 70 % de líneas de benchmark (sin contar `goos`, `pkg`, `PASS`, `ok`…).
+7. **Falsos positivos**: al detectar, una medida solo puede llevar una etiqueta corta (sin barras, paréntesis ni marcas de pruebas, como mucho otro número); una lista de cosas distintas con su duración no es una serie; números sueltos sin unidad ni comentario, solo con decimales y sin paso fijo.
+8. **Dos grupos con etiqueta se fundían**: cada comentario tras unas medidas empieza otra serie.
+9. **Miles**: `1,234.5` y `1.234,5`; con un solo separador, decimal.
+10. **Lecturas parciales**: `2 min 3 s` y `10-12 ms` ya no son medidas; `.5 ms` sí; los tiempos negativos no.
+11. **Título de hyperfine**: «Mediciones de {comando}».
+12. **Tabla**: las columnas de la referencia (serie, Mediana, IC 95 %, Variación); `n` va en el veredicto y en las cifras.
+13. **Varias series con el mismo color**: la leyenda solo pinta la muestra con una serie (con varias, cada fila del gráfico lleva su nombre).
+
+Sin cambiar: con n ≤ 5 el «IC 95 %» de `icMediana` (IN-011) es el mínimo y el máximo, con una cobertura algo menor; el aviso «pocas» ya lo acompaña. Con `GOMAXPROCS=1` y un solo benchmark cuyo nombre acaba en `-N` (`BenchmarkSHA-256`), el sufijo se toma por GOMAXPROCS.

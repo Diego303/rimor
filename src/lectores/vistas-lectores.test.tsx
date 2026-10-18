@@ -200,13 +200,8 @@ describe('vista de Mediciones', () => {
     expect(mediana).toBeLessThan(x + ancho);
     expect(screen.getByText('Línea: mediana · banda: intervalo de confianza del 95 %')).toBeTruthy();
     const celdas = [...container.querySelectorAll('.tabla-mediciones tbody td')].map((c) => c.textContent);
-    expect(celdas).toEqual([
-      'reqwest',
-      '20',
-      '38,54\u00a0ms',
-      '38,11 – 39,02',
-      expect.stringMatching(/^\d,\d\u00a0%$/),
-    ]);
+    // Las columnas de la referencia: serie, Mediana, IC 95 % y Variación.
+    expect(celdas).toEqual(['reqwest', '38,54\u00a0ms', '38,11 – 39,02', expect.stringMatching(/^\d,\d\u00a0%$/)]);
     // Un atípico (41,70 ms): un aviso, con su número en el plegable.
     expect(screen.getByText('Avisos de método (1)')).toBeTruthy();
     expect(screen.getByText(/Un valor \(41,70 ms\) se aleja de la mediana/)).toBeTruthy();
@@ -224,7 +219,11 @@ describe('vista de Mediciones', () => {
     const otra = render(<VistaMediciones el={go.el} datos={go.datos} />);
     expect(otra.container.querySelectorAll('.gp-banda')).toHaveLength(2);
     expect(otra.container.querySelectorAll('.tabla-mediciones tbody tr')).toHaveLength(2);
-    expect(otra.container.querySelector('.verdict .big')?.textContent).toBe('0,01273\u00a0ms');
+    // De menos de 1 ms se enseña en µs (los valores se guardan en ms).
+    expect(otra.container.querySelector('.verdict .big')?.textContent).toBe('12,73\u00a0µs');
+    expect(otra.container.querySelector('.gp-unidad')?.textContent).toBe('µs');
+    // Con varias series, la leyenda no pinta muestras de color que no las distinguirían.
+    expect(otra.container.querySelectorAll('.legend i')).toHaveLength(0);
     // Los avisos de cada serie llevan su nombre delante.
     expect(screen.getAllByText(/^(Parse|Encode): Solo 5 mediciones/)).toHaveLength(2);
   });

@@ -32,25 +32,57 @@ export function decimalesPara(v: number): number {
   return Math.min(6, Math.max(0, 3 - Math.floor(Math.log10(Math.abs(v)))));
 }
 
-/** Formateadores de una serie: todos sus valores con los mismos decimales, los de su mediana. */
-export function formatosDe(s: Pick<SerieDerivada, 'd' | 'unidad'>, idioma: Idioma) {
-  const dec = decimalesPara(s.d.mediana);
+/** Lo que hace falta de una serie para elegir cómo escribir sus valores. */
+interface ConMediana {
+  d: Pick<Descriptiva, 'mediana'>;
+  unidad: UnidadSerie;
+}
+
+/** Unidad en la que se enseñan los valores (se guardan en ms o s). */
+export type UnidadVista = 'ns' | 'µs' | 'ms' | 's';
+
+export interface Escala {
+  unidad: UnidadVista;
+  /** Por cuánto se multiplica el valor guardado. */
+  factor: number;
+}
+
+/**
+ * Los valores se guardan en ms (o s), pero por debajo de 1 ms se enseñan en µs y por debajo de 1 µs en ns: un
+ * benchmark de Go de 0,26 ns/op no puede salir «0,000000 ms». Con varias series, manda la mediana más pequeña.
+ */
+export function escalaDe(series: readonly ConMediana[]): Escala {
+  if (series[0]?.unidad === 's') return { unidad: 's', factor: 1 };
+  let menor = Number.POSITIVE_INFINITY;
+  for (const s of series) if (Number.isFinite(s.d.mediana) && s.d.mediana > 0) menor = Math.min(menor, s.d.mediana);
+  if (!Number.isFinite(menor) || menor >= 1) return { unidad: 'ms', factor: 1 };
+  return menor >= 1e-3 ? { unidad: 'µs', factor: 1e3 } : { unidad: 'ns', factor: 1e6 };
+}
+
+/**
+ * Formateadores de una serie: todos sus valores en la misma escala y con los mismos decimales, los de su mediana.
+ * Con varias series en una tabla o un gráfico, se les pasa la escala común.
+ */
+export function formatosDe(s: ConMediana, idioma: Idioma, escala: Escala = escalaDe([s])) {
+  const dec = decimalesPara(s.d.mediana * escala.factor);
   return {
-    numero: (v: number) => fmtNumero(v, idioma, dec),
-    conUnidad: (v: number) => fmtCifra(v, dec, s.unidad, idioma),
+    escala,
+    numero: (v: number) => fmtNumero(v * escala.factor, idioma, dec),
+    conUnidad: (v: number) => fmtCifra(v * escala.factor, dec, escala.unidad, idioma),
     porcentaje: (f: number) => fmtCifra(f * 100, 1, '%', idioma),
   };
 }
 
-/** Cifra de la primera serie; sin series, «—». */
-function cifraDe(d: DatosMediciones, f: (s: SerieDerivada) => Cifra): Cifra {
+/** Cifra de la primera serie, escrita en la escala de todas (como en la vista); sin series, «—». */
+function cifraDe(d: DatosMediciones, f: (s: SerieDerivada, escala: Escala) => Cifra): Cifra {
   const s = d.series[0];
-  return s ? f(s) : { texto: '—' };
+  return s ? f(s, escalaDe(d.series)) : { texto: '—' };
 }
 
-const valorCon = (s: SerieDerivada, v: number, unidad: UnidadSerie | '%' = s.unidad): Cifra => ({
-  texto: unidad === '%' ? fmtCifra(v, 1, '%', 'es') : formatosDe(s, 'es').conUnidad(v),
-  ...(Number.isFinite(v) ? { valor: v, unidad } : {}),
+/** El texto en la escala de la vista; el valor, en la unidad en que se guarda (ms o s). */
+const valorCon = (s: SerieDerivada, escala: Escala, v: number): Cifra => ({
+  texto: formatosDe(s, 'es', escala).conUnidad(v),
+  ...(Number.isFinite(v) ? { valor: v, unidad: s.unidad } : {}),
 });
 
 export const lectorMediciones: Lector<DatosMediciones> = {
@@ -63,9 +95,11 @@ export const lectorMediciones: Lector<DatosMediciones> = {
 
   async leer(e: Entrada): Promise<Borrador> {
     const texto = e.texto ?? '';
-    const { series } = leerSeries(texto);
+    const { formato, series } = leerSeries(texto);
     const etiqueta = series.find((s) => s.etiqueta)?.etiqueta;
-    const titulo = etiqueta ? etiqueta.slice(0, LARGO_TITULO) : textos.t('es', 'titulo');
+    // De hyperfine, la etiqueta es el comando: «Mediciones de rg TODO src».
+    const conNombre = etiqueta && formato === 'hyperfine' ? textos.t('es', 'tituloDe', { etiqueta }) : etiqueta;
+    const titulo = conNombre ? conNombre.slice(0, LARGO_TITULO) : textos.t('es', 'titulo');
     return { titulo, original: texto, resumen: { n: series[0]?.valores.length ?? 0 } };
   },
 
@@ -90,7 +124,8 @@ export const lectorMediciones: Lector<DatosMediciones> = {
     if (typeof r.mediana !== 'number' || !Number.isFinite(r.mediana) || typeof r.unidad !== 'string') {
       return mediciones;
     }
-    const mediana = fmtCifra(r.mediana, decimalesPara(r.mediana), r.unidad, idioma);
+    const unidad: UnidadSerie = r.unidad === 's' ? 's' : 'ms';
+    const mediana = formatosDe({ d: { mediana: r.mediana }, unidad }, idioma).conUnidad(r.mediana);
     return textos.t(idioma, 'legible', { mediciones, mediana });
   },
 
@@ -98,7 +133,7 @@ export const lectorMediciones: Lector<DatosMediciones> = {
     const i = ctx.idioma;
     const s = d.series[0];
     if (!s || !s.d.n) return { texto: [{ t: 'texto', v: textos.t(i, 'respuesta.vacia') }] };
-    const f = formatosDe(s, i);
+    const f = formatosDe(s, i, escalaDe(d.series));
     const mediciones = textos.t(i, 'mediciones', { n: s.d.n });
     // Con una sola medición no hay intervalo que dar.
     const inicio =
@@ -117,11 +152,15 @@ export const lectorMediciones: Lector<DatosMediciones> = {
   },
 
   cifras: {
-    mediana: (d) => cifraDe(d, (s) => valorCon(s, s.d.mediana)),
-    ic_bajo: (d) => cifraDe(d, (s) => valorCon(s, s.d.icBajo)),
-    ic_alto: (d) => cifraDe(d, (s) => valorCon(s, s.d.icAlto)),
+    mediana: (d) => cifraDe(d, (s, e) => valorCon(s, e, s.d.mediana)),
+    ic_bajo: (d) => cifraDe(d, (s, e) => valorCon(s, e, s.d.icBajo)),
+    ic_alto: (d) => cifraDe(d, (s, e) => valorCon(s, e, s.d.icAlto)),
     n: (d) => cifraDe(d, (s) => ({ texto: fmtNumero(s.d.n, 'es'), valor: s.d.n })),
-    cv: (d) => cifraDe(d, (s) => valorCon(s, s.d.cv * 100, '%')),
+    cv: (d) =>
+      cifraDe(d, (s) => ({
+        texto: fmtCifra(s.d.cv * 100, 1, '%', 'es'),
+        ...(Number.isFinite(s.d.cv) ? { valor: s.d.cv * 100, unidad: '%' } : {}),
+      })),
   },
 
   textoIndexable: (d) =>

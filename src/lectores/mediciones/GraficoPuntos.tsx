@@ -38,11 +38,41 @@ export function pasoBonito(x: number): number {
   return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * e;
 }
 
+/** Tope de marcas del eje: con valores enormes (más allá de 2⁵³ pasos) `k` dejaría de avanzar. */
+const MAX_MARCAS = 50;
+
 /** Las marcas del eje entre `mn` y `mx`, de `paso` en `paso` (sin acumular errores de coma flotante). */
 export function marcasEje(mn: number, mx: number, paso: number): number[] {
   const marcas: number[] = [];
-  for (let k = Math.ceil(mn / paso); k * paso <= mx; k++) marcas.push(k * paso);
+  if (!(paso > 0) || !Number.isFinite(mn) || !Number.isFinite(mx)) return marcas;
+  for (let k = Math.ceil(mn / paso); k * paso <= mx && marcas.length < MAX_MARCAS; k++) {
+    const t = k * paso;
+    if (marcas.at(-1) === t) break;
+    marcas.push(t);
+  }
   return marcas;
+}
+
+/** Puntos que se dibujan por fila; con más, se toman a intervalos regulares (la banda y la mediana son de todos). */
+export const MAX_PUNTOS = 2000;
+
+/** Los índices de los puntos que se dibujan, a intervalos regulares si hay más de `MAX_PUNTOS`. */
+export function puntosADibujar(n: number): number[] {
+  if (n <= MAX_PUNTOS) return Array.from({ length: n }, (_, i) => i);
+  return Array.from({ length: MAX_PUNTOS }, (_, i) => Math.floor((i * n) / MAX_PUNTOS));
+}
+
+/** Mínimo y máximo sin `Math.min(...valores)`, que desborda la pila con series de cientos de miles. */
+function extremos(filas: readonly FilaGrafico[]): [number, number] {
+  let mn = Number.POSITIVE_INFINITY;
+  let mx = Number.NEGATIVE_INFINITY;
+  for (const f of filas)
+    for (const v of f.valores) {
+      if (!Number.isFinite(v)) continue;
+      if (v < mn) mn = v;
+      if (v > mx) mx = v;
+    }
+  return [mn, mx];
 }
 
 /** Desplazamiento vertical del punto `i`, entre −8 y 8: el de la referencia. */
@@ -51,14 +81,14 @@ const temblor = (i: number) => (((i * 37) % 13) / 13 - 0.5) * 16;
 const corta = (s: string) => (s.length > LARGO_ETIQUETA ? `${s.slice(0, LARGO_ETIQUETA - 1)}…` : s);
 
 export function GraficoPuntos({ filas, unidad, idioma, titulo }: PropsGrafico) {
-  const todos = filas.flatMap((f) => f.valores).filter(Number.isFinite);
-  if (!todos.length) return null;
-  let mn = Math.min(...todos);
-  let mx = Math.max(...todos);
+  let [mn, mx] = extremos(filas);
+  if (!Number.isFinite(mn)) return null;
   // Un 8 % de aire a cada lado; si todos los valores son iguales, un 5 % del valor (o 1).
   const aire = mx > mn ? (mx - mn) * 0.08 : Math.abs(mn) * 0.05 || 1;
   mn -= aire;
   mx += aire;
+  // Con valores al borde de lo representable, el rango ya no es un número: no hay gráfico que dibujar.
+  if (!Number.isFinite(mx - mn) || !(mx > mn)) return null;
   const alto = ALTO_FILA * filas.length + ALTO_EJE;
   const x = (v: number) => IZQUIERDA + ((v - mn) / (mx - mn)) * (ANCHO - IZQUIERDA - DERECHA);
   const paso = pasoBonito((mx - mn) / 5);
@@ -93,12 +123,10 @@ export function GraficoPuntos({ filas, unidad, idioma, titulo }: PropsGrafico) {
                 rx={4}
               />
             )}
-            {f.valores.map((v, i) =>
-              Number.isFinite(v) ? (
-                // biome-ignore lint/suspicious/noArrayIndexKey: el orden de las medidas es fijo.
-                <circle key={i} cx={x(v)} cy={y + temblor(i)} r={3.4} />
-              ) : null,
-            )}
+            {puntosADibujar(f.valores.length).map((i) => {
+              const v = f.valores[i] as number;
+              return Number.isFinite(v) ? <circle key={i} cx={x(v)} cy={y + temblor(i)} r={3.4} /> : null;
+            })}
             {Number.isFinite(f.d.mediana) && (
               <line className="gp-mediana" x1={x(f.d.mediana)} x2={x(f.d.mediana)} y1={y - 19} y2={y + 19} />
             )}
