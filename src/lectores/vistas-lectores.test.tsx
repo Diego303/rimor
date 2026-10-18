@@ -120,3 +120,21 @@ describe('vista de Texto guardado aparte', () => {
     expect(screen.getByRole('button', { name: 'Descargar el texto completo' })).toBeTruthy();
   });
 });
+
+describe('vista de Enlace', () => {
+  it('enlaza la dirección limpia aparte y enseña lo pegado si era distinto', async () => {
+    const { default: VistaEnlace } = await import('./enlace/Vista');
+    const el = elementoFalso(7, 'https://docs.rs/ureq?utm_source=hn', 'enlace');
+    render(
+      <VistaEnlace
+        el={el}
+        datos={{ url: 'https://docs.rs/ureq', clase: 'documentacion', sitio: 'docs.rs', nombre: 'ureq' }}
+      />,
+    );
+    const enlace = screen.getByRole('link', { name: 'https://docs.rs/ureq' });
+    expect(enlace.getAttribute('rel')).toContain('noopener');
+    expect(enlace.getAttribute('target')).toBe('_blank');
+    expect(screen.getByText('Documentación')).toBeTruthy();
+    expect(screen.getByText('https://docs.rs/ureq?utm_source=hn')).toBeTruthy();
+  });
+});

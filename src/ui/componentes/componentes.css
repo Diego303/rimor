@@ -1028,6 +1028,9 @@ details.more > div {
 .lista-enlaces a {
   overflow-wrap: anywhere;
 }
+.enlace-url {
+  overflow-wrap: anywhere;
+}
 .tarjeta-texto {
   white-space: pre-line;
   overflow: hidden;

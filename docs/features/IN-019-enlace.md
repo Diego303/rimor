@@ -37,11 +37,11 @@ Guardar URL y DOI limpios, saber a qué apuntan y recordar si ya se guardaron, s
 
 ## Tareas
 
-- [ ] Normaliza: quita `utm_*`, `fbclid`, `gclid` y `ref` de seguimiento, y ordena los parámetros.
-- [ ] Clasifica por destino: repositorio, paquete, paper (arXiv, DOI), documentación, issue o PR, Stack Overflow, vídeo u otro.
-- [ ] Título provisional desde la URL (dominio y ruta legibles).
-- [ ] Sin red en v0.1 (D7).
-- [ ] Respuesta: «Documentación de ureq en docs.rs.» y, si ya existía, «Ya lo guardaste el 2 oct.»
+- [x] Normaliza: quita `utm_*`, `fbclid`, `gclid` y `ref` de seguimiento, y ordena los parámetros.
+- [x] Clasifica por destino: repositorio, paquete, paper (arXiv, DOI), documentación, issue o PR, Stack Overflow, vídeo u otro.
+- [x] Título provisional desde la URL (dominio y ruta legibles).
+- [x] Sin red en v0.1 (D7).
+- [x] Respuesta: «Documentación de ureq en docs.rs.» y, si ya existía, «Ya lo guardaste el 2 oct.»
 
 ## Pruebas previstas
 
@@ -69,3 +69,11 @@ Guardar URL y DOI limpios, saber a qué apuntan y recordar si ya se guardaron, s
 ## Autorrevisión
 
 Cubre las cinco tareas y la aceptación. Reusa la huella del contexto (IN-016) para «ya lo guardaste», sin estructuras nuevas. El enriquecido (IN-041) partirá de la clase y el nombre que se calculan aquí.
+
+## Cambios durante la implementación
+
+- `normalizar` quita también un `#` final sin nada detrás (la API `URL` lo conserva en el texto aunque su `hash` esté vacío).
+- El número de una issue o un PR va tal cual («#57465»), no como cantidad con separador de miles.
+- `detectar` puntúa 0,95 con un texto que es entero una URL o un DOI (además del atajo del detector) y 0 con archivos.
+- Lo forzado con `/enlace` que no es una URL se guarda como «otro», sin dirección.
+

@@ -20,6 +20,24 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
       ],
     },
   },
+  "enlace": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "rust-lang/rust repository on GitHub.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Repositorio rust-lang/rust en GitHub.",
+        },
+      ],
+    },
+  },
   "idea": {
     "en": {
       "texto": [

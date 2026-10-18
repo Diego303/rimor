@@ -1,0 +1,242 @@
+[
+  {
+    "url": "https://github.com/rust-lang/rust",
+    "clase": "repositorio"
+  },
+  {
+    "url": "https://github.com/algesten/ureq/tree/main/src",
+    "clase": "repositorio"
+  },
+  {
+    "url": "https://gitlab.com/gitlab-org/gitlab",
+    "clase": "repositorio"
+  },
+  {
+    "url": "https://codeberg.org/forgejo/forgejo",
+    "clase": "repositorio"
+  },
+  {
+    "url": "https://bitbucket.org/atlassian/python-bitbucket",
+    "clase": "repositorio"
+  },
+  {
+    "url": "https://github.com/withastro/astro?utm_source=newsletter&utm_medium=email",
+    "clase": "repositorio"
+  },
+  {
+    "url": "https://github.com/rust-lang/rust/issues/12345",
+    "clase": "issue"
+  },
+  {
+    "url": "https://github.com/facebook/react/issues/24502#issuecomment-1131846237",
+    "clase": "issue"
+  },
+  {
+    "url": "https://gitlab.com/gitlab-org/gitlab/-/issues/1",
+    "clase": "issue"
+  },
+  {
+    "url": "https://github.com/microsoft/TypeScript/pull/57465",
+    "clase": "pr"
+  },
+  {
+    "url": "https://github.com/denoland/deno/pull/21000/files",
+    "clase": "pr"
+  },
+  {
+    "url": "https://gitlab.com/gitlab-org/gitlab/-/merge_requests/100",
+    "clase": "pr"
+  },
+  {
+    "url": "https://www.npmjs.com/package/react",
+    "clase": "paquete"
+  },
+  {
+    "url": "https://www.npmjs.com/package/@tanstack/react-router",
+    "clase": "paquete"
+  },
+  {
+    "url": "https://crates.io/crates/serde",
+    "clase": "paquete"
+  },
+  {
+    "url": "https://crates.io/crates/ureq/2.9.1",
+    "clase": "paquete"
+  },
+  {
+    "url": "https://pypi.org/project/numpy/",
+    "clase": "paquete"
+  },
+  {
+    "url": "https://pkg.go.dev/github.com/spf13/cobra",
+    "clase": "paquete"
+  },
+  {
+    "url": "https://central.sonatype.com/artifact/com.google.guava/guava",
+    "clase": "paquete"
+  },
+  {
+    "url": "https://rubygems.org/gems/rails",
+    "clase": "paquete"
+  },
+  {
+    "url": "https://packagist.org/packages/laravel/framework",
+    "clase": "paquete"
+  },
+  {
+    "url": "https://www.nuget.org/packages/Newtonsoft.Json",
+    "clase": "paquete"
+  },
+  {
+    "url": "https://hex.pm/packages/phoenix",
+    "clase": "paquete"
+  },
+  {
+    "url": "https://arxiv.org/abs/2310.06825",
+    "clase": "paper"
+  },
+  {
+    "url": "https://arxiv.org/pdf/1706.03762",
+    "clase": "paper"
+  },
+  {
+    "url": "https://doi.org/10.1145/3368089.3409741",
+    "clase": "paper"
+  },
+  {
+    "url": "https://dx.doi.org/10.1038/nature14539",
+    "clase": "paper"
+  },
+  {
+    "url": "doi:10.48550/arXiv.2310.06825",
+    "clase": "paper"
+  },
+  {
+    "url": "10.1145/3368089.3409741",
+    "clase": "paper"
+  },
+  {
+    "url": "https://aclanthology.org/2020.acl-main.463/",
+    "clase": "paper"
+  },
+  {
+    "url": "https://openreview.net/forum?id=YicbFdNTTy",
+    "clase": "paper"
+  },
+  {
+    "url": "https://dl.acm.org/doi/10.1145/3368089.3409741",
+    "clase": "paper"
+  },
+  {
+    "url": "https://www.semanticscholar.org/paper/204e3073870fae3d05bcbc2f6a8e263d9b72e776",
+    "clase": "paper"
+  },
+  {
+    "url": "https://www.biorxiv.org/content/10.1101/2020.03.22.002386v3",
+    "clase": "paper"
+  },
+  {
+    "url": "https://docs.rs/ureq/latest/ureq/",
+    "clase": "documentacion"
+  },
+  {
+    "url": "https://docs.rs/serde",
+    "clase": "documentacion"
+  },
+  {
+    "url": "https://docs.python.org/3/library/asyncio.html",
+    "clase": "documentacion"
+  },
+  {
+    "url": "https://docs.astro.build/en/guides/deploy/github/",
+    "clase": "documentacion"
+  },
+  {
+    "url": "https://requests.readthedocs.io/en/latest/",
+    "clase": "documentacion"
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system",
+    "clase": "documentacion"
+  },
+  {
+    "url": "https://learn.microsoft.com/en-us/dotnet/csharp/",
+    "clase": "documentacion"
+  },
+  {
+    "url": "https://devdocs.io/javascript/",
+    "clase": "documentacion"
+  },
+  {
+    "url": "https://vitest.dev/docs/",
+    "clase": "documentacion"
+  },
+  {
+    "url": "https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-processing-an-unsorted-array",
+    "clase": "pregunta"
+  },
+  {
+    "url": "https://stackoverflow.com/questions/927358/how-do-i-undo-the-most-recent-local-commits-in-git?utm_campaign=social",
+    "clase": "pregunta"
+  },
+  {
+    "url": "https://unix.stackexchange.com/questions/4126/what-is-the-exact-difference-between-a-terminal-a-shell-a-tty-and-a-con",
+    "clase": "pregunta"
+  },
+  {
+    "url": "https://superuser.com/questions/1185/how-to-measure-time-of-program-execution",
+    "clase": "pregunta"
+  },
+  {
+    "url": "https://serverfault.com/questions/24409/what-is-the-difference-between-a-load-balancer-and-a-reverse-proxy",
+    "clase": "pregunta"
+  },
+  {
+    "url": "https://askubuntu.com/questions/53822/how-do-you-run-ubuntu-server-with-a-gui",
+    "clase": "pregunta"
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ&feature=share",
+    "clase": "video"
+  },
+  {
+    "url": "https://youtu.be/dQw4w9WgXcQ?si=abc123",
+    "clase": "video"
+  },
+  {
+    "url": "https://www.youtube.com/shorts/abcdefghijk",
+    "clase": "video"
+  },
+  {
+    "url": "https://vimeo.com/76979871",
+    "clase": "video"
+  },
+  {
+    "url": "https://www.twitch.tv/videos/123456789",
+    "clase": "video"
+  },
+  {
+    "url": "https://blog.rust-lang.org/2024/02/08/Rust-1.76.0.html",
+    "clase": "otro"
+  },
+  {
+    "url": "https://news.ycombinator.com/item?id=38000000",
+    "clase": "otro"
+  },
+  {
+    "url": "https://github.com/",
+    "clase": "otro"
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Rust_(programming_language)",
+    "clase": "otro"
+  },
+  {
+    "url": "https://www.example.com/path/to/page?fbclid=IwAR123&b=2&a=1",
+    "clase": "otro"
+  },
+  {
+    "url": "https://martinfowler.com/articles/microservices.html",
+    "clase": "otro"
+  }
+]

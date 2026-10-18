@@ -8,6 +8,7 @@
 import type { Elemento } from '@rimor/formato';
 import { lectorArchivo } from './archivo/lector';
 import type { Lector } from './contrato';
+import { lectorEnlace } from './enlace/lector';
 import { lectorIdea } from './idea/lector';
 import { lectorTexto } from './texto/lector';
 
@@ -38,6 +39,7 @@ export const ORDEN_DETECCION: readonly (readonly string[])[] = [
 /** Los lectores de la app, en el orden de `ORDEN_DETECCION`. */
 export const LECTORES: readonly Lector[] = [
   lectorArchivo, // 2
+  lectorEnlace, // 3
   lectorIdea, // 16
   lectorTexto, // 17
 ];
