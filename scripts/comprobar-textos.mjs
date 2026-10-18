@@ -7,7 +7,7 @@ import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
-/** Atributos cuyo valor acaba en pantalla o en el lector de pantalla. */
+/** Atributos y propiedades cuyo valor acaba en pantalla o en el lector de pantalla. */
 const ATRIBUTOS = new Set([
   'aria-label',
   'aria-description',
@@ -24,9 +24,34 @@ const ATRIBUTOS = new Set([
   'resumen',
   'frase',
   'explicacion',
+  'accion',
 ]);
+/** Funciones cuyo argumento de texto se muestra (avisos efímeros). */
+const LLAMADAS = new Set(['avisar']);
 const LETRA = /\p{L}/u;
+const ENTIDAD = /&(?:[a-z]+|#\d+|#x[0-9a-f]+);/gi;
 const EXCLUIDAS = [['ui', 'muestras'].join(sep)];
+
+/** Textos con letras que una expresión puede producir: literales, ternarias, `??`, `&&`, listas y objetos. */
+function textosDe(e, nombrePropiedad) {
+  if (!e) return [];
+  if (ts.isStringLiteral(e) || ts.isNoSubstitutionTemplateLiteral(e)) return LETRA.test(e.text) ? [e.text] : [];
+  if (ts.isTemplateExpression(e)) {
+    const fijo = [e.head.text, ...e.templateSpans.map((x) => x.literal.text)].join(' ').trim();
+    return LETRA.test(fijo) ? [fijo] : [];
+  }
+  if (ts.isParenthesizedExpression(e) || ts.isAsExpression(e) || ts.isSatisfiesExpression(e))
+    return textosDe(e.expression);
+  if (ts.isConditionalExpression(e)) return [...textosDe(e.whenTrue), ...textosDe(e.whenFalse)];
+  if (ts.isBinaryExpression(e)) return [...textosDe(e.left), ...textosDe(e.right)];
+  if (ts.isArrayLiteralExpression(e)) return e.elements.flatMap((x) => textosDe(x, nombrePropiedad));
+  if (ts.isObjectLiteralExpression(e)) {
+    return e.properties.flatMap((p) =>
+      ts.isPropertyAssignment(p) && ATRIBUTOS.has(p.name.getText().replace(/['"]/g, '')) ? textosDe(p.initializer) : [],
+    );
+  }
+  return [];
+}
 
 /**
  * Busca textos visibles literales en el código de un componente.
@@ -39,31 +64,42 @@ export function buscarTextos(codigo, nombre = 'x.tsx') {
   const hallados = [];
   const anotar = (nodo, texto) =>
     hallados.push({ linea: fuente.getLineAndCharacterOfPosition(nodo.getStart(fuente)).line + 1, texto: texto.trim() });
-  const literal = (e) => {
-    if (!e) return null;
-    if ((ts.isStringLiteral(e) || ts.isNoSubstitutionTemplateLiteral(e)) && LETRA.test(e.text)) return e.text;
-    if (ts.isTemplateExpression(e)) {
-      const fijo = [e.head.text, ...e.templateSpans.map((s) => s.literal.text)].join(' ');
-      if (LETRA.test(fijo)) return fijo;
-    }
-    return null;
-  };
 
   const visitar = (nodo) => {
-    if (ts.isJsxText(nodo) && LETRA.test(nodo.text)) anotar(nodo, nodo.text);
-    if (ts.isJsxAttribute(nodo) && ATRIBUTOS.has(nodo.name.getText(fuente)) && nodo.initializer) {
+    if (ts.isJsxText(nodo) && LETRA.test(nodo.text.replace(ENTIDAD, ''))) anotar(nodo, nodo.text);
+    if (ts.isJsxAttribute(nodo) && nodo.initializer) {
+      const nombreAtributo = nodo.name.getText(fuente);
       const ini = nodo.initializer;
-      const texto = ts.isStringLiteral(ini) ? literal(ini) : ts.isJsxExpression(ini) ? literal(ini.expression) : null;
-      if (texto) anotar(nodo, texto);
+      const expresion = ts.isJsxExpression(ini) ? ini.expression : ini;
+      // En props de objetos y listas (opciones, columnas) se miran sus propiedades visibles.
+      const visible = ATRIBUTOS.has(nombreAtributo) || (nombreAtributo === 'value' && esBoton(nodo));
+      const textos = visible
+        ? textosDe(expresion)
+        : expresion && (ts.isArrayLiteralExpression(expresion) || ts.isObjectLiteralExpression(expresion))
+          ? textosDe(expresion)
+          : [];
+      for (const texto of textos) anotar(nodo, texto);
     }
     if (ts.isJsxExpression(nodo) && nodo.parent && (ts.isJsxElement(nodo.parent) || ts.isJsxFragment(nodo.parent))) {
-      const texto = literal(nodo.expression);
-      if (texto) anotar(nodo, texto);
+      for (const texto of textosDe(nodo.expression)) anotar(nodo, texto);
+    }
+    if (ts.isCallExpression(nodo) && LLAMADAS.has(nodo.expression.getText(fuente).split('.').pop() ?? '')) {
+      for (const texto of textosDe(nodo.arguments[0])) anotar(nodo, texto);
     }
     ts.forEachChild(nodo, visitar);
   };
   visitar(fuente);
   return hallados;
+}
+
+/** `<input type="submit|button|reset">`: su `value` es el texto del botón. */
+function esBoton(atributo) {
+  const elemento = atributo.parent?.parent;
+  if (!elemento || !(ts.isJsxSelfClosingElement(elemento) || ts.isJsxOpeningElement(elemento))) return false;
+  if (elemento.tagName.getText() !== 'input') return false;
+  const tipo = elemento.attributes.properties.find((a) => ts.isJsxAttribute(a) && a.name.getText() === 'type');
+  const valor = tipo?.initializer && ts.isStringLiteral(tipo.initializer) ? tipo.initializer.text : '';
+  return ['submit', 'button', 'reset'].includes(valor);
 }
 
 function* recorrer(dir) {

@@ -124,3 +124,25 @@ Cubre las tareas de la ficha. Sin dependencias nuevas. No contradice decisiones 
 - `SelectorTema` traduce sus propios textos (`tema.*`) y ya no recibe `etiqueta` ni `textos`.
 - La regla de textos también detecta literales en plantillas (`` `${n} filas` ``) y no mira la propiedad `nombre` (es el nombre del icono, no se ve).
 - Los dos catálogos van en la carga inicial (76,2 KB en total). Si el inglés crece mucho, se cargará bajo demanda.
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 03:20): `astro check` 0 errores y 0 avisos; Biome, colores y textos, OK; Vitest 11 archivos y 64 pruebas, OK; construcción, OK; carga inicial **76,2 KB**.
+
+| Criterio | Evidencia |
+|---|---|
+| Ningún literal visible en componentes (regla de lint) | `scripts/comprobar-textos.mjs` en `pnpm lint`; `comprobar-textos.test.mjs` cubre texto JSX, atributos, ternarias, `??`/`&&`, listas, objetos de props (`opciones`, `columnas`), `value` de botones, `avisar('…')` y entidades HTML; la orden falla con código 1 |
+| `fmtCifra(-4.515, 1, '%')` da `−4,5 %` con espacio de no separación | `formatos.test.ts`: igual a `'−4,5 %'` |
+| Formateadores en `es` y `en` con casos límite | `formatos.test.ts`: 0, negativos, `−0`, NaN, ∞, redondeos que cambian de unidad, zonas horarias alrededor de medianoche, otro año; propiedad de fast-check (sin guion ni `NaN`) |
+| Pluralización y ordinales («3.ª vez») | `i18n.test.ts` y `formatos.test.ts` (`3.ª`, `3.º`, `1st`…`101st`); las variables numéricas se formatean (`10.000 veces`) |
+| Cambio de idioma en caliente | `useT.test.tsx`: `ChipTipo` pasa de «Hilo» a «Thread» y `<html lang>` cambia |
+| Catálogos completos | Misma lista de claves y mismas variables en `es` y `en` |
+
+### Revisión independiente
+
+Hallazgos, todos corregidos con prueba:
+
+1. `fmtDuracion(-0.4)` daba `−0 ms`: el signo se decide con el valor ya redondeado.
+2. La unidad se elegía antes de redondear (`999,6 ms` → `1000 ms`, `1024 KB`…): ahora sube de unidad.
+3. `{n}` se interpolaba sin formato (`10000 veces`, `-3 veces`): las variables numéricas pasan por `fmtNumero`.
+4. La regla de textos solo veía literales directos: ahora mira ternarias, operadores, paréntesis y `as`, listas, objetos de props, `value` de botones, `accion` y `avisar('…')`, y ya no confunde entidades HTML con texto.

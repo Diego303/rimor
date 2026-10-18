@@ -44,6 +44,12 @@ describe('traducir', () => {
     expect(traducir('en', 'comun.vez', { n: 0 })).toBe('0 times');
   });
 
+  it('formatea las variables numéricas y elige el plural con ellas', () => {
+    expect(traducir('es', 'comun.vez', { n: 10000 })).toBe('10.000 veces');
+    expect(traducir('es', 'comun.vez', { n: -3 })).toBe('\u22123 veces');
+    expect(traducir('en', 'comun.vez', { n: 2400 })).toBe('2,400 times');
+  });
+
   it('una clave inexistente se devuelve tal cual', () => {
     expect(traducir('en', 'no.existe' as Clave)).toBe('no.existe');
   });

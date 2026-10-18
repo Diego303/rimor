@@ -90,6 +90,14 @@ describe('fmtDuracion', () => {
     expect(n(fmtDuracion(1.6 * 86_400_000, 'en'))).toBe('1.6 days');
     expect(n(fmtDuracion(-1600, 'es'))).toBe('-1,6 s');
     expect(fmtDuracion(Number.NaN, 'es')).toBe('—');
+    expect(n(fmtDuracion(-0.4, 'es'))).toBe('0 ms');
+  });
+
+  it('sube de unidad cuando el redondeo llega al límite', () => {
+    expect(n(fmtDuracion(999.6, 'es'))).toBe('1 s');
+    expect(n(fmtDuracion(59_960, 'es'))).toBe('1 min');
+    expect(n(fmtDuracion(3_570_000, 'es'))).toBe('1 h');
+    expect(n(fmtDuracion(86_390_000, 'es'))).toBe('1 día');
   });
 });
 
@@ -99,6 +107,8 @@ describe('fmtBytes', () => {
     expect(n(fmtBytes(2.4 * 1024 * 1024, 'es'))).toBe('2,4 MB');
     expect(n(fmtBytes(2048, 'en'))).toBe('2 KB');
     expect(fmtBytes(-1, 'es')).toBe('—');
+    expect(n(fmtBytes(1024 * 1023.97, 'es'))).toBe('1 MB');
+    expect(n(fmtBytes(1023.6, 'es'))).toBe('1 KB');
   });
 });
 

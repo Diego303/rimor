@@ -65,34 +65,50 @@ export function fmtP(p: number, idioma: Idioma): string {
 
 const DIA = 86_400_000;
 
-/** Duración legible: `850 ms`, `1,6 s`, `12 min`, `3,5 h`, `1,6 días`. */
+/** Redondea a `decimales`. */
+const redondear = (x: number, decimales: number) => Math.round(x * 10 ** decimales) / 10 ** decimales;
+
+/**
+ * Duración legible: `850 ms`, `1,6 s`, `12 min`, `3,5 h`, `1,6 días`.
+ * La unidad se elige con el valor ya redondeado, así que 999,6 ms es `1 s` y no `1000 ms`.
+ */
 export function fmtDuracion(ms: number, idioma: Idioma): string {
   if (!Number.isFinite(ms)) return NO_FINITO;
-  const signo = ms < 0 ? MENOS : '';
   const a = Math.abs(ms);
-  const con = (v: number, dec: number, u: string) =>
-    `${signo}${fmtNumero(v, idioma, dec).replace(/[.,]0$/, '')}${NBSP}${u}`;
-  if (a < 1000) return con(Math.round(a), 0, 'ms');
-  if (a < 60_000) return con(a / 1000, 1, 's');
-  if (a < 3_600_000) return con(Math.round(a / 60_000), 0, 'min');
-  if (a < DIA) return con(a / 3_600_000, 1, 'h');
-  const dias = a / DIA;
-  const unidad =
-    idioma === 'es' ? (Math.abs(dias - 1) < 0.05 ? 'día' : 'días') : Math.abs(dias - 1) < 0.05 ? 'day' : 'days';
-  return con(dias, 1, unidad);
+  const escalas: [number, number, string][] = [
+    [1, 0, 'ms'],
+    [1000, 1, 's'],
+    [60_000, 0, 'min'],
+    [3_600_000, 1, 'h'],
+  ];
+  const limites = [1000, 60, 60, 24];
+  let valor = redondear(a / DIA, 1);
+  let unidad = '';
+  for (const [i, [divisor, dec, u]] of escalas.entries()) {
+    const r = redondear(a / divisor, dec);
+    if (r < (limites[i] ?? Number.POSITIVE_INFINITY)) {
+      valor = r;
+      unidad = u;
+      break;
+    }
+  }
+  if (!unidad) unidad = idioma === 'es' ? (valor === 1 ? 'día' : 'días') : valor === 1 ? 'day' : 'days';
+  // Sin «−0»: el signo solo si lo redondeado no es cero.
+  const signo = ms < 0 && valor !== 0 ? -1 : 1;
+  return `${fmtNumero(signo * valor, idioma)}${NBSP}${unidad}`;
 }
 
-/** Tamaño de archivo en unidades de 1024: `512 B`, `2,4 KB`, `2,4 MB`. */
+/** Tamaño de archivo en unidades de 1024: `512 B`, `2,4 KB`, `2,4 MB` (la unidad, con el valor redondeado). */
 export function fmtBytes(b: number, idioma: Idioma): string {
   if (!Number.isFinite(b) || b < 0) return NO_FINITO;
   const unidades = ['B', 'KB', 'MB', 'GB', 'TB'];
   let v = b;
   let i = 0;
-  while (v >= 1024 && i < unidades.length - 1) {
+  while (redondear(v, i === 0 ? 0 : 1) >= 1024 && i < unidades.length - 1) {
     v /= 1024;
     i++;
   }
-  return fmtCifra(v, i === 0 ? 0 : 1, unidades[i], idioma).replace(/[.,]0(?= )/, '');
+  return `${fmtNumero(redondear(v, i === 0 ? 0 : 1), idioma)}${NBSP}${unidades[i]}`;
 }
 
 interface Partes {

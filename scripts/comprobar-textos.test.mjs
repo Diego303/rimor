@@ -19,9 +19,32 @@ describe('buscarTextos', () => {
     expect(textos('const A = ({ n }) => <p>{`${n} filas`}</p>;')).toEqual(['filas']);
   });
 
+  it('mira dentro de ternarias, operadores, listas, objetos de props, inputs de botón y avisos', () => {
+    expect(textos("const A = ({ c }) => <b aria-label={c ? 'Abrir' : 'Cerrar'} />;")).toEqual(['Abrir', 'Cerrar']);
+    expect(
+      textos("const A = ({ c, x }) => <p>{c ? 'Sí' : 'No'}{x ?? 'Sin título'}{x && 'Hola'}{['Lista']}</p>;"),
+    ).toEqual(['Sí', 'No', 'Sin título', 'Hola', 'Lista']);
+    expect(textos("const A = () => <b aria-label={('Cerrar')} title={'Abrir' as const} />;")).toEqual([
+      'Cerrar',
+      'Abrir',
+    ]);
+    expect(textos("const A = () => <Segmentado opciones={[{ valor: 'claro', etiqueta: 'Claro' }]} />;")).toEqual([
+      'Claro',
+    ]);
+    expect(textos("const A = () => <Tabla columnas={[{ id: 'n', titulo: 'Nombre' }]} />;")).toEqual(['Nombre']);
+    expect(textos('const A = () => <input type="submit" value="Enviar" />;')).toEqual(['Enviar']);
+    expect(textos('const A = () => <input type="text" value="dato" />;')).toEqual([]);
+    expect(textos('const A = () => <Hueco accion="Ver" />;')).toEqual(['Ver']);
+    expect(textos("avisar('Copiado'); avisos.avisar(t('x'));")).toEqual(['Copiado']);
+  });
+
   it('acepta claves de i18n, símbolos, cifras y propiedades que no se ven', () => {
     expect(textos("const A = () => <b>{t('acciones.guardar')}</b>;")).toEqual([]);
     expect(textos('const A = () => <span>· › − 42</span>;')).toEqual([]);
+    expect(textos('const A = () => <span>&nbsp;&middot;&#183;</span>;')).toEqual([]);
+    expect(
+      textos("const A = () => <Segmentado opciones={[{ valor: 'claro', etiqueta: t('tema.claro') }]} />;"),
+    ).toEqual([]);
     expect(textos('const A = () => <Icono nombre="enviar" className="ti k-log" />;')).toEqual([]);
     expect(textos('const A = () => <a href="#add" title={t("x")} />;')).toEqual([]);
   });

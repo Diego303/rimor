@@ -4,7 +4,7 @@
  */
 import en from './en.json';
 import es from './es.json';
-import type { Idioma } from './formatos';
+import { fmtNumero, type Idioma } from './formatos';
 
 export type { Idioma } from './formatos';
 
@@ -52,12 +52,19 @@ function elegir(nodo: unknown, idioma: Idioma, vars: Vars | undefined): string |
   return undefined;
 }
 
-/** Texto de `clave` en `idioma`, con sus variables. Si falta en inglés, cae al español; si falta del todo, la clave. */
+/**
+ * Texto de `clave` en `idioma`, con sus variables. Las variables numéricas se formatean con `fmtNumero`
+ * (`10.000`, `−3`) y `n` elige la forma plural. Si falta en inglés, cae al español; si falta del todo, la clave.
+ */
 export function traducir(idioma: Idioma, clave: Clave, vars?: Vars): string {
   const texto =
     elegir(buscar(CATALOGOS[idioma], clave), idioma, vars) ?? elegir(buscar(CATALOGOS.es, clave), 'es', vars) ?? clave;
   if (!vars) return texto;
-  return texto.replace(/\{(\w+)\}/g, (m, nombre: string) => (nombre in vars ? String(vars[nombre]) : m));
+  return texto.replace(/\{(\w+)\}/g, (m, nombre: string) => {
+    const valor = vars[nombre];
+    if (valor === undefined) return m;
+    return typeof valor === 'number' ? fmtNumero(valor, idioma) : valor;
+  });
 }
 
 let activo: Idioma = 'es';
