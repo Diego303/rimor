@@ -1,0 +1,10 @@
+using System;
+
+class Programa
+{
+    static void Main(string[] args)
+    {
+        Console.WriteLine("Hola");
+        var lista = new List<int> { 1, 2, 3 };
+    }
+}

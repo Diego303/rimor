@@ -1,0 +1,4 @@
+<?php
+$nombre = $_GET['nombre'] ?? 'mundo';
+$saludo = "Hola, " . htmlspecialchars($nombre);
+echo $saludo;

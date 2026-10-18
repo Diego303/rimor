@@ -1,0 +1,5 @@
+#!/bin/sh
+export PATH="$HOME/bin:$PATH"
+ultimo=$(ls -t backups | head -n 1)
+echo "Último: $ultimo"
+cp "backups/$ultimo" /tmp/

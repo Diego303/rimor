@@ -1,0 +1,9 @@
+module Utilidades
+  def self.dobles(lista)
+    lista.map do |x|
+      x * 2
+    end
+  end
+end
+
+puts Utilidades.dobles([1, 2, 3]).inspect

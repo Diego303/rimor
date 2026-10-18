@@ -50,9 +50,9 @@ TypeScript, JavaScript, Python, Java, C#, C y C++, Go, Rust, PHP, Ruby, Shell y 
 
 ## Tareas
 
-- [ ] Detección del lenguaje por densidad de sintaxis (los 12 más comunes) y por extensión si viene de archivo.
-- [ ] Resaltado de solo lectura con los analizadores Lezer de CodeMirror.
-- [ ] Respuesta: «Código TypeScript, 48 líneas.»
+- [x] Detección del lenguaje por densidad de sintaxis (los 12 más comunes) y por extensión si viene de archivo.
+- [x] Resaltado de solo lectura con los analizadores Lezer de CodeMirror.
+- [x] Respuesta: «Código TypeScript, 48 líneas.»
 
 ## Pruebas previstas
 
@@ -78,3 +78,13 @@ TypeScript, JavaScript, Python, Java, C#, C y C++, Go, Rust, PHP, Ruby, Shell y 
 ## Autorrevisión
 
 Cubre las tres tareas. La comparación de versiones (CMP-02) es de IN-029 y el diff (LEC-09b) de v0.2. Con lo aprendido en IN-021 a IN-024: la detección se recorre por líneas con expresiones sin retroceso (nada de `[ \t]*` contiguos ni `\s*` con la bandera `m`), normaliza CRLF, mira solo el principio y se prueba con el detector real contra todos los corpus y contra código, documentos y prompts reales del disco; Markdown ya da 0 a los textos que son casi todo código, así que no compite.
+
+## Cambios durante la implementación
+
+- Dependencias nuevas, fijadas a versiones publicadas hace más de dos semanas: `@lezer/highlight` 1.2.5, `@lezer/common` 1.5.3, `@lezer/javascript` 1.5.6, `@lezer/python` 1.1.19, `@lezer/java` 1.1.4, `@lezer/cpp` 1.1.6, `@lezer/go` 1.0.1, `@lezer/rust` 1.0.3 y `@lezer/php` 1.0.6. Solo `@lezer/highlight` va en el trozo de la vista; cada analizador, en el suyo, cargado al abrir un código de su lenguaje.
+- Densidad: una línea es de código si tiene puntuación o construcciones de código, o cualquier señal de uno de los 12 lenguajes (las líneas de Shell, SQL y Ruby no se parecen a las de C); los comentarios no cuentan ni a favor ni en contra (un script muy comentado sigue siendo código); la prosa cuenta en contra. Un log (también JSON por línea y logfmt) es de Log.
+- Señales añadidas tras probar con código real del disco: tipos y `->`/`::` de Rust (sin ellas, `let x =` contaba como JavaScript), columnas de SQL en minúsculas y `CREATE EXTENSION`/`FUNCTION`…, propiedades de objetos literales (`clave: 'valor',`). Con código real pegado sin nombre: Rust 39 de 40 como código (38 con su lenguaje), Python 35 de 40, JavaScript 25 de 30, TypeScript 36 de 40 (sin tipos, a veces JavaScript), SQL 3 de 3 y Shell 8 de 12.
+- Markdown usa las señales de los 12 lenguajes para no tomar código por documento.
+- La PHP sin `<?php` se analiza como programa (no como plantilla con HTML).
+- Si llega de archivo, su nombre va en el frontmatter (`archivo_de_codigo`) para saber el lenguaje igual al derivar.
+

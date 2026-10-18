@@ -1,0 +1,13 @@
+package com.ejemplo.tienda;
+
+import java.util.List;
+import java.util.ArrayList;
+
+public class Carrito {
+    private final List<String> productos = new ArrayList<>();
+
+    public void anadir(String producto) {
+        productos.add(producto);
+        System.out.println("Añadido: " + producto);
+    }
+}

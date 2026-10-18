@@ -1,0 +1,12 @@
+use std::collections::HashMap;
+
+#[derive(Debug, Clone)]
+pub struct Cache {
+    datos: HashMap<String, String>,
+}
+
+impl Cache {
+    pub fn nueva() -> Self {
+        Cache { datos: HashMap::new() }
+    }
+}

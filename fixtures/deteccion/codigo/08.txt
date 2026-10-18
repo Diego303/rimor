@@ -1,0 +1,8 @@
+@Override
+public String toString() {
+    return "Pedido{" + "id=" + id + "}";
+}
+
+public static void main(String[] args) {
+    System.out.println(new Pedido(1));
+}

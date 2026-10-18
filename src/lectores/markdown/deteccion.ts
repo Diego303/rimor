@@ -2,6 +2,7 @@
  * Detección de un documento Markdown (LEC-08), barata y sin parser: señales por línea, sin expresiones que
  * retrocedan (los encabezados se leen con `encabezadoDe`, las filas de tabla a mano). TS puro.
  */
+import { esLineaDeLenguaje } from '../codigo/lenguajes';
 import { encabezadoDe } from '../prompt/analisis';
 
 /** Caracteres que se miran para detectar. */
@@ -94,7 +95,7 @@ export function confianzaMarkdown(texto: string): number {
       continue;
     }
     conTexto++;
-    if (LINEA_DE_CODIGO.test(linea)) deCodigo++;
+    if (LINEA_DE_CODIGO.test(linea) || esLineaDeLenguaje(linea.trim())) deCodigo++;
     if (TAREA.test(linea)) senales.add('tareas');
     else if (esSeparadorDeTabla(linea)) senales.add('tabla');
     else if (LISTA.test(linea)) senales.add('lista');

@@ -1,0 +1,7 @@
+SELECT c.nombre, COUNT(p.id) AS pedidos
+FROM clientes c
+LEFT JOIN pedidos p ON p.cliente_id = c.id
+WHERE p.creado >= '2026-01-01'
+GROUP BY c.nombre
+ORDER BY pedidos DESC
+LIMIT 10;

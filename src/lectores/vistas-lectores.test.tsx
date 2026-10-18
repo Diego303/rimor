@@ -6,6 +6,8 @@ import { AlmacenMemoria } from '../almacen/memoria';
 import type { Cerrojos } from '../almacen/pestanas';
 import { type DependenciasProveedor, ProveedorEspacio, useEspacioAbierto } from '../espacio/Espacio';
 import VistaArchivo from './archivo/Vista';
+import { analizarCodigo } from './codigo/analisis';
+import VistaCodigo from './codigo/Vista';
 import { analizarMarkdown } from './markdown/analisis';
 import { indiceDe } from './markdown/indice';
 import VistaMarkdown from './markdown/Vista';
@@ -230,6 +232,28 @@ describe('vista de Mediciones', () => {
     expect(otra.container.querySelectorAll('.legend i')).toHaveLength(0);
     // Los avisos de cada serie llevan su nombre delante.
     expect(screen.getAllByText(/^(Parse|Encode): Solo 5 mediciones/)).toHaveLength(2);
+  });
+});
+
+describe('vista de Código', () => {
+  it('números de línea y resaltado cargado bajo demanda, con el texto intacto', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const texto = readFileSync(join(process.cwd(), 'fixtures/codigo/rust-1.txt'), 'utf8');
+    const { container } = render(<VistaCodigo el={elementoFalso(16, texto, 'codigo')} datos={analizarCodigo(texto)} />);
+    const pre = container.querySelector('pre.codigo');
+    expect(pre?.querySelectorAll('.linea')).toHaveLength(12);
+    await waitFor(() => expect(pre?.querySelector('.tok-keyword')).toBeTruthy(), { timeout: 4000 });
+    expect(pre?.textContent).toBe(texto);
+    expect(screen.getByText('Rust')).toBeTruthy();
+    expect(screen.getByText('(por su sintaxis)')).toBeTruthy();
+  });
+
+  it('sin analizador (SQL), el texto tal cual y el aviso', () => {
+    const texto = 'SELECT id\nFROM elementos\nWHERE ref = 1;';
+    const { container } = render(<VistaCodigo el={elementoFalso(17, texto, 'codigo')} datos={analizarCodigo(texto)} />);
+    expect(container.querySelector('pre.codigo')?.textContent).toBe(`${texto}\n`);
+    expect(screen.getByText('Sin resaltado de sintaxis para este lenguaje.')).toBeTruthy();
   });
 });
 

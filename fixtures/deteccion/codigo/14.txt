@@ -1,0 +1,8 @@
+func (s *Servidor) Manejar(w http.ResponseWriter, r *http.Request) {
+	datos, err := s.leer(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	fmt.Fprintf(w, "%v", datos)
+}

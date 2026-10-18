@@ -7,6 +7,7 @@
  */
 import type { Elemento } from '@rimor/formato';
 import { lectorArchivo } from './archivo/lector';
+import { lectorCodigo } from './codigo/lector';
 import type { Lector } from './contrato';
 import { lectorEnlace } from './enlace/lector';
 import { lectorError } from './error/lector';
@@ -50,6 +51,7 @@ export const LECTORES: readonly Lector[] = [
   lectorMediciones, // 6
   lectorPrompt, // 11
   lectorMarkdown, // 12
+  lectorCodigo, // 15
   lectorIdea, // 16
   lectorTexto, // 17
 ];

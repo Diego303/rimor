@@ -1,0 +1,7 @@
+CREATE TABLE elementos (
+  id TEXT PRIMARY KEY,
+  ref TEXT NOT NULL UNIQUE,
+  creado TIMESTAMP NOT NULL
+);
+
+INSERT INTO elementos (id, ref, creado) VALUES ('01J', 'LOG-0001', CURRENT_TIMESTAMP);

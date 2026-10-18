@@ -1,0 +1,7 @@
+export type Resultado<T> = { ok: true; valor: T } | { ok: false; error: string };
+
+export async function leer(ruta: string): Promise<Resultado<string>> {
+  const res = await fetch(ruta);
+  if (!res.ok) return { ok: false, error: res.statusText };
+  return { ok: true, valor: await res.text() };
+}

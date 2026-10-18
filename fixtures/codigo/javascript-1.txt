@@ -1,0 +1,10 @@
+const express = require('express');
+const app = express();
+
+app.get('/salud', (req, res) => {
+  res.json({ ok: true });
+});
+
+app.listen(3000, () => {
+  console.log('Escuchando en 3000');
+});

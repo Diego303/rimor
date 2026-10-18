@@ -1,0 +1,12 @@
+<?php
+
+namespace App\Http;
+
+class Controlador
+{
+    public function indice($peticion)
+    {
+        $usuarios = $this->repo->todos();
+        return view('usuarios', ['usuarios' => $usuarios]);
+    }
+}

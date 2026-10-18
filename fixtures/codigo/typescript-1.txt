@@ -1,0 +1,14 @@
+import { useEffect, useState } from 'react';
+
+interface Props {
+  ref: string;
+  onCerrar: () => void;
+}
+
+export function Panel({ ref, onCerrar }: Props) {
+  const [abierto, setAbierto] = useState<boolean>(false);
+  useEffect(() => {
+    setAbierto(true);
+  }, [ref]);
+  return null;
+}

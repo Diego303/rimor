@@ -20,6 +20,24 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
       ],
     },
   },
+  "codigo": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "TypeScript code, 14 lines.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Código TypeScript, 14 líneas.",
+        },
+      ],
+    },
+  },
   "enlace": {
     "en": {
       "texto": [

@@ -1,0 +1,11 @@
+import json
+from pathlib import Path
+
+
+class Config:
+    def __init__(self, ruta):
+        self.ruta = Path(ruta)
+
+    def leer(self):
+        with self.ruta.open() as f:
+            return json.load(f)

@@ -1147,6 +1147,55 @@ pre.code.prompt-texto {
 .seccion-indice:hover .sm {
   color: var(--accent);
 }
+/* Código (IN-025): números de línea que no se copian y colores de los `tok-*` de Lezer con los tokens de la guía. */
+pre.code.codigo {
+  counter-reset: linea;
+  overflow-x: auto;
+}
+pre.code.codigo .linea::before {
+  counter-increment: linea;
+  content: counter(linea);
+  display: inline-block;
+  width: 3.2em;
+  margin-right: 1em;
+  text-align: right;
+  color: var(--faint);
+  user-select: none;
+}
+.codigo .tok-keyword,
+.codigo .tok-operator.tok-definition {
+  color: var(--accent);
+}
+.codigo .tok-string,
+.codigo .tok-string2 {
+  color: var(--ok);
+}
+.codigo .tok-number,
+.codigo .tok-bool,
+.codigo .tok-atom,
+.codigo .tok-literal {
+  color: var(--warn);
+}
+.codigo .tok-comment,
+.codigo .tok-meta {
+  color: var(--muted);
+  font-style: italic;
+}
+.codigo .tok-typeName,
+.codigo .tok-className,
+.codigo .tok-namespace {
+  color: var(--k-prm);
+}
+.codigo .tok-variableName.tok-definition,
+.codigo .tok-macroName {
+  color: var(--k-url);
+}
+.codigo .tok-propertyName {
+  color: var(--k-dat);
+}
+.codigo .tok-invalid {
+  color: var(--bad);
+}
 .tabla-plantillas {
   min-width: 480px;
 }
