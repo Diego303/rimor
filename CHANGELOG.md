@@ -12,5 +12,6 @@ Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepacha
 - Almacén de archivos del espacio en OPFS (en un Worker) y en memoria, con escritura atómica, cola de escrituras por archivo, repositorio de elementos con papelera y adjuntos sin duplicados, y coordinación para que solo una pestaña escriba (IN-005).
 - Caché del espacio en IndexedDB (frontmatter, derivados de los lectores e índice de búsqueda comprimido) que se pone al día con los archivos al abrir, leyendo solo lo nuevo o cambiado (IN-006).
 - Carcasa de la app: raíl con Inicio, Buscar, colecciones, Ajustes y el pie del espacio con su piloto de copia; rutas por hash para GitHub Pages; barra inferior por debajo de 720 px; atajos de teclado con ayuda en «?»; avisos efímeros y límite de errores por pantalla (IN-008).
+- Todo lo pegado se pinta saneado (sin scripts, estilos, formularios ni protocolos peligrosos; las imágenes remotas no se cargan) y la web lleva una política de seguridad de contenido estricta con los hashes de sus scripts (IN-009).
 ### Cambiado
 ### Corregido

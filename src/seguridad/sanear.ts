@@ -1,0 +1,203 @@
+/**
+ * Saneado de todo lo pegado que se pinta (SEG-01): Markdown, HTML suelto y SVG pasan por rehype-sanitize con
+ * un esquema propio. Nada pegado puede ejecutar código, cargar recursos de fuera ni pisar la app.
+ */
+import type { Element, Root } from 'hast';
+import { fromHtml } from 'hast-util-from-html';
+import { toHtml } from 'hast-util-to-html';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema, type Options as Esquema } from 'rehype-sanitize';
+import remarkGfm from 'remark-gfm';
+import remarkParse from 'remark-parse';
+import remarkRehype from 'remark-rehype';
+import { unified } from 'unified';
+import { visit } from 'unist-util-visit';
+
+const PROHIBIDAS = [
+  'script',
+  'style',
+  'iframe',
+  'object',
+  'embed',
+  'form',
+  'base',
+  'meta',
+  'link',
+  'frame',
+  'frameset',
+  'noscript',
+  'template',
+  'svg',
+  'math',
+];
+const PROTOCOLOS = ['http', 'https', 'mailto'];
+
+/** Esquema de Markdown y HTML pegado: el de GitHub sin estilos, sin formularios y con protocolos seguros. */
+export const ESQUEMA: Esquema = {
+  ...defaultSchema,
+  clobberPrefix: 'rimor-',
+  tagNames: (defaultSchema.tagNames ?? []).filter((t) => !PROHIBIDAS.includes(t)),
+  attributes: Object.fromEntries(
+    Object.entries(defaultSchema.attributes ?? {}).map(([etiqueta, atributos]) => [
+      etiqueta,
+      (atributos ?? []).filter((a) => {
+        const nombre = Array.isArray(a) ? String(a[0]) : String(a);
+        return nombre !== 'style' && !nombre.startsWith('on');
+      }),
+    ]),
+  ),
+  protocols: { href: PROTOCOLOS, src: PROTOCOLOS, cite: PROTOCOLOS, longDesc: PROTOCOLOS },
+  strip: ['script', 'style'],
+};
+
+/**
+ * Tras sanear: las imágenes remotas no se cargan (avisarían a un servidor de que has abierto el elemento, P6)
+ * y pasan a ser un enlace con su texto; los enlaces externos se abren aparte y sin referer.
+ */
+function endurecer() {
+  return (arbol: Root) => {
+    visit(arbol, 'element', (nodo: Element, indice, padre) => {
+      if (nodo.tagName === 'img' && padre && indice !== undefined) {
+        const src = String(nodo.properties.src ?? '');
+        const alt = String(nodo.properties.alt ?? src);
+        const enlace: Element = {
+          type: 'element',
+          tagName: 'a',
+          properties: {
+            href: src,
+            rel: ['noopener', 'noreferrer', 'nofollow'],
+            target: '_blank',
+            className: ['imagen-externa'],
+          },
+          children: [{ type: 'text', value: alt || src }],
+        };
+        padre.children.splice(indice, 1, src ? enlace : { type: 'text', value: alt });
+        return indice;
+      }
+      if (nodo.tagName === 'a') {
+        const href = String(nodo.properties.href ?? '');
+        if (/^(https?:|mailto:)/i.test(href)) {
+          nodo.properties.rel = ['noopener', 'noreferrer', 'nofollow'];
+          nodo.properties.target = '_blank';
+        }
+      }
+      return undefined;
+    });
+  };
+}
+
+const procesador = unified()
+  .use(remarkParse)
+  .use(remarkGfm)
+  .use(remarkRehype, { allowDangerousHtml: true })
+  .use(rehypeRaw)
+  .use(rehypeSanitize, ESQUEMA)
+  .use(endurecer);
+
+/** Markdown pegado → árbol hast saneado, listo para pintar. */
+export function markdownAHast(md: string): Root {
+  return procesador.runSync(procesador.parse(md)) as Root;
+}
+
+const procesadorHtml = unified().use(rehypeSanitize, ESQUEMA).use(endurecer);
+
+/** HTML suelto pegado → árbol hast saneado. */
+export function sanearHtml(html: string): Root {
+  return procesadorHtml.runSync(fromHtml(html, { fragment: true })) as Root;
+}
+
+const ETIQUETAS_SVG = [
+  'svg',
+  'g',
+  'path',
+  'rect',
+  'circle',
+  'ellipse',
+  'line',
+  'polyline',
+  'polygon',
+  'text',
+  'tspan',
+  'title',
+  'desc',
+  'defs',
+  'marker',
+  'clipPath',
+  'linearGradient',
+  'radialGradient',
+  'stop',
+  'use',
+  'symbol',
+  'pattern',
+  'mask',
+];
+const ATRIBUTOS_SVG = [
+  'viewBox',
+  'width',
+  'height',
+  'x',
+  'y',
+  'x1',
+  'y1',
+  'x2',
+  'y2',
+  'cx',
+  'cy',
+  'r',
+  'rx',
+  'ry',
+  'd',
+  'points',
+  'fill',
+  'stroke',
+  'strokeWidth',
+  'strokeLinecap',
+  'strokeLinejoin',
+  'strokeDasharray',
+  'opacity',
+  'fillOpacity',
+  'strokeOpacity',
+  'transform',
+  'fontSize',
+  'fontFamily',
+  'fontWeight',
+  'textAnchor',
+  'dominantBaseline',
+  'dx',
+  'dy',
+  'markerEnd',
+  'markerStart',
+  'markerWidth',
+  'markerHeight',
+  'refX',
+  'refY',
+  'orient',
+  'offset',
+  'stopColor',
+  'clipPath',
+  'mask',
+  'id',
+  'className',
+  'role',
+  'ariaLabel',
+  'preserveAspectRatio',
+  'gradientUnits',
+  'patternUnits',
+  'xmlns',
+];
+
+/** Esquema de SVG (diagramas, IN-066): formas y texto, sin `script`, `foreignObject`, `on*` ni enlaces de fuera. */
+const ESQUEMA_SVG: Esquema = {
+  tagNames: ETIQUETAS_SVG,
+  attributes: { '*': ATRIBUTOS_SVG, use: [...ATRIBUTOS_SVG, ['href', /^#/]] },
+  protocols: { href: [] },
+  strip: ['script', 'style', 'foreignObject'],
+  clobberPrefix: 'rimor-',
+  clobber: [],
+};
+
+/** SVG pegado o generado → SVG saneado como texto. */
+export function sanearSvg(svg: string): string {
+  const arbol = fromHtml(svg, { fragment: true, space: 'svg' });
+  return toHtml(unified().use(rehypeSanitize, ESQUEMA_SVG).runSync(arbol) as Root, { space: 'svg' });
+}

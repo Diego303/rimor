@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 03:33
-**Ahora:** IN-009 · Saneado y política de seguridad de contenido · fase implementación
+**Última actualización:** 2026-10-18 03:38
+**Ahora:** IN-009 · Saneado y política de seguridad de contenido · fase verificación
 **Siguiente:** IN-010 · Ocultación de secretos
 **Progreso:** F0 9/9 · v0.1 8/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 17/99
 
@@ -26,7 +26,7 @@
 | IN-005 | Almacén OPFS y en memoria | v0.1 | 1 | hecha | 8683837 1212e5a 06512fc | docs/features/IN-005-almacen.md |
 | IN-006 | Caché de derivados e índice | v0.1 | 1 | hecha | 07a0baf 74e501c 4b6ee55 | docs/features/IN-006-cache.md |
 | IN-008 | Carcasa, navegación, atajos y diseño adaptable | v0.1 | 1 | hecha | bd270d9 f9cda52 daacb69 | docs/features/IN-008-carcasa.md |
-| IN-009 | Saneado y política de seguridad de contenido | v0.1 | 1 | en análisis y diseño | — | docs/features/IN-009-saneado-csp.md |
+| IN-009 | Saneado y política de seguridad de contenido | v0.1 | 1 | en implementación | f63fd83 | docs/features/IN-009-saneado-csp.md |
 | IN-010 | Ocultación de secretos | v0.1 | 1 | pendiente | — | — |
 | IN-011 | Paquete de estadística | v0.1 | 1 | pendiente | — | — |
 | IN-090 | Animaciones del símbolo (núcleo) | v0.1 | 1 | pendiente | — | — |
@@ -162,7 +162,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-009 | análisis y diseño | rehype-sanitize con esquema propio y CSP con hashes | … |
+| 2026-10-18 | IN-009 | implementación | pnpm verificar OK (219 pruebas) | … |
+| 2026-10-18 | IN-009 | análisis y diseño | rehype-sanitize con esquema propio y CSP con hashes | f63fd83 |
 | 2026-10-18 | IN-008 | verificación | pnpm verificar OK; 5 hallazgos de la revisión corregidos | daacb69 |
 | 2026-10-18 | IN-008 | implementación | pnpm verificar OK (182 pruebas, 112,7 KB) | f9cda52 |
 | 2026-10-18 | IN-008 | análisis y diseño | router por hash, raíl, atajos y límite de errores | bd270d9 |
@@ -198,5 +199,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-008 hecha. Siguiente: IN-009 (diseño y código en borrador en el scratchpad in009/; borradores también de IN-010 e IN-090).
-- Último `pnpm verificar`: OK (2026-10-18 07:00).
+- IN-009: implementado. Falta verificación.
+- Último `pnpm verificar`: OK (2026-10-18 07:20).

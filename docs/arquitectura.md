@@ -21,6 +21,9 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi�
 |---|---|---|
 | `src/app/App.tsx` | Raíz de la isla | 001 |
 | `src/layouts/Base.astro` | HTML base | 001 |
+| `src/seguridad/sanear.ts` | Saneado de Markdown, HTML y SVG con `rehype-sanitize` (esquema propio) | 009 |
+| `src/ui/componentes/MarkdownSeguro.tsx` | Única forma de pintar Markdown pegado (carga diferida) | 009 |
+| `scripts/csp.mjs` | CSP en `<meta>` con hashes de los scripts en línea, tras construir | 009 |
 | `src/rutas/` | Router por hash, `Carcasa`, `Rail`, `Pantalla`, `LimiteErrores` y una carpeta por pantalla | 008 |
 | `src/estado/espacio.ts` | Store de lo que pinta la carcasa (espacio, recuentos, colecciones, copia) | 008 |
 | `src/ui/atajos/` | Gestor de atajos (puro), hook y ayuda | 008 |

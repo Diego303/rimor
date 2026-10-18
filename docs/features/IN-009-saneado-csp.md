@@ -94,3 +94,9 @@ Decisiones (ADR-0005):
 ## Autorrevisión
 
 Cubre las tres tareas. La CSP en `<meta>` es la única posible en GitHub Pages y se documenta su límite (`connect-src` fijo).
+
+## Cambios durante la implementación
+
+- La CSP se inserta en el propio `pnpm build` (`astro build && node scripts/csp.mjs`), así la construcción de GitHub Pages ya la lleva; `comprobar-dist` verifica que va antes de cualquier script, que autoriza cada script en línea por su hash y que no permite `unsafe-inline` ni `unsafe-eval` en scripts.
+- `MarkdownSeguro` se exporta por defecto para cargarlo con `React.lazy` desde las vistas que lo usen (IN-017, IN-024), fuera de la carga inicial.
+- El corpus XSS (`src/seguridad/xss.ts`) tiene 27 cargas.
