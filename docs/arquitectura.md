@@ -42,7 +42,7 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi�
 | `src/lectores/` | Contrato `Lector<D>` (núcleo puro), textos por lector, registro en el orden del Anexo D, `ColaDerivados`, ejecutor en Worker, vistas por convención (`import.meta.glob` + `React.lazy`), `VistaElemento`, `TarjetaElemento` y `_plantilla/` | 012 |
 | `src/respuestas/tipos.ts` | `Fragmento`, `Accion` y `Respuesta` de Rimor (CAP-14) | 012 |
 | `src/workers/derivados.worker.ts` | `derivar` de cada lector fuera del hilo principal, con Comlink | 012 |
-| `src/captura/` | Detector de tipo (atajos del Anexo D y arbitraje con duda), firmas de binarios y arnés de la matriz de detección | 013 |
+| `src/captura/` | Detector de tipo (atajos del Anexo D y arbitraje con duda), firmas de binarios y arnés de la matriz de detección; flujo de captura (`capturar`, `crearCapturador`, deshacer), borrador del compositor y `ProveedorCaptura` (pegar y soltar) | 013, 014 |
 | `fixtures/deteccion/` | Corpus de detección: una carpeta por tipo con sus ejemplos | 013 |
 | `src/i18n/motor.ts` | Motor de textos sin catálogos (plurales, `{x}`, números), común a la app y los lectores | 012 |
 | `paquetes/formato` | Esquemas Valibot, `.md` de elementos (frontmatter fiel, notas y original), ULID, refs, rutas, SHA-256 y migraciones | 004 |
@@ -81,7 +81,17 @@ VistaElemento ──pedir(visible)──▶ ColaDerivados ──¿en caché (id,
                      Vista.tsx del lector (diferida) con los datos
 ```
 
-Se describen a medida que llegan: captura (IN-014), búsqueda (IN-032) y exportación (IN-035).
+### Captura (IN-014)
+
+```
+pegar fuera de un campo ──▶ useCompositor (borrador) ──▶ compositor (IN-015) ──┐
+soltar archivos ──────────────────────────────────────────────────────────────┴─▶ capturador (de una en una)
+  1 normalizar (≤ 50 MB; texto o bytes + cabecera) → 2 ocultar secretos → 3 detectar (o /tipo)
+  → 4 duplicado por hash (se avisa y no se crea) → 5 indicaciones → 6 leer, adjunto, ref, guardar
+  → 7 el repositorio avisa (raíl, feed) → 8 derivados de fondo (respuesta de IN-016)
+```
+
+Se describen a medida que llegan: búsqueda (IN-032) y exportación (IN-035).
 
 ## Despliegue
 

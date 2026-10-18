@@ -166,5 +166,17 @@
       "titulo": "Could not analyse it",
       "texto": "The reader failed on this item. Here is the original as it is."
     }
+  },
+  "captura": {
+    "guardado": {
+      "one": "Saved",
+      "other": "{n} saved"
+    },
+    "deshacer": "Undo",
+    "duplicado": "Already saved: {ref}",
+    "demasiadoGrande": "“{nombre}” is {tam}: the limit is {limite} per file.",
+    "sinLector": "There is no reader for “{nombre}” yet.",
+    "fallo": "Could not save “{nombre}”.",
+    "soltar": "Drop to save"
   }
 }

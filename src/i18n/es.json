@@ -166,5 +166,17 @@
       "titulo": "No se pudo analizar",
       "texto": "El lector falló con este elemento. Aquí tienes el original tal cual."
     }
+  },
+  "captura": {
+    "guardado": {
+      "one": "Guardado",
+      "other": "Guardados {n}"
+    },
+    "deshacer": "Deshacer",
+    "duplicado": "Ya estaba guardado: {ref}",
+    "demasiadoGrande": "«{nombre}» pesa {tam}: el límite es {limite} por archivo.",
+    "sinLector": "Todavía no hay un lector para «{nombre}».",
+    "fallo": "No se pudo guardar «{nombre}».",
+    "soltar": "Suelta para guardar"
   }
 }

@@ -856,6 +856,26 @@ details.more > div {
   font-size: 0.8125rem;
   z-index: 40;
   max-width: calc(100% - 32px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* Acción de un aviso («Deshacer», IN-014): texto en negrita sobre la píldora, sin caja. */
+.toast-accion {
+  font: inherit;
+  font-weight: 700;
+  color: var(--panel);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.toast-accion:focus-visible {
+  outline: 2px solid var(--panel);
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 .swatch {
   width: 100%;

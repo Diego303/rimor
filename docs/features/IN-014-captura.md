@@ -56,11 +56,11 @@ Resultado: `{ ok: true, elemento, alternativa?, adjuntoNuevo }` | `{ ok: true, d
 
 ## Tareas
 
-- [ ] Flujo como función pura con efectos inyectados (almacén, caché, índice, reloj) para probarlo sin navegador.
-- [ ] Pegar fuera de un campo de texto, en cualquier pantalla, lleva el contenido al compositor (no guarda directamente).
-- [ ] Soltar archivos sobre cualquier pantalla: los guarda uno a uno con su lector (o el genérico).
-- [ ] Límite de 50 MB por archivo con un aviso que lo explica.
-- [ ] Deshacer la última captura durante 10 s («Guardado. Deshacer»).
+- [x] Flujo como función pura con efectos inyectados (almacén, caché, índice, reloj) para probarlo sin navegador.
+- [x] Pegar fuera de un campo de texto, en cualquier pantalla, lleva el contenido al compositor (no guarda directamente).
+- [x] Soltar archivos sobre cualquier pantalla: los guarda uno a uno con su lector (o el genérico).
+- [x] Límite de 50 MB por archivo con un aviso que lo explica.
+- [x] Deshacer la última captura durante 10 s («Guardado. Deshacer»).
 
 ## Pruebas previstas
 
@@ -88,3 +88,14 @@ Resultado: `{ ok: true, elemento, alternativa?, adjuntoNuevo }` | `{ ok: true, d
 ## Autorrevisión
 
 Cubre las cinco tareas y los ocho pasos en orden. El compositor (IN-015) y el feed (IN-026) se apoyan en `capturar`, `useCompositor` y la cola; la respuesta (IN-016), en el derivado de fondo. El índice de búsqueda (IN-032) se pondrá al día escuchando los cambios del repositorio, así que `capturar` no lo toca.
+
+## Cambios durante la implementación
+
+- `crearCapturador(efectos)` serializa las capturas (la ref se asigna y se escribe en el mismo turno); `capturar` suelta queda para usos sueltos y pruebas.
+- `ProveedorCaptura` recibe `alRecibir` (ir a Inicio) de la carcasa, que es quien tiene el router; así se prueba sin él.
+- `Repositorio` gana `porHash` (duplicado exacto fuera de la papelera), `borrarElemento` (definitivo, en su turno, para deshacer) y `borrarAdjunto`.
+- Si escribir el elemento falla, se borra el adjunto que acababa de crear esa captura. Un `ErrorSoloLectura` se convierte en `almacen.soloLectura`.
+- Las claves propias del lector (`metadatos`) van antes que las comunes: no pueden pisar `id`, `ref`, `hash`…
+- Avisos con acción (`avisar(texto, { accion, duracionMs })`, 10 s con acción) y botón alcanzable en la píldora; la región viva sigue anunciando el texto.
+- La capa «Suelta para guardar» cubre la ventana con un borde discontinuo del acento (la pantalla de referencia no la dibuja).
+

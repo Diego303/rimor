@@ -90,6 +90,11 @@ async function ponerAlDia(repositorio: Repositorio, el: Elemento, lector: Lector
   );
 }
 
+/** Registro y cola, o `null` fuera de `ProveedorLectores`. */
+export function useLectoresOpcional(): ValorLectores | null {
+  return useContext(Contexto);
+}
+
 export function useLectores(): ValorLectores {
   const v = useContext(Contexto);
   if (!v) throw new Error('useLectores necesita un ProveedorLectores');

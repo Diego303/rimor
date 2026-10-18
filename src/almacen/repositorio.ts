@@ -164,6 +164,12 @@ export class Repositorio {
     return [...this.fms].filter(([id]) => !this.porId.get(id)?.enPapelera).map(([, fm]) => fm);
   }
 
+  /** Elemento (fuera de la papelera) con ese hash del original: el duplicado exacto (ORG-05). */
+  porHash(hash: string): FrontmatterComun | undefined {
+    for (const [id, fm] of this.fms) if (fm.hash === hash && !this.porId.get(id)?.enPapelera) return fm;
+    return undefined;
+  }
+
   /** Frontmatter de un elemento por ref o id, sin abrir su archivo. */
   frontmatter(refOId: string): FrontmatterComun | undefined {
     const e = this.buscar(refOId);
@@ -193,10 +199,6 @@ export class Repositorio {
     return this.idPorRef.keys();
   }
 
-  /**
-   * Guarda un elemento. Si ya existía, conserva el YAML anterior (orden y comentarios) y, si cambió el
-   * título o la ref, renombra el archivo. Devuelve la ruta final.
-   */
   /** Las escrituras de un mismo elemento van de una en una, en el orden en que se piden. */
   private readonly turnos = new Map<string, Promise<unknown>>();
 
@@ -211,6 +213,10 @@ export class Repositorio {
     return actual;
   }
 
+  /**
+   * Guarda un elemento. Si ya existía, conserva el YAML anterior (orden y comentarios) y, si cambió el
+   * título o la ref, renombra el archivo. Devuelve la ruta final.
+   */
   async guardarElemento(el: Elemento): Promise<string> {
     this.comprobarEscritura();
     return this.enTurno(el.frontmatter.id, () => this.guardarAhora(el));
@@ -306,6 +312,33 @@ export class Repositorio {
     await this.refrescarTrasMover(e.id, destino);
     this.cambio();
     return ok(destino);
+  }
+
+  /**
+   * Borra un elemento para siempre, sin pasar por la papelera (deshacer una captura recién hecha, IN-014).
+   * Devuelve `false` si ya no existía.
+   */
+  async borrarElemento(refOId: string): Promise<boolean> {
+    this.comprobarEscritura();
+    const id = this.buscar(refOId)?.id;
+    if (!id) return false;
+    return this.enTurno(id, async () => {
+      const e = this.porId.get(id);
+      if (!e) return false;
+      await this.almacen.borrar(e.ruta);
+      this.porId.delete(id);
+      this.fms.delete(id);
+      if (this.idPorRef.get(e.ref) === id) this.idPorRef.delete(e.ref);
+      await this.cache?.borrarElementos([id]);
+      this.cambio();
+      return true;
+    });
+  }
+
+  /** Borra un adjunto (solo si nadie más lo usa: lo comprueba quien llama). */
+  async borrarAdjunto(ruta: string): Promise<void> {
+    this.comprobarEscritura();
+    await this.almacen.borrar(ruta);
   }
 
   /** Borra definitivamente lo que hay en la papelera. El ZIP previo lo hace quien llama (IN-035). */

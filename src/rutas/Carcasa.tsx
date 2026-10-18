@@ -3,7 +3,8 @@
  * avisos efímeros y límite de errores por pantalla.
  */
 import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { ProveedorCaptura } from '../captura/Captura';
 import { AvisoAlmacenamiento } from '../espacio/Avisos';
 import { useT } from '../i18n/useT';
 import { AyudaAtajos } from '../ui/atajos/AyudaAtajos';
@@ -20,6 +21,7 @@ export function Carcasa() {
   // La pantalla que de verdad se pinta: `location` cambia antes de que cambie el <Outlet>.
   const ruta = useRouterState({ select: (s) => (s.resolvedLocation ?? s.location).pathname });
   const [ayuda, setAyuda] = useState(false);
+  const irAInicio = useCallback(() => void navegar({ to: '/' }), [navegar]);
 
   useEffect(
     () =>
@@ -54,22 +56,24 @@ export function Carcasa() {
   return (
     <ContextoAtajos.Provider value={gestor}>
       <ProveedorAvisos>
-        <div className="marco">
-          <div className="shell">
-            <Rail />
-            <main className="amain" id="principal">
-              <AvisoAlmacenamiento />
-              <ProveedorEsperas>
-                <LimiteErrores clave={ruta}>
-                  <Suspense fallback={<Espera texto={t('comun.cargandoPantalla')} />}>
-                    <Outlet />
-                  </Suspense>
-                </LimiteErrores>
-              </ProveedorEsperas>
-            </main>
+        <ProveedorCaptura alRecibir={irAInicio}>
+          <div className="marco">
+            <div className="shell">
+              <Rail />
+              <main className="amain" id="principal">
+                <AvisoAlmacenamiento />
+                <ProveedorEsperas>
+                  <LimiteErrores clave={ruta}>
+                    <Suspense fallback={<Espera texto={t('comun.cargandoPantalla')} />}>
+                      <Outlet />
+                    </Suspense>
+                  </LimiteErrores>
+                </ProveedorEsperas>
+              </main>
+            </div>
           </div>
-        </div>
-        <AyudaAtajos abierta={ayuda} alCerrar={() => setAyuda(false)} />
+          <AyudaAtajos abierta={ayuda} alCerrar={() => setAyuda(false)} />
+        </ProveedorCaptura>
       </ProveedorAvisos>
     </ContextoAtajos.Provider>
   );

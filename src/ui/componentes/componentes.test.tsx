@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { guardarPreferencia } from '../tema/tema';
-import { DURACION_AVISO_MS, ProveedorAvisos, useAvisos } from './Avisos';
+import { DURACION_AVISO_CON_ACCION_MS, DURACION_AVISO_MS, ProveedorAvisos, useAvisos } from './Avisos';
 import { Detalles } from './Bloques';
 import { Boton } from './Boton';
 import { Medidor, Tabla, Veredicto } from './Datos';
@@ -124,6 +124,36 @@ describe('Avisos', () => {
     act(() => vi.advanceTimersByTime(DURACION_AVISO_MS));
     expect(region.textContent).toBe('');
     expect(document.querySelector('.toast')).toBeNull();
+  });
+
+  it('un aviso con acción dura 10 s y su botón la ejecuta y lo cierra', () => {
+    vi.useFakeTimers();
+    const deshacer = vi.fn();
+    function Disparador() {
+      const { avisar } = useAvisos();
+      return (
+        <button
+          type="button"
+          onClick={() => avisar('Guardado', { accion: { etiqueta: 'Deshacer', alPulsar: deshacer } })}
+        >
+          avisar
+        </button>
+      );
+    }
+    render(
+      <ProveedorAvisos>
+        <Disparador />
+      </ProveedorAvisos>,
+    );
+    fireEvent.click(screen.getByText('avisar'));
+    act(() => vi.advanceTimersByTime(DURACION_AVISO_CON_ACCION_MS - 1));
+    fireEvent.click(screen.getByRole('button', { name: 'Deshacer' }));
+    expect(deshacer).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('.toast')).toBeNull();
+    fireEvent.click(screen.getByText('avisar'));
+    act(() => vi.advanceTimersByTime(DURACION_AVISO_CON_ACCION_MS));
+    expect(document.querySelector('.toast')).toBeNull();
+    vi.useRealTimers();
   });
 });
 
