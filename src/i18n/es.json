@@ -177,6 +177,8 @@
     "demasiadoGrande": "«{nombre}» pesa {tam}: el límite es {limite} por archivo.",
     "sinLector": "Todavía no hay un lector para «{nombre}».",
     "fallo": "No se pudo guardar «{nombre}».",
-    "soltar": "Suelta para guardar"
+    "soltar": "Suelta para guardar",
+    "ver": "Ver",
+    "noDeshecho": "Algo no se deshizo: ya se había editado o movido."
   }
 }

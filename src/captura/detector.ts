@@ -6,7 +6,10 @@
 import type { TipoElemento } from '@rimor/formato';
 import type { Entrada } from '../lectores/contrato';
 import type { Registro } from '../lectores/registro';
-import { BYTES_CABECERA, esImagen, firmaDe, pareceTexto } from './firmas';
+import { BYTES_CABECERA, decodificarTexto, esImagen, firmaDe, pareceTexto } from './firmas';
+
+/** Cabecera de un archivo que no es texto aunque su principio lo parezca (un byte nulo la marca como binaria). */
+const NO_TEXTO = new Uint8Array([0, 0xff, 0]);
 
 /** Confianza que hay que superar para ganar (plan §14.5). */
 export const UMBRAL_DETECCION = 0.6;
@@ -79,10 +82,11 @@ export function entradaDeArchivo(
 ): { entrada: Entrada; cabecera: Uint8Array } {
   const cabecera = bytes.subarray(0, BYTES_CABECERA);
   const archivo = new File([bytes as Uint8Array<ArrayBuffer>], nombre, { type: mime });
-  const esTexto = firmaDe(cabecera) === null && pareceTexto(cabecera);
+  const decodificado = firmaDe(cabecera) === null ? decodificarTexto(bytes) : null;
   const entrada: Entrada = { archivos: [archivo], nombre, ...(mime ? { mime } : {}) };
-  if (esTexto) entrada.texto = new TextDecoder().decode(bytes);
-  return { entrada, cabecera };
+  if (decodificado) entrada.texto = decodificado.texto;
+  // Si todo el archivo resultó no ser texto, la cabecera tampoco debe hacerlo pasar por texto.
+  return { entrada, cabecera: decodificado || !pareceTexto(cabecera) ? cabecera : NO_TEXTO };
 }
 
 /** Confianza válida: un número finito entre 0 y 1; lo demás (o un lector que lanza) cuenta 0. */

@@ -22,6 +22,7 @@ export function Carcasa() {
   const ruta = useRouterState({ select: (s) => (s.resolvedLocation ?? s.location).pathname });
   const [ayuda, setAyuda] = useState(false);
   const irAInicio = useCallback(() => void navegar({ to: '/' }), [navegar]);
+  const abrirElemento = useCallback((ref: string) => void navegar({ to: '/e/$ref', params: { ref } }), [navegar]);
 
   useEffect(
     () =>
@@ -56,7 +57,7 @@ export function Carcasa() {
   return (
     <ContextoAtajos.Provider value={gestor}>
       <ProveedorAvisos>
-        <ProveedorCaptura alRecibir={irAInicio}>
+        <ProveedorCaptura alRecibir={irAInicio} alAbrir={abrirElemento}>
           <div className="marco">
             <div className="shell">
               <Rail />

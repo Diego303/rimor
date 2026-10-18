@@ -3,6 +3,7 @@
  * orden. Sin React ni navegador: el repositorio, el registro, el reloj y la cola de derivados van inyectados.
  */
 import {
+  analizarRef,
   asignarRef,
   type Elemento,
   type FrontmatterComun,
@@ -11,6 +12,7 @@ import {
   isoConZona,
   LIMITE_ORIGINAL_EN_MD,
   ok,
+  PREFIJOS,
   type Resultado,
   sha256Hex,
   type TipoElemento,
@@ -106,6 +108,8 @@ export async function capturar(entrada: EntradaCaptura, efectos: EfectosCaptura)
 async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<Resultado<ResultadoCaptura>> {
   const { repositorio, registro, cola } = efectos;
   const reloj = efectos.reloj ?? (() => new Date());
+  // Otra pestaña escribe: ni se lee el archivo ni se busca el duplicado.
+  if (!repositorio.escribible()) return fallo('almacen.soloLectura');
 
   // 1. Normalizar: un archivo se lee entero; si es texto, también como texto.
   let texto = entrada.texto;
@@ -159,19 +163,24 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
   const ahora = isoConZona(reloj());
   const tipo = entrada.tipo ?? lector.tipo;
   const ref = asignarRef(tipo, repositorio.refs());
-  let original: string | null = borrador.original ?? texto ?? null;
+  // `original: null` en el borrador es que el lector lo quiere como adjunto (su `archivo` o el texto).
+  let original: string | null = borrador.original === undefined ? (texto ?? null) : borrador.original;
   let adjunto: FrontmatterComun['adjunto'];
   let adjuntoNuevo: string | undefined;
-  const aAdjuntar =
-    bytes ?? (original !== null && utf8(original).length > LIMITE_ORIGINAL_EN_MD ? utf8(original) : null);
+  const delLector = borrador.archivo ? new Uint8Array(await borrador.archivo.arrayBuffer()) : null;
+  const textoAparte = original === null && texto !== undefined ? utf8(texto) : null;
+  const grande = original !== null && utf8(original).length > LIMITE_ORIGINAL_EN_MD ? utf8(original) : null;
+  const aAdjuntar = bytes ?? delLector ?? textoAparte ?? grande;
+  const nombreAdjunto = borrador.archivo?.name ?? nombre ?? '';
   if (aAdjuntar) {
-    const g = await repositorio.guardarAdjunto(aAdjuntar, bytes ? extension(nombre ?? '') : 'txt');
+    const g = await repositorio.guardarAdjunto(aAdjuntar, bytes || delLector ? extension(nombreAdjunto) : 'txt');
     if (g.nuevo) adjuntoNuevo = g.ruta;
+    const mime = borrador.archivo?.type || archivo?.type || (bytes ? '' : 'text/plain');
     adjunto = {
       hash: g.hash,
       ruta: g.ruta,
-      ...(nombre ? { nombre } : {}),
-      ...(archivo?.type ? { mime: archivo.type } : bytes ? {} : { mime: 'text/plain' }),
+      ...(nombreAdjunto ? { nombre: nombreAdjunto } : {}),
+      ...(mime ? { mime } : {}),
       tam: aAdjuntar.length,
     };
     original = null;
@@ -194,7 +203,10 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     lector: { nombre: lector.nombre, version: lector.version, resumen: borrador.resumen ?? {} },
     ...(colecciones.length ? { colecciones } : {}),
     ...(etiquetas.length ? { etiquetas } : {}),
-    ...(entrada.hilo ? { hilo: entrada.hilo as FrontmatterComun['ref'] } : {}),
+    // Solo una ref de hilo válida: otra cosa dejaría el archivo ilegible al releerlo.
+    ...(entrada.hilo && analizarRef(entrada.hilo)?.prefijo === PREFIJOS.hilo
+      ? { hilo: entrada.hilo as FrontmatterComun['ref'] }
+      : {}),
     ...(adjunto ? { adjunto } : {}),
   };
   const elemento: Elemento = { frontmatter, notas: '', original };
@@ -222,10 +234,19 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
   });
 }
 
-/** Deshace una captura recién hecha: borra el elemento y el adjunto que creó. */
-export async function deshacerCaptura(c: Capturado, repositorio: Repositorio): Promise<void> {
-  const borrado = await repositorio.borrarElemento(c.elemento.frontmatter.id);
+/**
+ * Deshace una captura recién hecha: borra el elemento y su adjunto si nadie más lo usa. No toca nada si el
+ * elemento ya no está como se capturó (se editó, se movió a la papelera o ya no existe). Devuelve si deshizo.
+ */
+export async function deshacerCaptura(c: Capturado, repositorio: Repositorio): Promise<boolean> {
+  const fm = c.elemento.frontmatter;
+  const actual = repositorio.frontmatter(fm.id);
+  const entrada = repositorio.buscar(fm.id);
+  if (!actual || !entrada || entrada.enPapelera || actual.modificado !== fm.modificado || actual.hash !== fm.hash)
+    return false;
+  const borrado = await repositorio.borrarElemento(fm.id);
   if (borrado && c.adjuntoNuevo) await repositorio.borrarAdjunto(c.adjuntoNuevo);
+  return borrado;
 }
 
 /**
@@ -240,7 +261,7 @@ export function crearCapturador(efectos: EfectosCaptura) {
       turno = r.catch(() => undefined);
       return r;
     },
-    deshacer: (c: Capturado) => deshacerCaptura(c, efectos.repositorio),
+    deshacer: (c: Capturado): Promise<boolean> => deshacerCaptura(c, efectos.repositorio),
   };
 }
 

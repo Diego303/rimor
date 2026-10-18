@@ -5,7 +5,7 @@ import { lectorFalso } from '../lectores/pruebas/falsos';
 import { crearRegistro } from '../lectores/registro';
 import { type Ejemplo, evaluar, formatear } from './deteccion';
 import { detectar, entradaDeArchivo, esEnlaceCompleto, MARGEN_DUDA, UMBRAL_DETECCION } from './detector';
-import { firmaDe, pareceTexto } from './firmas';
+import { decodificarTexto, firmaDe, pareceTexto } from './firmas';
 
 /** Lector falso de `tipo` que puntúa siempre `confianza` (o lo que diga la función). */
 function puntua(nombre: string, tipo: TipoElemento, confianza: number | ((e: Entrada) => number)) {
@@ -159,7 +159,22 @@ describe('firmas', () => {
     expect(pareceTexto(ene)).toBe(true);
     expect(pareceTexto(ene.subarray(0, 2))).toBe(true);
     expect(pareceTexto(bytes('ab', 0, 'c'))).toBe(false);
-    expect(pareceTexto(bytes(0xff, 0xfe, 0x41))).toBe(false);
+    expect(pareceTexto(bytes(0x81, 0x02, 0x41))).toBe(false);
+  });
+
+  it('decodifica UTF-16 (con BOM o sin él) y Latin-1 con todo el archivo; un binario con texto delante no', () => {
+    const utf16 = new Uint8Array([0xff, 0xfe, ...[...'clave=x'].flatMap((c) => [c.charCodeAt(0), 0])]);
+    expect(decodificarTexto(utf16)).toEqual({ texto: 'clave=x', codificacion: 'utf-16le' });
+    const sinBom = new Uint8Array([...'hola mundo'].flatMap((c) => [c.charCodeAt(0), 0]));
+    expect(decodificarTexto(sinBom)?.texto).toBe('hola mundo');
+    // Una «ñ» en Latin-1 pasado el primer KB: el archivo entero es Latin-1, no un UTF-8 con «�».
+    const latin1 = new Uint8Array([...new TextEncoder().encode('a'.repeat(2000)), 0x63, 0x61, 0xf1, 0x61]);
+    expect(decodificarTexto(latin1)).toEqual({ texto: `${'a'.repeat(2000)}caña`, codificacion: 'windows-1252' });
+    const mixto = new Uint8Array([...new TextEncoder().encode('x'.repeat(2000)), 0, 1, 2, 3, 0xff, 0x10]);
+    expect(decodificarTexto(mixto)).toBeNull();
+    const archivo = entradaDeArchivo('a.bin', '', mixto);
+    expect(archivo.entrada.texto).toBeUndefined();
+    expect(pareceTexto(archivo.cabecera)).toBe(false);
   });
 });
 

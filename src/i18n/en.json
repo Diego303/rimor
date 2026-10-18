@@ -177,6 +177,8 @@
     "demasiadoGrande": "“{nombre}” is {tam}: the limit is {limite} per file.",
     "sinLector": "There is no reader for “{nombre}” yet.",
     "fallo": "Could not save “{nombre}”.",
-    "soltar": "Drop to save"
+    "soltar": "Drop to save",
+    "ver": "Open",
+    "noDeshecho": "Something was not undone: it had already been edited or moved."
   }
 }

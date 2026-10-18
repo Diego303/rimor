@@ -82,9 +82,14 @@ export class Repositorio {
     private readonly opciones: OpcionesRepositorio = {},
   ) {}
 
-  /** Solo una pestaña escribe (IN-005): las demás no tocan los archivos aunque alguien lo intente. */
+  /** ¿Puede escribir esta pestaña ahora? (Solo una escribe, IN-005.) */
+  escribible(): boolean {
+    return !this.opciones.puedeEscribir || this.opciones.puedeEscribir();
+  }
+
+  /** Las pestañas que no escriben no tocan los archivos aunque alguien lo intente. */
   private comprobarEscritura(): void {
-    if (this.opciones.puedeEscribir && !this.opciones.puedeEscribir()) throw new ErrorSoloLectura();
+    if (!this.escribible()) throw new ErrorSoloLectura();
   }
 
   /** Avisa de un cambio (cuenta para el recordatorio de copia, IN-007). */
@@ -335,10 +340,18 @@ export class Repositorio {
     });
   }
 
-  /** Borra un adjunto (solo si nadie más lo usa: lo comprueba quien llama). */
-  async borrarAdjunto(ruta: string): Promise<void> {
+  /** ¿Usa algún elemento conocido (también en la papelera) el adjunto de `ruta`? */
+  usaAdjunto(ruta: string): boolean {
+    for (const fm of this.fms.values()) if (fm.adjunto?.ruta === ruta) return true;
+    return false;
+  }
+
+  /** Borra un adjunto si ningún elemento lo usa. Devuelve si lo borró. */
+  async borrarAdjunto(ruta: string): Promise<boolean> {
     this.comprobarEscritura();
+    if (this.usaAdjunto(ruta)) return false;
     await this.almacen.borrar(ruta);
+    return true;
   }
 
   /** Borra definitivamente lo que hay en la papelera. El ZIP previo lo hace quien llama (IN-035). */

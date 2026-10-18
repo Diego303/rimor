@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 16:44
-**Ahora:** IN-014 · Flujo de captura · fase verificación
-**Siguiente:** IN-015 · Compositor
-**Progreso:** F0 9/9 · v0.1 15/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 24/99
+**Última actualización:** 2026-10-18 17:04
+**Ahora:** IN-015 · Compositor · fase análisis y diseño
+**Siguiente:** IN-016 · Respuestas de Rimor y contadores locales
+**Progreso:** F0 9/9 · v0.1 16/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 25/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -33,7 +33,7 @@
 | IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | hecha | 39f479a 86e9ce2 d410b16 | docs/features/IN-007-espacio.md |
 | IN-012 | Contrato y registro de lectores | v0.1 | 2 | hecha | fa7e527 00d01e5 aa34b1e | docs/features/IN-012-lectores.md |
 | IN-013 | Detector de tipo y corpus | v0.1 | 2 | hecha | 9e3e067 6697076 e6f4ac8 | docs/features/IN-013-detector.md |
-| IN-014 | Flujo de captura | v0.1 | 3 | en verificación | 683703f | docs/features/IN-014-captura.md |
+| IN-014 | Flujo de captura | v0.1 | 3 | hecha | 683703f 9830443 | docs/features/IN-014-captura.md |
 | IN-015 | Compositor | v0.1 | 3 | pendiente | — | — |
 | IN-016 | Respuestas de Rimor y contadores locales | v0.1 | 3 | pendiente | — | — |
 | IN-017 | Lector Texto y lector genérico de archivo | v0.1 | 3 | pendiente | — | — |
@@ -159,6 +159,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **F0-7 (CORS):** confirmar en la app publicada que el enriquecimiento de IN-041 no lo bloquea el navegador.
 - **F0-8 (MiniSearch):** medir en el navegador la búsqueda por pulsación y la carga del índice con un espacio real grande.
 - **F0-9 (fuentes):** comprobar en la app publicada que las fuentes salen del propio sitio y que la CSP no bloquea nada.
+- **IN-014 (rendimiento):** pegar 100 KB en el portátil de referencia y comprobar que el elemento se ve en menos de 300 ms (p95) con OPFS.
 - **IN-007 (persistencia):** en Chrome con la PWA instalada, «Proteger los datos» queda concedido y Datos y copias lo enseña como «Protegido».
 - **IN-007 (ventana privada):** abrir la app publicada en incógnito de Chrome, privada de Firefox y de Safari y comprobar que aparece el aviso (la heurística de cuota está probada solo con dobles).
 - **IN-007 (dos pestañas):** abrir dos pestañas, comprobar que la segunda avisa de solo lectura y que, al cerrar la primera, la segunda pasa a escribir con lo último guardado.
@@ -169,7 +170,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-014 | implementación | OK (479 pruebas; 100 KB en < 300 ms p95 en memoria) | … |
+| 2026-10-18 | IN-014 | verificación | OK (485 pruebas; 9 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-014 | implementación | OK (479 pruebas; 100 KB en < 300 ms p95 en memoria) | 9830443 |
 | 2026-10-18 | IN-014 | análisis y diseño | ocho pasos con efectos inyectados, pegar al compositor, soltar, límite y deshacer | 683703f |
 | 2026-10-18 | IN-013 | verificación | OK (457 pruebas; 5 hallazgos de la revisión corregidos) | e6f4ac8 |
 | 2026-10-18 | IN-013 | implementación | OK (452 pruebas; matriz 100 % con Texto por defecto) | 6697076 |
@@ -227,4 +229,4 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-013 hecha. Siguiente: IN-014 (diseño escrito en docs/features/IN-014-captura.md, sin commit).
+- IN-014 hecha. Siguiente: IN-015 (diseño escrito en docs/features/IN-015-compositor.md, sin commit; borrador de indicaciones en el scratchpad in015/).

@@ -186,6 +186,41 @@ describe('capturar', () => {
     expect(await vistos[0]?.archivos?.[0]?.text()).not.toContain(CLAVE_AWS);
   });
 
+  it('un archivo en UTF-16 o Latin-1 también pasa por la ocultación de secretos', async () => {
+    const { repositorio, efectos: ef } = efectos();
+    const texto = `AWS_ACCESS_KEY_ID=${CLAVE_AWS}\nruta=caña`;
+    const utf16 = new Uint8Array([
+      0xff,
+      0xfe,
+      ...[...texto].flatMap((c) => [c.charCodeAt(0) & 0xff, c.charCodeAt(0) >> 8]),
+    ]);
+    const a = creado(await capturar({ archivo: new File([utf16], 'env.txt'), origen: 'soltado' }, ef));
+    expect(a.elemento.frontmatter).toMatchObject({ tipo: 'texto', ocultados: 1 });
+    expect(a.elemento.original).not.toContain(CLAVE_AWS);
+    expect(a.elemento.original).toContain('caña');
+    const latin1 = new Uint8Array([...texto.replace('caña', 'otra caña')].map((c) => c.charCodeAt(0)));
+    const b = creado(await capturar({ archivo: new File([latin1], 'conf.ini'), origen: 'soltado' }, ef));
+    expect(b.elemento.original).toContain('otra caña');
+    expect(b.elemento.original).not.toContain(CLAVE_AWS);
+    expect(repositorio.elementos().every((fm) => !fm.adjunto)).toBe(true);
+  });
+
+  it('si el lector devuelve original: null, el texto va como adjunto', async () => {
+    const { repositorio } = efectos();
+    const registro = crearRegistro([
+      lectorFalso({ nombre: 'texto', tipo: 'texto', leer: async () => ({ titulo: 'Aparte', original: null }) }),
+    ]);
+    const c = creado(await capturar({ texto: 'contenido aparte', origen: 'pegado' }, { repositorio, registro }));
+    expect(c.elemento.original).toBeNull();
+    expect(c.elemento.frontmatter.adjunto).toMatchObject({ mime: 'text/plain', tam: 16 });
+  });
+
+  it('un hilo que no es una ref de hilo se ignora (no deja el archivo ilegible)', async () => {
+    const { efectos: ef } = efectos();
+    const c = creado(await capturar({ texto: 'nota', origen: 'pegado', hilo: 'LOG-0001' }, ef));
+    expect(c.elemento.frontmatter.hilo).toBeUndefined();
+  });
+
   it('rechaza un archivo de más de 50 MB sin leerlo', async () => {
     const { efectos: ef } = efectos();
     const enorme = {
@@ -201,10 +236,16 @@ describe('capturar', () => {
     });
   });
 
-  it('en una pestaña de solo lectura falla con almacen.soloLectura', async () => {
+  it('en una pestaña de solo lectura falla con almacen.soloLectura antes de leer nada', async () => {
     const repositorio = new Repositorio(new AlmacenMemoria(), undefined, { puedeEscribir: () => false });
     const r = await capturar({ texto: 'hola', origen: 'pegado' }, { repositorio, registro: registroDePrueba() });
     expect(!r.ok && r.error.codigo).toBe('almacen.soloLectura');
+    const sinLeer = { name: 'a.txt', type: '', size: 3, arrayBuffer: () => Promise.reject(new Error('no se lee')) };
+    const f = await capturar(
+      { archivo: sinLeer as unknown as File, origen: 'soltado' },
+      { repositorio, registro: registroDePrueba() },
+    );
+    expect(!f.ok && f.error.codigo).toBe('almacen.soloLectura');
   });
 
   it('pide los derivados en segundo plano', async () => {
@@ -226,6 +267,31 @@ describe('capturar', () => {
     expect(await almacen.existe(c.adjuntoNuevo ?? '')).toBe(false);
     // Deshacer otra vez no hace nada.
     await capturador.deshacer(c);
+  });
+
+  it('deshacer no toca lo editado, lo que está en la papelera ni un adjunto que otro usa', async () => {
+    const { almacen, repositorio, efectos: ef } = efectos();
+    const capturador = crearCapturador(ef);
+    const png = () => new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 7])], 'a.png');
+    const ra = await capturador.capturar({ archivo: png(), origen: 'soltado' });
+    if (!ra.ok || ra.valor.tipo !== 'creado') throw new Error('no creado');
+    const a = ra.valor.capturado;
+    await repositorio.moverAPapelera(a.elemento.frontmatter.ref);
+    const rb = await capturador.capturar({ archivo: png(), origen: 'soltado' });
+    if (!rb.ok || rb.valor.tipo !== 'creado') throw new Error('no creado');
+    // A está en la papelera: deshacerlo no lo borra para siempre ni se lleva el adjunto que usa B.
+    expect(await capturador.deshacer(a)).toBe(false);
+    expect(repositorio.buscar(a.elemento.frontmatter.id)).toBeTruthy();
+    expect(await almacen.existe(a.adjuntoNuevo ?? '')).toBe(true);
+    // Editado después de capturar: tampoco.
+    const c = creado(await capturador.capturar({ texto: 'para editar', origen: 'pegado' }));
+    await repositorio.guardarElemento({
+      ...c.elemento,
+      notas: 'editado',
+      frontmatter: { ...c.elemento.frontmatter, modificado: '2030-01-01T00:00:00+01:00' },
+    });
+    expect(await capturador.deshacer(c)).toBe(false);
+    expect(repositorio.buscar(c.elemento.frontmatter.ref)).toBeTruthy();
   });
 
   it('20 pegados seguidos, sin esperar, dan 20 elementos con refs distintas', async () => {

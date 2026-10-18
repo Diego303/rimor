@@ -7,7 +7,7 @@ import type { Cerrojos } from '../almacen/pestanas';
 import { type DependenciasProveedor, ProveedorEspacio, useEspacioAbierto } from '../espacio/Espacio';
 import { ejecutorEnHilo } from '../lectores/ejecutor';
 import { ProveedorLectores } from '../lectores/Lectores';
-import { lectorFalso } from '../lectores/pruebas/falsos';
+import { elementoFalso, lectorFalso } from '../lectores/pruebas/falsos';
 import { crearRegistro } from '../lectores/registro';
 import { ProveedorAvisos } from '../ui/componentes';
 import { ProveedorCaptura } from './Captura';
@@ -41,12 +41,12 @@ function Espia() {
   return <textarea aria-label="campo" />;
 }
 
-function montar(alRecibir = vi.fn()) {
+function montar(alRecibir = vi.fn(), alAbrir = vi.fn()) {
   render(
     <ProveedorEspacio dependencias={dependencias}>
       <ProveedorLectores registro={registro} ejecutar={ejecutar}>
         <ProveedorAvisos>
-          <ProveedorCaptura alRecibir={alRecibir}>
+          <ProveedorCaptura alRecibir={alRecibir} alAbrir={alAbrir}>
             <Espia />
           </ProveedorCaptura>
         </ProveedorAvisos>
@@ -74,6 +74,8 @@ describe('captura en la interfaz', () => {
     useCompositor.getState().vaciar();
     const alRecibir = montar();
     await screen.findByLabelText('campo');
+    // Que terminen los efectos pendientes (los oyentes de pegar y soltar).
+    await act(async () => undefined);
     const e = pegar('17:40 ERROR algo');
     expect(e.defaultPrevented).toBe(true);
     expect(useCompositor.getState().texto).toBe('17:40 ERROR algo');
@@ -88,6 +90,8 @@ describe('captura en la interfaz', () => {
     useCompositor.getState().vaciar();
     montar();
     const campo = await screen.findByLabelText('campo');
+    // Que terminen los efectos pendientes (los oyentes de pegar y soltar).
+    await act(async () => undefined);
     campo.focus();
     const e = pegar('dentro', campo);
     expect(e.defaultPrevented).toBe(false);
@@ -97,6 +101,8 @@ describe('captura en la interfaz', () => {
   it('soltar archivos los guarda uno a uno y «Deshacer» los borra', async () => {
     montar();
     await screen.findByLabelText('campo');
+    // Que terminen los efectos pendientes (los oyentes de pegar y soltar).
+    await act(async () => undefined);
     arrastrar('dragenter', []);
     expect(document.querySelector('.capa-soltar')?.textContent).toBe('Suelta para guardar');
     arrastrar('drop', [
@@ -116,9 +122,25 @@ describe('captura en la interfaz', () => {
     await waitFor(() => expect(repositorio?.elementos()).toHaveLength(0));
   });
 
+  it('soltar un duplicado avisa con su ref y «Ver» lleva al existente', async () => {
+    const alAbrir = vi.fn();
+    montar(vi.fn(), alAbrir);
+    await screen.findByLabelText('campo');
+    await act(async () => undefined);
+    const existente = elementoFalso(7, 'igual');
+    await repositorio?.guardarElemento(existente);
+    arrastrar('drop', [new File(['igual'], 'b.txt', { type: 'text/plain' })]);
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver' }));
+    expect(document.querySelector('.toast')).toBeNull();
+    expect(alAbrir).toHaveBeenCalledWith(existente.frontmatter.ref);
+    expect(repositorio?.elementos()).toHaveLength(1);
+  });
+
   it('un archivo de más de 50 MB se rechaza con un aviso que lo explica', async () => {
     montar();
     await screen.findByLabelText('campo');
+    // Que terminen los efectos pendientes (los oyentes de pegar y soltar).
+    await act(async () => undefined);
     const enorme = {
       name: 'video.mov',
       type: 'video/quicktime',

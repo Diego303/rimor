@@ -99,3 +99,31 @@ Cubre las cinco tareas y los ocho pasos en orden. El compositor (IN-015) y el fe
 - Avisos con acción (`avisar(texto, { accion, duracionMs })`, 10 s con acción) y botón alcanzable en la píldora; la región viva sigue anunciando el texto.
 - La capa «Suelta para guardar» cubre la ventana con un borde discontinuo del acento (la pantalla de referencia no la dibuja).
 
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 17:03): tipos 0 errores; Biome, colores y textos, OK; Vitest 38 archivos y 485 pruebas, OK; construcción OK; carga inicial 170,9 KB.
+
+| Criterio | Evidencia |
+|---|---|
+| Flujo puro con efectos inyectados | `flujo.test.ts` con `AlmacenMemoria` y lectores falsos, sin navegador |
+| Pegar fuera de un campo lleva al compositor | `Captura.test.tsx`: llena el borrador, no guarda y va a Inicio; dentro de un campo no hace nada; en solo lectura avisa |
+| Soltar archivos los guarda uno a uno | `Captura.test.tsx`: dos archivos, dos elementos (texto y archivo) |
+| Más de 50 MB se rechaza con aviso | Prueba del flujo (sin leer el archivo) y de la interfaz (texto del aviso) |
+| Deshacer durante 10 s | Aviso con acción de 10 s (prueba de `Avisos`) y Deshacer que borra lo creado |
+| Duplicado, secreto, archivo grande, 20 pegados, corpus | Pruebas del flujo |
+| Pegar 100 KB → visible en < 300 ms (p95) | p95 de 20 capturas de 100 KB con el almacén en memoria por debajo de 300 ms; en el portátil de referencia, pendiente de validación humana |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Secretos en archivos UTF-16 o Latin-1 llegaban al disco** porque se trataban como binarios: `codificacionDe` reconoce UTF-8 (con o sin BOM), UTF-16 (BOM o patrón de nulos) y Windows-1252 (sin bytes de control), y esos archivos pasan por la ocultación como texto.
+2. **El original se corrompía** cuando solo el primer KB era UTF-8: ahora se decide con el archivo entero (`decodificarTexto`); un binario con texto delante sigue siendo binario.
+3. **Deshacer podía borrar para siempre algo de la papelera o un adjunto que otro usa**: no se deshace lo que está en la papelera, se editó o ya no existe, y `borrarAdjunto` solo borra si ningún elemento lo usa. Si algo no se deshace, se avisa.
+4. **`original: null` del lector se ignoraba**: ahora guarda el texto (o su `archivo`) como adjunto.
+5. **En solo lectura**, pegar avisa sin tocar el borrador y soltar avisa sin leer los archivos; `capturar` comprueba que se puede escribir antes de nada.
+6. **El duplicado no llevaba al existente**: el aviso trae «Ver», que abre el elemento.
+7. **«Guardado. Deshacer» podía salir tarde** detrás de otros avisos: ahora sale el primero.
+8. Pérdida del permiso a mitad: el adjunto huérfano se intenta borrar sin romper nada y el fallo de Deshacer se avisa.
+9. **Un `hilo` que no es ref de hilo** se ignora en lugar de dejar el archivo ilegible.
+

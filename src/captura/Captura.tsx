@@ -4,6 +4,7 @@
  */
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useEspacioOpcional } from '../espacio/Espacio';
+import { useEspacio } from '../estado/espacio';
 import { fmtBytes } from '../i18n/formatos';
 import { useT } from '../i18n/useT';
 import { useLectoresOpcional } from '../lectores/Lectores';
@@ -25,14 +26,17 @@ interface Props {
   children: ReactNode;
   /** Tras llevar lo pegado al compositor: ir a Inicio (lo da la carcasa, que tiene el router). */
   alRecibir?: () => void;
+  /** Abrir un elemento por su ref (el existente, ante un duplicado). */
+  alAbrir?: (ref: string) => void;
 }
 
-export function ProveedorCaptura({ children, alRecibir }: Props) {
+export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
   const { t, idioma } = useT();
   const espacio = useEspacioOpcional();
   const lectores = useLectoresOpcional();
   const { avisar } = useAvisos();
   const recibir = useCompositor((s) => s.recibir);
+  const soloLectura = useEspacio((s) => s.soloLectura);
   const [soltando, setSoltando] = useState(false);
   // `dragenter` y `dragleave` llegan por cada hijo: se cuentan para saber cuándo sale de verdad.
   const dentro = useRef(0);
@@ -54,12 +58,14 @@ export function ProveedorCaptura({ children, alRecibir }: Props) {
       const archivos = [...(e.clipboardData?.files ?? [])];
       if (!texto.trim() && !archivos.length) return;
       e.preventDefault();
+      // En una pestaña que solo lee no se podría guardar: se dice y no se toca el borrador.
+      if (soloLectura) return avisar(t('espacio.aviso.soloLectura'));
       recibir(texto, archivos);
       alRecibir?.();
     };
     document.addEventListener('paste', alPegar);
     return () => document.removeEventListener('paste', alPegar);
-  }, [recibir, alRecibir]);
+  }, [recibir, alRecibir, soloLectura, avisar, t]);
 
   // Soltar archivos en cualquier pantalla.
   useEffect(() => {
@@ -87,36 +93,56 @@ export function ProveedorCaptura({ children, alRecibir }: Props) {
       void guardar([...(e.dataTransfer?.files ?? [])]);
     };
     async function guardar(archivos: File[]) {
-      if (!archivos.length) return;
-      if (!capturador) return;
+      if (!archivos.length || !capturador) return;
+      if (soloLectura) return avisar(t('espacio.aviso.soloLectura'));
       const creados: Capturado[] = [];
+      // Los demás avisos van después del de «Guardado», para que Deshacer salga en cuanto se guarda.
+      const otros: (() => void)[] = [];
       for (const archivo of archivos) {
         const r = await capturador.capturar({ archivo, origen: 'soltado' }).catch(() => null);
-        if (!r) avisar(t('captura.fallo', { nombre: archivo.name }));
+        if (!r) otros.push(() => avisar(t('captura.fallo', { nombre: archivo.name })));
         else if (r.ok) {
           if (r.valor.tipo === 'creado') creados.push(r.valor.capturado);
-          else avisar(t('captura.duplicado', { ref: r.valor.ref }));
-        } else if (r.error.codigo === 'captura.demasiadoGrande')
-          avisar(
-            t('captura.demasiadoGrande', {
-              nombre: archivo.name,
-              tam: fmtBytes(archivo.size, idioma),
-              limite: fmtBytes(LIMITE_ARCHIVO, idioma),
-            }),
+          else {
+            const ref = r.valor.ref;
+            otros.push(() =>
+              avisar(t('captura.duplicado', { ref }), {
+                ...(alAbrir ? { accion: { etiqueta: t('captura.ver'), alPulsar: () => alAbrir(ref) } } : {}),
+              }),
+            );
+          }
+        } else {
+          const codigo = r.error.codigo;
+          otros.push(() =>
+            avisar(
+              codigo === 'captura.demasiadoGrande'
+                ? t('captura.demasiadoGrande', {
+                    nombre: archivo.name,
+                    tam: fmtBytes(archivo.size, idioma),
+                    limite: fmtBytes(LIMITE_ARCHIVO, idioma),
+                  })
+                : codigo === 'almacen.soloLectura'
+                  ? t('espacio.aviso.soloLectura')
+                  : codigo === 'captura.sinLector'
+                    ? t('captura.sinLector', { nombre: archivo.name })
+                    : t('captura.fallo', { nombre: archivo.name }),
+            ),
           );
-        else if (r.error.codigo === 'almacen.soloLectura') avisar(t('espacio.aviso.soloLectura'));
-        else if (r.error.codigo === 'captura.sinLector') avisar(t('captura.sinLector', { nombre: archivo.name }));
-        else avisar(t('captura.fallo', { nombre: archivo.name }));
+        }
       }
       if (creados.length)
         avisar(t('captura.guardado', { n: creados.length }), {
           accion: {
             etiqueta: t('captura.deshacer'),
-            alPulsar: () => {
-              for (const c of creados) void capturador?.deshacer(c).catch(() => undefined);
-            },
+            alPulsar: () => void deshacerTodos(creados),
           },
         });
+      for (const avisarOtro of otros) avisarOtro();
+    }
+    async function deshacerTodos(creados: Capturado[]) {
+      const hechos = await Promise.all(creados.map((c) => capturador?.deshacer(c).catch(() => false)));
+      // Si alguno ya se había editado, movido o no se pudo borrar, se dice: nunca se finge haberlo deshecho.
+      if (hechos.some((h) => !h)) avisar(t('captura.noDeshecho'));
     }
     window.addEventListener('dragenter', entrar);
     window.addEventListener('dragover', encima);
@@ -128,7 +154,7 @@ export function ProveedorCaptura({ children, alRecibir }: Props) {
       window.removeEventListener('dragleave', salir);
       window.removeEventListener('drop', soltar);
     };
-  }, [capturador, avisar, t, idioma]);
+  }, [capturador, avisar, t, idioma, soloLectura, alAbrir]);
 
   return (
     <Contexto.Provider value={capturador}>
