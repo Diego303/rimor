@@ -62,6 +62,34 @@ describe('Carcasa', () => {
     expect(screen.getByText('Ir a Inicio')).toBeTruthy();
   });
 
+  it('el límite de errores se reinicia cuando cambia la pantalla que se pinta', async () => {
+    const { LimiteErrores } = await import('./LimiteErrores');
+    expect(
+      LimiteErrores.getDerivedStateFromProps(
+        { clave: '/buscar', children: null },
+        { error: new Error('x'), clave: '/datos' },
+      ),
+    ).toEqual({ error: null, clave: '/buscar' });
+  });
+
+  it('una ruta que no existe muestra su pantalla traducida', async () => {
+    montar('/nada');
+    expect(await screen.findByText('Aquí no hay nada')).toBeTruthy();
+  });
+
+  it('con la ayuda abierta los atajos no navegan por detrás', async () => {
+    const router = montar('/');
+    await screen.findByRole('link', { name: /Inicio/ });
+    fireEvent.keyDown(window, { key: '?', shiftKey: true });
+    await screen.findByText('Atajos de teclado');
+    // happy-dom no implementa showModal: se marca abierto como lo haría el navegador.
+    document.querySelector('dialog')?.setAttribute('open', '');
+    fireEvent.keyDown(window, { key: '/' });
+    await act(async () => undefined);
+    expect(router.state.location.pathname).toBe('/');
+    document.querySelector('dialog')?.removeAttribute('open');
+  });
+
   it('cada ruta tiene su pantalla', async () => {
     const router = montar('/e/LOG-0042');
     expect(await screen.findByRole('heading', { name: 'LOG-0042' })).toBeTruthy();

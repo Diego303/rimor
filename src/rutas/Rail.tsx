@@ -50,7 +50,8 @@ export function Rail() {
           <ContenidoRb icono="coleccion" texto={c.nombre} recuento={c.recuento} />
         </Link>
       ))}
-      <Link to="/ajustes" className="rb sub" aria-current={actual(ruta === '/ajustes')}>
+      {/* No es «sub»: también va en la barra inferior del móvil, donde no hay pie del espacio. */}
+      <Link to="/ajustes" className="rb" aria-current={actual(ruta === '/ajustes')}>
         <ContenidoRb icono="ajustes" texto={t('rail.ajustes')} />
       </Link>
       <Link to="/datos" className="space" aria-current={actual(ruta === '/datos')}>

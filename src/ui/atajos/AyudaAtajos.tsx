@@ -4,8 +4,9 @@ import { useT } from '../../i18n/useT';
 import { Boton, Kbd } from '../componentes';
 import { useGestorAtajos } from './useAtajos';
 
-const TECLA: Record<string, string> = { ctrl: 'Ctrl', shift: 'Mayús', alt: 'Alt', space: 'Espacio', enter: 'Enter' };
-const mostrar = (teclas: string) => teclas.split(' ').map((paso) => paso.split('+').map((k) => TECLA[k] ?? k));
+const TECLAS = ['ctrl', 'shift', 'alt', 'space', 'enter', 'escape'] as const;
+type Tecla = (typeof TECLAS)[number];
+const esTeclaConNombre = (k: string): k is Tecla => (TECLAS as readonly string[]).includes(k);
 
 export function AyudaAtajos({ abierta, alCerrar }: { abierta: boolean; alCerrar: () => void }) {
   const { t } = useT();
@@ -20,6 +21,8 @@ export function AyudaAtajos({ abierta, alCerrar }: { abierta: boolean; alCerrar:
   }, [abierta]);
 
   const filas = gestor.lista().flatMap(({ atajos }) => atajos);
+  const mostrar = (teclas: string) =>
+    teclas.split(' ').map((paso) => paso.split('+').map((k) => (esTeclaConNombre(k) ? t(`atajos.teclas.${k}`) : k)));
   return (
     <dialog ref={dialogo} className="dialogo card" aria-labelledby="ayuda-atajos" onClose={alCerrar}>
       <h3 id="ayuda-atajos">{t('atajos.titulo')}</h3>

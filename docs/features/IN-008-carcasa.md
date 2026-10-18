@@ -121,3 +121,28 @@ Cubre la ficha. Las pantallas son marcadores hasta su IN, con su título y un va
 - La barra inferior móvil da 40 px de alto a cada botón (diana táctil de la guía §5.4).
 - Diálogo de ayuda con `<dialog>` nativo y la clase `.dialogo` (sombra flotante, fondo `--grille`).
 - Carga inicial: 112,7 KB comprimidos (TanStack Router suma unos 36 KB); las pantallas van en carga diferida.
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 07:00): tipos 0 errores; Biome, colores y textos, OK; Vitest 21 archivos y 185 pruebas, OK; construcción OK; carga inicial **113,0 KB**.
+
+| Criterio | Evidencia |
+|---|---|
+| Rutas `/`, `/e/:ref`, `/hilo/:ref`, `/buscar`, `/c/:coleccion`, `/datos`, `/ajustes` y `/muestras` (desarrollo) | `rutas.tsx` con historial por hash; prueba «cada ruta tiene su pantalla»; ruta inexistente → pantalla «Aquí no hay nada» traducida |
+| Raíl de 212 px con recuento de «Sin clasificar», Buscar, colecciones y pie con espacio, rejilla y piloto | Prueba del raíl (sección activa con `aria-current`, recuento, colección, piloto «Copia al día», nombre del espacio) y prueba del CSS |
+| Columna de 780 px y modo ancho | `Pantalla` (`.col` / `.col.wide`) |
+| Consulta de contenedor a 720 px: barra inferior | `carcasa.css` sobre `.marco`; Inicio, Buscar y Ajustes en la barra |
+| Gestor de atajos sin conflicto con campos de texto, ayuda con `?` | `atajos.test.ts` (6 pruebas) y pruebas de la carcasa (navegar con `/` y `g h`, no dispararse en un campo, ni con la ayuda abierta) |
+| Aviso efímero global | `ProveedorAvisos` en la carcasa |
+| Límite de errores por pantalla | `LimiteErrores.test.tsx` (falla una pantalla, el raíl sigue, se reintenta) y reinicio por cambio de pantalla |
+| Capturas a 1440 y 400 px, navegación completa con Playwright | Pendiente por instrucción del autor |
+
+### Revisión independiente
+
+Hallazgos corregidos:
+
+1. El límite de errores usaba `location.pathname`, que cambia antes de que cambie la pantalla: al salir de una pantalla rota seguía la tarjeta de error. Ahora usa la ubicación resuelta (la que se pinta).
+2. Una ruta inexistente mostraba «Not Found» en inglés: `defaultNotFoundComponent` con su pantalla traducida.
+3. Los atajos seguían activos con la ayuda abierta (cambiaban de pantalla por detrás): con un diálogo modal abierto no actúan.
+4. Las etiquetas de teclas de la ayuda estaban en español fijo: van por i18n (`atajos.teclas.*`).
+5. Menor: en móvil no se llegaba a Ajustes; ahora está en la barra inferior.

@@ -62,7 +62,15 @@
     "buscar": "Buscar",
     "irInicio": "Ir a Inicio",
     "irBuscar": "Ir a Buscar",
-    "ayuda": "Mostrar esta ayuda"
+    "ayuda": "Mostrar esta ayuda",
+    "teclas": {
+      "ctrl": "Ctrl",
+      "shift": "Mayús",
+      "alt": "Alt",
+      "space": "Espacio",
+      "enter": "Intro",
+      "escape": "Esc"
+    }
   },
   "errores": {
     "pantalla": {
@@ -106,6 +114,11 @@
       "titulo": "Ajustes",
       "vacioTitulo": "Ajustes",
       "vacio": "Tema, idioma, detección, secretos, respuestas y copias."
+    },
+    "noEncontrada": {
+      "titulo": "Aquí no hay nada",
+      "texto": "El enlace no lleva a ninguna pantalla de Rimor.",
+      "volver": "Ir a Inicio"
     }
   }
 }

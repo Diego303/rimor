@@ -8,6 +8,7 @@ import {
   type RouterHistory,
 } from '@tanstack/react-router';
 import { Carcasa } from './Carcasa';
+import { NoEncontrada } from './NoEncontrada';
 
 const raiz = createRootRoute({ component: Carcasa });
 
@@ -52,7 +53,12 @@ const arbol = raiz.addChildren([inicio, elemento, hilo, buscar, coleccion, datos
 
 /** Crea el router; las pruebas pasan un historial en memoria. */
 export function crearRouter(historial: RouterHistory = createHashHistory()) {
-  return createRouter({ routeTree: arbol, history: historial, defaultPreload: 'intent' });
+  return createRouter({
+    routeTree: arbol,
+    history: historial,
+    defaultPreload: 'intent',
+    defaultNotFoundComponent: NoEncontrada,
+  });
 }
 
 export type RouterRimor = ReturnType<typeof crearRouter>;

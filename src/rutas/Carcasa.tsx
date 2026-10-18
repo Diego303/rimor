@@ -16,7 +16,8 @@ export function Carcasa() {
   const { t } = useT();
   const gestor = useMemo(() => new GestorAtajos(), []);
   const navegar = useNavigate();
-  const ruta = useRouterState({ select: (s) => s.location.pathname });
+  // La pantalla que de verdad se pinta: `location` cambia antes de que cambie el <Outlet>.
+  const ruta = useRouterState({ select: (s) => (s.resolvedLocation ?? s.location).pathname });
   const [ayuda, setAyuda] = useState(false);
 
   useEffect(
@@ -33,6 +34,8 @@ export function Carcasa() {
   useEffect(() => {
     const alPulsar = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.isComposing) return;
+      // Con un diálogo modal abierto (la ayuda), los atajos de la app no actúan por detrás.
+      if (document.querySelector('dialog[open]')) return;
       const consumida = gestor.pulsar({
         key: e.key,
         ctrlKey: e.ctrlKey,

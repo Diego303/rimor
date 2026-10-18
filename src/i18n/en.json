@@ -62,7 +62,15 @@
     "buscar": "Search",
     "irInicio": "Go to Home",
     "irBuscar": "Go to Search",
-    "ayuda": "Show this help"
+    "ayuda": "Show this help",
+    "teclas": {
+      "ctrl": "Ctrl",
+      "shift": "Shift",
+      "alt": "Alt",
+      "space": "Space",
+      "enter": "Enter",
+      "escape": "Esc"
+    }
   },
   "errores": {
     "pantalla": {
@@ -106,6 +114,11 @@
       "titulo": "Settings",
       "vacioTitulo": "Settings",
       "vacio": "Theme, language, detection, secrets, replies and backups."
+    },
+    "noEncontrada": {
+      "titulo": "Nothing here",
+      "texto": "This link does not lead to any Rimor screen.",
+      "volver": "Go to Home"
     }
   }
 }
