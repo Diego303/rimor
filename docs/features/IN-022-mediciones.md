@@ -1,0 +1,77 @@
+# IN-022 · Lector Mediciones
+
+## Objetivo y catálogo
+
+Que una serie de tiempos diga cuánto tarda de verdad y con qué confianza, sin hoja de cálculo. Catálogo: **LEC-06** (plan §8.3). Depende de IN-011 (`@rimor/estadistica`: `describir`, `icMediana`, `avisosDeMetodo`, `atipicos`) e IN-017.
+
+## Estado de partida
+
+- `describir(valores)` da n, mediana, media, desviación, CV, mínimo, máximo, p5, p95, cuartiles e IC 95 % de la mediana; `avisosDeMetodo` da «pocas» (< 10), «ruido» (CV > 5 %) y «atípicos». Contrastado con NumPy y SciPy.
+- La pantalla de referencia no tiene una serie suelta, pero sí la comparación (`SC.medic`): gráfico de puntos (720 de ancho, eje con marcas «bonitas», banda del IC al 14 % de opacidad, puntos de 3,4 de radio con un pequeño temblor vertical, línea de la mediana de 2,5), leyenda, tabla «Mediana · IC 95 % · Variación» y «Avisos de método (N)» plegados con `.gaps .gap .dot`. La serie suelta usa esas mismas piezas con una fila.
+
+## Diseño
+
+### `src/lectores/mediciones/series.ts` (puro)
+
+`leerSeries(texto)` → `Serie[]` con `{ etiqueta, valores (en ms), unidadOriginal }`:
+
+- **Una medida por línea**, con o sin unidad (`38.41 ms`, `38,41ms`, `850 µs`, `850 us`, `120ns`, `1.2 s`, `38.41`): por línea, el número con unidad (o la línea entera si es solo un número). Sin unidad, ms. Las líneas `#` son comentarios: el primero da la **etiqueta** (hasta un `·`).
+- **`go test -bench`**: `BenchmarkNombre-8   1000000   1234 ns/op …`; una serie por nombre (sin el sufijo `-8`), con sus repeticiones (`-count=N`).
+- **JSON de hyperfine**: `{ "results": [{ "command", "times": [s…] }] }`; una serie por comando.
+- **Unidades a ms**, o a **s** si todos los valores pasan de 10 s (`unidad` de la serie: `ms` o `s`).
+
+### El lector (`src/lectores/mediciones/`)
+
+- `detectar`: 0,9 con JSON de hyperfine o con líneas de `go test -bench`; 0,88 con al menos 3 medidas y que sean al menos el 70 % de las líneas que no son comentarios; si no, 0. Al detectar, una línea con una hora, una fecha o un nivel de log, o una frase de más de 6 palabras con una duración, no cuenta como medida (lección de IN-021: un log no debe acabar en otro lector).
+- `leer`: título desde la etiqueta (o «Mediciones de {comando}» / el nombre del benchmark), resumen provisional `{ n }`.
+- `derivar` → `{ series: [{ etiqueta, unidad, valores, d: Descriptiva, avisos }] }`.
+- `resumen`: de la primera serie, `{ n, mediana, unidad, series }`; `resumenLegible`: «20 mediciones · mediana 38,54 ms».
+- **Respuesta**: «20 mediciones · mediana 38,54 ms (IC 95 %: 38,11 – 39,02).» y, si n < 10, «Son pocas: lo recomendable son al menos 10.» Con varias series, la primera y «… y 2 series más» en la misma frase.
+- **Cifras**: `mediana`, `ic_bajo`, `ic_alto`, `n`, `cv` (de la primera serie).
+- `textoIndexable`: las etiquetas.
+
+### Vista (`Vista.tsx`) y `GraficoPuntos`
+
+- `GraficoPuntos` (en `src/lectores/mediciones/`, reutilizable por la comparación de IN-028): una fila por serie, eje con marcas «bonitas» (1, 2, 5 × 10ⁿ), banda del IC, puntos con un temblor determinista y línea de la mediana; colores `--key` para la serie (y `--muted` para la de referencia en una comparación); con la unidad arriba a la derecha.
+- Una tarjeta, como la de la comparación: el veredicto (la mediana como cifra grande, «Mediana de 20 mediciones», y «IC 95 %: 38,11 – 39,02 · variación 1,6 %»; tono `warn` si hay pocas o ruido, `ok` si no), el gráfico, la leyenda («Línea: mediana · banda: intervalo de confianza del 95 %») y la tabla de la referencia: serie, n, Mediana, IC 95 % y Variación.
+- «Avisos de método (N)» plegados (con el número visible; sin avisos, no sale) y «Detalles» con el formato, media, desviación, mínimo, máximo, p5 y p95 de cada serie y las cifras citables.
+- Números con unas cuatro cifras significativas según la mediana («38,54», «410,2», «0,001234»): una serie de `go test -bench` en ns sigue legible en ms.
+
+### Corpus
+
+- `fixtures/mediciones/`: ejemplos de los tres formatos con lo esperado (n, mediana, IC, unidad).
+- `fixtures/deteccion/mediciones/`: 25 para la matriz (líneas con varias unidades y etiquetas, `go test -bench` y JSON de hyperfine soltado como archivo).
+
+## Tareas
+
+- [ ] Formatos v0.1: una medida por línea con o sin unidad, `go test -bench` y JSON de hyperfine. Etiqueta desde un comentario `#`.
+- [ ] Normaliza unidades a ms (o a s si todo pasa de 10 s).
+- [ ] Deriva las estadísticas de IN-011 y los avisos de método.
+- [ ] Vista: gráfico de puntos con mediana e intervalo, tabla de estadísticos y avisos plegados con recuento.
+- [ ] Cifras: `mediana`, `ic_bajo`, `ic_alto`, `n`, `cv`.
+- [ ] Respuesta: «20 mediciones · mediana 38,54 ms (IC 95 %: 38,11 – 39,02).» y, si n < 10, «Son pocas: lo recomendable son al menos 10.»
+
+## Pruebas previstas
+
+- Lectura de los tres formatos (unidades mezcladas, comas decimales, etiquetas, varios benchmarks, varios comandos) y paso a s.
+- Estadísticas iguales a las de `@rimor/estadistica` (y los avisos); el ejemplo de la ficha.
+- Respuesta en es y en, con n < 10 y con varias series; reglas de estilo.
+- Vista: gráfico con su banda y su mediana, tabla y avisos plegados con su número.
+- Matriz con la carpeta `mediciones`; un log con milisegundos o una idea con un número no pasan por mediciones.
+
+## Criterios de aceptación
+
+- Las pruebas de arriba; los números coinciden con IN-011 (ya contrastado con SciPy).
+- `pnpm verificar` y `pnpm deteccion` en verde.
+
+## Riesgos y dudas
+
+| Riesgo o duda | Decisión |
+|---|---|
+| Una línea con varios números (`run 3: 38.4 ms`) | Cuenta el número con unidad; si no tiene unidad y hay más de un número, la línea no es una medida |
+| Varias series en un pegado | Se guardan todas; la respuesta y las cifras hablan de la primera; comparar es IN-028 |
+| Un log con duraciones (`tardó 410ms`) | Log puntúa por sus marcas y niveles; mediciones exige que casi todas las líneas sean solo medidas |
+
+## Autorrevisión
+
+Cubre las seis tareas. Los formatos de v0.2 (pytest-benchmark, JMH, criterion, CSV) son de IN-047; la comparación y Mann-Whitney en pantalla, de IN-028, que reutilizará `GraficoPuntos`.
