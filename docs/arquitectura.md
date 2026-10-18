@@ -28,6 +28,8 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi�
 | `public/marca/` | Favicon, PNG de app y `manifest-iconos.json` (salida de `pnpm marca`) | 089 |
 | `src/ui/muestras/` | Página `#/muestras`, solo en desarrollo | 002 |
 | `src/i18n/` | Catálogos `es` y `en`, `traducir` y `t` con claves tipadas, `useT`, idioma inicial y formateadores | 003 |
+| `src/almacen/` | Contrato `Almacen`, adaptadores en memoria y OPFS, cola de escrituras, `Repositorio` y coordinación de pestañas | 005 |
+| `src/workers/almacen.worker.ts` | OPFS con accesos síncronos, expuesto con Comlink | 005 |
 | `paquetes/formato` | Esquemas Valibot, `.md` de elementos (frontmatter fiel, notas y original), ULID, refs, rutas, SHA-256 y migraciones | 004 |
 | `paquetes/estadistica` | Estadística de mediciones (esqueleto) | 001 |
 | `scripts/` | Comprobación de colores y de textos sin traducir, tamaño de la carga inicial y seguimiento | 001, 003 |

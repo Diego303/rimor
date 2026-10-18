@@ -108,3 +108,10 @@ Al reescribir, `guardarElemento` pasa el texto anterior a `escribirElemento(el, 
 ## Autorrevisión
 
 Cubre la ficha. El índice en memoria del repositorio se sustituirá por la caché de IN-006 sin cambiar su interfaz.
+
+## Cambios durante la implementación
+
+- Los tipos de DOM de TypeScript declaran `createSyncAccessHandle` aunque solo exista en Workers: el adaptador usa un tipo propio (`Archivo`) con los métodos opcionales (`createSyncAccessHandle`, `createWritable`, `move`) y comprueba cada uno antes de usarlo.
+- `mover` en OPFS es leer, escribir (atómico) en el destino y borrar el origen: `move()` entre carpetas distintas no está en todos los navegadores, y así la operación siempre es segura.
+- El OPFS falso no implementa `createWritable` (el camino de respaldo de los navegadores sin `createSyncAccessHandle`): queda para la validación humana en navegador.
+- El cliente (`crearAlmacenOpfs`) y el Worker aún no los usa ninguna pantalla: los conecta IN-007 al abrir el espacio.

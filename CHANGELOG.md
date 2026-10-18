@@ -9,5 +9,6 @@ Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepacha
 - Textos en español e inglés con cambio de idioma en caliente, y formatos de números, cifras con unidad, p-valores, duraciones, tamaños, fechas relativas y ordinales al estilo de la guía (IN-003).
 - Formato de archivos del espacio en `@rimor/formato`: esquemas de elementos, comparaciones, hilos, investigaciones, documentos, manifest, colecciones, vistas y ajustes; frontmatter que conserva orden, comentarios y claves desconocidas; ULID, refs, nombres de archivo, hash SHA-256 del original y migraciones (IN-004).
 - Símbolo «Señal» y logotipo como componentes que siguen al tema, favicon que cambia con el modo claro u oscuro, iconos de app y `theme-color`; `pnpm marca` optimiza los SVG de marca y genera el logotipo en contornos (IN-089).
+- Almacén de archivos del espacio en OPFS (en un Worker) y en memoria, con escritura atómica, cola de escrituras por archivo, repositorio de elementos con papelera y adjuntos sin duplicados, y coordinación para que solo una pestaña escriba (IN-005).
 ### Cambiado
 ### Corregido
