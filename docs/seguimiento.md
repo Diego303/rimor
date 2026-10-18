@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 02:19
-**Ahora:** IN-004 · Formato de archivos · fase análisis y diseño
+**Última actualización:** 2026-10-18 02:20
+**Ahora:** IN-004 · Formato de archivos · fase implementación
 **Siguiente:** IN-089 · Símbolo «Señal», iconos de app y favicon
 **Progreso:** F0 9/9 · v0.1 3/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 12/99
 
@@ -20,8 +20,8 @@
 | F0-9 | Fuentes empaquetadas | F0 | — | hecha | f529c42 | docs/f0/F0-9.md |
 | IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | hecha | 4088155 b31670c d8ece75 | docs/features/IN-001-repositorio.md |
 | IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | hecha | 3f75c99 4b3c27c 63afa3a | docs/features/IN-002-tema-y-componentes.md |
-| IN-003 | Textos, idiomas y formatos | v0.1 | 0 | hecha | e4770f8 2001502 | docs/features/IN-003-textos-idiomas-formatos.md |
-| IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | pendiente | — | — |
+| IN-003 | Textos, idiomas y formatos | v0.1 | 0 | hecha | e4770f8 2001502 d44efd6 | docs/features/IN-003-textos-idiomas-formatos.md |
+| IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | en análisis y diseño | — | docs/features/IN-004-formato.md |
 | IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | pendiente | — | — |
 | IN-005 | Almacén OPFS y en memoria | v0.1 | 1 | pendiente | — | — |
 | IN-006 | Caché de derivados e índice | v0.1 | 1 | pendiente | — | — |
@@ -134,6 +134,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
   - IN-085: se hace (F0-4 positiva).
 - **Iconos:** los trazados propios de las pantallas en vez de `lucide-react` (mismo estilo: retícula 24 px, trazo 1,8), para que la web sea igual al HTML de referencia (ADR-0004).
 - **`--muted` claro `#66635D`** en lugar de `#67645E`: el de la guía da 4,47:1 sobre `--panel-2` y no llega a AA (IN-002).
+- **Tipo `archivo` (prefijo `ARC`)** para el lector genérico de archivo de IN-017, que el plan no nombra (IN-004).
 - **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
 
 ## Pendientes de validación humana
@@ -155,7 +156,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-003 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | … |
+| 2026-10-18 | IN-004 | análisis y diseño | modelo, formato del .md y migraciones | … |
+| 2026-10-18 | IN-003 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | d44efd6 |
 | 2026-10-18 | IN-003 | implementación | pnpm verificar OK (61 pruebas, 76,2 KB) | 2001502 |
 | 2026-10-18 | IN-003 | análisis y diseño | librería propia mínima y regla de textos | e4770f8 |
 | 2026-10-18 | IN-002 | verificación | pnpm verificar OK; 9 hallazgos de la revisión corregidos | 63afa3a |
