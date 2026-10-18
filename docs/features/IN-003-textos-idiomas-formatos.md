@@ -116,3 +116,11 @@ Lo que no tiene letras (`·`, `›`, `−`, cifras) pasa. Se añade a `pnpm lint
 ## Autorrevisión
 
 Cubre las tareas de la ficha. Sin dependencias nuevas. No contradice decisiones previas; ajusta `ChipTipo` e `IconoTipo` como estaba previsto en IN-002.
+
+## Cambios durante la implementación
+
+- `formatos.ts` usa `en-GB` para el inglés (24 h y miles con coma) y una tabla propia de meses abreviados («2 oct», «Oct 2»), porque el texto de `Intl` para los meses cambia entre versiones de ICU («oct.» frente a «oct»).
+- `src/i18n/iniciar.ts` separa lo que toca `localStorage` y `navigator` (idioma inicial y elegido) para que `i18n.ts` siga siendo puro. La isla lo llama al cargarse.
+- `SelectorTema` traduce sus propios textos (`tema.*`) y ya no recibe `etiqueta` ni `textos`.
+- La regla de textos también detecta literales en plantillas (`` `${n} filas` ``) y no mira la propiedad `nombre` (es el nombre del icono, no se ve).
+- Los dos catálogos van en la carga inicial (76,2 KB en total). Si el inglés crece mucho, se cargará bajo demanda.

@@ -1,5 +1,6 @@
 /** Chips, marcas y piezas pequeñas (guía §7.3). */
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { useT } from '../../i18n/useT';
 import { clases } from '../clases';
 import { Icono } from '../iconos/Icono';
 import { ASPECTO_TIPO, type TipoVisual } from '../iconos/tipos';
@@ -19,19 +20,22 @@ export function Filtro({
 }
 
 /** Chip de tipo: icono y nombre en neutro; solo Error lleva color (E7). */
-export function ChipTipo({ tipo, nombre }: { tipo: TipoVisual; nombre: string }) {
+export function ChipTipo({ tipo }: { tipo: TipoVisual }) {
+  const { t } = useT();
   const a = ASPECTO_TIPO[tipo];
   return (
     <span className={clases('kchip', a.clase)}>
       <Icono nombre={a.icono} tamano={13} />
-      {nombre}
+      {t(`tipos.${tipo}`)}
     </span>
   );
 }
 
 /** Icono de tipo en un círculo (30 px; 24 px en listas densas). */
-export function IconoTipo({ tipo, nombre, denso }: { tipo: TipoVisual; nombre: string; denso?: boolean }) {
+export function IconoTipo({ tipo, denso }: { tipo: TipoVisual; denso?: boolean }) {
+  const { t } = useT();
   const a = ASPECTO_TIPO[tipo];
+  const nombre = t(`tipos.${tipo}`);
   return (
     <span className={clases('ti', a.clase, denso && 'denso')} title={nombre}>
       <Icono nombre={a.icono} tamano={denso ? 14 : 16} />

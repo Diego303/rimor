@@ -1,23 +1,20 @@
 import { useState } from 'react';
+import { useT } from '../../i18n/useT';
 import { guardarPreferencia, leerPreferencia, type PreferenciaTema } from '../tema/tema';
 import { Segmentado } from './Segmentado';
 
-interface Props {
-  etiqueta: string;
-  textos: Record<PreferenciaTema, string>;
-}
-
 /** Sistema, claro u oscuro (APP-02). Guarda la elección en local y la aplica al momento. */
-export function SelectorTema({ etiqueta, textos }: Props) {
+export function SelectorTema() {
+  const { t } = useT();
   const [valor, setValor] = useState<PreferenciaTema>(() => leerPreferencia());
   return (
     <Segmentado<PreferenciaTema>
-      etiqueta={etiqueta}
+      etiqueta={t('tema.etiqueta')}
       valor={valor}
       opciones={[
-        { valor: 'sistema', etiqueta: textos.sistema },
-        { valor: 'claro', etiqueta: textos.claro },
-        { valor: 'oscuro', etiqueta: textos.oscuro },
+        { valor: 'sistema', etiqueta: t('tema.sistema') },
+        { valor: 'claro', etiqueta: t('tema.claro') },
+        { valor: 'oscuro', etiqueta: t('tema.oscuro') },
       ]}
       alCambiar={(p) => {
         setValor(p);

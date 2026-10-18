@@ -14,7 +14,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "typecheck": "astro check && pnpm -r --filter \"./paquetes/*\" typecheck",
-    "lint": "biome check . && node scripts/comprobar-colores.mjs",
+    "lint": "biome check . && node scripts/comprobar-colores.mjs && node scripts/comprobar-textos.mjs",
     "lint:arreglar": "biome check --write .",
     "test": "vitest run",
     "tamano": "node scripts/tamano-carga.mjs",

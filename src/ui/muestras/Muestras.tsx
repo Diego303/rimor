@@ -47,32 +47,6 @@ const TOKENS = [
   ['--bad', 'Error'],
 ] as const;
 
-const NOMBRES: Record<TipoVisual, string> = {
-  texto: 'Texto',
-  idea: 'Idea',
-  enlace: 'Enlace',
-  log: 'Log',
-  error: 'Error',
-  mediciones: 'Mediciones',
-  prompt: 'Prompt',
-  markdown: 'Documento MD',
-  codigo: 'Código',
-  comando: 'Comando',
-  datos: 'Datos',
-  json: 'JSON / TOML',
-  http: 'Petición HTTP',
-  imagen: 'Imagen',
-  pdf: 'PDF',
-  formula: 'Fórmula',
-  diagrama: 'Diagrama',
-  calculo: 'Cálculo',
-  archivo: 'Archivo',
-  comparacion: 'Comparación',
-  investigacion: 'Investigación',
-  documento: 'Documento',
-  hilo: 'Hilo',
-};
-
 const REGLAS = [
   'Una columna de lectura de 780 px; solo lienzo, tiempo, métricas y documento usan todo el ancho.',
   'Arriba lo que responde a «¿qué pasa?»; lo demás en «Detalles», plegado.',
@@ -130,15 +104,15 @@ function Galeria() {
         <Tarjeta titulo="Tipos (icono y nombre; solo Error lleva color)">
           <div className="row">
             {(Object.keys(ASPECTO_TIPO) as TipoVisual[]).map((t) => (
-              <ChipTipo key={t} tipo={t} nombre={NOMBRES[t]} />
+              <ChipTipo key={t} tipo={t} />
             ))}
           </div>
           <div className="row">
             {(['log', 'error', 'mediciones', 'prompt', 'enlace', 'idea'] as const).map((t) => (
-              <IconoTipo key={t} tipo={t} nombre={NOMBRES[t]} />
+              <IconoTipo key={t} tipo={t} />
             ))}
             {(['log', 'error'] as const).map((t) => (
-              <IconoTipo key={`d-${t}`} tipo={t} nombre={NOMBRES[t]} denso />
+              <IconoTipo key={`d-${t}`} tipo={t} denso />
             ))}
           </div>
         </Tarjeta>
@@ -275,7 +249,7 @@ export default function Muestras() {
     <div className="muestras-pagina">
       <div className="muestras-cabecera">
         <b>Muestras</b>
-        <SelectorTema etiqueta="Tema de la página" textos={{ sistema: 'Sistema', claro: 'Claro', oscuro: 'Oscuro' }} />
+        <SelectorTema />
       </div>
       <div className="muestras-marcos">
         <iframe title="Tema claro" src="#/muestras?marco=claro" />

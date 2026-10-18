@@ -1,0 +1,42 @@
+{
+  "tipos": {
+    "texto": "Texto",
+    "idea": "Idea",
+    "enlace": "Enlace",
+    "log": "Log",
+    "error": "Error",
+    "mediciones": "Mediciones",
+    "prompt": "Prompt",
+    "markdown": "Documento MD",
+    "codigo": "Código",
+    "comando": "Comando",
+    "datos": "Datos",
+    "json": "JSON / TOML",
+    "http": "Petición HTTP",
+    "imagen": "Imagen",
+    "pdf": "PDF",
+    "formula": "Fórmula",
+    "diagrama": "Diagrama",
+    "calculo": "Cálculo",
+    "archivo": "Archivo",
+    "comparacion": "Comparación",
+    "investigacion": "Investigación",
+    "documento": "Documento",
+    "hilo": "Hilo"
+  },
+  "tema": {
+    "etiqueta": "Tema",
+    "sistema": "Sistema",
+    "claro": "Claro",
+    "oscuro": "Oscuro"
+  },
+  "idioma": {
+    "etiqueta": "Idioma",
+    "es": "Español",
+    "en": "English"
+  },
+  "comun": {
+    "vez": { "one": "{n} vez", "other": "{n} veces" },
+    "enesimaVez": "{ordinal} vez"
+  }
+}

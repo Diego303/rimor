@@ -131,7 +131,7 @@ describe('SelectorTema', () => {
   afterEach(() => guardarPreferencia('sistema'));
 
   it('aplica data-theme al elegir y lo quita al volver al sistema', () => {
-    render(<SelectorTema etiqueta="Tema" textos={{ sistema: 'Sistema', claro: 'Claro', oscuro: 'Oscuro' }} />);
+    render(<SelectorTema />);
     fireEvent.click(screen.getByRole('button', { name: 'Oscuro' }));
     expect(document.documentElement.dataset.theme).toBe('dark');
     expect(localStorage.getItem('rimor:tema')).toBe('oscuro');

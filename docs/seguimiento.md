@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 02:08
-**Ahora:** IN-003 · Textos, idiomas y formatos · fase implementación
+**Última actualización:** 2026-10-18 02:13
+**Ahora:** IN-003 · Textos, idiomas y formatos · fase verificación
 **Siguiente:** IN-004 · Formato de archivos
 **Progreso:** F0 9/9 · v0.1 2/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 11/99
 
@@ -20,7 +20,7 @@
 | F0-9 | Fuentes empaquetadas | F0 | — | hecha | f529c42 | docs/f0/F0-9.md |
 | IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | hecha | 4088155 b31670c d8ece75 | docs/features/IN-001-repositorio.md |
 | IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | hecha | 3f75c99 4b3c27c 63afa3a | docs/features/IN-002-tema-y-componentes.md |
-| IN-003 | Textos, idiomas y formatos | v0.1 | 0 | en análisis y diseño | — | docs/features/IN-003-textos-idiomas-formatos.md |
+| IN-003 | Textos, idiomas y formatos | v0.1 | 0 | en implementación | e4770f8 | docs/features/IN-003-textos-idiomas-formatos.md |
 | IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | pendiente | — | — |
 | IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | pendiente | — | — |
 | IN-005 | Almacén OPFS y en memoria | v0.1 | 1 | pendiente | — | — |
@@ -155,7 +155,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-003 | análisis y diseño | librería propia mínima y regla de textos | … |
+| 2026-10-18 | IN-003 | implementación | pnpm verificar OK (61 pruebas, 76,2 KB) | … |
+| 2026-10-18 | IN-003 | análisis y diseño | librería propia mínima y regla de textos | e4770f8 |
 | 2026-10-18 | IN-002 | verificación | pnpm verificar OK; 9 hallazgos de la revisión corregidos | 63afa3a |
 | 2026-10-18 | IN-002 | implementación | pnpm verificar OK (34 pruebas, 76,9 KB) | 4b3c27c |
 | 2026-10-18 | IN-002 | análisis y diseño | diseño y ADR-0004 | 3f75c99 |
@@ -173,5 +174,6 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-002 hecha. Siguiente: IN-003 (diseño en docs/features/IN-003-textos-idiomas-formatos.md, sin commit; borradores de código en el scratchpad in003/).
-- Último `pnpm verificar`: OK (2026-10-18 02:45).
+- IN-003: implementado. Falta verificación.
+- Borrador de IN-004 (diseño y código) en el scratchpad in004/.
+- Último `pnpm verificar`: OK (2026-10-18 03:00).

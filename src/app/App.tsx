@@ -3,6 +3,9 @@
  * IN-008 sustituye este esqueleto por la carcasa completa con su router.
  */
 import { lazy, Suspense } from 'react';
+import { iniciarIdioma } from '../i18n/iniciar';
+
+iniciarIdioma();
 
 // Solo en desarrollo; en producción `import.meta.env.DEV` es falso y Vite elimina el import.
 const Muestras = import.meta.env.DEV ? lazy(() => import('../ui/muestras/Muestras')) : null;
