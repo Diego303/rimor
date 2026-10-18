@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 03:18
-**Ahora:** IN-008 · Carcasa, navegación, atajos y diseño adaptable · fase análisis y diseño
+**Última actualización:** 2026-10-18 03:19
+**Ahora:** IN-008 · Carcasa, navegación, atajos y diseño adaptable · fase implementación
 **Siguiente:** IN-009 · Saneado y política de seguridad de contenido
 **Progreso:** F0 9/9 · v0.1 7/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 16/99
 
@@ -24,8 +24,8 @@
 | IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | hecha | eea9cb1 f942aa1 feceb14 | docs/features/IN-004-formato.md |
 | IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | hecha | 4177d63 58a44ca 9c0cb34 | docs/features/IN-089-marca.md |
 | IN-005 | Almacén OPFS y en memoria | v0.1 | 1 | hecha | 8683837 1212e5a 06512fc | docs/features/IN-005-almacen.md |
-| IN-006 | Caché de derivados e índice | v0.1 | 1 | hecha | 07a0baf 74e501c | docs/features/IN-006-cache.md |
-| IN-008 | Carcasa, navegación, atajos y diseño adaptable | v0.1 | 1 | pendiente | — | — |
+| IN-006 | Caché de derivados e índice | v0.1 | 1 | hecha | 07a0baf 74e501c 4b6ee55 | docs/features/IN-006-cache.md |
+| IN-008 | Carcasa, navegación, atajos y diseño adaptable | v0.1 | 1 | en análisis y diseño | — | docs/features/IN-008-carcasa.md |
 | IN-009 | Saneado y política de seguridad de contenido | v0.1 | 1 | pendiente | — | — |
 | IN-010 | Ocultación de secretos | v0.1 | 1 | pendiente | — | — |
 | IN-011 | Paquete de estadística | v0.1 | 1 | pendiente | — | — |
@@ -135,6 +135,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **Iconos:** los trazados propios de las pantallas en vez de `lucide-react` (mismo estilo: retícula 24 px, trazo 1,8), para que la web sea igual al HTML de referencia (ADR-0004).
 - **`--muted` claro `#66635D`** en lugar de `#67645E`: el de la guía da 4,47:1 sobre `--panel-2` y no llega a AA (IN-002).
 - **Tipo `archivo` (prefijo `ARC`)** para el lector genérico de archivo de IN-017, que el plan no nombra (IN-004).
+- **Botón «Ajustes» en el raíl**, que las pantallas no dibujan, para que la ruta de la ficha se alcance sin teclado (IN-008).
 - **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
 
 ## Notas para funcionalidades futuras
@@ -160,7 +161,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-006 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | … |
+| 2026-10-18 | IN-008 | análisis y diseño | router por hash, raíl, atajos y límite de errores | … |
+| 2026-10-18 | IN-006 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | 4b6ee55 |
 | 2026-10-18 | IN-006 | implementación | pnpm verificar OK (165 pruebas) | 74e501c |
 | 2026-10-18 | IN-006 | análisis y diseño | IndexedDB con frontmatter, derivados, índice y reconciliación | 07a0baf |
 | 2026-10-18 | IN-005 | verificación | pnpm verificar OK; 6 hallazgos de la revisión corregidos | 06512fc |
