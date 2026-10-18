@@ -99,3 +99,25 @@ Cubre las cuatro tareas y la aceptación. El detector no conoce ningún lector c
 - `pnpm deteccion` es `scripts/deteccion.mjs`, que lanza la prueba del corpus con `DETECCION_INFORME=1` (la app y sus lectores son TypeScript con alias del workspace: Vitest ya sabe cargarlos). La integración continua tiene un paso «Matriz de detección» tras `pnpm verificar`.
 - Los porcentajes del informe van con coma decimal.
 
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 16:35): tipos 0 errores; Biome, colores y textos, OK; Vitest 36 archivos y 457 pruebas, OK; construcción OK; carga inicial 165,0 KB. **`pnpm deteccion`**: texto 25/25, acierto total 100,0 %.
+
+| Criterio | Evidencia |
+|---|---|
+| Arbitraje: > 0,6 gana, < 0,15 duda, si no Texto | Pruebas de `detector.test.ts` (umbral estricto, distancia redondeada, empate por el orden del Anexo D, lectores que lanzan o devuelven NaN) |
+| Atajos: binarios por MIME o firma; URL o DOI completos | Pruebas de atajos y de firmas |
+| Corpus `fixtures/deteccion/<tipo>/` | 25 textos; la prueba exige 25 por carpeta y una carpeta por cada lector registrado |
+| `pnpm deteccion` con matriz y acierto por tipo, en la integración continua | Salida arriba; paso «Matriz de detección» en `ci.yml` |
+| El arnés funciona con Texto solo y no cambia al añadir lectores | Lee las carpetas que haya (texto pegado o archivos) y usa `REGISTRO` |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Una imagen o un PDF sin su lector iban a Texto**: un binario nunca entra al arbitraje; va a su lector, al genérico de archivo si no lo hay (como en v0.1) o, sin ninguno, sin lector.
+2. **Archivos de texto con MIME raro (`.ts` como `video/mp2t`, `.sh`, `.toml`) se trataban como binarios**: decide el contenido (`pareceTexto`: UTF-8 válido y sin bytes nulos en los primeros 1.024 bytes) y, sin cabecera, el MIME o la extensión.
+3. **Un binario sin MIME (SQLite, Parquet) no iba a `archivo`**, y un MIME vacío no caía al del archivo: corregidos.
+4. **El arnés solo medía texto pegado**: un ejemplo con otra extensión que `.txt` entra como archivo soltado, con `entradaDeArchivo` (la misma que usará la captura), así que los lectores de archivo pueden traer su corpus sin cambiar el arnés.
+5. **Nada obligaba a un lector nuevo a traer su corpus**: la prueba exige una carpeta por cada tipo con lector registrado.
+

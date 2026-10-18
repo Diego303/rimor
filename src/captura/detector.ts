@@ -6,7 +6,7 @@
 import type { TipoElemento } from '@rimor/formato';
 import type { Entrada } from '../lectores/contrato';
 import type { Registro } from '../lectores/registro';
-import { esImagen, firmaDe } from './firmas';
+import { BYTES_CABECERA, esImagen, firmaDe, pareceTexto } from './firmas';
 
 /** Confianza que hay que superar para ganar (plan §14.5). */
 export const UMBRAL_DETECCION = 0.6;
@@ -31,7 +31,7 @@ export interface Deteccion extends Candidato {
 export interface OpcionesDeteccion {
   umbral?: number;
   margen?: number;
-  /** Primeros bytes del archivo (ver `BYTES_FIRMA`), para reconocer binarios por su firma. */
+  /** Primeros bytes del archivo (`BYTES_CABECERA`): su firma y si es texto. */
   cabecera?: Uint8Array;
 }
 
@@ -44,19 +44,45 @@ export function esEnlaceCompleto(texto: string): boolean {
   return t !== '' && (URL_SOLA.test(t) || DOI_SOLO.test(t));
 }
 
-/** Tipo binario por firma (que manda) o por MIME; `null` si no es un binario reconocible como tal. */
+const MIME_TEXTO = /^text\/|json|xml|yaml|toml|csv|javascript|typescript|x-sh|sql|markdown/;
+const EXTENSION_TEXTO =
+  /\.(txt|log|md|markdown|csv|tsv|json|jsonl|ya?ml|toml|xml|html?|css|m?[jt]sx?|cjs|py|rs|go|java|kt|c|h|cpp|hpp|cs|rb|php|sh|bash|zsh|sql|ini|cfg|conf|env|diff|patch|tex|bib|r|swift|lua|pl)$/i;
+
+/**
+ * Tipo binario de la entrada (`imagen`, `pdf` o `archivo`), o `null` si es texto. Manda la firma; después, el
+ * MIME de imagen o PDF; un archivo cualquiera lo decide su contenido (la cabecera) y, sin ella, su MIME o su
+ * extensión. Lo pegado como texto nunca es binario.
+ */
 function tipoBinario(entrada: Entrada, cabecera: Uint8Array | undefined): TipoElemento | null {
   const firma = cabecera ? firmaDe(cabecera) : null;
   if (esImagen(firma)) return 'imagen';
   if (firma === 'pdf') return 'pdf';
   if (firma) return 'archivo';
-  const mime = (entrada.mime ?? entrada.archivos?.[0]?.type ?? '').toLowerCase();
+  const archivo = entrada.archivos?.[0];
+  const mime = (entrada.mime || archivo?.type || '').toLowerCase();
   if (mime.startsWith('image/')) return 'imagen';
   if (mime === 'application/pdf') return 'pdf';
-  // Un archivo que no es texto (ni por MIME ni por su nombre) va al lector genérico.
-  if (entrada.archivos?.length && mime && !mime.startsWith('text/') && !/(json|xml|yaml|csv|javascript)/.test(mime))
-    return 'archivo';
-  return null;
+  if (!archivo && !cabecera) return null;
+  if (cabecera) return pareceTexto(cabecera) ? null : 'archivo';
+  const nombre = entrada.nombre || archivo?.name || '';
+  return MIME_TEXTO.test(mime) || EXTENSION_TEXTO.test(nombre) ? null : 'archivo';
+}
+
+/**
+ * Entrada de un archivo soltado, como la arma la captura (IN-014) y el arnés: el archivo, su cabecera y, si
+ * es texto, también su texto.
+ */
+export function entradaDeArchivo(
+  nombre: string,
+  mime: string,
+  bytes: Uint8Array,
+): { entrada: Entrada; cabecera: Uint8Array } {
+  const cabecera = bytes.subarray(0, BYTES_CABECERA);
+  const archivo = new File([bytes as Uint8Array<ArrayBuffer>], nombre, { type: mime });
+  const esTexto = firmaDe(cabecera) === null && pareceTexto(cabecera);
+  const entrada: Entrada = { archivos: [archivo], nombre, ...(mime ? { mime } : {}) };
+  if (esTexto) entrada.texto = new TextDecoder().decode(bytes);
+  return { entrada, cabecera };
 }
 
 /** Confianza válida: un número finito entre 0 y 1; lo demás (o un lector que lanza) cuenta 0. */
@@ -78,11 +104,18 @@ export function detectar(entrada: Entrada, registro: Registro, opciones: Opcione
     // `sort` es estable: a igual confianza queda el orden del registro (Anexo D).
     .sort((a, b) => b.confianza - a.confianza);
 
-  // Atajos: solo si el lector de ese tipo existe; si no, decide el arbitraje.
+  // Un binario nunca va al arbitraje (ni a Texto): a su lector, al genérico de archivo si no lo hay (v0.1 no
+  // tiene lectores de imagen ni PDF) o, sin ninguno, sin lector.
   const binario = tipoBinario(entrada, cabecera);
-  const atajo = binario ?? (entrada.texto !== undefined && esEnlaceCompleto(entrada.texto) ? 'enlace' : null);
-  const lectorAtajo = atajo ? lectorDe(atajo) : null;
-  if (atajo && lectorAtajo) return { tipo: atajo, lector: lectorAtajo, confianza: 1, via: 'atajo', puntuaciones };
+  if (binario) {
+    const propio = lectorDe(binario);
+    const generico = propio ? null : lectorDe('archivo');
+    const tipo = propio || !generico ? binario : 'archivo';
+    return { tipo, lector: propio ?? generico, confianza: 1, via: 'atajo', puntuaciones };
+  }
+  // URL o DOI completos: solo si hay lector de enlaces; si no, decide el arbitraje.
+  const enlace = entrada.texto !== undefined && esEnlaceCompleto(entrada.texto) ? lectorDe('enlace') : null;
+  if (enlace) return { tipo: 'enlace', lector: enlace, confianza: 1, via: 'atajo', puntuaciones };
 
   const [primero, segundo] = puntuaciones;
   if (primero && primero.confianza > umbral) {

@@ -3,14 +3,13 @@
  * matriz de confusión, el acierto por tipo y el total. TS puro; la prueba lee el corpus de `fixtures/deteccion/`.
  */
 import type { Registro } from '../lectores/registro';
-import { detectar } from './detector';
+import { detectar, entradaDeArchivo } from './detector';
 
-export interface Ejemplo {
-  /** Tipo esperado: el nombre de la carpeta del corpus. */
-  esperado: string;
-  archivo: string;
-  texto: string;
-}
+/**
+ * Un ejemplo del corpus: un `.txt` es texto pegado; cualquier otra extensión, un archivo soltado (sus bytes),
+ * que pasa por el detector igual que en la captura.
+ */
+export type Ejemplo = { esperado: string; archivo: string } & ({ texto: string } | { bytes: Uint8Array });
 
 export interface Evaluacion {
   /** `matriz[esperado][detectado]` = número de ejemplos. */
@@ -25,7 +24,13 @@ export function evaluar(corpus: readonly Ejemplo[], registro: Registro): Evaluac
   const matriz: Evaluacion['matriz'] = {};
   const fallos: Evaluacion['fallos'] = [];
   for (const e of corpus) {
-    const detectado = detectar({ texto: e.texto }, registro).tipo;
+    const detectado =
+      'texto' in e
+        ? detectar({ texto: e.texto }, registro).tipo
+        : (() => {
+            const { entrada, cabecera } = entradaDeArchivo(e.archivo.split('/').pop() ?? e.archivo, '', e.bytes);
+            return detectar(entrada, registro, { cabecera }).tipo;
+          })();
     const fila = matriz[e.esperado] ?? {};
     matriz[e.esperado] = fila;
     fila[detectado] = (fila[detectado] ?? 0) + 1;

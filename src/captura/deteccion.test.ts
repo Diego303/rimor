@@ -39,6 +39,10 @@ describe('corpus de detección', () => {
     }
   });
 
+  it('cada lector registrado trae su carpeta de ejemplos', () => {
+    for (const l of REGISTRO.lectores) expect(tipos, `falta fixtures/deteccion/${l.tipo}/`).toContain(l.tipo);
+  });
+
   it(`acierta al menos el ${ACIERTO_MINIMO * 100} % con los lectores registrados`, () => {
     const ev = evaluar(corpus, REGISTRO);
     // `pnpm deteccion` activa el informe: la matriz de confusión y el acierto por tipo.

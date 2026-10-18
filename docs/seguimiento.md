@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 16:29
-**Ahora:** IN-013 · Detector de tipo y corpus · fase verificación
-**Siguiente:** IN-014 · Flujo de captura
-**Progreso:** F0 9/9 · v0.1 14/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 23/99
+**Última actualización:** 2026-10-18 16:35
+**Ahora:** IN-014 · Flujo de captura · fase análisis y diseño
+**Siguiente:** IN-015 · Compositor
+**Progreso:** F0 9/9 · v0.1 15/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 24/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -32,7 +32,7 @@
 | IN-090 | Animaciones del símbolo (núcleo) | v0.1 | 1 | hecha | b9e91ee bdd15f6 69e2ee5 | docs/features/IN-090-animaciones.md |
 | IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | hecha | 39f479a 86e9ce2 d410b16 | docs/features/IN-007-espacio.md |
 | IN-012 | Contrato y registro de lectores | v0.1 | 2 | hecha | fa7e527 00d01e5 aa34b1e | docs/features/IN-012-lectores.md |
-| IN-013 | Detector de tipo y corpus | v0.1 | 2 | en verificación | 9e3e067 | docs/features/IN-013-detector.md |
+| IN-013 | Detector de tipo y corpus | v0.1 | 2 | hecha | 9e3e067 6697076 | docs/features/IN-013-detector.md |
 | IN-014 | Flujo de captura | v0.1 | 3 | pendiente | — | — |
 | IN-015 | Compositor | v0.1 | 3 | pendiente | — | — |
 | IN-016 | Respuestas de Rimor y contadores locales | v0.1 | 3 | pendiente | — | — |
@@ -169,7 +169,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-013 | implementación | OK (452 pruebas; matriz 100 % con Texto por defecto) | … |
+| 2026-10-18 | IN-013 | verificación | OK (457 pruebas; 5 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-013 | implementación | OK (452 pruebas; matriz 100 % con Texto por defecto) | 6697076 |
 | 2026-10-18 | IN-013 | análisis y diseño | atajos, arbitraje con duda, corpus por carpeta y matriz | 9e3e067 |
 | 2026-10-18 | IN-012 | verificación | OK (439 pruebas; 8 hallazgos de la revisión corregidos) | aa34b1e |
 | 2026-10-18 | IN-012 | implementación | OK (431 pruebas) | 00d01e5 |
@@ -224,4 +225,4 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-012 hecha. Siguiente: IN-013 (diseño en docs/features/IN-013-detector.md, código en borrador en el scratchpad in013/, corpus de texto en fixtures/deteccion/texto/).
+- IN-013 hecha. Siguiente: IN-014 (diseño escrito en docs/features/IN-014-captura.md, sin commit).

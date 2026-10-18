@@ -4,8 +4,8 @@ import type { Entrada } from '../lectores/contrato';
 import { lectorFalso } from '../lectores/pruebas/falsos';
 import { crearRegistro } from '../lectores/registro';
 import { type Ejemplo, evaluar, formatear } from './deteccion';
-import { detectar, esEnlaceCompleto, MARGEN_DUDA, UMBRAL_DETECCION } from './detector';
-import { firmaDe } from './firmas';
+import { detectar, entradaDeArchivo, esEnlaceCompleto, MARGEN_DUDA, UMBRAL_DETECCION } from './detector';
+import { firmaDe, pareceTexto } from './firmas';
 
 /** Lector falso de `tipo` que puntúa siempre `confianza` (o lo que diga la función). */
 function puntua(nombre: string, tipo: TipoElemento, confianza: number | ((e: Entrada) => number)) {
@@ -95,10 +95,48 @@ describe('atajos', () => {
     expect(esEnlaceCompleto('ftp://a.org')).toBe(false);
   });
 
-  it('sin el lector de destino no hay atajo', () => {
+  it('sin lector de enlaces, una URL la decide el arbitraje', () => {
     const soloLog = crearRegistro([puntua('log', 'log', 0.2)]);
     expect(detectar({ texto: 'https://ejemplo.org' }, soloLog)).toMatchObject({ tipo: 'texto', via: 'por-defecto' });
-    expect(detectar({ mime: 'image/png' }, soloLog).via).toBe('por-defecto');
+  });
+
+  it('un binario sin su lector va al genérico de archivo y, sin él, a ninguno (nunca a Texto)', () => {
+    const v01 = crearRegistro([puntua('archivo', 'archivo', 0), puntua('texto', 'texto', 0)]);
+    const png = bytes(0x89, 'PNG', 0x0d, 0x0a, 0x1a, 0x0a);
+    expect(detectar({ mime: 'image/png' }, v01, { cabecera: png })).toMatchObject({
+      tipo: 'archivo',
+      lector: 'archivo',
+      via: 'atajo',
+    });
+    expect(detectar({}, v01, { cabecera: bytes('%PDF-1.4') })).toMatchObject({ tipo: 'archivo', lector: 'archivo' });
+    const nada = crearRegistro([puntua('texto', 'texto', 0)]);
+    expect(detectar({ mime: 'image/png' }, nada)).toMatchObject({ tipo: 'imagen', lector: null, via: 'atajo' });
+  });
+
+  it('un archivo es texto o binario por su contenido, no por un MIME raro', () => {
+    const codigo = crearRegistro([puntua('archivo', 'archivo', 0), puntua('codigo', 'codigo', 0.9)]);
+    for (const [nombre, mime] of [
+      ['a.ts', 'video/mp2t'],
+      ['a.sh', 'application/x-sh'],
+      ['a.toml', 'application/toml'],
+      ['a.sql', ''],
+    ] as const) {
+      const { entrada, cabecera } = entradaDeArchivo(nombre, mime, new TextEncoder().encode('const x = 1;\n'));
+      expect(detectar(entrada, codigo, { cabecera }).tipo, nombre).toBe('codigo');
+      expect(entrada.texto).toBe('const x = 1;\n');
+    }
+    // Un binario sin firma conocida ni MIME (SQLite, Parquet sin cabecera leída) va al genérico.
+    const sqlite = entradaDeArchivo('a.sqlite', '', bytes('SQLite format 3', 0, 0x10, 0));
+    expect(detectar(sqlite.entrada, codigo, { cabecera: sqlite.cabecera }).tipo).toBe('archivo');
+    expect(sqlite.entrada.texto).toBeUndefined();
+    const parquet = new File([bytes(1, 2)], 'a.parquet');
+    expect(detectar({ archivos: [parquet] }, codigo).tipo).toBe('archivo');
+    // Un PNG con MIME vacío se reconoce por su firma.
+    expect(detectar({ mime: '' }, codigo, { cabecera: bytes(0x89, 'PNG', 0x0d, 0x0a, 0x1a, 0x0a) }).tipo).toBe(
+      'archivo',
+    );
+    // Sin cabecera, un archivo de texto por su extensión.
+    expect(detectar({ archivos: [new File(['x'], 'notas.md')] }, codigo).tipo).toBe('codigo');
   });
 });
 
@@ -114,6 +152,14 @@ describe('firmas', () => {
     expect(firmaDe(bytes(0x50, 0x4b, 3, 4))).toBe('zip');
     expect(firmaDe(bytes(0x89, 'PN'))).toBeNull();
     expect(firmaDe(new Uint8Array())).toBeNull();
+  });
+
+  it('distingue texto (UTF-8 sin nulos, aunque la muestra corte un carácter) de binario', () => {
+    const ene = new TextEncoder().encode('año');
+    expect(pareceTexto(ene)).toBe(true);
+    expect(pareceTexto(ene.subarray(0, 2))).toBe(true);
+    expect(pareceTexto(bytes('ab', 0, 'c'))).toBe(false);
+    expect(pareceTexto(bytes(0xff, 0xfe, 0x41))).toBe(false);
   });
 });
 
@@ -133,5 +179,11 @@ describe('arnés', () => {
     const tabla = formatear(ev);
     expect(tabla).toContain('Acierto total: 66,7 % de 3 ejemplos');
     expect(tabla).toContain('log/2.txt: log → texto');
+  });
+
+  it('un ejemplo con bytes pasa por el detector como archivo soltado', () => {
+    const r = crearRegistro([puntua('archivo', 'archivo', 0), puntua('texto', 'texto', 0)]);
+    const ev = evaluar([{ esperado: 'archivo', archivo: 'archivo/a.bin', bytes: bytes(0, 1, 2, 3) }], r);
+    expect(ev.acierto).toBe(1);
   });
 });
