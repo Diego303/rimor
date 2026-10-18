@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 04:03
-**Ahora:** IN-011 · Paquete de estadística · fase análisis y diseño
+**Última actualización:** 2026-10-18 04:05
+**Ahora:** IN-011 · Paquete de estadística · fase implementación
 **Siguiente:** IN-090 · Animaciones del símbolo (núcleo)
 **Progreso:** F0 9/9 · v0.1 10/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 19/99
 
@@ -27,8 +27,8 @@
 | IN-006 | Caché de derivados e índice | v0.1 | 1 | hecha | 07a0baf 74e501c 4b6ee55 | docs/features/IN-006-cache.md |
 | IN-008 | Carcasa, navegación, atajos y diseño adaptable | v0.1 | 1 | hecha | bd270d9 f9cda52 daacb69 | docs/features/IN-008-carcasa.md |
 | IN-009 | Saneado y política de seguridad de contenido | v0.1 | 1 | hecha | f63fd83 ae2a843 d0c9d58 | docs/features/IN-009-saneado-csp.md |
-| IN-010 | Ocultación de secretos | v0.1 | 1 | hecha | a206f2c e8cae1b | docs/features/IN-010-secretos.md |
-| IN-011 | Paquete de estadística | v0.1 | 1 | pendiente | — | — |
+| IN-010 | Ocultación de secretos | v0.1 | 1 | hecha | a206f2c e8cae1b 34b4ca4 | docs/features/IN-010-secretos.md |
+| IN-011 | Paquete de estadística | v0.1 | 1 | en análisis y diseño | — | docs/features/IN-011-estadistica.md |
 | IN-090 | Animaciones del símbolo (núcleo) | v0.1 | 1 | pendiente | — | — |
 | IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | pendiente | — | — |
 | IN-012 | Contrato y registro de lectores | v0.1 | 2 | pendiente | — | — |
@@ -137,6 +137,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **`--muted` claro `#66635D`** en lugar de `#67645E`: el de la guía da 4,47:1 sobre `--panel-2` y no llega a AA (IN-002).
 - **Tipo `archivo` (prefijo `ARC`)** para el lector genérico de archivo de IN-017, que el plan no nombra (IN-004).
 - **Botón «Ajustes» en el raíl**, que las pantallas no dibujan, para que la ruta de la ficha se alcance sin teclado (IN-008).
+- **Referencias estadísticas solo de NumPy y SciPy**, sin benchstat (no hay Go en el entorno y su prueba usa la distribución exacta de U con muestras pequeñas) (IN-011).
 - **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
 
 ## Notas para funcionalidades futuras
@@ -162,7 +163,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-010 | verificación | pnpm verificar OK; 10 hallazgos de seguridad corregidos | … |
+| 2026-10-18 | IN-011 | análisis y diseño | métodos documentados y referencias de SciPy | … |
+| 2026-10-18 | IN-010 | verificación | pnpm verificar OK; 10 hallazgos de seguridad corregidos | 34b4ca4 |
 | 2026-10-18 | IN-010 | implementación | pnpm verificar OK (272 pruebas) | e8cae1b |
 | 2026-10-18 | IN-010 | análisis y diseño | reglas de gitleaks, ocultar puro e idempotente | a206f2c |
 | 2026-10-18 | IN-009 | verificación | pnpm verificar OK; 4 hallazgos de seguridad corregidos | d0c9d58 |
