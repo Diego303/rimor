@@ -78,3 +78,8 @@ paquetes/estadistica/referencias/
 ## Autorrevisión
 
 Cubre la ficha. TS puro, sin dependencias, utilizable desde la CLI.
+
+## Cambios durante la implementación
+
+- `generar.py` se ejecutó con NumPy 2.2.6 y SciPy 1.15.3 en un entorno virtual fuera del repositorio; `casos.json` guarda los 30 casos y las versiones con que se generaron.
+- La prueba compara con tolerancia relativa (con un mínimo absoluto igual a la tolerancia) para que los casos con valores de un millón no exijan precisión imposible en coma flotante.

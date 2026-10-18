@@ -39,7 +39,7 @@ Paquetes del workspace   paquetes/formato, paquetes/estadistica (TS puro, tambi�
 | `src/almacen/cache/` | `CacheEspacio` (IndexedDB), `reconciliar` y compresión gzip | 006 |
 | `src/workers/almacen.worker.ts` | OPFS con accesos síncronos, expuesto con Comlink | 005 |
 | `paquetes/formato` | Esquemas Valibot, `.md` de elementos (frontmatter fiel, notas y original), ULID, refs, rutas, SHA-256 y migraciones | 004 |
-| `paquetes/estadistica` | Estadística de mediciones (esqueleto) | 001 |
+| `paquetes/estadistica` | Descriptiva, IC de la mediana, Mann-Whitney, comparación, avisos de método; referencias de SciPy | 011 |
 | `scripts/` | Comprobación de colores y de textos sin traducir, tamaño de la carga inicial y seguimiento | 001, 003 |
 
 ## Flujos

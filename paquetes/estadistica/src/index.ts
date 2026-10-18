@@ -1,9 +1,11 @@
 /**
- * @rimor/estadistica: estadística de mediciones verificada contra referencias (SciPy y benchstat).
- * TS puro, sin dependencias. Lo implementa IN-011.
+ * @rimor/estadistica: estadística de mediciones verificada contra referencias de NumPy y SciPy (IN-011).
+ * TS puro, sin dependencias.
  */
-
-/** Copia ordenada de menor a mayor; no modifica la entrada. */
-export function ordenados(valores: readonly number[]): number[] {
-  return [...valores].sort((a, b) => a - b);
-}
+export * from './avisos';
+export * from './comparar';
+export * from './descriptiva';
+export type { HodgesLehmann, ResultadoHodgesLehmann } from './hodgesLehmann';
+export * from './mannWhitney';
+export * from './normal';
+export * from './orden';
