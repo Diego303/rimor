@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 03:52
-**Ahora:** IN-010 · Ocultación de secretos · fase verificación
-**Siguiente:** IN-011 · Paquete de estadística
-**Progreso:** F0 9/9 · v0.1 9/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 18/99
+**Última actualización:** 2026-10-18 04:03
+**Ahora:** IN-011 · Paquete de estadística · fase análisis y diseño
+**Siguiente:** IN-090 · Animaciones del símbolo (núcleo)
+**Progreso:** F0 9/9 · v0.1 10/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 19/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -27,7 +27,7 @@
 | IN-006 | Caché de derivados e índice | v0.1 | 1 | hecha | 07a0baf 74e501c 4b6ee55 | docs/features/IN-006-cache.md |
 | IN-008 | Carcasa, navegación, atajos y diseño adaptable | v0.1 | 1 | hecha | bd270d9 f9cda52 daacb69 | docs/features/IN-008-carcasa.md |
 | IN-009 | Saneado y política de seguridad de contenido | v0.1 | 1 | hecha | f63fd83 ae2a843 d0c9d58 | docs/features/IN-009-saneado-csp.md |
-| IN-010 | Ocultación de secretos | v0.1 | 1 | en implementación | a206f2c | docs/features/IN-010-secretos.md |
+| IN-010 | Ocultación de secretos | v0.1 | 1 | hecha | a206f2c e8cae1b | docs/features/IN-010-secretos.md |
 | IN-011 | Paquete de estadística | v0.1 | 1 | pendiente | — | — |
 | IN-090 | Animaciones del símbolo (núcleo) | v0.1 | 1 | pendiente | — | — |
 | IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | pendiente | — | — |
@@ -162,7 +162,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-010 | implementación | pnpm verificar OK (272 pruebas) | … |
+| 2026-10-18 | IN-010 | verificación | pnpm verificar OK; 10 hallazgos de seguridad corregidos | … |
+| 2026-10-18 | IN-010 | implementación | pnpm verificar OK (272 pruebas) | e8cae1b |
 | 2026-10-18 | IN-010 | análisis y diseño | reglas de gitleaks, ocultar puro e idempotente | a206f2c |
 | 2026-10-18 | IN-009 | verificación | pnpm verificar OK; 4 hallazgos de seguridad corregidos | d0c9d58 |
 | 2026-10-18 | IN-009 | implementación | pnpm verificar OK (219 pruebas) | ae2a843 |
@@ -202,5 +203,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-010: implementado. Falta verificación.
-- Último `pnpm verificar`: OK (2026-10-18 08:00).
+- IN-010 hecha. Siguiente: IN-011 (diseño, código y referencias de SciPy en el scratchpad in011/).
+- Último `pnpm verificar`: OK (2026-10-18 08:40).

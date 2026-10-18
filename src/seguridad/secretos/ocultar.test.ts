@@ -25,7 +25,7 @@ describe('corpus de secretos', () => {
 
 describe('corpus de logs sin secretos', () => {
   it('menos del 2 % de líneas con falsos positivos', () => {
-    expect(LINEAS_LIMPIAS.length).toBeGreaterThanOrEqual(100);
+    expect(new Set(LINEAS_LIMPIAS).size).toBeGreaterThanOrEqual(120);
     const conHallazgo = LINEAS_LIMPIAS.filter((l) => buscarSecretos(l).length > 0);
     expect(conHallazgo.length / LINEAS_LIMPIAS.length).toBeLessThan(0.02);
   });
@@ -62,6 +62,57 @@ describe('ocultar', () => {
         expect(ocultar(una).texto).toBe(una);
       }),
     );
+  });
+
+  it('es idempotente con un token en el usuario de una URL', () => {
+    const una = ocultar(`https://ghp_${'c'.repeat(36)}:x-oauth-basic@github.com/a/b.git`).texto;
+    expect(una).toBe('https://‹oculto:github›:‹oculto:contrasena›@github.com/a/b.git');
+    expect(ocultar(una)).toEqual({ texto: una, hallados: [] });
+  });
+
+  it('idempotencia con piezas que se combinan (URL, usuarios, tokens y marcas)', () => {
+    const pieza = fc.oneof(
+      fc.constantFrom(
+        'https://',
+        '://',
+        ':',
+        '@',
+        '/',
+        '‹oculto:x›',
+        'Authorization: Bearer ',
+        'ghp_',
+        'u:p@h',
+        '\n',
+        ' ',
+      ),
+      fc.constantFrom(...SECRETOS.map((c) => c.secreto)),
+      fc.string({ maxLength: 6 }),
+    );
+    fc.assert(
+      fc.property(fc.array(pieza, { maxLength: 12 }), (piezas) => {
+        const una = ocultar(piezas.join('')).texto;
+        expect(ocultar(una).texto).toBe(una);
+      }),
+      { numRuns: 3000 },
+    );
+  });
+
+  it('textos patológicos de 100 KB no provocan retroceso costoso', () => {
+    const uuids = Array.from({ length: 2800 }, (_, i) => `123e4567-e89b-12d3-a456-${String(i).padStart(12, '0')}`).join(
+      '-',
+    );
+    for (const texto of [
+      'a.'.repeat(50_000),
+      'sk-'.repeat(33_000),
+      'docs.example.org.'.repeat(6000),
+      uuids,
+      'x://'.repeat(25_000),
+      'eyJ'.repeat(33_000),
+    ]) {
+      const t0 = performance.now();
+      ocultar(texto);
+      expect(performance.now() - t0, texto.slice(0, 20)).toBeLessThan(300);
+    }
   });
 
   it('no se atasca con textos grandes', () => {

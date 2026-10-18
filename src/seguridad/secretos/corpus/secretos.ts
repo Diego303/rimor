@@ -100,4 +100,34 @@ anadir(
   (s) => `GET /api HTTP/1.1\r\nHost: x\r\nauthorization: bearer ${s}\r\n`,
 );
 
+// Casos de la revisión de IN-010.
+anadir(
+  'clave-privada-incompleta',
+  `-----BEGIN ${'RSA PRIVATE'} KEY-----\n${mezcla(64)}\n${mezcla(64, 'Zq8Lm3Np')}`,
+  (s) => `pegué esto a medias:\n${s}`,
+);
+anadir(
+  'clave-privada',
+  `-----BEGIN ${'PGP PRIVATE'} KEY BLOCK-----\n\n${mezcla(64, 'lQOYBGbq')}\n-----END ${'PGP PRIVATE'} KEY BLOCK-----`,
+  (s) => s,
+);
+anadir('contrasena-url', `p@ss${'W0rd'}`, (s) => `postgres://ana:${s}@db.interna/x`);
+anadir('contrasena-url', `ab/Cd+${'eFg'}9`, (s) => `DATABASE_URL=postgresql://admin:${s}@rds.amazonaws.com:5432/db`);
+anadir('contrasena-url', `clave${'Redis'}9`, (s) => `redis://:${s}@cache:6379`);
+anadir('contrasena-url', `pa'ss${'x'}`, (s) => `u://u:${s}@h`);
+anadir(
+  'aws-secreto',
+  `${mezcla(20, 'Rt5Yu7Io')}/${mezcla(19, 'Kl2Mn4Op')}`,
+  (s) => `const cfg = { secretAccessKey: "${s}" };`,
+);
+anadir('aws-secreto', `${mezcla(40, 'Qa1Ws2Ed')}`, (s) => `AWS_SECRET_KEY=${s}`);
+anadir('authorization', `${mezcla(28, 'Zx4Cv6Bn')}`, (s) => `log: {\\"Authorization\\":\\"Bearer ${s}\\"}`);
+anadir(
+  'jwt',
+  `eyJ${mezcla(20)}.eyJ${mezcla(24, 'Ju7Ki8Lo')}.${mezcla(10)}+${mezcla(6, 'Pp9Oo8')}/${mezcla(5)}`,
+  (s) => `id_token=${s}`,
+);
+anadir('slack', `xapp-1-${'A0123456789'}-${mezcla(30)}`, (s) => `SLACK_APP_TOKEN=${s}`);
+anadir('slack', `xoxe-1-${mezcla(40, 'My6Nu8Bi')}`, (s) => `refresh: ${s}`);
+
 export const SECRETOS: CasoSecreto[] = casos.map(([regla, secreto, texto]) => ({ regla, secreto, texto }));

@@ -85,3 +85,28 @@ Cubre la ficha. La interfaz (qué se ocultó, desactivar para un pegado) la pone
 - Las expresiones llevan la bandera `d` (posiciones de los grupos) para ocultar exactamente el grupo `secreto` cuando la regla tiene contexto.
 - Corpus en `src/seguridad/secretos/corpus/` (42 secretos falsos y 125 líneas de log limpias), con los valores armados por concatenación.
 - La comprobación de colores no mira las carpetas `corpus/` (son datos de prueba; un log con «build #4123» no es un color).
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 08:40): tipos 0 errores; Biome, colores y textos, OK; Vitest 25 archivos y 287 pruebas (64 de secretos, la propiedad de idempotencia con 3.000 casos combinados), OK; construcción OK; carga inicial 113,6 KB.
+
+| Criterio | Evidencia |
+|---|---|
+| El 100 % del corpus de secretos se oculta | 54 secretos falsos (todas las reglas, más los casos de la revisión): el texto resultante no contiene el secreto ni trozos de 12 caracteres o más |
+| Menos del 2 % de falsos positivos en logs reales | 125 líneas **distintas** (logs, volcados de `env`, URL con consulta y correo, pods de Kubernetes, hashes, UUID, base64): por debajo del 2 % |
+| Idempotencia | Prueba sobre el corpus, regresión del token en el usuario de una URL y propiedad con piezas que se combinan (URL, usuarios, marcas, tokens) |
+| Desactivar una regla para un pegado | Prueba con `desactivadas` |
+| El valor original nunca se devuelve | Los hallazgos llevan regla, tipo, posición y longitud; prueba de que no contienen el valor |
+| Sin retroceso costoso | Seis textos patológicos de 100 KB en menos de 300 ms cada uno; 500 KB de logs en menos de 2 s |
+
+### Revisión independiente
+
+Hallazgos corregidos con prueba:
+
+1. **Retroceso cuadrático** en la regla de contraseñas en URL (`'a.'×50.000` tardaba 6,8 s): ahora es un analizador lineal que parte de cada «://», con un tramo máximo de 2048 caracteres y salto del tramo cuando no hay «@».
+2. **No idempotente** con un token en el usuario de una URL (`https://ghp_…:x@github.com`) y con secretos pegados entre sí (una clave de GCP seguida de un PEM): las marcas son opacas para el analizador de URL y `ocultar` repite hasta el punto fijo, devolviendo las posiciones del texto original.
+3. **Contraseñas en URL que quedaban a la vista** (con «@», «/» o «+» sin codificar, sin usuario, con comilla simple): el tramo de usuario llega hasta el último «@».
+4. **PEM incompleto y PGP**: regla para bloques sin línea END (solo líneas en base64 o cabeceras) y `PRIVATE KEY BLOCK`.
+5. **AWS** `secretAccessKey`/`AWS_SECRET_KEY`, **Authorization** en JSON escapado, **JWT** con firma en base64 estándar, **Slack** `xapp-`/`xoxe-`.
+6. **Falsos positivos:** `PWD=/home/…` (ya no cuenta `PWD` en mayúsculas), `sk-operator-controller-…` (OpenAI exige el formato real: 48 alfanuméricos o `proj`/`svcacct`/`admin`) y `example.com:443?next=a@b.com` (un «@» después de «?» o «#» no es de usuario).
+7. **Pruebas débiles:** el corpus de logs repetía una plantilla (ahora 125 líneas distintas) y la propiedad no combinaba piezas peligrosas (ahora sí).
