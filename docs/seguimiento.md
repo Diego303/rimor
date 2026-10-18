@@ -44,8 +44,8 @@
 | IN-022 | Lector Mediciones | v0.1 | 4 | hecha | b310e37 6a1cf43 9b9c796 | docs/features/IN-022-mediciones.md |
 | IN-023 | Lector Prompt | v0.1 | 4 | hecha | 7b6580a bc9fa85 5498fa1 | docs/features/IN-023-prompt.md |
 | IN-024 | Lector Documento Markdown | v0.1 | 4 | hecha | 77638b0 39b2632 5a6c03e | docs/features/IN-024-markdown.md |
-| IN-025 | Lector Código | v0.1 | 4 | hecha | 7c063ed 976f145 | docs/features/IN-025-codigo.md |
-| IN-026 | Inicio: feed y triaje | v0.1 | 5 | pendiente | — | — |
+| IN-025 | Lector Código | v0.1 | 4 | hecha | 7c063ed 976f145 9926e80 | docs/features/IN-025-codigo.md |
+| IN-026 | Inicio: feed y triaje | v0.1 | 5 | en análisis y diseño | — | docs/features/IN-026-inicio.md |
 | IN-027 | Vista de elemento, estados, fijar y papelera | v0.1 | 5 | pendiente | — | — |
 | IN-028 | Comparaciones de logs y mediciones | v0.1 | 5 | pendiente | — | — |
 | IN-029 | Versiones e historial | v0.1 | 5 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-19 | IN-025 | verificación | OK (964 pruebas; 11 grupos de hallazgos de la revisión corregidos) | … |
+| 2026-10-19 | IN-026 | análisis y diseño | feed por días con lista virtual, mensajes, búsquedas, ideas y triaje con teclado | … |
+| 2026-10-19 | IN-025 | verificación | OK (964 pruebas; 11 grupos de hallazgos de la revisión corregidos) | 9926e80 |
 | 2026-10-19 | IN-025 | implementación | OK (951 pruebas; matriz 250/250; 12 lenguajes, resaltado Lezer en 8) | 976f145 |
 | 2026-10-19 | IN-025 | análisis y diseño | 12 lenguajes por densidad y extensión, resaltado con Lezer bajo demanda | 7c063ed |
 | 2026-10-19 | IN-024 | verificación | OK (898 pruebas; 13 hallazgos de la revisión corregidos) | 5a6c03e |
