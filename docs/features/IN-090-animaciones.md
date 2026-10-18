@@ -113,3 +113,28 @@ Cubre la ficha. La prueba de fidelidad se adapta a la ausencia de navegador sin 
 - La barra indeterminada de `Cargando` desaparece (su `@keyframes` también): la espera indeterminada es la señal y la barra queda para el progreso.
 - La regla de textos de IN-003 ya no confunde comparaciones (`estado === 'cargando'`) con texto visible: en `cond && x` solo mira la derecha.
 - La prueba de fidelidad se comprobó con una mutación (cambiar un 42 % por 43 % y una escala de 0,4 por 0,5 la hace fallar).
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 16:00): tipos 0 errores; Biome, colores y textos, OK; Vitest 28 archivos y 380 pruebas (77 de marca y animaciones), OK; construcción OK; carga inicial 115,7 KB.
+
+| Criterio | Evidencia |
+|---|---|
+| Los 10 estados de v0.1 (y el 17) fieles a sus SVG | `fidelidad.test.ts`: en claro y oscuro, cada `<animate*>` tiene su `@keyframes` con los mismos tiempos, valores, colores por token, duración y curva (comprobado con mutaciones); además, lo estático: opacidades de la onda tenue, trazos discontinuos, recorrido del punto de «indexando», origen de las escalas, anillo, color de la frase y valor de la curva común. `fidelidad-estatica.test.tsx`: cada estado dibuja exactamente los elementos de su SVG. La comparación de píxeles queda para Playwright |
+| Con movimiento reducido no se mueve nada | `base.css` anula toda animación con `prefers-reduced-motion`; los estilos sin animación de cada estado son su reposo |
+| Fotograma de reposo | Una vez: iteraciones fraccionarias (0,88; 0,9; 0,75) con `fill-mode: both`; con el reposo al final, sin `fill-mode` (vuelve a la base); bucles: clase `reposo` a los 20 s |
+| Umbral de 400 ms y mínimo de 600 ms | `useEsperaVisible` (300 ms no muestra; 450 ms se ve 600 ms) y `Espera` dentro de `ProveedorEsperas`, que mantiene la espera aunque el `Suspense` la desmonte |
+| Nunca sola, `role="status"` | Pruebas de `Senal`; `decorativa` solo dentro de `ErrorTarjeta`, que ya se anuncia |
+| Sin recálculo de diseño | Solo `stroke-dashoffset`, `opacity`, `transform`, `r`, `fill` y `offset-distance` |
+| Peso < 4 KB comprimidos | Prueba de `senal.css` + `Senal.tsx` con gzip |
+| `Cargando` y `ErrorTarjeta` con su señal | Pruebas de los dos componentes |
+| Una animación en bucle por zona | Regla de uso; se revisa pantalla a pantalla (IN-040) |
+
+### Revisión independiente
+
+Hallazgos corregidos con prueba:
+
+1. «cargando» pintaba la onda llena debajo del tramo (el SVG 04 solo tiene la tenue): ya no la pinta, y la nueva prueba de elementos estáticos lo vigila en todos los estados.
+2. Con `veces={1}` en un estado de bucle, `fill-mode: both` congelaba el último fotograma (tramo visible, punto naranja en «contestando»): si el reposo es el final del ciclo, la animación acaba sin `fill-mode` y queda la base.
+3. `Espera` no podía cumplir los 600 ms porque el `Suspense` la desmonta al terminar: `ProveedorEsperas` mantiene la espera encima hasta completarlos.
+4. La prueba de fidelidad no miraba lo estático (elementos, opacidades, trazos, recorrido, origen, curva): ampliada.

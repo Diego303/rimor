@@ -129,6 +129,57 @@ describe('fidelidad de las animaciones con sus SVG', () => {
   }
 });
 
+describe('lo estático de los SVG en senal.css', () => {
+  const svg = (n: string) => readFileSync(new URL(`${n}-claro.svg`, carpeta), 'utf8');
+  const regla = (selector: string) =>
+    new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\{([^}]*)\\}`).exec(css)?.[1] ?? '';
+
+  it('opacidades de la onda tenue (0,18 en cargando y 0,22 en indexando)', () => {
+    expect(svg('04-cargando')).toContain('opacity="0.18"');
+    expect(regla('.senal .tenue')).toContain('opacity: 0.18');
+    expect(svg('06-indexando')).toContain('opacity="0.22"');
+    expect(regla('.senal-indexando .tenue')).toContain('opacity: 0.22');
+  });
+
+  it('trazos discontinuos del tramo y de las ondas que se dibujan', () => {
+    expect(svg('04-cargando')).toContain('stroke-dasharray="26 74"');
+    expect(regla('.senal-cargando .tramo')).toContain('stroke-dasharray: 26 74');
+    for (const [n, e] of [
+      ['01-abrir-la-web', 'arranque'],
+      ['02-primer-uso', 'primer-uso'],
+      ['06-indexando', 'indexando'],
+    ]) {
+      expect(svg(n as string)).toContain('stroke-dasharray="100"');
+      expect(regla(`.senal-${e} .onda`)).toContain('stroke-dasharray: 100');
+    }
+  });
+
+  it('el recorrido del punto en indexando es el path de su animateMotion', () => {
+    const camino = /<animateMotion path="([^"]+)"/.exec(svg('06-indexando'))?.[1];
+    expect(regla('.senal-indexando .punto')).toContain(`offset-path: path("${camino}")`);
+  });
+
+  it('las escalas se hacen sobre el eje de la onda (translate(0 24) del SVG)', () => {
+    expect(svg('11-analizando')).toContain('<g transform="translate(0 24)">');
+    expect(svg('15-error')).toContain('<g transform="translate(0 24)">');
+    expect(regla('.senal .escala')).toContain('transform-origin: 0 24px');
+  });
+
+  it('anillo de guardado de 1,4 y frase del primer uso en --muted', () => {
+    expect(svg('09-guardado')).toContain('stroke-width="1.4"');
+    expect(regla('.senal .anillo')).toContain('stroke-width: 1.4');
+    expect(svg('02-primer-uso')).toMatch(/fill="#67645E"[^>]*Roboto Mono/);
+    expect(regla('.senal .frase')).toContain('fill: var(--muted)');
+  });
+
+  it('la curva común es la de los keySplines (.4 0 .2 1)', () => {
+    for (const n of svgs.filter((x) => x.endsWith('-claro.svg')))
+      for (const m of readFileSync(new URL(n, carpeta), 'utf8').matchAll(/keySplines="([^"]+)"/g))
+        for (const tramo of (m[1] ?? '').split(';')) expect(tramo.trim()).toBe('.4 0 .2 1');
+    expect(regla('.senal .anima')).toContain('animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1)');
+  });
+});
+
 describe('reglas del movimiento', () => {
   it('solo se animan propiedades que no recalculan el diseño', () => {
     const permitidas = new Set(['stroke-dashoffset', 'opacity', 'transform', 'r', 'fill', 'offset-distance']);

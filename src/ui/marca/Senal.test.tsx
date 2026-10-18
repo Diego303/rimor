@@ -94,6 +94,30 @@ describe('Senal decorativa y esperas', () => {
     expect(screen.getByRole('status').className).toContain('senal-cargando');
   });
 
+  it('veces={1} en un estado de bucle acaba en su reposo (sin congelar el último fotograma)', () => {
+    render(<Senal estado="cargando" veces={1} etiqueta="Cargando" />);
+    expect(screen.getByRole('status').style.getPropertyValue('--senal-relleno')).toBe('none');
+  });
+
+  it('Espera dentro de ProveedorEsperas se mantiene hasta los 600 ms aunque se desmonte', async () => {
+    vi.useFakeTimers();
+    const { Espera, ProveedorEsperas } = await import('../componentes/Estados');
+    const { rerender } = render(
+      <ProveedorEsperas>
+        <Espera texto="Abriendo" />
+      </ProveedorEsperas>,
+    );
+    act(() => vi.advanceTimersByTime(UMBRAL_ESPERA_MS + 50));
+    expect(screen.getByText('Abriendo')).toBeTruthy();
+    rerender(<ProveedorEsperas>{null}</ProveedorEsperas>);
+    // Se vio desde los 400 ms y se desmontó a los 450: sigue hasta cumplir 600 ms visible (a los 1000).
+    expect(screen.getByText('Abriendo')).toBeTruthy();
+    act(() => vi.advanceTimersByTime(MINIMO_VISIBLE_MS - 100));
+    expect(screen.getByText('Abriendo')).toBeTruthy();
+    act(() => vi.advanceTimersByTime(100));
+    expect(screen.queryByText('Abriendo')).toBeNull();
+  });
+
   it('Espera no aparece antes de 400 ms', async () => {
     vi.useFakeTimers();
     const { Espera } = await import('../componentes/Estados');

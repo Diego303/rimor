@@ -8,7 +8,7 @@ import { useT } from '../i18n/useT';
 import { AyudaAtajos } from '../ui/atajos/AyudaAtajos';
 import { esCampoDeTexto, GestorAtajos } from '../ui/atajos/atajos';
 import { ContextoAtajos } from '../ui/atajos/useAtajos';
-import { Espera, ProveedorAvisos } from '../ui/componentes';
+import { Espera, ProveedorAvisos, ProveedorEsperas } from '../ui/componentes';
 import { LimiteErrores } from './LimiteErrores';
 import { Rail } from './Rail';
 
@@ -57,11 +57,13 @@ export function Carcasa() {
           <div className="shell">
             <Rail />
             <main className="amain" id="principal">
-              <LimiteErrores clave={ruta}>
-                <Suspense fallback={<Espera texto={t('comun.cargandoPantalla')} />}>
-                  <Outlet />
-                </Suspense>
-              </LimiteErrores>
+              <ProveedorEsperas>
+                <LimiteErrores clave={ruta}>
+                  <Suspense fallback={<Espera texto={t('comun.cargandoPantalla')} />}>
+                    <Outlet />
+                  </Suspense>
+                </LimiteErrores>
+              </ProveedorEsperas>
             </main>
           </div>
         </div>

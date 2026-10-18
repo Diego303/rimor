@@ -914,3 +914,10 @@ details.more > div {
   display: inline-flex;
   gap: 4px;
 }
+
+/* Espera que se mantiene hasta cumplir su mínimo de 600 ms tras desmontarse (ProveedorEsperas). */
+.espera-residual {
+  position: absolute;
+  inset: 22px 24px auto;
+  pointer-events: none;
+}

@@ -42,6 +42,9 @@ export function Senal({ estado, tamano = 24, veces, etiqueta, textoOculto, frase
   const trazo = tamano < UMBRAL_PEQUENO ? TRAZO_PEQUENO : TRAZO;
   // Una vez: se detiene en la fracción del ciclo de su reposo (iteraciones fraccionarias y fill-mode both).
   const iteraciones = bucle ? 'infinite' : String(def.reposo);
+  // Con el reposo al final del ciclo, el último fotograma no tiene por qué ser el reposo (el tramo de «cargando»
+  // sigue visible): sin fill-mode, al acabar se ve la base, que es el reposo.
+  const relleno = !bucle && def.reposo === 1 ? 'none' : 'both';
   const anchoVista = def.ancho ? 156 : 48;
   return (
     <span
@@ -49,7 +52,7 @@ export function Senal({ estado, tamano = 24, veces, etiqueta, textoOculto, frase
       role={decorativa ? undefined : 'status'}
       aria-live={decorativa ? undefined : 'polite'}
       aria-hidden={decorativa ? true : undefined}
-      style={{ ['--senal-veces' as string]: iteraciones }}
+      style={{ ['--senal-veces' as string]: iteraciones, ['--senal-relleno' as string]: relleno }}
     >
       <svg
         viewBox={`0 0 ${anchoVista} 48`}
@@ -62,9 +65,12 @@ export function Senal({ estado, tamano = 24, veces, etiqueta, textoOculto, frase
           <path className="tenue" d={ONDA} pathLength={100} strokeWidth={trazo} />
         )}
         {estado === 'comparando' && <path className="referencia anima" d={ONDA} strokeWidth={trazo} />}
-        <g className="escala anima">
-          <path className="onda anima" d={ONDA} pathLength={100} strokeWidth={trazo} />
-        </g>
+        {/* «cargando» no lleva la onda llena: solo la tenue y el tramo que la recorre (SVG 04). */}
+        {estado !== 'cargando' && (
+          <g className="escala anima">
+            <path className="onda anima" d={ONDA} pathLength={100} strokeWidth={trazo} />
+          </g>
+        )}
         {estado === 'cargando' && <path className="tramo anima" d={ONDA} pathLength={100} strokeWidth={trazo} />}
         {estado === 'guardado' && <circle className="anillo anima" cx={PUNTO.cx} cy={PUNTO.cy} r={PUNTO.r} />}
         {estado === 'indexando' ? (

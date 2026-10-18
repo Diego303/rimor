@@ -58,7 +58,7 @@
 }
 .senal .anima {
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  animation-fill-mode: both;
+  animation-fill-mode: var(--senal-relleno, both);
   /* «infinite» en bucle; en una vez, la fracción del ciclo donde está el reposo (Senal.tsx). */
   animation-iteration-count: var(--senal-veces, infinite);
 }
