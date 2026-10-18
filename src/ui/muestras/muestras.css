@@ -19,10 +19,26 @@
   font-weight: 700;
   letter-spacing: -0.02em;
 }
+.muestras-pagina {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.muestras-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
 .muestras-marcos {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  height: 100vh;
+  flex: 1;
+}
+.muestra-rimor {
+  max-width: 520px;
 }
 .muestras-marcos iframe {
   width: 100%;

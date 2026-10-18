@@ -1,4 +1,5 @@
-/* Tokens del estilo Instrumento: copia literal del anexo de rimor-diseno.md (§16). Es el único archivo con colores. */
+/* Tokens del estilo Instrumento: los del anexo de rimor-diseno.md (§16), con el formato de Biome.
+   Es el único archivo con colores. Cambios y añadidos marcados (ADR-0004). */
 :root {
   /* Superficies y texto */
   --page: #dcd9d2;
@@ -6,7 +7,8 @@
   --panel: #f6f5f1;
   --panel-2: #e3e0d9;
   --ink: #191919;
-  --muted: #67645e;
+  /* La guía dice #67645E, que da 4,47:1 sobre --panel-2 (no llega a AA); un punto más oscuro sí llega (ADR-0004). */
+  --muted: #66635d;
   --faint: #737068;
   --line: #ccc8bf;
   --line-2: #ddd9d1;

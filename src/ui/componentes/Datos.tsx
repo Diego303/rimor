@@ -51,7 +51,7 @@ export function Tabla<F>({ columnas, filas, clave, alPulsarFila, activa, titulo 
                   : undefined
               }
               tabIndex={alPulsarFila ? 0 : undefined}
-              aria-selected={activa ? activa(f) : undefined}
+              aria-current={activa?.(f) ? true : undefined}
             >
               {columnas.map((c) => (
                 <td key={c.id} className={c.numerica ? 'n' : undefined}>

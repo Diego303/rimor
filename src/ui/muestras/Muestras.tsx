@@ -4,7 +4,7 @@
  * Los textos son de ejemplo y quedan fuera de la regla de textos de i18n.
  */
 import './muestras.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import {
   Banner,
   BarraH,
@@ -115,7 +115,6 @@ function Galeria() {
             <h2>Sistema de diseño</h2>
             <span className="meta">Estilo Instrumento · tokens, tipografía y componentes</span>
           </div>
-          <SelectorTema etiqueta="Tema" textos={{ sistema: 'Sistema', claro: 'Claro', oscuro: 'Oscuro' }} />
         </div>
         <Tarjeta titulo="Color">
           <div className="g4">
@@ -194,6 +193,13 @@ function Galeria() {
             <BotonAviso />
           </div>
         </Tarjeta>
+        <Tarjeta titulo="Respuesta de Rimor">
+          <div className="rimor muestra-rimor">
+            {/* El avatar lleva el símbolo «Señal» en mono a partir de IN-089. */}
+            <span className="av" aria-hidden="true" />
+            <p>Así habla Rimor: una o dos frases con lo que ha entendido y, si hace falta, una pregunta con botones.</p>
+          </div>
+        </Tarjeta>
         <section className="card">
           <Veredicto
             tono="ok"
@@ -260,14 +266,21 @@ function Galeria() {
 /** Con `?marco=claro|oscuro` pinta la galería en ese tema; sin él, los dos marcos lado a lado. */
 export default function Muestras() {
   const marco = new URLSearchParams(location.hash.split('?')[1] ?? '').get('marco');
-  useEffect(() => {
+  // Antes que los efectos de los hijos (que leen los tokens) y sin guardar nada: el marco queda fijo en su tema.
+  useLayoutEffect(() => {
     if (marco === 'claro' || marco === 'oscuro') aplicarTema(marco);
   }, [marco]);
   if (marco) return <Galeria />;
   return (
-    <div className="muestras-marcos">
-      <iframe title="Tema claro" src="#/muestras?marco=claro" />
-      <iframe title="Tema oscuro" src="#/muestras?marco=oscuro" />
+    <div className="muestras-pagina">
+      <div className="muestras-cabecera">
+        <b>Muestras</b>
+        <SelectorTema etiqueta="Tema de la página" textos={{ sistema: 'Sistema', claro: 'Claro', oscuro: 'Oscuro' }} />
+      </div>
+      <div className="muestras-marcos">
+        <iframe title="Tema claro" src="#/muestras?marco=claro" />
+        <iframe title="Tema oscuro" src="#/muestras?marco=oscuro" />
+      </div>
     </div>
   );
 }

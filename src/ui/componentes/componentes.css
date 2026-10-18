@@ -885,3 +885,28 @@ details.more > div {
   flex-direction: column;
   gap: 8px;
 }
+
+/* ---------- Respuesta de Rimor (la pinta RespuestaRimor, IN-016) ---------- */
+.rimor {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  font-size: 0.84375rem;
+}
+.rimor .av {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--panel);
+  color: var(--ink);
+  margin-top: 1px;
+}
+.rimor p {
+  min-width: 0;
+}

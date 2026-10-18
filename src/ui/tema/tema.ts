@@ -9,12 +9,19 @@ export const CLAVE_TEMA = 'rimor:tema';
 const PREFERENCIAS: readonly PreferenciaTema[] = ['sistema', 'claro', 'oscuro'];
 const ATRIBUTO: Record<PreferenciaTema, 'light' | 'dark' | null> = { sistema: null, claro: 'light', oscuro: 'dark' };
 
-/** Lee la preferencia guardada; si no hay o no es válida, «sistema». */
-export function leerPreferencia(
-  almacen: Pick<Storage, 'getItem'> | undefined = globalThis.localStorage,
-): PreferenciaTema {
+/** localStorage puede no existir o lanzar al tocarlo (datos del sitio bloqueados). */
+function almacenLocal(): Storage | undefined {
   try {
-    const v = almacen?.getItem(CLAVE_TEMA);
+    return globalThis.localStorage;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Lee la preferencia guardada; si no hay, no es válida o no se puede leer, «sistema». */
+export function leerPreferencia(almacen?: Pick<Storage, 'getItem'>): PreferenciaTema {
+  try {
+    const v = (almacen ?? almacenLocal())?.getItem(CLAVE_TEMA);
     return PREFERENCIAS.find((p) => p === v) ?? 'sistema';
   } catch {
     return 'sistema';
@@ -29,12 +36,9 @@ export function aplicarTema(p: PreferenciaTema, raiz: HTMLElement = document.doc
 }
 
 /** Guarda y aplica la preferencia. El guardado puede fallar (modo privado estricto) sin romper nada. */
-export function guardarPreferencia(
-  p: PreferenciaTema,
-  almacen: Pick<Storage, 'setItem'> | undefined = globalThis.localStorage,
-): void {
+export function guardarPreferencia(p: PreferenciaTema, almacen?: Pick<Storage, 'setItem'>): void {
   try {
-    almacen?.setItem(CLAVE_TEMA, p);
+    (almacen ?? almacenLocal())?.setItem(CLAVE_TEMA, p);
   } catch {
     // Sin almacenamiento local: el tema se aplica igual para esta sesión.
   }

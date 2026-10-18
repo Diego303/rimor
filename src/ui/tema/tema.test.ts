@@ -24,3 +24,21 @@ describe('leerPreferencia', () => {
     expect(leerPreferencia(roto)).toBe('sistema');
   });
 });
+
+describe('leerPreferencia sin localStorage accesible', () => {
+  it('no falla si tocar localStorage lanza (datos del sitio bloqueados)', () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new Error('SecurityError');
+      },
+    });
+    try {
+      expect(leerPreferencia()).toBe('sistema');
+    } finally {
+      if (original) Object.defineProperty(globalThis, 'localStorage', original);
+      else delete (globalThis as { localStorage?: unknown }).localStorage;
+    }
+  });
+});

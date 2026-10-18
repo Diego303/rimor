@@ -35,9 +35,15 @@ export function ProveedorAvisos({ children }: { children: ReactNode }) {
   return (
     <Contexto.Provider value={valor}>
       {children}
-      <div className="toast" role="status" aria-live="polite" hidden={!actual}>
+      {/* La región viva existe siempre, para que el lector de pantalla anuncie también el primer aviso. */}
+      <div className="solo-lector" role="status" aria-live="polite">
         {actual?.texto}
       </div>
+      {actual && (
+        <div className="toast" aria-hidden="true">
+          {actual.texto}
+        </div>
+      )}
     </Contexto.Provider>
   );
 }

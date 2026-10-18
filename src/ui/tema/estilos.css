@@ -1,5 +1,7 @@
-/* Punto de entrada de los estilos de Rimor. */
+/* Punto de entrada de los estilos de Rimor. Orden de capas: las utilidades de Tailwind ganan a la base
+   y a los componentes, como en cualquier proyecto con Tailwind. Los tokens no necesitan capa. */
+@layer theme, base, components, utilities;
 @import "./tokens.css";
 @import "./tailwind.css";
-@import "./base.css";
-@import "../componentes/componentes.css";
+@import "./base.css" layer(base);
+@import "../componentes/componentes.css" layer(components);

@@ -124,3 +124,37 @@ Mientras no existan los ajustes del espacio (IN-038), la preferencia vive en `lo
 - `Medidor` y `Segmentado` usan `role="meter"` y `role="group"` sobre `div` (con su comentario para Biome): `<meter>` no admite el aspecto de la guía en todos los navegadores y `<fieldset>` obliga a una leyenda visible.
 - Biome: `noImportantStyles` desactivada; los dos `!important` (`[hidden]` y movimiento reducido) son intencionados.
 - Los estilos globales y las fuentes se importan en `Base.astro`, no en la isla, para que Astro los enlace en el HTML aunque la isla sea `client:only`.
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 02:45): `astro check` 0 errores y 0 avisos; Biome y colores, OK; Vitest 7 archivos y 35 pruebas, OK; construcción, OK; carga inicial **75,8 KB** (límite 300 KB). La página de muestras no entra en `dist/` (ningún archivo construido contiene sus textos).
+
+| Criterio | Evidencia |
+|---|---|
+| `tokens.css` del anexo, claro y oscuro por `prefers-color-scheme` y `data-theme` | Valores idénticos a §16 (con el formato de Biome), salvo `--muted` claro (ver abajo); prueba «los dos bloques oscuros son idénticos» |
+| Contraste de cada par de §13.1 comprobado automáticamente | `contraste.test.ts`: cada par alcanza el valor de la tabla (−0,05 por redondeo) **y** AA (4,5:1) en los dos temas; también `#191919` sobre `#EE4F1F` |
+| `tailwind.css` con `@theme inline` | Sin preflight; utilidades en su capa, por encima de base y componentes; solo se buscan clases en `src/` |
+| Fuentes Archivo y Roboto Mono, latin y latin-ext | `fuentes.ts`, importado en `Base.astro`; 14 `.woff2` en `dist/_astro/` |
+| Iconos | Trazados de las pantallas (ADR-0004), idénticos a su `IC` |
+| Componentes de la ficha | `src/ui/componentes/`, con las clases y medidas del CSS final de las pantallas; pruebas de `Boton`, `Segmentado`, `Detalles`, `Veredicto`, `Medidor`, `Tabla`, `Avisos` y `SelectorTema` |
+| Selector de tema guardado en local | `SelectorTema` + `tema.ts`; aplica `data-theme` y lo quita en «Sistema»; resiste un `localStorage` que lanza |
+| `/muestras` en los dos temas lado a lado y equivalente a «Sistema de diseño» | `#/muestras` en desarrollo: dos marcos fijos en claro y oscuro con los bloques de esa pantalla (color, tipos, tipografía, componentes, respuesta de Rimor, estados y reglas de limpieza) |
+| Revisión visual con capturas y axe | Aplazada por instrucción del autor (Playwright) |
+
+### Desviación: `--muted` en claro
+
+La guía da `#67645E` y dice que sobre `--panel-2` alcanza 4,5:1, pero mide **4,47:1**: el texto secundario sobre superficies hundidas (opciones no pulsadas de un segmentado, respuesta de Rimor) no llegaría a AA. Se usa `#66635D` (un punto más oscuro por canal, imperceptible), que da 4,54:1 sobre `--panel-2` y 5,49:1 sobre `--panel`. Queda en «Pendientes de validación humana» por si el autor prefiere otro valor.
+
+### Revisión independiente
+
+Hallazgos, todos corregidos:
+
+1. La tolerancia de 0,1 ocultaba el 4,47:1 de `--muted` sobre `--panel-2`: tolerancia de 0,05 más el mínimo AA, y token ajustado.
+2. Leer `globalThis.localStorage` como valor por defecto podía lanzar fuera del `try` (datos del sitio bloqueados): el acceso va dentro, con prueba.
+3. La base y los componentes estaban fuera de capa y ganaban a las utilidades de Tailwind: ahora van en `@layer base` y `@layer components`.
+4. Tailwind recorría todo el repositorio y metía clases de las pruebas de `scripts/`: `source("../..")` limita a `src/`.
+5. En las muestras, los tokens se leían antes de forzar el tema del marco, y el selector de cada marco escribía la preferencia global: el tema del marco se aplica en `useLayoutEffect` sin guardar, y el selector pasa a la cabecera de la página.
+6. Faltaba la respuesta de Rimor de «Sistema de diseño»: portadas `.rimor` y `.av` y añadida a las muestras (el símbolo del avatar llega con IN-089).
+7. `aria-selected` en una fila de tabla no significa nada: la fila activa lleva `aria-current`.
+8. El primer aviso podía no anunciarse porque la región viva aparecía con él: la región existe siempre (oculta a la vista) y la píldora visible va aparte.
+9. Menor: quitado `-webkit-font-smoothing`, que no está en las pantallas.

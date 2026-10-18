@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 01:58
-**Ahora:** IN-002 · Tema Instrumento y componentes base · fase verificación
-**Siguiente:** IN-003 · Textos, idiomas y formatos
-**Progreso:** F0 9/9 · v0.1 1/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 10/99
+**Última actualización:** 2026-10-18 02:07
+**Ahora:** IN-003 · Textos, idiomas y formatos · fase análisis y diseño
+**Siguiente:** IN-004 · Formato de archivos
+**Progreso:** F0 9/9 · v0.1 2/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 11/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -19,7 +19,7 @@
 | F0-8 | MiniSearch | F0 | — | hecha | 7eacd39 | docs/f0/F0-8.md |
 | F0-9 | Fuentes empaquetadas | F0 | — | hecha | f529c42 | docs/f0/F0-9.md |
 | IN-001 | Repositorio, herramientas e integración continua | v0.1 | 0 | hecha | 4088155 b31670c d8ece75 | docs/features/IN-001-repositorio.md |
-| IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | en implementación | 3f75c99 | docs/features/IN-002-tema-y-componentes.md |
+| IN-002 | Tema Instrumento y componentes base | v0.1 | 0 | hecha | 3f75c99 4b3c27c | docs/features/IN-002-tema-y-componentes.md |
 | IN-003 | Textos, idiomas y formatos | v0.1 | 0 | pendiente | — | — |
 | IN-004 | Formato de archivos (`paquetes/formato`) | v0.1 | 0 | pendiente | — | — |
 | IN-089 | Símbolo «Señal», iconos de app y favicon | v0.1 | 0 | pendiente | — | — |
@@ -133,11 +133,13 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
   - IN-032: índice comprimido en IndexedDB y carga asíncrona en el Worker (F0-8).
   - IN-085: se hace (F0-4 positiva).
 - **Iconos:** los trazados propios de las pantallas en vez de `lucide-react` (mismo estilo: retícula 24 px, trazo 1,8), para que la web sea igual al HTML de referencia (ADR-0004).
+- **`--muted` claro `#66635D`** en lugar de `#67645E`: el de la guía da 4,47:1 sobre `--panel-2` y no llega a AA (IN-002).
 - **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
 
 ## Pendientes de validación humana
 - **Licencia (D5):** no se ha añadido archivo de licencia. La propuesta del plan es «la misma que Struo». Ojo: pandoc-wasm (IN-084) es GPL-2.0-or-later (F0-3).
 - **Pruebas en navegador real** (Playwright en Chromium, Firefox y WebKit, capturas en claro, oscuro y 400 px, axe y fidelidad de animaciones): aplazadas por instrucción del autor hasta el final.
+- **Token `--muted` (claro):** se usa `#66635D` porque `#67645E` no llega a AA sobre `--panel-2` (4,47:1). Confirmar o elegir otro valor.
 - **F0-1 (OPFS):** ejecutar el script del anexo de `docs/f0/F0-1.md` en Chrome, Firefox y Safari, con y sin la PWA instalada, y anotar tiempos y resultado de `persist()`.
 - **F0-2 (ZIP):** exportar 200 MB en la app publicada con el panel de rendimiento abierto y comprobar que no hay tareas largas en el hilo principal.
 - **F0-3 (Pandoc):** medir descarga y compilación de `pandoc.wasm` en los tres navegadores; abrir el `.docx` en Word y compilar el `.tex` en Overleaf.
@@ -153,7 +155,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-002 | implementación | pnpm verificar OK (34 pruebas, 76,9 KB) | … |
+| 2026-10-18 | IN-002 | verificación | pnpm verificar OK; 9 hallazgos de la revisión corregidos | … |
+| 2026-10-18 | IN-002 | implementación | pnpm verificar OK (34 pruebas, 76,9 KB) | 4b3c27c |
 | 2026-10-18 | IN-002 | análisis y diseño | diseño y ADR-0004 | 3f75c99 |
 | 2026-10-18 | IN-001 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | d8ece75 |
 | 2026-10-18 | IN-001 | implementación | pnpm verificar OK (31 s, carga inicial 68,6 KB) | b31670c |
@@ -169,5 +172,5 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-002: implementado. Falta verificación (criterios, revisión independiente).
-- Último `pnpm verificar`: OK (2026-10-18 02:20).
+- IN-002 hecha. Siguiente: IN-003 (diseño en docs/features/IN-003-textos-idiomas-formatos.md, sin commit; borradores de código en el scratchpad in003/).
+- Último `pnpm verificar`: OK (2026-10-18 02:45).

@@ -30,7 +30,10 @@ const PARES: [string, string, number, number | null][] = [
   ['--bad', '--bad-soft', 4.7, null],
   ['--key-ink', '--key', 4.8, 6.1],
 ];
-const TOLERANCIA = 0.1; // la guía redondea a una cifra decimal
+// La guía redondea a un decimal: el valor real puede quedar hasta 0,05 por debajo del de la tabla.
+const TOLERANCIA = 0.05;
+// Todos los pares de la tabla son de texto: además, nunca por debajo de AA (4,5:1).
+const AA = 4.5;
 
 describe('contraste de los tokens (§13.1)', () => {
   it('calcula bien los extremos', () => {
@@ -44,15 +47,19 @@ describe('contraste de los tokens (§13.1)', () => {
 
   for (const [texto, fondo, minClaro, minOscuro] of PARES) {
     it(`${texto} sobre ${fondo}`, () => {
-      expect(contraste(claro[texto] ?? '', claro[fondo] ?? '')).toBeGreaterThanOrEqual(minClaro - TOLERANCIA);
+      const c = contraste(claro[texto] ?? '', claro[fondo] ?? '');
+      expect(c).toBeGreaterThanOrEqual(minClaro - TOLERANCIA);
+      expect(c).toBeGreaterThanOrEqual(AA);
       if (minOscuro !== null) {
-        const t = oscuro[texto] ?? claro[texto] ?? '';
-        expect(contraste(t, oscuro[fondo] ?? '')).toBeGreaterThanOrEqual(minOscuro - TOLERANCIA);
+        const o = contraste(oscuro[texto] ?? claro[texto] ?? '', oscuro[fondo] ?? '');
+        expect(o).toBeGreaterThanOrEqual(minOscuro - TOLERANCIA);
+        expect(o).toBeGreaterThanOrEqual(AA);
       }
     });
   }
 
   it('el símbolo sobre el icono de señal llega a 4,8:1 (IN-089)', () => {
     expect(contraste('#191919', '#EE4F1F')).toBeGreaterThanOrEqual(4.8 - TOLERANCIA);
+    expect(contraste('#191919', '#EE4F1F')).toBeGreaterThanOrEqual(AA);
   });
 });

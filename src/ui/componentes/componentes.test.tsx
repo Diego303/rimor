@@ -114,13 +114,16 @@ describe('Avisos', () => {
         <Disparador />
       </ProveedorAvisos>,
     );
+    const region = screen.getByRole('status');
+    expect(region.textContent).toBe('');
     fireEvent.click(screen.getByText('avisar'));
-    const aviso = screen.getByRole('status');
-    expect(aviso.textContent).toBe('Exportado');
+    expect(region.textContent).toBe('Exportado');
+    expect(document.querySelector('.toast')?.textContent).toBe('Exportado');
     act(() => vi.advanceTimersByTime(DURACION_AVISO_MS));
-    expect(aviso.textContent).toBe('Copiado');
+    expect(region.textContent).toBe('Copiado');
     act(() => vi.advanceTimersByTime(DURACION_AVISO_MS));
-    expect(aviso.hidden).toBe(true);
+    expect(region.textContent).toBe('');
+    expect(document.querySelector('.toast')).toBeNull();
   });
 });
 
