@@ -57,6 +57,10 @@ function claveDe(f: File): number {
   return c;
 }
 
+/** Una captura acabada: guardada, duplicada o rechazada para siempre (ya avisada). Lo demás se reintenta. */
+const PERMANENTES = new Set(['captura.demasiadoGrande', 'captura.sinLector', 'captura.vacia']);
+const terminado = (r: ResultadoDe['r']) => r !== null && (r.ok || PERMANENTES.has(r.error.codigo));
+
 const sinAcentos = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 interface Props {
@@ -82,7 +86,7 @@ export function Compositor({ alAbrir }: Props) {
     quitarArchivo,
     responderA,
     anotarBusqueda,
-    vaciar,
+    quitarGuardado,
   } = useCompositor();
   const area = useRef<HTMLTextAreaElement>(null);
   const selector = useRef<HTMLInputElement>(null);
@@ -149,9 +153,10 @@ export function Compositor({ alAbrir }: Props) {
     const token = tokenEnCursor(valor, cursor);
     if (!token) return setSugerencias(null);
     const parcial = sinAcentos(token.parcial);
-    const opciones = (fuentes[token.marca] ?? [])
-      .filter((o) => sinAcentos(o).startsWith(parcial) && o !== token.parcial)
-      .slice(0, MAX_SUGERENCIAS);
+    const fuente = fuentes[token.marca] ?? [];
+    // Con un nombre ya completo, nada que sugerir: Enter guarda en vez de cambiarlo por otro más largo.
+    if (fuente.includes(token.parcial)) return setSugerencias(null);
+    const opciones = fuente.filter((o) => sinAcentos(o).startsWith(parcial)).slice(0, MAX_SUGERENCIAS);
     setActiva(0);
     setSugerencias(opciones.length ? { marca: token.marca, desde: token.desde, hasta: cursor, opciones } : null);
   }
@@ -169,16 +174,21 @@ export function Compositor({ alAbrir }: Props) {
     if (guardando) return;
     const ind = analizarIndicaciones(texto);
     if (ind.busqueda !== undefined) {
+      // Solo el texto: los adjuntos y la respuesta siguen ahí para la siguiente captura.
       anotarBusqueda(ind.busqueda, isoConZona(new Date()));
-      vaciar();
+      setTexto('');
       return;
     }
     if (!ind.cuerpo.trim() && !archivos.length) return;
     if (soloLectura) return avisar(t('espacio.aviso.soloLectura'));
     if (!capturador) return;
     setGuardando(true);
+    // Lo que se guarda ahora; lo que se escriba o adjunte mientras tanto se queda en el borrador.
+    const textoGuardado = texto;
+    const archivosGuardados = [...archivos];
+    const respuesta = respondiendoA;
     // Responder a un elemento con hilo: la captura va a ese hilo (IN-030 crea el hilo si no lo tiene).
-    const hilo = respondiendoA ? espacio?.repositorio.frontmatter(respondiendoA)?.hilo : undefined;
+    const hilo = respuesta ? espacio?.repositorio.frontmatter(respuesta)?.hilo : undefined;
     const comunes: Omit<EntradaCaptura, 'origen'> = {
       ...(ind.tipo ? { tipo: ind.tipo } : {}),
       colecciones: ind.colecciones,
@@ -186,18 +196,26 @@ export function Compositor({ alAbrir }: Props) {
       ...(hilo ? { hilo } : {}),
     };
     const resultados: ResultadoDe[] = [];
+    let textoHecho = true;
     if (ind.cuerpo.trim()) {
       const r = await capturador.capturar({ texto: ind.cuerpo, origen: 'pegado', ...comunes }).catch(() => null);
       resultados.push({ nombre: ind.cuerpo.split('\n')[0]?.slice(0, 40) ?? '', r });
+      textoHecho = terminado(r);
     }
-    for (const archivo of archivos) {
+    const hechos: File[] = [];
+    for (const archivo of archivosGuardados) {
       const r = await capturador.capturar({ archivo, origen: 'soltado', ...comunes }).catch(() => null);
       resultados.push({ nombre: archivo.name, tam: archivo.size, r });
+      if (terminado(r)) hechos.push(archivo);
     }
     setGuardando(false);
     informar(resultados);
-    // Lo que no se pudo guardar (un fallo, no un duplicado) se queda en el borrador para reintentar.
-    if (resultados.every((x) => x.r?.ok)) vaciar();
+    // Se quita lo guardado (o lo que nunca podrá guardarse, ya avisado); un fallo pasajero se queda para reintentar.
+    quitarGuardado({
+      ...(textoHecho ? { texto: textoGuardado } : {}),
+      archivos: hechos,
+      respondiendoA: textoHecho && hechos.length === archivosGuardados.length ? respuesta : null,
+    });
   }
 
   function alPulsar(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -212,7 +230,7 @@ export function Compositor({ alAbrir }: Props) {
         setActiva((i) => (i + (e.key === 'ArrowDown' ? 1 : n - 1)) % n);
         return;
       }
-      if (e.key === 'Enter' || e.key === 'Tab') {
+      if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Tab') {
         e.preventDefault();
         const opcion = sugerencias.opciones[activa];
         if (opcion) elegir(opcion);
@@ -278,6 +296,13 @@ export function Compositor({ alAbrir }: Props) {
           aria-describedby={sugerencias ? idLista : undefined}
           onChange={alCambiar}
           onKeyDown={alPulsar}
+          onPaste={(e) => {
+            // Una imagen o un archivo pegado dentro de la caja va a los adjuntos; el texto se pega como siempre.
+            const pegados = [...e.clipboardData.files];
+            if (!pegados.length) return;
+            adjuntar(pegados);
+            if (!e.clipboardData.getData('text/plain')) e.preventDefault();
+          }}
           onBlur={() => setSugerencias(null)}
         />
         {sugerencias && (

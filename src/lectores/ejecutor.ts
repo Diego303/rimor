@@ -39,45 +39,63 @@ export function crearEjecutor(registro: Registro): EjecutorCerrable {
   if (typeof Worker !== 'function')
     return { ejecutar: enHilo, previsualizar: previaEnHilo, reiniciar: () => undefined, cerrar: () => undefined };
 
-  let actual: { worker: Worker; api: Remote<ApiDerivados>; roto: Promise<never> } | null = null;
+  interface Abierto {
+    worker: Worker;
+    api: Remote<ApiDerivados>;
+    /** Quien espera a este Worker: si muere (no carga, se reinicia o se cierra), se le rechaza. */
+    esperando: Set<(e: Error) => void>;
+  }
+  let actual: Abierto | null = null;
   let averiado = false;
   let cerrado = false;
-  const terminar = () => {
-    actual?.worker.terminate();
+  /** Termina el Worker y rechaza lo que esperaba de él (Comlink no lo haría nunca). */
+  const terminar = (motivo: string) => {
+    const w = actual;
     actual = null;
+    if (!w) return;
+    w.worker.terminate();
+    for (const rechazar of w.esperando) rechazar(new Error(motivo));
+    w.esperando.clear();
   };
-  const abrir = () => {
+  const abrir = (): Abierto => {
     const worker = new Worker(new URL('../workers/derivados.worker.ts', import.meta.url), { type: 'module' });
-    const roto = new Promise<never>((_, ko) =>
-      worker.addEventListener('error', () => {
-        averiado = true;
-        worker.terminate();
-        actual = null;
-        ko(new Error('derivados.workerNoCarga'));
-      }),
-    );
-    roto.catch(() => undefined);
-    actual = { worker, api: wrap<ApiDerivados>(worker), roto };
-    return actual;
+    const abierto: Abierto = { worker, api: wrap<ApiDerivados>(worker), esperando: new Set() };
+    worker.addEventListener('error', () => {
+      averiado = true;
+      if (actual === abierto) terminar('derivados.workerNoCarga');
+    });
+    actual = abierto;
+    return abierto;
   };
+  /**
+   * Una llamada al Worker que se rechaza si el Worker muere. Cada llamada se da de baja al acabar: no queda
+   * nada que retenga su resultado (con `Promise.race` contra una promesa eterna, se acumularían).
+   */
+  function vigilada<T>(llamar: (api: Remote<ApiDerivados>) => Promise<T>): Promise<T> {
+    const w = actual ?? abrir();
+    return new Promise<T>((ok, ko) => {
+      w.esperando.add(ko);
+      llamar(w.api)
+        .then(ok, ko)
+        .finally(() => w.esperando.delete(ko));
+    });
+  }
 
   return {
     ejecutar: (nombre: string, el: Elemento) => {
       if (cerrado) return Promise.reject(new Error('derivados.cerrado'));
       if (averiado) return enHilo(nombre, el);
-      const w = actual ?? abrir();
-      return Promise.race([w.api.derivar(nombre, el), w.roto]);
+      return vigilada((api) => api.derivar(nombre, el));
     },
     previsualizar: (texto: string) => {
       if (cerrado) return Promise.reject(new Error('derivados.cerrado'));
       if (averiado) return previaEnHilo(texto);
-      const w = actual ?? abrir();
-      return Promise.race([w.api.previsualizar(texto), w.roto]);
+      return vigilada((api) => api.previsualizar(texto));
     },
-    reiniciar: terminar,
+    reiniciar: () => terminar('derivados.reiniciado'),
     cerrar: () => {
       cerrado = true;
-      terminar();
+      terminar('derivados.cerrado');
     },
   };
 }

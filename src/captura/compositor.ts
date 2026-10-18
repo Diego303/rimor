@@ -34,6 +34,11 @@ export interface Borrador {
   enfocar(): void;
   /** Tras guardar: sin texto, sin archivos y sin respuesta. */
   vaciar(): void;
+  /**
+   * Tras guardar, quita solo lo que se guardó: el texto si no ha cambiado desde entonces (lo escrito mientras
+   * se guardaba se conserva), esos archivos y la respuesta si sigue siendo la misma.
+   */
+  quitarGuardado(guardado: { texto?: string; archivos: readonly File[]; respondiendoA: string | null }): void;
 }
 
 function leerGuardado(): string {
@@ -49,7 +54,12 @@ function guardar(texto: string): void {
     if (texto) globalThis.sessionStorage?.setItem(CLAVE_BORRADOR, texto);
     else globalThis.sessionStorage?.removeItem(CLAVE_BORRADOR);
   } catch {
-    // Sin sessionStorage (privado, bloqueado): el borrador vive solo en memoria.
+    // Sin sessionStorage (privado, bloqueado) o sin cuota: que no quede un borrador viejo que restaurar.
+    try {
+      globalThis.sessionStorage?.removeItem(CLAVE_BORRADOR);
+    } catch {
+      // El borrador vive solo en memoria.
+    }
   }
 }
 
@@ -74,6 +84,12 @@ export const useCompositor = create<Borrador>((set) => ({
   anotarBusqueda: (texto, en) => set((s) => ({ busquedas: [...s.busquedas, { texto, en }] })),
   enfocar: () => set((s) => ({ llegadas: s.llegadas + 1 })),
   vaciar: () => set({ texto: '', archivos: [], respondiendoA: null }),
+  quitarGuardado: (g) =>
+    set((s) => ({
+      texto: g.texto !== undefined && s.texto === g.texto ? '' : s.texto,
+      archivos: s.archivos.filter((a) => !g.archivos.includes(a)),
+      respondiendoA: s.respondiendoA === g.respondiendoA ? null : s.respondiendoA,
+    })),
 }));
 
 useCompositor.subscribe((s, previo) => {

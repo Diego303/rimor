@@ -122,7 +122,8 @@ describe('ColaDerivados', () => {
     const enCola = new AbortController();
     const a = cola.pedir(elementoFalso(1, 'abcd'), { senal: enMarcha.signal });
     const b = cola.pedir(elementoFalso(2), { senal: enCola.signal });
-    await esperarVuelta();
+    // La consulta a la caché es asíncrona: se espera a que el primero esté de verdad en marcha.
+    await vi.waitFor(() => expect(m.empezados).toEqual(['TXT-0001']));
     enCola.abort();
     enMarcha.abort();
     await expect(b).rejects.toSatisfy(esCancelado);
@@ -275,12 +276,28 @@ describe('ejecutor', () => {
     expect(await ejecutor.ejecutar('falso', elementoFalso(2, 'abc'))).toEqual({ largo: 3 });
   });
 
+  it('reiniciar rechaza lo que esperaba del Worker y lo siguiente abre otro', async () => {
+    vi.stubGlobal('Worker', WorkerMudo);
+    const ejecutor = crearEjecutor(crearRegistro([lectorFalso()]));
+    const colgada = ejecutor.ejecutar('falso', elementoFalso(1));
+    const previa = ejecutor.previsualizar('texto');
+    const primero = WorkerMudo.ultimo;
+    ejecutor.reiniciar();
+    await expect(colgada).rejects.toThrow('derivados.reiniciado');
+    await expect(previa).rejects.toThrow('derivados.reiniciado');
+    void ejecutor.ejecutar('falso', elementoFalso(2)).catch(() => undefined);
+    expect(WorkerMudo.ultimo).not.toBe(primero);
+    ejecutor.cerrar();
+  });
+
   it('cerrado, termina el Worker y no abre otro', async () => {
     vi.stubGlobal('Worker', WorkerMudo);
     const ejecutor = crearEjecutor(crearRegistro([lectorFalso()]));
-    void ejecutor.ejecutar('falso', elementoFalso(1));
+    const pendiente = ejecutor.ejecutar('falso', elementoFalso(1));
     const primero = WorkerMudo.ultimo;
     ejecutor.cerrar();
+    // Lo que esperaba del Worker cerrado se rechaza (Comlink lo dejaría colgado).
+    await expect(pendiente).rejects.toThrow('derivados.cerrado');
     expect(primero?.terminate).toHaveBeenCalled();
     await expect(ejecutor.ejecutar('falso', elementoFalso(2))).rejects.toThrow('derivados.cerrado');
     expect(WorkerMudo.ultimo).toBe(primero);

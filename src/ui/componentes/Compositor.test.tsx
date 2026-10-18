@@ -153,6 +153,59 @@ describe('Compositor', () => {
     expect(repositorio?.elementos()[0]?.tipo).toBe('archivo');
   });
 
+  it('lo que se escribe mientras se guarda no se pierde', async () => {
+    const area = await montar();
+    const archivo = new File([new Uint8Array([0, 1, 2])], 'grande.bin');
+    act(() => useCompositor.getState().adjuntar([archivo]));
+    escribir(area, 'primera nota');
+    fireEvent.keyDown(area, { key: 'Enter' });
+    // Mientras se guarda, el usuario escribe otra cosa y adjunta otro archivo.
+    escribir(area, 'segunda nota');
+    const otro = new File(['x'], 'otro.txt', { type: 'text/plain' });
+    act(() => useCompositor.getState().adjuntar([otro]));
+    await waitFor(() => expect(repositorio?.elementos()).toHaveLength(2));
+    expect(useCompositor.getState().texto).toBe('segunda nota');
+    expect(useCompositor.getState().archivos).toEqual([otro]);
+  });
+
+  it('con un nombre de colección completo, Enter guarda (no lo cambia por uno más largo)', async () => {
+    const area = await montar();
+    await act(async () => {
+      const el = elementoFalso(3, 'tres', 'texto');
+      await repositorio?.guardarElemento({
+        ...el,
+        frontmatter: { ...el.frontmatter, colecciones: ['gateway', 'gateway/http'] },
+      });
+    });
+    escribir(area, 'nota @gateway');
+    expect(document.querySelector('.sugerencias')).toBeNull();
+    fireEvent.keyDown(area, { key: 'Enter' });
+    await waitFor(() => expect(repositorio?.elementos()).toHaveLength(2));
+    expect(repositorio?.elementos().some((fm) => fm.colecciones?.[0] === 'gateway' && fm.titulo === 'Elemento 3')).toBe(
+      true,
+    );
+  });
+
+  it('una imagen pegada dentro de la caja va a los adjuntos', async () => {
+    const area = await montar();
+    const imagen = new File([new Uint8Array([0x89, 0x50])], 'captura.png', { type: 'image/png' });
+    fireEvent.paste(area, { clipboardData: { files: [imagen], getData: () => '' } });
+    expect(useCompositor.getState().archivos).toEqual([imagen]);
+  });
+
+  it('solo indicaciones con adjuntos: los archivos se guardan con ellas y no se crea una nota', async () => {
+    const area = await montar();
+    act(() => useCompositor.getState().adjuntar([new File([new Uint8Array([0, 9])], 'a.bin')]));
+    escribir(area, '@gateway #rust');
+    fireEvent.keyDown(area, { key: 'Enter' });
+    await waitFor(() => expect(repositorio?.elementos()).toHaveLength(1));
+    expect(repositorio?.elementos()[0]).toMatchObject({
+      tipo: 'archivo',
+      colecciones: ['gateway'],
+      etiquetas: ['rust'],
+    });
+  });
+
   it('modo respuesta: «Respondiendo a REF» y × para cancelar', async () => {
     await montar();
     act(() => useCompositor.getState().responderA('LOG-0042'));
@@ -169,6 +222,15 @@ describe('Compositor', () => {
     fireEvent.keyDown(area, { key: 'Enter' });
     expect(useCompositor.getState().busquedas.map((b) => b.texto)).toEqual(['timeout gateway']);
     expect(useCompositor.getState().texto).toBe('');
+    // Una búsqueda no se lleva los adjuntos ni la respuesta.
+    act(() => {
+      useCompositor.getState().adjuntar([new File(['a'], 'a.txt')]);
+      useCompositor.getState().responderA('LOG-0001');
+    });
+    escribir(area, '?otra');
+    fireEvent.keyDown(area, { key: 'Enter' });
+    expect(useCompositor.getState().archivos).toHaveLength(1);
+    expect(useCompositor.getState().respondiendoA).toBe('LOG-0001');
     expect(repositorio?.elementos()).toHaveLength(0);
   });
 

@@ -38,9 +38,8 @@ export function tipoDePalabra(palabra: string): TipoElemento | undefined {
 const NOMBRE = String.raw`[\p{L}\p{N}_](?:[\p{L}\p{N}_.\/-]*[\p{L}\p{N}_])?`;
 /** Una indicación suelta: `@nombre` o `#nombre`. */
 const UNA = new RegExp(`^[@#]${NOMBRE}$`, 'u');
-const PREPROCESADOR =
-  /^#(?:include|define|undef|if|ifdef|ifndef|elif|else|endif|pragma|region|endregion|error|warning|line)\b/;
-const COLOR = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+/** Directivas de preprocesador que cierran código (no etiquetas). `#error` o `#region` sí pueden ser etiquetas. */
+const PREPROCESADOR = /^#(?:include|define|undef|ifdef|ifndef|elif|endif|pragma|endregion)$/;
 
 /** ¿Está el final del texto dentro de un bloque de código (cerca abierta) o es su cierre? */
 function terminaEnCodigo(lineas: readonly string[]): boolean {
@@ -49,12 +48,24 @@ function terminaEnCodigo(lineas: readonly string[]): boolean {
   return abiertas === 1;
 }
 
+const esIndicacion = (p: string) => UNA.test(p) && !PREPROCESADOR.test(p);
+
 /** Separa en palabras una línea de indicaciones; `null` si alguna no lo es. */
 function indicacionesDe(linea: string): string[] | null {
   const palabras = linea.trim().split(/\s+/).filter(Boolean);
-  if (!palabras.length) return null;
-  for (const p of palabras) if (!UNA.test(p) || PREPROCESADOR.test(p) || COLOR.test(p)) return null;
-  return palabras;
+  return palabras.length && palabras.every(esIndicacion) ? palabras : null;
+}
+
+/**
+ * Las indicaciones seguidas al final de una línea, recorriendo sus palabras desde el final (lineal: un texto
+ * enorme con muchas `@` en medio no se atasca). Devuelve dónde empiezan, o `null`.
+ */
+function indicacionesAlFinal(linea: string): { desde: number; palabras: string[] } | null {
+  const fichas = [...linea.matchAll(/\S+/g)];
+  let i = fichas.length;
+  while (i > 0 && esIndicacion(fichas[i - 1]?.[0] ?? '')) i--;
+  if (i === fichas.length) return null;
+  return { desde: fichas[i]?.index ?? 0, palabras: fichas.slice(i).map((f) => f[0]) };
 }
 
 export function analizarIndicaciones(texto: string): Indicaciones {
@@ -77,18 +88,20 @@ export function analizarIndicaciones(texto: string): Indicaciones {
 
   const lineas = cuerpo.split('\n');
   let palabras: string[] | null = null;
+  // Tras «clave:» lo que sigue es un valor (un color en CSS), no una indicación.
+  const esValor = (antes: string) => /:\s*$/.test(antes);
   if (lineas.length > 1) {
     const ultima = lineas[lineas.length - 1] ?? '';
-    if (!terminaEnCodigo(lineas)) palabras = indicacionesDe(ultima);
-    if (palabras) cuerpo = lineas.slice(0, -1).join('\n').replace(/\s+$/, '');
+    const previas = lineas.slice(0, -1).join('\n').replace(/\s+$/, '');
+    if (!terminaEnCodigo(lineas) && !esValor(previas)) palabras = indicacionesDe(ultima);
+    if (palabras) cuerpo = previas;
   } else {
-    // Una sola línea: las indicaciones del final, cada una tras un espacio.
-    const fin = new RegExp(String.raw`((?:\s+[@#]${NOMBRE})+)$`, 'u').exec(cuerpo);
-    // Tras «clave:» lo que sigue es un valor (un color en CSS), no una indicación.
-    const antes = fin ? cuerpo.slice(0, fin.index) : '';
-    if (fin?.[1] && !/:\s*$/.test(antes)) {
-      palabras = indicacionesDe(fin[1]);
-      if (palabras) cuerpo = antes;
+    // Una sola línea: las indicaciones del final (o la línea entera, si solo tiene indicaciones).
+    const fin = indicacionesAlFinal(cuerpo);
+    const antes = fin ? cuerpo.slice(0, fin.desde) : '';
+    if (fin && !esValor(antes)) {
+      palabras = fin.palabras;
+      cuerpo = antes.replace(/\s+$/, '');
     }
   }
 

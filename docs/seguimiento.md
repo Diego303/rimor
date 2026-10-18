@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 17:20
-**Ahora:** IN-015 · Compositor · fase verificación
-**Siguiente:** IN-016 · Respuestas de Rimor y contadores locales
-**Progreso:** F0 9/9 · v0.1 16/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 25/99
+**Última actualización:** 2026-10-18 17:39
+**Ahora:** IN-016 · Respuestas de Rimor y contadores locales · fase análisis y diseño
+**Siguiente:** IN-017 · Lector Texto y lector genérico de archivo
+**Progreso:** F0 9/9 · v0.1 17/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 26/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -34,7 +34,7 @@
 | IN-012 | Contrato y registro de lectores | v0.1 | 2 | hecha | fa7e527 00d01e5 aa34b1e | docs/features/IN-012-lectores.md |
 | IN-013 | Detector de tipo y corpus | v0.1 | 2 | hecha | 9e3e067 6697076 e6f4ac8 | docs/features/IN-013-detector.md |
 | IN-014 | Flujo de captura | v0.1 | 3 | hecha | 683703f 9830443 02b7548 | docs/features/IN-014-captura.md |
-| IN-015 | Compositor | v0.1 | 3 | en verificación | df7d8c3 | docs/features/IN-015-compositor.md |
+| IN-015 | Compositor | v0.1 | 3 | hecha | df7d8c3 3531022 | docs/features/IN-015-compositor.md |
 | IN-016 | Respuestas de Rimor y contadores locales | v0.1 | 3 | pendiente | — | — |
 | IN-017 | Lector Texto y lector genérico de archivo | v0.1 | 3 | pendiente | — | — |
 | IN-018 | Lector Idea y resurgimiento mínimo | v0.1 | 4 | pendiente | — | — |
@@ -170,7 +170,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-015 | implementación | OK (537 pruebas) | … |
+| 2026-10-18 | IN-015 | verificación | OK (548 pruebas; 10 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-015 | implementación | OK (537 pruebas) | 3531022 |
 | 2026-10-18 | IN-015 | análisis y diseño | indicaciones con exclusiones, vista previa con debounce, autocompletar, adjuntos y atajo global | df7d8c3 |
 | 2026-10-18 | IN-014 | verificación | OK (485 pruebas; 9 hallazgos de la revisión corregidos) | 02b7548 |
 | 2026-10-18 | IN-014 | implementación | OK (479 pruebas; 100 KB en < 300 ms p95 en memoria) | 9830443 |
@@ -231,4 +232,4 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-014 hecha. Siguiente: IN-015 (diseño escrito en docs/features/IN-015-compositor.md, sin commit; borrador de indicaciones en el scratchpad in015/).
+- IN-015 hecha. Siguiente: IN-016 (diseño escrito en docs/features/IN-016-respuestas.md, sin commit).

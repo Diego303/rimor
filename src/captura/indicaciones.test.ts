@@ -24,6 +24,14 @@ const SON: Caso[] = [
   ['idea @métricas-rápidas', { colecciones: ['métricas-rápidas'] }],
   ['repetida @a @a #b #b', { colecciones: ['a'], etiquetas: ['b'] }],
   ['/codigo\nfn main() {}\n#rust', { tipo: 'codigo', cuerpo: 'fn main() {}', etiquetas: ['rust'] }],
+  ['nota @gateway #2024', { cuerpo: 'nota', colecciones: ['gateway'], etiquetas: ['2024'] }],
+  [
+    'fallo login @gateway #error #cafe',
+    { cuerpo: 'fallo login', colecciones: ['gateway'], etiquetas: ['error', 'cafe'] },
+  ],
+  ['@gateway #rust', { cuerpo: '', colecciones: ['gateway'], etiquetas: ['rust'] }],
+  ['/idea @gateway', { tipo: 'idea', cuerpo: '', colecciones: ['gateway'] }],
+  ['/texto\n@a', { tipo: 'texto', cuerpo: '', colecciones: ['a'] }],
 ];
 
 const NO_SON: Caso[] = [
@@ -37,7 +45,7 @@ const NO_SON: Caso[] = [
   ['int x;\n#pragma once', { etiquetas: [] }],
   ['```rust\nfn main() {}\n#tag', { etiquetas: [] }],
   ['color: #fff', { etiquetas: [], cuerpo: 'color: #fff' }],
-  ['fondo\n#1e90ff', { etiquetas: [] }],
+  ['background:\n#1e90ff', { etiquetas: [] }],
   ['# Título de un documento', { etiquetas: [], cuerpo: '# Título de un documento' }],
   ['## Sección\ntexto', { etiquetas: [] }],
   ['menciono @pepe en mitad del texto', { colecciones: [] }],
@@ -59,6 +67,13 @@ describe('analizarIndicaciones', () => {
     expect(r).toMatchObject(esperado);
     expect(r.tipo).toBeUndefined();
     expect(r.busqueda).toBeUndefined();
+  });
+
+  it('es lineal con muchas indicaciones en mitad de un texto enorme', () => {
+    const texto = `${'@a #b '.repeat(40_000)}fin`;
+    const t0 = performance.now();
+    expect(a(texto).colecciones).toEqual([]);
+    expect(performance.now() - t0).toBeLessThan(500);
   });
 
   it('hay al menos 40 casos', () => {

@@ -81,3 +81,35 @@ Cubre las nueve tareas y los dos criterios. Lo visual sale de las reglas de la p
 - Si algo no se pudo guardar (un fallo, no un duplicado), el borrador se conserva para reintentar.
 - IME: además de `isComposing`, la tecla `Process` y el código 229 (Safari).
 
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 17:39): tipos 0 errores; Biome, colores y textos, OK; Vitest 41 archivos y 548 pruebas, OK; construcción OK; carga inicial 173,6 KB.
+
+| Criterio | Evidencia |
+|---|---|
+| Área que crece hasta 220 px; Enter, Mayús+Enter e IME | `Compositor.test.tsx` |
+| `analizarIndicaciones` | 45 casos (`indicaciones.test.ts`), más una prueba de tiempo lineal |
+| Vista previa con debounce (Worker con > 20 KB) | Prueba de la vista previa (tipo, confianza, indicaciones, secretos, duda, `/tipo`); `previsualizar` es la misma función en el Worker |
+| Autocompletar `@`, `#` y `/` | Prueba con teclado y con un nombre ya completo |
+| Adjuntar y soltar | Selector, soltar sobre el compositor y pegar una imagen en la caja |
+| Modo respuesta | Prueba del aviso y su × |
+| `?texto` + Enter | Queda la búsqueda; no guarda; no se lleva adjuntos ni respuesta |
+| `Ctrl+Mayús+Espacio` | `App.test.tsx`: desde Ajustes lleva a Inicio y enfoca la caja |
+| Borrador en `sessionStorage` | Pruebas del borrador (guardar, restaurar al recargar, sin `sessionStorage`) |
+| `ana@empresa.com` no es colección; `/var/log` no es tipo | Casos de `indicaciones.test.ts` |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Lo escrito o adjuntado mientras se guardaba se perdía**: se guarda una instantánea y después solo se quita lo guardado (`quitarGuardado`).
+2. **Etiquetas válidas (`#2024`, `#error`, `#cafe`) descartaban toda la línea de indicaciones**: los colores solo se excluyen tras «clave:» y las directivas de preprocesador se reducen a las que nunca son etiquetas.
+3. **Una línea con solo indicaciones no se analizaba** (y con adjuntos creaba una nota «@gateway»): ahora sí, y los archivos se guardan con ellas.
+4. **Enter cambiaba un nombre completo por uno más largo** del autocompletado: con un nombre exacto no hay sugerencias, y Mayús+Enter nunca elige.
+5. **Fuga de memoria en las llamadas al Worker** (`Promise.race` contra una promesa eterna): cada llamada vigila al Worker y se da de baja al acabar; reiniciar o cerrar rechaza lo pendiente.
+6. **Una imagen pegada dentro de la caja se perdía**: va a los adjuntos.
+7. **`?texto` se llevaba adjuntos y respuesta**: solo vacía el texto.
+8. **Un fallo permanente dejaba el borrador atascado**: lo guardado y lo rechazado para siempre (ya avisado) se quitan; lo pasajero se queda.
+9. **La expresión de una sola línea era cuadrática**: se recorren las palabras desde el final, en tiempo lineal.
+10. **Sin cuota en `sessionStorage` quedaba un borrador viejo**: se borra.
+
