@@ -13,6 +13,7 @@ import {
   rutaElemento,
   sha256Hex,
 } from '@rimor/formato';
+import type { EntradaFrontmatter } from './cache/cache';
 import { type Almacen, leerTexto, listarTodo } from './contrato';
 
 export const CARPETA_PAPELERA = 'papelera';
@@ -29,11 +30,38 @@ export interface EntradaIndice {
 
 const codificador = new TextEncoder();
 
+/** Lo que el repositorio necesita de la caché del espacio. */
+export interface CacheRepositorio {
+  guardarFrontmatters(entradas: EntradaFrontmatter[]): Promise<void>;
+  borrarElementos(ids: readonly string[]): Promise<void>;
+}
+
+/**
+ * Termina la operación de varios pasos que quedó a medias según el diario: si el destino ya existe, sobra el
+ * origen. Lo llaman `Repositorio.cargar` y `reconciliar` antes de leer nada.
+ */
+export async function recuperarOperacion(almacen: Almacen): Promise<void> {
+  const texto = await leerTexto(almacen, RUTA_DIARIO);
+  if (texto === null) return;
+  try {
+    const { de, a } = JSON.parse(texto) as { de?: unknown; a?: unknown };
+    if (typeof de === 'string' && typeof a === 'string' && de !== a && (await almacen.existe(a)))
+      await almacen.borrar(de);
+  } catch {
+    // Diario ilegible: la operación no llegó a empezar.
+  }
+  await almacen.borrar(RUTA_DIARIO);
+}
+
 export class Repositorio {
   private readonly porId = new Map<string, EntradaIndice>();
   private readonly idPorRef = new Map<string, string>();
 
-  constructor(private readonly almacen: Almacen) {}
+  constructor(
+    private readonly almacen: Almacen,
+    /** Si se da, se actualiza al guardar, mover y vaciar (IN-006), sin esperar a la próxima reconciliación. */
+    private readonly cache?: CacheRepositorio,
+  ) {}
 
   /**
    * Mueve `de` → `a` (o deja `a` escrito y borra `de`) anotándolo antes en el diario: un corte en medio
@@ -45,18 +73,21 @@ export class Repositorio {
     await this.almacen.borrar(RUTA_DIARIO);
   }
 
-  /** Termina la operación que quedó a medias: si el destino ya existe, sobra el origen. */
-  private async recuperar(): Promise<void> {
-    const texto = await leerTexto(this.almacen, RUTA_DIARIO);
-    if (texto === null) return;
-    try {
-      const { de, a } = JSON.parse(texto) as { de?: unknown; a?: unknown };
-      if (typeof de === 'string' && typeof a === 'string' && de !== a && (await this.almacen.existe(a)))
-        await this.almacen.borrar(de);
-    } catch {
-      // Diario ilegible: la operación no llegó a empezar.
+  /** Termina la operación que quedó a medias (ver `recuperarOperacion`). */
+  private recuperar(): Promise<void> {
+    return recuperarOperacion(this.almacen);
+  }
+
+  /** Pone al día la caché (si la hay) con el archivo recién escrito o movido, con su tamaño y fecha reales. */
+  private async refrescarCache(el: Elemento, ruta: string): Promise<void> {
+    if (!this.cache) return;
+    for await (const e of this.almacen.listar(ruta)) {
+      if (e.ruta !== ruta) continue;
+      const { id, ref } = el.frontmatter;
+      await this.cache.guardarFrontmatters([
+        { id, ref, ruta, tam: e.tam, modificado: e.modificado, frontmatter: el.frontmatter },
+      ]);
     }
-    await this.almacen.borrar(RUTA_DIARIO);
   }
 
   /** Arma el índice leyendo `elementos/` y `papelera/elementos/`. Devuelve los archivos que no se pudieron leer. */
@@ -138,6 +169,7 @@ export class Repositorio {
       });
     } else await this.almacen.escribir(destino, datos);
     this.indexar(el, destino);
+    await this.refrescarCache(el, destino);
     return destino;
   }
 
@@ -156,6 +188,7 @@ export class Repositorio {
     const destino = `${CARPETA_PAPELERA}/${e.ruta}`;
     await this.conDiario(e.ruta, destino, () => this.almacen.mover(e.ruta, destino));
     this.porId.set(e.id, { ...e, ruta: destino, enPapelera: true });
+    await this.refrescarTrasMover(e.id, destino);
     return ok(destino);
   }
 
@@ -172,6 +205,7 @@ export class Repositorio {
       await this.almacen.borrar(e.ruta);
     } else await this.conDiario(e.ruta, destino, () => this.almacen.mover(e.ruta, destino));
     this.porId.set(e.id, { ...e, ruta: destino, enPapelera: false });
+    await this.refrescarTrasMover(e.id, destino);
     return ok(destino);
   }
 
@@ -179,12 +213,21 @@ export class Repositorio {
   async vaciarPapelera(): Promise<number> {
     const entradas = await listarTodo(this.almacen, `${CARPETA_PAPELERA}/`);
     for (const e of entradas) await this.almacen.borrar(e.ruta);
+    const borrados: string[] = [];
     for (const [id, e] of [...this.porId]) {
       if (!e.enPapelera) continue;
       this.porId.delete(id);
+      borrados.push(id);
       if (this.idPorRef.get(e.ref) === id) this.idPorRef.delete(e.ref);
     }
+    await this.cache?.borrarElementos(borrados);
     return entradas.length;
+  }
+
+  private async refrescarTrasMover(id: string, ruta: string): Promise<void> {
+    if (!this.cache) return;
+    const r = leerElemento((await leerTexto(this.almacen, ruta)) ?? '');
+    if (r.ok && r.valor.frontmatter.id === id) await this.refrescarCache(r.valor, ruta);
   }
 
   /** Guarda un adjunto por su hash; si ya existe, no lo reescribe. */

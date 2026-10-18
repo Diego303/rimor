@@ -111,3 +111,24 @@ Cubre la ficha; la parte visible de la reconstrucción va en IN-007, que ya depe
 - **`openDB` de `idb` no admite otra IndexedDB que la global**: la caché abre la base con la fábrica indicada (`fabrica.open`) y la envuelve con `wrap` de `idb`. Así las pruebas usan una IndexedDB aislada cada una (`new IDBFactory()` de `fake-indexeddb`); con la global compartida, la prueba «borrar IndexedDB y reconciliar» no habría borrado nada.
 - `Repositorio.cargarDesde(entradas)` arma el índice id/ref → ruta desde la caché.
 - `reconciliar` devuelve también las entradas vigentes, para que quien abre el espacio (IN-007) llene el repositorio sin otra consulta.
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-18 06:10): tipos 0 errores; Biome, colores y textos, OK; Vitest 17 archivos y 169 pruebas (14 de la caché), OK; construcción OK; carga inicial 76,5 KB.
+
+| Criterio | Evidencia |
+|---|---|
+| Borrar IndexedDB y reabrir da el mismo estado | Prueba con dos IndexedDB aisladas (`new IDBFactory()`); con copias duplicadas el resultado también es estable (siempre gana la misma) |
+| Subir la versión de un lector recalcula solo sus derivados | Prueba: la versión 2 de `log` caduca la 1 de `log` y conserva los de otro lector |
+| Invalidación por hash, versión del lector y versión de la caché | Pruebas de `derivado`, `podarDerivados` y versión de caché distinta |
+| Reconciliación al arrancar | Solo relee lo nuevo o cambiado, borra lo que desaparece, conserva renombrados y termina antes la operación del diario cortada |
+| Apertura de 10.000 elementos con caché caliente < 2 s | Prueba que cronometra abrir la caché, reconciliar sin cambios y llenar el repositorio (Node con `fake-indexeddb`; en navegador, pendiente) |
+
+### Revisión independiente
+
+Hallazgos corregidos con prueba:
+
+1. **Dos archivos con el mismo id alternaban en cada apertura**: ahora gana siempre el que está en su sitio (o el de ruta menor), el otro se avisa como `almacen.duplicado` y `nuevos` solo cuenta ganadores. `reconciliar` termina antes la operación del diario (`recuperarOperacion`, compartida con el repositorio).
+2. **`guardarDerivado` borraba los derivados de otros lectores** del mismo elemento: solo borra los del mismo lector con otra versión u otro original; cuando el archivo cambia, `podarDerivados` quita los hechos sobre el original viejo.
+3. **El repositorio no actualizaba la caché al guardar** (prometido en el diseño, necesario porque OPFS puede no cambiar la fecha en escrituras seguidas del mismo tamaño): `Repositorio` acepta la caché y la actualiza al guardar, mover a la papelera, restaurar y vaciar, con el tamaño y la fecha reales del archivo.
+4. Menor: la prueba de 10.000 elementos ahora mide toda la apertura.

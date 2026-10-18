@@ -86,14 +86,22 @@ export class CacheEspacio {
     return (await this.db.get('derivados', [id, lector, version, hash]))?.datos as D | undefined;
   }
 
-  /** Guarda un derivado y borra los anteriores del mismo elemento (otra versión u otro original). */
+  /** Guarda un derivado y borra los anteriores del mismo elemento y lector (otra versión u otro original). */
   async guardarDerivado(id: string, lector: string, version: number, hash: string, datos: unknown): Promise<void> {
     const tx = this.db.transaction('derivados', 'readwrite');
     for (const clave of await tx.store.index('porId').getAllKeys(id)) {
       const [, l, v, h] = clave;
-      if (l !== lector || v !== version || h !== hash) await tx.store.delete(clave);
+      if (l === lector && (v !== version || h !== hash)) await tx.store.delete(clave);
     }
     await tx.store.put({ id, lector, version, hash, datos });
+    await tx.done;
+  }
+
+  /** Borra los derivados de un elemento hechos sobre otro original (el archivo cambió). */
+  async podarDerivados(id: string, hashVigente: string): Promise<void> {
+    const tx = this.db.transaction('derivados', 'readwrite');
+    for (const clave of await tx.store.index('porId').getAllKeys(id))
+      if (clave[3] !== hashVigente) await tx.store.delete(clave);
     await tx.done;
   }
 
