@@ -7,7 +7,7 @@ import { AlmacenMemoria } from '../almacen/memoria';
 import type { Canal, Cerrojos } from '../almacen/pestanas';
 import { useEspacio } from '../estado/espacio';
 import { ESTADOS_SENAL, UMBRAL_ESPERA_MS } from '../ui/marca/estadosSenal';
-import { AvisoAlmacenamiento, TarjetaPersistencia } from './Avisos';
+import { AvisoAlmacenamiento, TarjetaCuidado, TarjetaPersistencia } from './Avisos';
 import { type DependenciasProveedor, ProveedorEspacio } from './Espacio';
 import { leerEstado, RUTA_ESTADO } from './estado';
 import { RUTA_MANIFEST } from './manifest';
@@ -93,12 +93,32 @@ describe('ProveedorEspacio', () => {
     expect(await leerTexto(almacen, RUTA_MANIFEST)).toBe('{ roto');
   });
 
+  it('tras un fallo, «Reintentar» vuelve a abrir', async () => {
+    const almacen = new AlmacenMemoria();
+    await escribirTexto(almacen, RUTA_MANIFEST, '{ roto');
+    render(
+      <ProveedorEspacio dependencias={dependencias(almacen)}>
+        <p>dentro</p>
+      </ProveedorEspacio>,
+    );
+    const boton = await screen.findByRole('button', { name: 'Reintentar' });
+    await almacen.borrar(RUTA_MANIFEST);
+    fireEvent.click(boton);
+    expect(await screen.findByText('dentro')).toBeTruthy();
+  });
+
   it('suelta las dependencias al desmontarse, también si aún estaba abriendo', async () => {
     const liberar = vi.fn();
     const lentas = dependencias(new AlmacenMemoria(), { liberar });
-    const apertura = { soltar: () => undefined as void };
+    const apertura: { soltar: () => void } = { soltar: () => undefined };
     const { unmount } = render(
-      <ProveedorEspacio dependencias={() => new Promise((r) => (apertura.soltar = () => r(lentas())))}>
+      <ProveedorEspacio
+        dependencias={() =>
+          new Promise((r) => {
+            apertura.soltar = () => r(lentas());
+          })
+        }
+      >
         <p>dentro</p>
       </ProveedorEspacio>,
     );
@@ -115,7 +135,8 @@ describe('ProveedorEspacio', () => {
     );
     await screen.findByText('dentro');
     segundo.unmount();
-    expect(otra).toHaveBeenCalledTimes(1);
+    // Primero se escribe lo pendiente y se suelta el cerrojo; después se libera el Worker.
+    await waitFor(() => expect(otra).toHaveBeenCalledTimes(1));
   });
 
   it('anota la persistencia que el navegador ya concedió', async () => {
@@ -184,11 +205,30 @@ describe('avisos del almacenamiento', () => {
     expect(await screen.findByText(/ventana privada/)).toBeTruthy();
   });
 
+  it('Datos y copias enseña el espacio usado, la persistencia y la última copia', async () => {
+    restaurar = conStorage({
+      persisted: async () => true,
+      estimate: async () => ({ usage: 148 * 1024 * 1024, quota: 1e12 }),
+    });
+    render(
+      <ProveedorEspacio dependencias={dependencias()}>
+        <TarjetaCuidado />
+      </ProveedorEspacio>,
+    );
+    expect(await screen.findByText('Protegido')).toBeTruthy();
+    expect(screen.getByText('Protegido').className).toBe('v ok');
+    expect(await screen.findByText(/^148\sMB$/)).toBeTruthy();
+    expect(screen.getByText('0 elementos')).toBeTruthy();
+    expect(screen.getByText('Nunca')).toBeTruthy();
+    expect(screen.getByText('última copia · 0 cambios desde entonces')).toBeTruthy();
+  });
+
   it('fuera del proveedor no pintan nada', () => {
     const { container } = render(
       <>
         <AvisoAlmacenamiento />
         <TarjetaPersistencia />
+        <TarjetaCuidado />
       </>,
     );
     expect(container.innerHTML).toBe('');

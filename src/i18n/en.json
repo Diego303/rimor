@@ -106,9 +106,7 @@
       "vacio": "Add items with @collection when capturing."
     },
     "datos": {
-      "titulo": "Data and backups",
-      "vacioTitulo": "Data and backups",
-      "vacio": "Here you will see how much space is used, whether it is protected and when it was backed up."
+      "titulo": "Data and backups"
     },
     "ajustes": {
       "titulo": "Settings",
@@ -127,7 +125,9 @@
     "fallo": {
       "titulo": "Could not open the workspace",
       "manifest": "Its manifest.json cannot be read: it may come from another Rimor version. Nothing was changed.",
-      "otro": "The browser did not let us open the data. Reload the page; if it persists, export from another tab."
+      "otro": "The browser did not let us open the data. Close the other Rimor tabs and try again.",
+      "esquemaNuevo": "It was created by a newer version of Rimor. Reload the page to use it; nothing was changed.",
+      "reintentar": "Try again"
     },
     "persistencia": {
       "titulo": "Protect your data",
@@ -141,6 +141,24 @@
       "memoria": "This browser does not allow saving: what you capture will be lost when you close the tab.",
       "privada": "This looks like a private window: everything will be deleted when you close it.",
       "soloLectura": "Rimor is open in another tab: here you can only read."
+    },
+    "cuidado": {
+      "usado": {
+        "one": "{n} item",
+        "other": "{n} items"
+      },
+      "usadoDesconocido": "—",
+      "persistencia": "persistent storage",
+      "protegido": "Protected",
+      "sinProteger": "Not protected",
+      "noDisponible": "Not available",
+      "nunca": "Never",
+      "copia": {
+        "one": "last backup · {n} change since then",
+        "other": "last backup · {n} changes since then"
+      },
+      "meta": "Workspace “{nombre}” · stored in your browser",
+      "metaMemoria": "Workspace “{nombre}” · only in this tab"
     }
   }
 }

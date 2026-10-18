@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-18 15:47
-**Ahora:** IN-007 · Espacio de trabajo y persistencia · fase verificación
-**Siguiente:** IN-012 · Contrato y registro de lectores
-**Progreso:** F0 9/9 · v0.1 12/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 21/99
+**Última actualización:** 2026-10-18 16:05
+**Ahora:** IN-012 · Contrato y registro de lectores · fase análisis y diseño
+**Siguiente:** IN-013 · Detector de tipo y corpus
+**Progreso:** F0 9/9 · v0.1 13/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 22/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -30,7 +30,7 @@
 | IN-010 | Ocultación de secretos | v0.1 | 1 | hecha | a206f2c e8cae1b 34b4ca4 | docs/features/IN-010-secretos.md |
 | IN-011 | Paquete de estadística | v0.1 | 1 | hecha | 5838d9a b2ebf4e afb9e32 | docs/features/IN-011-estadistica.md |
 | IN-090 | Animaciones del símbolo (núcleo) | v0.1 | 1 | hecha | b9e91ee bdd15f6 69e2ee5 | docs/features/IN-090-animaciones.md |
-| IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | en verificación | 39f479a | docs/features/IN-007-espacio.md |
+| IN-007 | Espacio de trabajo y persistencia | v0.1 | 2 | hecha | 39f479a 86e9ce2 | docs/features/IN-007-espacio.md |
 | IN-012 | Contrato y registro de lectores | v0.1 | 2 | pendiente | — | — |
 | IN-013 | Detector de tipo y corpus | v0.1 | 2 | pendiente | — | — |
 | IN-014 | Flujo de captura | v0.1 | 3 | pendiente | — | — |
@@ -123,6 +123,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Desviaciones del plan
 - **Astro en lugar de Vite + React a secas.** El repositorio ya tenía una web base de Astro (plantilla vacía). La app vive dentro de ella como una isla React (ADR-0001, ADR-0002). Las rutas del plan `app/src/…` pasan a `src/…`.
 - **Commits del agente y autorrevisión.** Se hace un commit por fase (nunca push) y la aprobación humana (GATE#1) se sustituye por la autorrevisión documentada en cada ficha (prompt maestro §6).
+- **Datos y copias adelanta su primera tarjeta** (IN-007): espacio usado, persistencia y última copia, como en la pantalla de referencia, para que la persistencia concedida «se muestre». IN-037 completa la pantalla.
 - **Despliegue en GitHub Pages** (instrucción del autor del 2026-10-18). Sin cabeceras HTTP propias: la CSP va solo en `<meta>` y la ruta base es configurable (`BASE_URL`).
 - **Sin Playwright por ahora** (instrucción del autor del 2026-10-18: «por ahora no testees con Playwright, cuando esté todo hecho ya vemos»). `pnpm verificar` ejecuta tipos, lint, unidades y construcción. Las pruebas de extremo a extremo, visuales, de axe y de fidelidad de animaciones del plan se sustituyen, mientras tanto, por pruebas de componentes con Vitest y happy-dom donde aportan, y quedan apuntadas en «Pendientes de validación humana».
 - **`docs/olas/`** no se crea: el estado de cada funcionalidad vive en el tablero de este archivo.
@@ -156,6 +157,9 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **F0-7 (CORS):** confirmar en la app publicada que el enriquecimiento de IN-041 no lo bloquea el navegador.
 - **F0-8 (MiniSearch):** medir en el navegador la búsqueda por pulsación y la carga del índice con un espacio real grande.
 - **F0-9 (fuentes):** comprobar en la app publicada que las fuentes salen del propio sitio y que la CSP no bloquea nada.
+- **IN-007 (persistencia):** en Chrome con la PWA instalada, «Proteger los datos» queda concedido y Datos y copias lo enseña como «Protegido».
+- **IN-007 (ventana privada):** abrir la app publicada en incógnito de Chrome, privada de Firefox y de Safari y comprobar que aparece el aviso (la heurística de cuota está probada solo con dobles).
+- **IN-007 (dos pestañas):** abrir dos pestañas, comprobar que la segunda avisa de solo lectura y que, al cerrar la primera, la segunda pasa a escribir con lo último guardado.
 
 ## Bloqueos
 (ninguno)
@@ -163,7 +167,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-007 | implementación | OK (402 pruebas) | … |
+| 2026-10-18 | IN-007 | verificación | OK (412 pruebas; 11 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-007 | implementación | OK (402 pruebas) | 86e9ce2 |
 | 2026-10-18 | IN-007 | análisis y diseño | abrir o crear, persistencia, última copia y arranque | 39f479a |
 | 2026-10-18 | IN-090 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | 69e2ee5 |
 | 2026-10-18 | IN-090 | implementación | pnpm verificar OK (361 pruebas) | bdd15f6 |
@@ -212,5 +217,4 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-090 hecha; ola 1 completa. Siguiente: IN-007 (diseño y código en borrador en el scratchpad in007/).
-- Último `pnpm verificar`: OK (2026-10-18 16:00).
+- IN-007 hecha. Siguiente: IN-012 (diseño en docs/features/IN-012-lectores.md, pendiente de commit).

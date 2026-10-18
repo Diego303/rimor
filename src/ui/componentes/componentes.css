@@ -466,6 +466,12 @@ input[type="number"] {
   font-variant-numeric: tabular-nums;
   line-height: 1.15;
 }
+.stat .v.ok {
+  color: var(--ok);
+}
+.stat .v.warn {
+  color: var(--warn);
+}
 .verdict {
   display: flex;
   gap: 18px;

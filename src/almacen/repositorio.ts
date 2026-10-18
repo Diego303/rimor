@@ -34,6 +34,16 @@ const codificador = new TextEncoder();
 export interface OpcionesRepositorio {
   /** Se llama tras cada cambio en los archivos de elementos (guardar, papelera, restaurar, vaciar). */
   alCambiar?: () => void;
+  /** Si devuelve `false` (otra pestaña escribe), cualquier escritura falla con `almacen.soloLectura`. */
+  puedeEscribir?: () => boolean;
+}
+
+/** Error de escribir desde una pestaña que solo puede leer. */
+export class ErrorSoloLectura extends Error {
+  readonly codigo = 'almacen.soloLectura';
+  constructor() {
+    super('almacen.soloLectura');
+  }
 }
 
 /** Lo que el repositorio necesita de la caché del espacio. */
@@ -71,6 +81,11 @@ export class Repositorio {
     private readonly cache?: CacheRepositorio,
     private readonly opciones: OpcionesRepositorio = {},
   ) {}
+
+  /** Solo una pestaña escribe (IN-005): las demás no tocan los archivos aunque alguien lo intente. */
+  private comprobarEscritura(): void {
+    if (this.opciones.puedeEscribir && !this.opciones.puedeEscribir()) throw new ErrorSoloLectura();
+  }
 
   /** Avisa de un cambio (cuenta para el recordatorio de copia, IN-007). */
   private cambio(): void {
@@ -183,6 +198,7 @@ export class Repositorio {
    * título o la ref, renombra el archivo. Devuelve la ruta final.
    */
   async guardarElemento(el: Elemento): Promise<string> {
+    this.comprobarEscritura();
     const previa = this.porId.get(el.frontmatter.id);
     const destino = previa?.enPapelera
       ? `${CARPETA_PAPELERA}/${rutaElemento(el.frontmatter.ref, el.frontmatter.titulo, el.frontmatter.creado)}`
@@ -211,6 +227,7 @@ export class Repositorio {
   }
 
   async moverAPapelera(refOId: string): Promise<Resultado<string>> {
+    this.comprobarEscritura();
     const e = this.buscar(refOId);
     if (!e) return fallo('almacen.noEncontrado', { ref: refOId });
     if (e.enPapelera) return ok(e.ruta);
@@ -223,6 +240,7 @@ export class Repositorio {
   }
 
   async restaurar(refOId: string): Promise<Resultado<string>> {
+    this.comprobarEscritura();
     const e = this.buscar(refOId);
     if (!e) return fallo('almacen.noEncontrado', { ref: refOId });
     if (!e.enPapelera) return ok(e.ruta);
@@ -242,6 +260,7 @@ export class Repositorio {
 
   /** Borra definitivamente lo que hay en la papelera. El ZIP previo lo hace quien llama (IN-035). */
   async vaciarPapelera(): Promise<number> {
+    this.comprobarEscritura();
     const entradas = await listarTodo(this.almacen, `${CARPETA_PAPELERA}/`);
     for (const e of entradas) await this.almacen.borrar(e.ruta);
     const borrados: string[] = [];
@@ -265,6 +284,7 @@ export class Repositorio {
 
   /** Guarda un adjunto por su hash; si ya existe, no lo reescribe. */
   async guardarAdjunto(bytes: Uint8Array, extension: string): Promise<{ hash: string; ruta: string; nuevo: boolean }> {
+    this.comprobarEscritura();
     const hash = sha256Hex(bytes);
     const ruta = rutaAdjunto(hash, extension);
     if (await this.almacen.existe(ruta)) return { hash, ruta, nuevo: false };

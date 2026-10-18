@@ -78,17 +78,12 @@ export class AlmacenOpfs implements Almacen {
     return c ? this.archivoEn(c[0], c[1]) : null;
   }
 
+  /**
+   * Lee con `getFile()`, que no toma el cerrojo exclusivo de `createSyncAccessHandle`: así una pestaña lectora
+   * no hace fallar las escrituras de la otra (IN-007). Si el archivo se está escribiendo, la lectura falla y
+   * quien lee lo reintenta.
+   */
   private async leerArchivo(f: Archivo): Promise<Uint8Array> {
-    if (f.createSyncAccessHandle) {
-      const h = await f.createSyncAccessHandle();
-      try {
-        const datos = new Uint8Array(h.getSize());
-        h.read(datos, { at: 0 });
-        return datos;
-      } finally {
-        h.close();
-      }
-    }
     return new Uint8Array(await (await f.getFile()).arrayBuffer());
   }
 

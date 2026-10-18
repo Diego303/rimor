@@ -9,7 +9,7 @@ import { crearAlmacenOpfs } from '../almacen/opfs/cliente';
 import type { Canal, Cerrojos } from '../almacen/pestanas';
 import { useEspacio } from '../estado/espacio';
 import { useT } from '../i18n/useT';
-import { ErrorTarjeta } from '../ui/componentes';
+import { Boton, ErrorTarjeta } from '../ui/componentes';
 import { ESTADOS_SENAL } from '../ui/marca/estadosSenal';
 import { Senal } from '../ui/marca/Senal';
 import { useEsperaVisible } from '../ui/marca/useEsperaVisible';
@@ -57,6 +57,15 @@ function idEspacio(): string {
 /** Lo que el proveedor necesita para abrir el espacio; `liberar` suelta lo que no cierra el espacio (el Worker). */
 export type DependenciasProveedor = DependenciasEspacio & { enMemoria: boolean; liberar?: () => void };
 
+/** Recuerda el espacio abierto para la próxima vez. */
+function recordarEspacio(id: string): void {
+  try {
+    globalThis.localStorage?.setItem(CLAVE_ESPACIO, id);
+  } catch {
+    // Sin localStorage se abre el de por defecto.
+  }
+}
+
 /** Dependencias reales del navegador; si OPFS falla, el espacio va en memoria. */
 async function dependenciasDelNavegador(): Promise<DependenciasProveedor> {
   const espacioId = idEspacio();
@@ -78,7 +87,9 @@ async function dependenciasDelNavegador(): Promise<DependenciasProveedor> {
       liberar: () => void cola.esperar().finally(() => opfs.cerrar()),
     };
   } catch {
-    return { espacioId, cerrojos, canal, enMemoria: true, almacen: new AlmacenMemoria() };
+    // OPFS no se abre (navegador antiguo, ventana privada de Firefox, Worker que no carga): en memoria.
+    if (typeof BroadcastChannel === 'function') (canal as unknown as BroadcastChannel).close();
+    return { espacioId, cerrojos: cerrojoUnico, canal: canalMudo, enMemoria: true, almacen: new AlmacenMemoria() };
   }
 }
 
@@ -95,7 +106,10 @@ interface Props {
 
 export function ProveedorEspacio({ children, dependencias = dependenciasDelNavegador }: Props) {
   const [apertura, setApertura] = useState<Apertura>({ estado: 'abriendo', fase: { fase: 'abriendo' } });
+  // Cada «Reintentar» vuelve a abrir desde el principio.
+  const [intento, setIntento] = useState(0);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `intento` solo sirve para volver a abrir.
   useEffect(() => {
     let vivo = true;
     // Mientras se abre, el desmontaje solo marca `vivo = false` y la propia apertura suelta todo en su
@@ -109,15 +123,17 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
       soltar = () => {
         if (suelto) return;
         suelto = true;
-        abierto?.cerrar();
-        dep.liberar?.();
+        // Primero se escribe lo pendiente y se suelta el cerrojo; después se termina el Worker.
+        void Promise.resolve(abierto?.cerrar())
+          .catch(() => undefined)
+          .finally(() => dep.liberar?.());
       };
       if (!vivo) return soltar();
       const r = await abrirEspacio(dep, (fase) => vivo && setApertura({ estado: 'abriendo', fase }));
       if (r.ok) abierto = r.valor;
       if (!vivo) return soltar();
       if (!r.ok) {
-        dep.liberar?.();
+        soltar();
         setApertura({ estado: 'fallo', codigo: r.error.codigo });
         return;
       }
@@ -132,10 +148,12 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
       pintar();
       e.alCambiar(pintar);
       e.coordinacion.alCambiarModo(pintar);
-      // Una PWA instalada puede tener ya el almacenamiento protegido sin haberlo pedido: se anota.
+      // Una PWA instalada puede tener ya el almacenamiento protegido sin haberlo pedido: se anota. Si no se
+      // puede escribir, se sigue igual (nunca bloquea).
       if (!dep.enMemoria && e.estado().persistencia !== 'concedida' && (await estaPersistido()))
-        await e.guardarEstado((x) => conPersistencia(x, 'concedida', ahoraIso()));
+        await e.guardarEstado((x) => conPersistencia(x, 'concedida', ahoraIso())).catch(() => undefined);
       if (!vivo) return soltar();
+      if (!dep.enMemoria) recordarEspacio(dep.espacioId);
       listo = true;
       setApertura({ estado: 'listo', espacio: { ...e, enMemoria: dep.enMemoria, ventanaPrivada } });
     })().catch(() => {
@@ -146,14 +164,34 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
       vivo = false;
       if (listo) soltar?.();
     };
-  }, [dependencias]);
+  }, [dependencias, intento]);
 
   if (apertura.estado === 'listo') return <Contexto.Provider value={apertura.espacio}>{children}</Contexto.Provider>;
-  return <Arranque apertura={apertura} />;
+  return (
+    <Arranque
+      apertura={apertura}
+      alReintentar={() => {
+        setApertura({ estado: 'abriendo', fase: { fase: 'abriendo' } });
+        setIntento((n) => n + 1);
+      }}
+    />
+  );
 }
 
+/** Texto del fallo según su código. */
+const TEXTO_FALLO = {
+  'espacio.manifestInvalido': 'espacio.fallo.manifest',
+  'espacio.esquemaNuevo': 'espacio.fallo.esquemaNuevo',
+} as const;
+
 /** Pantalla de arranque: nada antes de 400 ms; después, «arranque» una vez y, si sigue abriendo, «cargando». */
-function Arranque({ apertura }: { apertura: Exclude<Apertura, { estado: 'listo' }> }) {
+function Arranque({
+  apertura,
+  alReintentar,
+}: {
+  apertura: Exclude<Apertura, { estado: 'listo' }>;
+  alReintentar: () => void;
+}) {
   const { t } = useT();
   const visible = useEsperaVisible(apertura.estado === 'abriendo');
   const [larga, setLarga] = useState(false);
@@ -166,8 +204,11 @@ function Arranque({ apertura }: { apertura: Exclude<Apertura, { estado: 'listo' 
   if (apertura.estado === 'fallo')
     return (
       <div className="arranque">
-        <ErrorTarjeta titulo={t('espacio.fallo.titulo')}>
-          {t(`espacio.fallo.${apertura.codigo === 'espacio.manifestInvalido' ? 'manifest' : 'otro'}`)}
+        <ErrorTarjeta
+          titulo={t('espacio.fallo.titulo')}
+          accion={<Boton onClick={alReintentar}>{t('espacio.fallo.reintentar')}</Boton>}
+        >
+          {t(TEXTO_FALLO[apertura.codigo as keyof typeof TEXTO_FALLO] ?? 'espacio.fallo.otro')}
         </ErrorTarjeta>
       </div>
     );

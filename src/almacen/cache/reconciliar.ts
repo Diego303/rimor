@@ -39,12 +39,21 @@ function gana(a: EntradaFrontmatter, b: EntradaFrontmatter): EntradaFrontmatter 
   return a.ruta <= b.ruta ? a : b;
 }
 
+export interface OpcionesReconciliar {
+  /**
+   * Pestaña que no escribe (IN-007): ni termina el diario de la otra ni toca la caché compartida; solo calcula
+   * las entradas vigentes. Las copias que deje una operación cortada se resuelven como duplicados.
+   */
+  soloLectura?: boolean;
+}
+
 export async function reconciliar(
   almacen: Almacen,
   cache: CacheEspacio,
   alProgreso?: (p: Progreso) => void,
+  { soloLectura = false }: OpcionesReconciliar = {},
 ): Promise<ResultadoReconciliacion> {
-  await recuperarOperacion(almacen);
+  if (!soloLectura) await recuperarOperacion(almacen);
   const archivos: EntradaAlmacen[] = [];
   for (const prefijo of ['elementos/', `${CARPETA_PAPELERA}/elementos/`])
     for (const e of await listarTodo(almacen, prefijo)) if (e.ruta.endsWith('.md')) archivos.push(e);
@@ -102,16 +111,17 @@ export async function reconciliar(
       anterior.modificado !== ganador.modificado
     ) {
       resultado.cambiados++;
-      if (anterior.frontmatter.hash !== ganador.frontmatter.hash)
+      if (!soloLectura && anterior.frontmatter.hash !== ganador.frontmatter.hash)
         await cache.podarDerivados(id, ganador.frontmatter.hash);
     } else continue;
     aGuardar.push(ganador);
   }
-  for (let i = 0; i < aGuardar.length; i += LOTE) await cache.guardarFrontmatters(aGuardar.slice(i, i + LOTE));
+  if (!soloLectura)
+    for (let i = 0; i < aGuardar.length; i += LOTE) await cache.guardarFrontmatters(aGuardar.slice(i, i + LOTE));
 
   // Lo que está en la caché y ya no está en ningún archivo. Un renombrado conserva su id: su entrada ya cambió.
   const sobran = enCache.filter((c) => !vigentes.has(c.id)).map((c) => c.id);
-  await cache.borrarElementos(sobran);
+  if (!soloLectura) await cache.borrarElementos(sobran);
   resultado.borrados = sobran.length;
   resultado.entradas = [...vigentes.values()];
   resultado.total = vigentes.size;

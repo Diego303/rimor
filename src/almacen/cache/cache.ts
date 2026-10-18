@@ -59,6 +59,17 @@ export class CacheEspacio {
     return cache;
   }
 
+  /** Borra la base de la caché de un espacio (para rehacerla si no se puede abrir). */
+  static borrar(espacio: string, fabrica: IDBFactory = globalThis.indexedDB): Promise<void> {
+    return new Promise((ok, ko) => {
+      const peticion = fabrica.deleteDatabase(`rimor-cache-${espacio}`);
+      peticion.onsuccess = () => ok();
+      peticion.onerror = () => ko(peticion.error);
+      // Otra pestaña la tiene abierta: abrirla después quedaría esperando a que la suelte.
+      peticion.onblocked = () => ko(new Error('cache.bloqueada'));
+    });
+  }
+
   frontmatters(): Promise<EntradaFrontmatter[]> {
     return this.db.getAll('frontmatter');
   }

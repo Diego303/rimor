@@ -106,9 +106,7 @@
       "vacio": "Añade elementos con @colección al capturar."
     },
     "datos": {
-      "titulo": "Datos y copias",
-      "vacioTitulo": "Datos y copias",
-      "vacio": "Aquí verás cuánto ocupa el espacio, si está protegido y cuándo se copió."
+      "titulo": "Datos y copias"
     },
     "ajustes": {
       "titulo": "Ajustes",
@@ -127,7 +125,9 @@
     "fallo": {
       "titulo": "No se pudo abrir el espacio",
       "manifest": "Su manifest.json no se entiende: puede ser de otra versión de Rimor. No se ha tocado nada.",
-      "otro": "El navegador no dejó abrir los datos. Recarga la página; si sigue, exporta desde otra pestaña."
+      "otro": "El navegador no dejó abrir los datos. Cierra las demás pestañas de Rimor y vuelve a intentarlo.",
+      "esquemaNuevo": "Lo creó una versión más nueva de Rimor. Actualiza la página para usarla; no se ha tocado nada.",
+      "reintentar": "Reintentar"
     },
     "persistencia": {
       "titulo": "Protege tus datos",
@@ -141,6 +141,24 @@
       "memoria": "Este navegador no deja guardar: lo que captures se perderá al cerrar la pestaña.",
       "privada": "Parece una ventana privada: todo se borrará al cerrarla.",
       "soloLectura": "Rimor está abierto en otra pestaña: aquí solo puedes leer."
+    },
+    "cuidado": {
+      "usado": {
+        "one": "{n} elemento",
+        "other": "{n} elementos"
+      },
+      "usadoDesconocido": "—",
+      "persistencia": "almacenamiento persistente",
+      "protegido": "Protegido",
+      "sinProteger": "Sin proteger",
+      "noDisponible": "No disponible",
+      "nunca": "Nunca",
+      "copia": {
+        "one": "última copia · {n} cambio desde entonces",
+        "other": "última copia · {n} cambios desde entonces"
+      },
+      "meta": "Espacio «{nombre}» · guardado en tu navegador",
+      "metaMemoria": "Espacio «{nombre}» · solo en esta pestaña"
     }
   }
 }

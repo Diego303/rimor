@@ -1,14 +1,21 @@
 import 'fake-indexeddb/auto';
 import { type Elemento, esUlid, hashOriginal, leerManifest } from '@rimor/formato';
 import { IDBFactory } from 'fake-indexeddb';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { escribirTexto, leerTexto } from '../almacen/contrato';
 import { AlmacenMemoria } from '../almacen/memoria';
 import type { Canal, Cerrojos } from '../almacen/pestanas';
+import { RUTA_DIARIO } from '../almacen/repositorio';
 import { abrirEspacio } from './abrir';
 import { conCopia, conPersistencia, ESTADO_INICIAL, leerEstado, RUTA_ESTADO } from './estado';
-import { RUTA_MANIFEST } from './manifest';
-import { CUOTA_VENTANA_PRIVADA, espacioUsado, esVentanaPrivada, pedirPersistencia } from './persistencia';
+import { crearManifest, RUTA_MANIFEST } from './manifest';
+import {
+  CUOTA_VENTANA_PRIVADA,
+  espacioUsado,
+  esVentanaPrivada,
+  pedirPersistencia,
+  umbralVentanaPrivada,
+} from './persistencia';
 import { copiaAlDia, resumenParaCarcasa, sinClasificar } from './resumen';
 
 function cerrojosFalsos(): Cerrojos {
@@ -144,6 +151,136 @@ describe('abrirEspacio', () => {
     expect(await leerTexto(almacen, RUTA_MANIFEST)).toBe('{ roto');
   });
 
+  it('al crear el espacio escribe también el estado inicial', async () => {
+    const almacen = new AlmacenMemoria();
+    const r = await abrirEspacio({
+      espacioId: 'e6',
+      almacen,
+      fabricaIndexedDb: new IDBFactory(),
+      cerrojos: cerrojosFalsos(),
+      canal: canal(),
+    });
+    expect(leerEstado(await leerTexto(almacen, RUTA_ESTADO))).toEqual(ESTADO_INICIAL);
+    if (r.ok) await r.valor.cerrar();
+  });
+
+  it('un manifest de un esquema más nuevo no se abre ni se toca', async () => {
+    const almacen = new AlmacenMemoria();
+    const texto = JSON.stringify({ ...crearManifest('Trabajo', new Date()), esquema: 99 });
+    await escribirTexto(almacen, RUTA_MANIFEST, texto);
+    const r = await abrirEspacio({
+      espacioId: 'e7',
+      almacen,
+      fabricaIndexedDb: new IDBFactory(),
+      cerrojos: cerrojosFalsos(),
+      canal: canal(),
+    });
+    expect(!r.ok && r.error.codigo).toBe('espacio.esquemaNuevo');
+    expect(await leerTexto(almacen, RUTA_MANIFEST)).toBe(texto);
+  });
+
+  it('una pestaña lectora no termina el diario de la otra ni puede escribir', async () => {
+    const almacen = new AlmacenMemoria();
+    const cerrojos = cerrojosFalsos();
+    const fabrica = new IDBFactory();
+    const a = await abrirEspacio({ espacioId: 'e8', almacen, fabricaIndexedDb: fabrica, cerrojos, canal: canal() });
+    if (!a.ok) throw new Error('no abre');
+    await escribirTexto(almacen, 'elementos/x.md', 'x');
+    await escribirTexto(almacen, 'elementos/y.md', 'y');
+    await escribirTexto(almacen, RUTA_DIARIO, JSON.stringify({ de: 'elementos/x.md', a: 'elementos/y.md' }));
+    const b = await abrirEspacio({ espacioId: 'e8', almacen, fabricaIndexedDb: fabrica, cerrojos, canal: canal() });
+    if (!b.ok) throw new Error('no abre');
+    expect(b.valor.coordinacion.modo()).toBe('lector');
+    expect(await leerTexto(almacen, 'elementos/x.md')).toBe('x');
+    expect(await leerTexto(almacen, RUTA_DIARIO)).not.toBeNull();
+    await expect(b.valor.repositorio.guardarElemento(elemento(1))).rejects.toThrow('almacen.soloLectura');
+    await a.valor.cerrar();
+    await b.valor.cerrar();
+  });
+
+  it('al pasar a escribir, la lectora relee estado y elementos antes de escribir', async () => {
+    const almacen = new AlmacenMemoria();
+    const cerrojos = cerrojosFalsos();
+    const fabrica = new IDBFactory();
+    const a = await abrirEspacio({ espacioId: 'e9', almacen, fabricaIndexedDb: fabrica, cerrojos, canal: canal() });
+    const b = await abrirEspacio({ espacioId: 'e9', almacen, fabricaIndexedDb: fabrica, cerrojos, canal: canal() });
+    if (!a.ok || !b.ok) throw new Error('no abre');
+    await a.valor.guardarEstado((e) => conPersistencia(e, 'concedida', '2026-10-18T10:00:00+02:00'));
+    for (let i = 1; i <= 3; i++) await a.valor.repositorio.guardarElemento(elemento(i));
+    expect(b.valor.repositorio.elementos()).toHaveLength(0);
+    await a.valor.cerrar();
+    await vi.waitFor(() => expect(b.valor.repositorio.elementos()).toHaveLength(3));
+    expect(b.valor.coordinacion.modo()).toBe('escritor');
+    await b.valor.repositorio.guardarElemento(elemento(4));
+    await b.valor.guardarEstado((e) => e);
+    expect(leerEstado(await leerTexto(almacen, RUTA_ESTADO))).toMatchObject({
+      persistencia: 'concedida',
+      cambiosDesdeCopia: 4,
+    });
+    await b.valor.cerrar();
+  });
+
+  it('una lectora relee lo que cambia la otra pestaña', async () => {
+    const almacen = new AlmacenMemoria();
+    const cerrojos = cerrojosFalsos();
+    const fabrica = new IDBFactory();
+    // Un canal compartido en memoria, como BroadcastChannel entre pestañas.
+    const oyentes = new Set<(e: { data: unknown }) => void>();
+    const canalCompartido = (): Canal => {
+      let propio: ((e: { data: unknown }) => void) | null = null;
+      return {
+        postMessage: (data) => {
+          for (const fn of oyentes) if (fn !== propio) fn({ data });
+        },
+        addEventListener: (_t, fn) => {
+          propio = fn;
+          oyentes.add(fn);
+        },
+        close: () => {
+          if (propio) oyentes.delete(propio);
+        },
+      };
+    };
+    const a = await abrirEspacio({
+      espacioId: 'e10',
+      almacen,
+      fabricaIndexedDb: fabrica,
+      cerrojos,
+      canal: canalCompartido(),
+    });
+    const b = await abrirEspacio({
+      espacioId: 'e10',
+      almacen,
+      fabricaIndexedDb: fabrica,
+      cerrojos,
+      canal: canalCompartido(),
+    });
+    if (!a.ok || !b.ok) throw new Error('no abre');
+    await a.valor.repositorio.guardarElemento(elemento(1));
+    await vi.waitFor(() => expect(b.valor.repositorio.buscar('LOG-0001')).toBeTruthy());
+    await a.valor.cerrar();
+    await b.valor.cerrar();
+  });
+
+  it('si la caché no se deja abrir, la rehace', async () => {
+    const fabrica = new IDBFactory();
+    const abrir = fabrica.open.bind(fabrica);
+    let fallos = 1;
+    fabrica.open = (...args: Parameters<IDBFactory['open']>) => {
+      if (fallos-- > 0) throw new Error('rota');
+      return abrir(...args);
+    };
+    const r = await abrirEspacio({
+      espacioId: 'e11',
+      almacen: new AlmacenMemoria(),
+      fabricaIndexedDb: fabrica,
+      cerrojos: cerrojosFalsos(),
+      canal: canal(),
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) await r.valor.cerrar();
+  });
+
   it('avisa del progreso al indexar', async () => {
     const almacen = new AlmacenMemoria();
     const primera = await abrirEspacio({
@@ -231,6 +368,8 @@ describe('persistencia', () => {
     });
     expect(await espacioUsado({})).toBeNull();
     const grande = { getDirectory: async () => ({}), estimate: async () => ({ usage: 0, quota: 50e9 }) };
+    expect(umbralVentanaPrivada(undefined)).toBe(CUOTA_VENTANA_PRIVADA);
+    expect(umbralVentanaPrivada(4 * 1024 ** 3)).toBe(8 * 1024 ** 3);
     expect(await esVentanaPrivada(grande)).toBe(false);
     expect(
       await esVentanaPrivada({ ...grande, estimate: async () => ({ usage: 0, quota: CUOTA_VENTANA_PRIVADA - 1 }) }),

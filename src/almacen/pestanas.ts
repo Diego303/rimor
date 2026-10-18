@@ -72,6 +72,8 @@ export async function coordinarPestanas(espacioId: string, cerrojos: Cerrojos, c
     avisarCambio: (rutas) => canal.postMessage({ tipo: 'cambio', rutas }),
     alCambiarEnOtra: (fn) => void alCambio.add(fn),
     cerrar: () => {
+      // Tras cerrar, esta pestaña ya no escribe aunque siga viva.
+      modo = 'lector';
       parar.abort();
       liberar();
       canal.close();

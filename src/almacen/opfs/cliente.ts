@@ -13,11 +13,31 @@ export interface AlmacenOpfsRemoto extends Almacen {
   cerrar(): void;
 }
 
-/** Abre (o crea) la carpeta del espacio en OPFS dentro de un Worker. */
-export async function crearAlmacenOpfs(espacio: string): Promise<AlmacenOpfsRemoto> {
+/** Lo que se espera a que el Worker abra OPFS antes de darlo por perdido. */
+export const ESPERA_APERTURA_MS = 10_000;
+
+/**
+ * Abre (o crea) la carpeta del espacio en OPFS dentro de un Worker. Falla (y termina el Worker) si OPFS no se
+ * abre, si el Worker no llega a cargar (Comlink no rechaza nada en ese caso) o si tarda demasiado.
+ */
+export async function crearAlmacenOpfs(espacio: string, espera = ESPERA_APERTURA_MS): Promise<AlmacenOpfsRemoto> {
   const worker = new Worker(new URL('../../workers/almacen.worker.ts', import.meta.url), { type: 'module' });
   const api = wrap<ApiAlmacenWorker>(worker);
-  await api.abrir(espacio);
+  let tiempo: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      api.abrir(espacio),
+      new Promise<never>((_, ko) => {
+        worker.addEventListener('error', () => ko(new Error('opfs.workerNoCarga')), { once: true });
+        tiempo = setTimeout(() => ko(new Error('opfs.tiempoAgotado')), espera);
+      }),
+    ]);
+  } catch (e) {
+    worker.terminate();
+    throw e;
+  } finally {
+    clearTimeout(tiempo);
+  }
   return {
     limpiarHuerfanos: () => api.limpiarHuerfanos(),
     leer: (ruta) => api.leer(ruta),

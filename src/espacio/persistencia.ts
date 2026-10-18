@@ -47,14 +47,30 @@ export async function espacioUsado(
   }
 }
 
-/** Por debajo de esta cuota, lo normal es una ventana privada (Chromium y Safari dan cuotas pequeñas). */
+/** Por debajo de esta cuota, lo normal es una ventana privada (Safari y navegadores sin `performance.memory`). */
 export const CUOTA_VENTANA_PRIVADA = 150 * 1024 * 1024;
 
+/** Límite del montón de JavaScript en Chromium (`performance.memory`, no estándar); `undefined` en los demás. */
+const limiteMonton = (): number | undefined =>
+  (globalThis.performance as { memory?: { jsHeapSizeLimit?: number } } | undefined)?.memory?.jsHeapSizeLimit;
+
 /**
- * Heurística de ventana privada: OPFS no se puede abrir (Firefox) o la cuota es muy pequeña (Chromium, Safari).
+ * Cuota por debajo de la cual se sospecha una ventana privada. En Chromium, la de incógnito sale de la memoria
+ * del equipo y queda por debajo de dos veces el límite del montón, mientras que la normal es una parte del
+ * disco (la misma regla que usan las bibliotecas de detección conocidas); en el resto, 150 MB.
+ */
+export function umbralVentanaPrivada(monton: number | undefined = limiteMonton()): number {
+  return monton ? Math.max(CUOTA_VENTANA_PRIVADA, 2 * monton) : CUOTA_VENTANA_PRIVADA;
+}
+
+/**
+ * Heurística de ventana privada: OPFS no se puede abrir (Firefox) o la cuota es pequeña (Chromium, Safari).
  * Solo sirve para avisar; nunca bloquea nada.
  */
-export async function esVentanaPrivada(s: AlmacenamientoNavegador | undefined = del()): Promise<boolean> {
+export async function esVentanaPrivada(
+  s: AlmacenamientoNavegador | undefined = del(),
+  umbral = umbralVentanaPrivada(),
+): Promise<boolean> {
   if (!s?.getDirectory) return false;
   try {
     await s.getDirectory();
@@ -62,5 +78,5 @@ export async function esVentanaPrivada(s: AlmacenamientoNavegador | undefined = 
     return true;
   }
   const e = await espacioUsado(s);
-  return e !== null && e.cuota < CUOTA_VENTANA_PRIVADA;
+  return e !== null && e.cuota < umbral;
 }

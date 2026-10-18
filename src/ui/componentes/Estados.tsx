@@ -86,7 +86,16 @@ export function Espera({ texto }: { texto: string }) {
 }
 
 /** Qué pasó y qué hacer, sin disculpas. */
-export function ErrorTarjeta({ titulo, children }: { titulo: ReactNode; children: ReactNode }) {
+export function ErrorTarjeta({
+  titulo,
+  accion,
+  children,
+}: {
+  titulo: ReactNode;
+  /** Botón para salir del error (reintentar), debajo del texto. */
+  accion?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <section className="card error" role="alert">
       <div className="row">
@@ -95,6 +104,7 @@ export function ErrorTarjeta({ titulo, children }: { titulo: ReactNode; children
         <b className="sm titulo-error">{titulo}</b>
       </div>
       <p className="sm">{children}</p>
+      {accion && <div className="row">{accion}</div>}
     </section>
   );
 }
