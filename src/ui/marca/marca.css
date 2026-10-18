@@ -1,0 +1,30 @@
+/* Marca (IN-089): el símbolo sigue al tema por tokens. */
+.simbolo {
+  display: block;
+  flex: none;
+}
+.simbolo .onda,
+.simbolo .guion {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.simbolo .punto {
+  fill: var(--key);
+}
+.simbolo.mono .punto {
+  fill: var(--ink);
+}
+/* Como el «.rail .rbrand» de las pantallas: separación de 8 px y nombre en Archivo 700. */
+.logotipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.logotipo b {
+  font-family: var(--f-d);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}

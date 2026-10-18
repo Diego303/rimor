@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
   "files": {
-    "includes": ["**", "!docs/referencias", "!docs/marca/originales", "!src/ui/marca/referencia", "!**/*.astro"]
+    "includes": ["**", "!docs/referencias", "!docs/marca", "!src/ui/marca/referencia", "!public/marca", "!**/*.astro"]
   },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "always", "trailingCommas": "all" } },

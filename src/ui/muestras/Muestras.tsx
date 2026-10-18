@@ -34,7 +34,11 @@ import {
   Veredicto,
 } from '../componentes';
 import { ASPECTO_TIPO, type TipoVisual } from '../iconos/tipos';
+import { Logotipo } from '../marca/Logotipo';
+import { SimboloRimor } from '../marca/SimboloRimor';
 import { aplicarTema } from '../tema/tema';
+
+const BASE = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
 const TOKENS = [
   ['--app', 'Fondo'],
@@ -167,10 +171,29 @@ function Galeria() {
             <BotonAviso />
           </div>
         </Tarjeta>
+        <Tarjeta titulo="Marca: símbolo «Señal»">
+          <div className="row muestras-marca">
+            {[16, 20, 24, 48, 96].map((t) => (
+              <SimboloRimor key={t} tamano={t} titulo={`Rimor ${t} px`} />
+            ))}
+            <SimboloRimor tamano={48} variante="mono" titulo="Rimor mono" />
+          </div>
+          <div className="row muestras-marca">
+            <Logotipo />
+            <Logotipo tamano={28} />
+          </div>
+          <div className="row muestras-marca">
+            {['rimor-app-claro-32.png', 'rimor-app-claro-180.png', 'rimor-maskable-claro-192.png'].map((png) => (
+              <img key={png} src={`${BASE}marca/${png}`} alt={png} width={64} height={64} />
+            ))}
+            <img src={`${BASE}marca/favicon.svg`} alt="favicon.svg" width={32} height={32} />
+          </div>
+        </Tarjeta>
         <Tarjeta titulo="Respuesta de Rimor">
           <div className="rimor muestra-rimor">
-            {/* El avatar lleva el símbolo «Señal» en mono a partir de IN-089. */}
-            <span className="av" aria-hidden="true" />
+            <span className="av" aria-hidden="true">
+              <SimboloRimor variante="mono" tamano={13} />
+            </span>
             <p>Así habla Rimor: una o dos frases con lo que ha entendido y, si hace falta, una pregunta con botones.</p>
           </div>
         </Tarjeta>

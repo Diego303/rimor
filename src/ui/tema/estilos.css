@@ -5,3 +5,4 @@
 @import "./tailwind.css";
 @import "./base.css" layer(base);
 @import "../componentes/componentes.css" layer(components);
+@import "../marca/marca.css" layer(components);

@@ -105,3 +105,10 @@ Las salidas se guardan en el repositorio: la construcción no depende de ejecuta
 ## Autorrevisión
 
 Cubre la ficha; dos tareas dependen de componentes de IN posteriores y se anotan en ellas. Sin contradicciones con ADR-0004.
+
+## Cambios durante la implementación
+
+- **opentype.js 2 no admite una sustitución (`ccmp`, tipo 6, formato 2) de Archivo** y falla con `getPath`. El logotipo en contornos se compone glifo a glifo (avance, kerning y el espaciado de −0,4), sin pasar por las sustituciones; para «Rimor» el resultado es el mismo.
+- SVGO pasa los trazados a coordenadas relativas (`M7 24c3.5-11.5…`): mismo dibujo, menos bytes. El favicon no lleva `<title>` (no lo traía el original).
+- `scripts/comprobar-dist.mjs` (`pnpm comprobar:dist`, dentro de `verificar`): comprueba que el HTML construido enlaza el favicon, el PNG de 32 y el `apple-touch-icon` con la `BASE` del entorno, que existen en `dist/` y que están los dos `theme-color`.
+- Biome no revisa `public/marca/` ni `docs/marca/` (salidas generadas); las pruebas de `marca.test.ts` sí.

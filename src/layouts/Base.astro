@@ -6,6 +6,7 @@ interface Props {
   titulo?: string;
 }
 const { titulo = 'Rimor' } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 
 <!doctype html>
@@ -16,6 +17,12 @@ const { titulo = 'Rimor' } = Astro.props;
     <meta name="description" content="Rimor: del rumor a la conclusión." />
     <meta name="generator" content={Astro.generator} />
     <title>{titulo}</title>
+    <link rel="icon" href={`${base}marca/favicon.svg`} type="image/svg+xml" />
+    <link rel="icon" href={`${base}marca/rimor-app-claro-32.png`} sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href={`${base}marca/rimor-app-claro-180.png`} />
+    <!-- theme-color no admite variables CSS: son --app en claro y en oscuro (tokens.css). rimor-permitir-color -->
+    <meta name="theme-color" content="#E8E6E1" media="(prefers-color-scheme: light)" /><!-- rimor-permitir-color -->
+    <meta name="theme-color" content="#1A1A19" media="(prefers-color-scheme: dark)" /><!-- rimor-permitir-color -->
     <!-- Aplica el tema forzado antes de pintar, sin parpadeo (src/ui/tema/tema.ts). -->
     <script is:inline>
       try {

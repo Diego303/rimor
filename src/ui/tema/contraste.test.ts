@@ -58,6 +58,11 @@ describe('contraste de los tokens (§13.1)', () => {
     });
   }
 
+  it('el punto naranja sobre --panel llega a 3:1 en los dos temas (gráfico, WCAG 1.4.11)', () => {
+    expect(contraste(claro['--key'] ?? '', claro['--panel'] ?? '')).toBeGreaterThanOrEqual(3);
+    expect(contraste(oscuro['--key'] ?? '', oscuro['--panel'] ?? '')).toBeGreaterThanOrEqual(3);
+  });
+
   it('el símbolo sobre el icono de señal llega a 4,8:1 (IN-089)', () => {
     expect(contraste('#191919', '#EE4F1F')).toBeGreaterThanOrEqual(4.8 - TOLERANCIA);
     expect(contraste('#191919', '#EE4F1F')).toBeGreaterThanOrEqual(AA);

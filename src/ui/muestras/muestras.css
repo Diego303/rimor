@@ -46,3 +46,8 @@
   border: 0;
   border-right: 1px solid var(--line);
 }
+
+.muestras-marca {
+  gap: 16px;
+  align-items: flex-end;
+}
