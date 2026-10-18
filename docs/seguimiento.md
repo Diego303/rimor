@@ -2,7 +2,7 @@
 
 **Estado global:** EN CURSO
 **Última actualización:** 2026-10-18 20:08
-**Ahora:** IN-020 · Lector Log · fase análisis y diseño
+**Ahora:** IN-020 · Lector Log · fase implementación
 **Siguiente:** IN-021 · Lector Error y huella
 **Progreso:** F0 9/9 · v0.1 21/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 30/99
 
@@ -38,8 +38,8 @@
 | IN-016 | Respuestas de Rimor y contadores locales | v0.1 | 3 | hecha | c521a65 5b52db2 674f816 | docs/features/IN-016-respuestas.md |
 | IN-017 | Lector Texto y lector genérico de archivo | v0.1 | 3 | hecha | ecade38 19869f2 d231066 | docs/features/IN-017-texto-archivo.md |
 | IN-018 | Lector Idea y resurgimiento mínimo | v0.1 | 4 | hecha | 42c27b3 1f5f2dc 8c171e4 | docs/features/IN-018-idea.md |
-| IN-019 | Lector Enlace básico | v0.1 | 4 | hecha | 218e20d bed4c8f | docs/features/IN-019-enlace.md |
-| IN-020 | Lector Log | v0.1 | 4 | pendiente | — | — |
+| IN-019 | Lector Enlace básico | v0.1 | 4 | hecha | 218e20d bed4c8f d8043f4 | docs/features/IN-019-enlace.md |
+| IN-020 | Lector Log | v0.1 | 4 | en análisis y diseño | — | docs/features/IN-020-log.md |
 | IN-021 | Lector Error y huella | v0.1 | 4 | pendiente | — | — |
 | IN-022 | Lector Mediciones | v0.1 | 4 | pendiente | — | — |
 | IN-023 | Lector Prompt | v0.1 | 4 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-18 | IN-019 | verificación | OK (608 pruebas; 14 hallazgos de la revisión corregidos) | … |
+| 2026-10-18 | IN-020 | análisis y diseño | marcas y niveles de 8 formatos, plantillas, pares, histograma, bloques con progreso y carga de adjuntos | … |
+| 2026-10-18 | IN-019 | verificación | OK (608 pruebas; 14 hallazgos de la revisión corregidos) | d8043f4 |
 | 2026-10-18 | IN-019 | implementación | OK (603 pruebas; 60/60 URL; matriz 100/100) | bed4c8f |
 | 2026-10-18 | IN-019 | análisis y diseño | normalización sin seguimiento, clasificación por destino, título y huella por URL | 218e20d |
 | 2026-10-18 | IN-018 | verificación | OK (592 pruebas; 11 hallazgos de la revisión corregidos) | 8c171e4 |
