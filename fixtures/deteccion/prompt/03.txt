@@ -1,0 +1,2 @@
+Actúa como traductor técnico. Analiza el texto {texto} y responde en tres partes: lo que está bien, lo que falta y tres preguntas.
+No inventes nada que no esté en la entrada.

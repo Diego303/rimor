@@ -1,0 +1,8 @@
+Actúa como editor técnico. Resume el documento <documento> en cinco puntos para <publico>.
+
+<ejemplo>
+- Punto breve y concreto.
+- Otro punto con una cifra si la hay.
+</ejemplo>
+
+No inventes datos que no estén en el documento.

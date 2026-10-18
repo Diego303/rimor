@@ -1,0 +1,47 @@
+{
+  "revisor-adr.txt": {
+    "forma": "libre",
+    "variables": ["{{adr}}", "{{contexto}}", "{{criterios}}"],
+    "destino": null
+  },
+  "revisor-adr-v1.txt": {
+    "forma": "libre",
+    "variables": ["{{adr}}"],
+    "destino": null
+  },
+  "roles.txt": {
+    "forma": "roles",
+    "variables": ["{concepto_a}", "{concepto_b}"],
+    "destino": null
+  },
+  "claude-md.md": {
+    "forma": "claude-md",
+    "variables": [],
+    "destino": "Claude"
+  },
+  "skill.md": {
+    "forma": "skill",
+    "variables": ["{{rama}}"],
+    "destino": "Claude"
+  },
+  "agente.md": {
+    "forma": "agente",
+    "variables": ["{{pr}}"],
+    "destino": "Claude"
+  },
+  "angulos.txt": {
+    "forma": "libre",
+    "variables": ["<documento>", "<publico>"],
+    "destino": null
+  },
+  "json-salida.txt": {
+    "forma": "libre",
+    "variables": ["{{incidencia}}"],
+    "destino": null
+  },
+  "ingles.txt": {
+    "forma": "libre",
+    "variables": ["{{codigo}}"],
+    "destino": null
+  }
+}

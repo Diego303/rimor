@@ -146,3 +146,23 @@ describe('Repositorio', () => {
     expect(a.ruta).toBe(`adjuntos/${a.hash.slice(0, 2)}/${a.hash}.log`);
   });
 });
+
+describe('historial', () => {
+  it('guarda sin pisar: el segundo del mismo día lleva -2; a la vez, tampoco eligen la misma ruta', async () => {
+    const repo = new Repositorio(new AlmacenMemoria());
+    const base = 'historial/PRM-0001/resultado-2026-10-18';
+    expect(await repo.guardarEnHistorial(base, 'uno')).toBe(`${base}.md`);
+    expect(await repo.guardarEnHistorial(base, 'dos')).toBe(`${base}-2.md`);
+    const [a, b] = await Promise.all([repo.guardarEnHistorial(base, 'tres'), repo.guardarEnHistorial(base, 'cuatro')]);
+    expect([a, b]).toEqual([`${base}-3.md`, `${base}-4.md`]);
+    expect(await repo.leerHistorial(`${base}-2.md`)).toBe('dos');
+    expect(await repo.leerHistorial('elementos/x.md')).toBeNull();
+  });
+
+  it('fuera de historial/ o en una pestaña que solo lee, no escribe', async () => {
+    await expect(new Repositorio(new AlmacenMemoria()).guardarEnHistorial('elementos/x', 'y')).rejects.toThrow();
+    await expect(new Repositorio(new AlmacenMemoria()).guardarEnHistorial('historial/../x', 'y')).rejects.toThrow();
+    const lectora = new Repositorio(new AlmacenMemoria(), undefined, { puedeEscribir: () => false });
+    await expect(lectora.guardarEnHistorial('historial/PRM-0001/r', 'y')).rejects.toThrow('almacen.soloLectura');
+  });
+});

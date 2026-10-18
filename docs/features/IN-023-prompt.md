@@ -56,11 +56,11 @@ Como la referencia:
 
 ## Tareas
 
-- [ ] Detecta imperativo dirigido a un modelo, variables `{{x}}`, `{x}` y `<x>`, bloques de rol, `CLAUDE.md`, skills y definiciones de agentes.
-- [ ] Deriva variables, tokens aproximados (4 caracteres por token, documentado), secciones y destino si se menciona.
-- [ ] Copiar con valores: una caja por variable, valores recordados por prompt, portapapeles con alternativa de seleccionar; suma un contador.
-- [ ] Resultados: respuesta pegada, valoración 1–5 y nota en `historial/REF/resultado-fecha.md`.
-- [ ] Respuesta: «Prompt con 3 variables. Lo puedes copiar con valores.»
+- [x] Detecta imperativo dirigido a un modelo, variables `{{x}}`, `{x}` y `<x>`, bloques de rol, `CLAUDE.md`, skills y definiciones de agentes.
+- [x] Deriva variables, tokens aproximados (4 caracteres por token, documentado), secciones y destino si se menciona.
+- [x] Copiar con valores: una caja por variable, valores recordados por prompt, portapapeles con alternativa de seleccionar; suma un contador.
+- [x] Resultados: respuesta pegada, valoración 1–5 y nota en `historial/REF/resultado-fecha.md`.
+- [x] Respuesta: «Prompt con 3 variables. Lo puedes copiar con valores.»
 
 ## Pruebas previstas
 
@@ -86,3 +86,13 @@ Como la referencia:
 ## Autorrevisión
 
 Cubre las cinco tareas y las dos pruebas de la ficha (sustitución con llaves; skill y `CLAUDE.md` del corpus). Versiones, diff y «qué versión tuvo mejores valoraciones» son de IN-029 (CMP-02); la media de valoraciones de la vista es la de todos los resultados del prompt. Con lo aprendido en IN-021 e IN-022, la detección exige señales de modelo y longitud, y las pruebas recorren los corpus de los demás tipos con el detector real.
+
+## Cambios durante la implementación
+
+- El repositorio gana `guardarEnHistorial(base, texto)` (en turno por ruta, con sufijos `-2`, `-3`… sin pisar nada; solo bajo `historial/`) y `leerHistorial(ruta)`.
+- El contador es `copiasConValores` (ya estaba en los contadores de IN-016); cuenta también cuando el navegador no deja copiar y se enseña el texto listo.
+- El destino no se pinta en la tarjeta del texto (la referencia solo lleva el `pre`): va en el resumen legible («Para Claude») y en «Detalles».
+- «Llama» solo cuenta como destino con su versión o con Meta (en español es un verbo); se quitan «Cursor» y los nombres sueltos de modelos de OpenAI que chocan con palabras corrientes.
+- Las exclusiones (código y JSON) y las etiquetas que se cierran se calculan en una pasada lineal; la detección mira los primeros 20.000 caracteres.
+- Los encabezados Markdown no cuentan como estructura de prompt al detectar (un documento también los tiene); sí las variables y las secciones XML.
+

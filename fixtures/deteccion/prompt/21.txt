@@ -1,0 +1,8 @@
+# AGENTS.md
+
+## Commands
+- `cargo test` runs the tests.
+- `cargo clippy` must pass.
+
+## Code style
+- Prefer explicit errors over unwrap.

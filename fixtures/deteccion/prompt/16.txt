@@ -1,0 +1,2 @@
+system: You are a helpful assistant that answers briefly.
+user: Summarize {{articulo}} in five bullet points.

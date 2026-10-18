@@ -6,6 +6,10 @@ import { AlmacenMemoria } from '../almacen/memoria';
 import type { Cerrojos } from '../almacen/pestanas';
 import { type DependenciasProveedor, ProveedorEspacio, useEspacioAbierto } from '../espacio/Espacio';
 import VistaArchivo from './archivo/Vista';
+import { lectorMediciones } from './mediciones/lector';
+import VistaMediciones from './mediciones/Vista';
+import { analizarPrompt } from './prompt/analisis';
+import VistaPrompt from './prompt/Vista';
 import { elementoFalso } from './pruebas/falsos';
 import VistaTexto from './texto/Vista';
 
@@ -173,14 +177,12 @@ describe('vista de Mediciones', () => {
   const cargar = async (archivo: string) => {
     const { readFileSync } = await import('node:fs');
     const { join } = await import('node:path');
-    const { lectorMediciones } = await import('./mediciones/lector');
     const texto = readFileSync(join(process.cwd(), 'fixtures/mediciones', archivo), 'utf8');
     const el = elementoFalso(9, texto, 'mediciones');
     return { el, datos: await lectorMediciones.derivar(el) };
   };
 
   it('la mediana como veredicto, el gráfico con su banda y su mediana, la tabla y los avisos con su número', async () => {
-    const { default: VistaMediciones } = await import('./mediciones/Vista');
     const { el, datos } = await cargar('reqwest.txt');
     const { container } = render(<VistaMediciones el={el} datos={datos} />);
     expect(container.querySelector('.verdict.ok .big')?.textContent).toBe('38,54\u00a0ms');
@@ -209,7 +211,6 @@ describe('vista de Mediciones', () => {
   });
 
   it('con pocas, el veredicto avisa; varias series, una fila y una banda por serie', async () => {
-    const { default: VistaMediciones } = await import('./mediciones/Vista');
     const pocas = await cargar('pocas.txt');
     const { container, unmount } = render(<VistaMediciones el={pocas.el} datos={pocas.datos} />);
     expect(container.querySelector('.verdict.warn')).toBeTruthy();
@@ -226,6 +227,92 @@ describe('vista de Mediciones', () => {
     expect(otra.container.querySelectorAll('.legend i')).toHaveLength(0);
     // Los avisos de cada serie llevan su nombre delante.
     expect(screen.getAllByText(/^(Parse|Encode): Solo 5 mediciones/)).toHaveLength(2);
+  });
+});
+
+describe('vista de Prompt', () => {
+  it('variables resaltadas, copiar con valores (portapapeles y alternativa), valores recordados y resultados', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { ProveedorAvisos } = await import('../ui/componentes');
+    const texto = readFileSync(join(process.cwd(), 'fixtures/prompts/revisor-adr.txt'), 'utf8');
+    const datos = analizarPrompt(texto);
+    const base = elementoFalso(12, texto, 'prompt');
+    const el = { ...base, frontmatter: { ...base.frontmatter, tipo: 'prompt' as const, ref: 'PRM-0012' as const } };
+    const cerrojos: Cerrojos = { request: (_n, _o, fn) => fn({}) };
+    // El mismo almacén al volver a montar: es el mismo espacio.
+    const almacen = new AlmacenMemoria();
+    const dependencias = async (): Promise<DependenciasProveedor> => ({
+      espacioId: 'vista-prompt',
+      almacen,
+      fabricaIndexedDb: new IDBFactory(),
+      cerrojos,
+      canal: { postMessage: () => undefined, addEventListener: () => undefined, close: () => undefined },
+      enMemoria: false,
+    });
+    const abierto: { e: ReturnType<typeof useEspacioAbierto> | null } = { e: null };
+    function Montaje({ elemento }: { elemento: typeof el }) {
+      abierto.e = useEspacioAbierto();
+      return <VistaPrompt el={elemento} datos={datos} />;
+    }
+    const montar = (elemento: typeof el) => (
+      <ProveedorEspacio dependencias={dependencias}>
+        <ProveedorAvisos>
+          <Montaje elemento={elemento} />
+        </ProveedorAvisos>
+      </ProveedorEspacio>
+    );
+    const escribir = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: escribir }, configurable: true });
+    const { container, unmount } = render(montar(el));
+    await waitFor(() => expect(abierto.e).toBeTruthy());
+    await act(async () => {
+      await abierto.e?.repositorio.guardarElemento(el);
+    });
+
+    expect([...container.querySelectorAll('pre.prompt-texto .var')].map((v) => v.textContent)).toEqual([
+      '{{adr}}',
+      '{{contexto}}',
+      '{{criterios}}',
+    ]);
+    fireEvent.change(screen.getByLabelText('{{adr}}'), { target: { value: 'ADR-0012 {{no}}' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Copiar' }));
+    await waitFor(() => expect(escribir).toHaveBeenCalledTimes(1));
+    expect(escribir.mock.calls[0]?.[0]).toContain('Lee el ADR ADR-0012 {{no}} en el contexto de {{contexto}}.');
+    await waitFor(() => expect(abierto.e?.contadores.total('copiasConValores')).toBe(1));
+
+    // Los valores se recuerdan para este prompt (en este navegador).
+    unmount();
+    const otra = render(montar(el));
+    expect(((await otra.findByLabelText('{{adr}}')) as HTMLInputElement).value).toBe('ADR-0012 {{no}}');
+
+    // Si el navegador no deja copiar, el texto listo queda a la vista para seleccionarlo.
+    escribir.mockRejectedValueOnce(new Error('NotAllowedError'));
+    fireEvent.click(otra.getByRole('button', { name: 'Copiar' }));
+    const listo = (await otra.findByLabelText('Prompt con los valores')) as HTMLTextAreaElement;
+    expect(listo.value).toContain('ADR-0012 {{no}}');
+
+    // Un resultado: archivo en historial/ y entrada en el frontmatter.
+    expect(otra.getByText('Resultados (0)')).toBeTruthy();
+    fireEvent.click(otra.getByRole('button', { name: 'Añadir resultado' }));
+    fireEvent.change(otra.getByLabelText('Respuesta que obtuviste'), { target: { value: 'Le falta el contexto.' } });
+    fireEvent.click(otra.getByLabelText('4 estrellas'));
+    fireEvent.change(otra.getByLabelText('Nota'), { target: { value: 'Útil' } });
+    fireEvent.click(otra.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() =>
+      expect((abierto.e?.repositorio.frontmatter('PRM-0012') as { resultados?: unknown[] })?.resultados).toHaveLength(
+        1,
+      ),
+    );
+    const fm = abierto.e?.repositorio.frontmatter('PRM-0012') as unknown as { resultados: { archivo: string }[] };
+    const archivo = fm.resultados[0]?.archivo ?? '';
+    expect(archivo).toMatch(/^historial\/PRM-0012\/resultado-\d{4}-\d{2}-\d{2}\.md$/);
+    expect(await abierto.e?.repositorio.leerHistorial(archivo)).toContain('Le falta el contexto.');
+    const leido = await abierto.e?.repositorio.leerElemento('PRM-0012');
+    if (!leido?.ok) throw new Error('sin leer');
+    otra.rerender(montar(leido.valor as typeof el));
+    expect(await otra.findByText('Resultados (1)')).toBeTruthy();
+    expect(otra.getByText('Valoración media: ★ 4,0 (1 uso)')).toBeTruthy();
   });
 });
 

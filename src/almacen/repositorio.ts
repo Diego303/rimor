@@ -15,9 +15,11 @@ import {
   sha256Hex,
 } from '@rimor/formato';
 import type { EntradaFrontmatter } from './cache/cache';
-import { type Almacen, leerTexto, listarTodo } from './contrato';
+import { type Almacen, escribirTexto, leerTexto, listarTodo, validarRuta } from './contrato';
 
 export const CARPETA_PAPELERA = 'papelera';
+/** Versiones anteriores y resultados de los elementos (plan §13.2). */
+export const CARPETA_HISTORIAL = 'historial';
 /** Diario de la operación de varios pasos en curso (renombrar, papelera, restaurar): si se corta, se termina al cargar. */
 export const RUTA_DIARIO = '.rimor/operacion.json';
 
@@ -381,6 +383,31 @@ export class Repositorio {
     if (!this.cache) return;
     const r = leerElemento((await leerTexto(this.almacen, ruta)) ?? '');
     if (r.ok && r.valor.frontmatter.id === id) await this.refrescarCache(r.valor, ruta);
+  }
+
+  /**
+   * Guarda un archivo nuevo en `historial/` sin pisar ninguno: `base` es la ruta sin extensión
+   * (`historial/PRM-0012/resultado-2026-10-17`); si ya existe, prueba `-2`, `-3`… Devuelve la ruta escrita.
+   */
+  async guardarEnHistorial(base: string, texto: string): Promise<string> {
+    this.comprobarEscritura();
+    if (!base.startsWith(`${CARPETA_HISTORIAL}/`)) throw new Error(`Ruta fuera del historial: «${base}»`);
+    validarRuta(`${base}.md`);
+    // En turno por `base`: dos resultados del mismo día guardados a la vez no eligen la misma ruta.
+    return this.enTurno(`historial:${base}`, async () => {
+      for (let n = 1; ; n++) {
+        const ruta = n === 1 ? `${base}.md` : `${base}-${n}.md`;
+        if (await this.almacen.existe(ruta)) continue;
+        await escribirTexto(this.almacen, ruta, texto);
+        return ruta;
+      }
+    });
+  }
+
+  /** Un archivo de `historial/`, o `null` si no está. Leer no necesita el cerrojo. */
+  async leerHistorial(ruta: string): Promise<string | null> {
+    if (!ruta.startsWith(`${CARPETA_HISTORIAL}/`)) return null;
+    return leerTexto(this.almacen, validarRuta(ruta));
   }
 
   /** Guarda un adjunto por su hash; si ya existe, no lo reescribe. */

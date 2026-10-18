@@ -1,0 +1,2 @@
+You are a SQL expert. Review {query} carefully and answer with a bulleted list of issues ordered by severity.
+Do not rewrite it; only point out problems.

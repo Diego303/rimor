@@ -1,0 +1,1 @@
+Genera cinco títulos para un artículo sobre {{tema}} dirigidos a {{publico}}. Devuelve solo la lista, sin explicación.

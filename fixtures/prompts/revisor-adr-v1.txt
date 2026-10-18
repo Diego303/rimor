@@ -1,0 +1,2 @@
+Revisa el ADR {{adr}}.
+Dime si la decisión está bien justificada y qué falta.

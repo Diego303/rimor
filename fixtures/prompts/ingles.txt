@@ -1,0 +1,6 @@
+You are a senior Rust reviewer. Review the following code and point out bugs, unsafe blocks without justification and missing tests.
+
+Code:
+{{codigo}}
+
+Answer in three sections: bugs, safety, tests. Do not rewrite the code.

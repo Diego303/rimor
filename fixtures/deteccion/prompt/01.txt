@@ -1,0 +1,2 @@
+Actúa como revisor de código. Analiza el diff {{diff}} y responde en tres partes: lo que está bien, lo que falta y tres preguntas.
+No inventes nada que no esté en la entrada.

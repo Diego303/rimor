@@ -1,0 +1,3 @@
+sistema: Responde siempre en español neutro.
+usuario: ¿Qué diferencia hay entre {a} y {b}?
+asistente: 

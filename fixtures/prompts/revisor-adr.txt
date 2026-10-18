@@ -1,0 +1,11 @@
+Actúa como revisor de decisiones de arquitectura.
+
+Lee el ADR {{adr}} en el contexto de {{contexto}}.
+Evalúa la decisión con estos criterios: {{criterios}}.
+
+Responde en tres partes:
+1. Lo que está bien justificado.
+2. Lo que falta: consecuencias negativas, alternativas sin evaluar, supuestos ocultos.
+3. Tres preguntas que haría un revisor escéptico.
+
+No reescribas el ADR.

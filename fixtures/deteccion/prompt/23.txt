@@ -1,0 +1,5 @@
+Traduce al inglés el siguiente texto manteniendo el tono informal y los términos técnicos sin traducir:
+
+<texto>
+{{texto}}
+</texto>

@@ -13,6 +13,7 @@ import { lectorError } from './error/lector';
 import { lectorIdea } from './idea/lector';
 import { lectorLog } from './log/lector';
 import { lectorMediciones } from './mediciones/lector';
+import { lectorPrompt } from './prompt/lector';
 import { lectorTexto } from './texto/lector';
 
 /**
@@ -46,6 +47,7 @@ export const LECTORES: readonly Lector[] = [
   lectorError, // 4
   lectorLog, // 5
   lectorMediciones, // 6
+  lectorPrompt, // 11
   lectorIdea, // 16
   lectorTexto, // 17
 ];

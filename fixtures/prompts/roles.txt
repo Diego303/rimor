@@ -1,0 +1,3 @@
+system: Eres un asistente que responde en español claro y breve. Si no sabes algo, dilo.
+user: Explica la diferencia entre {concepto_a} y {concepto_b} para alguien que empieza.
+assistant: Claro. Primero, una idea general:
