@@ -3,7 +3,7 @@
  * abajo, junto al compositor, como en un chat), con las búsquedas del compositor y las ideas que vuelven
  * intercaladas en «Hoy». Puro: la vista solo pinta lo que sale de aquí.
  */
-import { type FrontmatterComun, isoConZona } from '@rimor/formato';
+import type { FrontmatterComun } from '@rimor/formato';
 import type { BusquedaPendiente } from '../../captura/compositor';
 import { sinClasificar } from '../../espacio/resumen';
 import { fmtDia, type Idioma } from '../../i18n/formatos';
@@ -89,10 +89,13 @@ export function filasDelFeed(elementos: readonly FrontmatterComun[], o: Opciones
     lista.push({ cuando, fila });
     delDia.set(dia, lista);
   };
+  const conMensajes = new Set<string>();
   for (const fm of elementos) {
     if (!visibleCon(fm, o.filtro)) continue;
     const dia = claveDia(fm.creado);
-    if (dia) anotar(dia, Date.parse(fm.creado), { t: 'mensaje', clave: fm.id, fm });
+    if (!dia) continue;
+    conMensajes.add(dia);
+    anotar(dia, Date.parse(fm.creado), { t: 'mensaje', clave: fm.id, fm });
   }
   // Las búsquedas son de esta sesión: siempre en su día (normalmente, hoy) y en los dos filtros.
   for (const [i, b] of (o.busquedas ?? []).entries()) {
@@ -101,9 +104,12 @@ export function filasDelFeed(elementos: readonly FrontmatterComun[], o: Opciones
   }
   if (o.conIdeas && o.filtro === 'todo') anotar(hoy, Number.NEGATIVE_INFINITY, { t: 'ideas', clave: 'ideas' });
 
-  const dias = [...delDia.keys()].sort((a, b) => (a < b ? 1 : -1)).slice(0, Math.max(1, o.dias));
+  // Los días cargados se cuentan por sus mensajes (como `diasConMensajes`); el de una búsqueda o el de las ideas
+  // (hoy) se añade siempre, sin quitarle el sitio a otro.
+  const cargados = new Set([...conMensajes].sort((a, b) => (a < b ? 1 : -1)).slice(0, Math.max(1, o.dias)));
+  const dias = [...delDia.keys()].filter((d) => cargados.has(d) || !conMensajes.has(d)).sort();
   const filas: FilaFeed[] = [];
-  for (const dia of dias.reverse()) {
+  for (const dia of dias) {
     filas.push({ t: 'dia', clave: `dia:${dia}`, etiqueta: etiquetaDia(dia, o.ahora, o.idioma, o.textos) });
     const lista = delDia.get(dia) ?? [];
     lista.sort((a, b) => a.cuando - b.cuando);
@@ -119,8 +125,9 @@ export const normalizar = (s: string) => s.normalize('NFKD').replace(/\p{M}/gu, 
 export const RESULTADOS_EN_FEED = 5;
 
 /**
- * Búsqueda en lo que el repositorio tiene en memoria (título, ref, tipo, colecciones, etiquetas y el resumen
- * legible del lector), con todas las palabras, sin acentos. La sustituye el buscador completo (IN-032).
+ * Búsqueda en lo que el repositorio tiene en memoria (título, ref, colecciones, etiquetas y lo que diga `legible`:
+ * el nombre del tipo en el idioma de la interfaz y el resumen del lector), con todas las palabras, sin acentos. No
+ * busca por el nombre interno del tipo (`texto` casaría con «text»). La sustituye el buscador completo (IN-032).
  * Primero lo que lo tiene en el título; después, lo más reciente.
  */
 export function buscarEnMemoria(
@@ -133,9 +140,7 @@ export function buscarEnMemoria(
   const hallados: { fm: FrontmatterComun; enTitulo: boolean }[] = [];
   for (const fm of elementos) {
     const titulo = normalizar(fm.titulo);
-    const resto = normalizar(
-      [fm.ref, fm.tipo, ...(fm.colecciones ?? []), ...(fm.etiquetas ?? []), legible(fm)].join(' '),
-    );
+    const resto = normalizar([fm.ref, ...(fm.colecciones ?? []), ...(fm.etiquetas ?? []), legible(fm)].join(' '));
     if (!palabras.every((p) => titulo.includes(p) || resto.includes(p))) continue;
     hallados.push({ fm, enTitulo: palabras.every((p) => titulo.includes(p)) });
   }

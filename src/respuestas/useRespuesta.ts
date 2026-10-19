@@ -12,10 +12,14 @@ import { componer, respuestaSinDatos } from './componer';
 import { construirContexto } from './contexto';
 import type { Respuesta } from './tipos';
 
-export function useRespuesta(
-  el: Elemento,
-  opciones: { derivados?: Promise<unknown>; respondeA?: string } = {},
-): Respuesta | null | 'desactivada' {
+export interface OpcionesRespuesta {
+  derivados?: Promise<unknown>;
+  respondeA?: string;
+  /** `visible` para lo que está en pantalla (un mensaje del feed): se adelanta en la cola. */
+  prioridad?: 'visible' | 'fondo';
+}
+
+export function useRespuesta(el: Elemento, opciones: OpcionesRespuesta = {}): Respuesta | null | 'desactivada' {
   const { idioma } = useT();
   const espacio = useEspacioOpcional();
   const lectores = useLectoresOpcional();
@@ -31,16 +35,18 @@ export function useRespuesta(
     return espacio.alCambiar(mirar);
   }, [espacio, tipo]);
   const [respuesta, setRespuesta] = useState<Respuesta | null>(null);
-  const { derivados, respondeA } = opciones;
+  const { derivados, respondeA, prioridad = 'fondo' } = opciones;
 
   useEffect(() => {
     if (desactivada) return undefined;
     let vigente = true;
+    // Si se desmonta (un mensaje que sale de la lista virtual), su petición se retira de la cola.
+    const cancelar = new AbortController();
     setRespuesta(null);
     const lector = lectores?.registro.paraElemento(el);
     (async () => {
       if (!lector || !lectores || !espacio) return respuestaSinDatos(el, idioma);
-      const datos = await (derivados ?? lectores.cola.pedir(el, { prioridad: 'fondo' }));
+      const datos = await (derivados ?? lectores.cola.pedir(el, { prioridad, senal: cancelar.signal }));
       // La huella y lo demás salen del resumen definitivo, el de los derivados.
       let resumen: Record<string, unknown> | undefined;
       try {
@@ -58,8 +64,9 @@ export function useRespuesta(
       .then((r) => vigente && setRespuesta(r));
     return () => {
       vigente = false;
+      cancelar.abort();
     };
-  }, [el, derivados, respondeA, idioma, desactivada, lectores, espacio]);
+  }, [el, derivados, respondeA, prioridad, idioma, desactivada, lectores, espacio]);
 
   return desactivada ? 'desactivada' : respuesta;
 }

@@ -1,10 +1,11 @@
 /**
  * Cambiar el tipo de un elemento (IN-026, tecla `t`; lo reutiliza IN-027): se vuelve a leer su original con otro
- * lector y se guarda con el tipo, la ref (el prefijo va con el tipo; la vieja queda en `alias`) y el resumen
- * nuevos. El `id` no cambia: las menciones por id siguen valiendo y el archivo se renombra solo.
+ * lector y se guarda con el tipo, la ref (el prefijo va con el tipo; la vieja queda en `alias` y sigue llevando a
+ * él) y el resumen nuevos. El `id` no cambia: las menciones por id siguen valiendo y el archivo se renombra solo.
  */
-import { asignarRef, type Elemento, isoConZona } from '@rimor/formato';
+import { asignarRef, type Elemento, type FrontmatterComun, isoConZona } from '@rimor/formato';
 import type { Repositorio } from '../almacen/repositorio';
+import { esEstadoComun } from '../espacio/estados';
 import type { Lector } from '../lectores/contrato';
 import { decodificarTexto } from './firmas';
 
@@ -26,12 +27,56 @@ async function textoDe(el: Elemento, repositorio: Repositorio): Promise<string |
   return bytes ? (decodificarTexto(bytes)?.texto ?? null) : null;
 }
 
-/** Cambia el tipo. Devuelve la ref nueva, o `null` si no se pudo (binario, sin original, mismo lector). */
+export interface OpcionesCambio {
+  /** El lector de ahora: sus claves propias del frontmatter (`url`, `vuelve`…) no pasan al nuevo. */
+  anterior?: Lector;
+  reloj?: () => Date;
+}
+
+/**
+ * El frontmatter con el tipo nuevo: sin las claves propias del lector anterior, con las del nuevo, y con el estado
+ * solo si es común o del tipo nuevo (si no, el que dé el lector nuevo, como `semilla` en una idea).
+ */
+export function frontmatterConTipo(
+  fm: FrontmatterComun,
+  lector: Lector,
+  datos: {
+    ref: string;
+    resumen: Record<string, unknown>;
+    metadatos: Record<string, unknown>;
+    viejas: readonly string[];
+  },
+  ahora: Date,
+): FrontmatterComun {
+  const base: Record<string, unknown> = { ...fm };
+  for (const clave of datos.viejas) delete base[clave];
+  // Un estado común (lo decidió quien lo usa) o válido en el tipo nuevo se conserva y gana al que traiga el lector
+  // nuevo; uno propio del tipo anterior se quita (y vale el del lector nuevo, como `semilla` en una idea).
+  const estado = fm.estado && (esEstadoComun(fm.estado) || lector.estados?.includes(fm.estado)) ? fm.estado : null;
+  delete base.estado;
+  // El alias: todas las refs que tuvo, sin la que vuelve a tener (ida y vuelta) y sin repetir.
+  const alias = [...new Set([...(fm.alias ?? []), fm.ref])].filter((r) => r !== datos.ref);
+  return {
+    ...base,
+    ...datos.metadatos,
+    ...(estado ? { estado } : {}),
+    tipo: lector.tipo,
+    ref: datos.ref,
+    alias,
+    lector: { nombre: lector.nombre, version: lector.version, resumen: datos.resumen },
+    modificado: isoConZona(ahora),
+  } as FrontmatterComun;
+}
+
+/**
+ * Cambia el tipo. Devuelve la ref nueva, o `null` si no se pudo: binario, sin original, mismo lector, el lector
+ * nuevo no sabe leerlo, o el elemento cambió mientras se leía (no se pisa una edición).
+ */
 export async function cambiarTipo(
   refOId: string,
   lector: Lector,
   repositorio: Repositorio,
-  reloj: () => Date = () => new Date(),
+  { anterior, reloj = () => new Date() }: OpcionesCambio = {},
 ): Promise<string | null> {
   const leido = await repositorio.leerElemento(refOId);
   if (!leido.ok || !sePuedeCambiar(leido.valor, lector)) return null;
@@ -39,21 +84,26 @@ export async function cambiarTipo(
   const texto = await textoDe(el, repositorio);
   if (texto === null) return null;
   const nombre = el.frontmatter.adjunto?.nombre;
-  const borrador = await lector.leer({ texto, ...(nombre ? { nombre } : {}) }).catch(() => null);
-  const fm = el.frontmatter;
-  const ref = asignarRef(lector.tipo, repositorio.refs());
-  const nuevo: Elemento = {
-    ...el,
-    frontmatter: {
-      ...(borrador?.metadatos ?? {}),
-      ...fm,
-      tipo: lector.tipo,
-      ref,
-      alias: [...(fm.alias ?? []), fm.ref],
-      lector: { nombre: lector.nombre, version: lector.version, resumen: borrador?.resumen ?? {} },
-      modificado: isoConZona(reloj()),
-    },
-  };
-  await repositorio.guardarElemento(nuevo);
-  return ref;
+  const entrada = { texto, ...(nombre ? { nombre } : {}) };
+  // Si el lector nuevo no sabe leerlo, no se guarda nada a medias.
+  const borrador = await lector.leer(entrada).catch(() => null);
+  if (!borrador) return null;
+  const previo = anterior ? await anterior.leer(entrada).catch(() => null) : null;
+  const viejas = Object.keys(previo?.metadatos ?? {});
+  let nueva: string | null = null;
+  const r = await repositorio.actualizarElemento(el.frontmatter.id, (actual) => {
+    // En turno: si el elemento cambió mientras se leía (otra edición), no se pisa.
+    if (actual.frontmatter.hash !== el.frontmatter.hash || actual.frontmatter.ref !== el.frontmatter.ref) return null;
+    nueva = asignarRef(lector.tipo, repositorio.refs());
+    return {
+      ...actual,
+      frontmatter: frontmatterConTipo(
+        actual.frontmatter,
+        lector,
+        { ref: nueva, resumen: borrador.resumen ?? {}, metadatos: borrador.metadatos ?? {}, viejas },
+        reloj(),
+      ),
+    };
+  });
+  return r.ok && r.valor ? nueva : null;
 }

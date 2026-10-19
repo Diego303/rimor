@@ -6,7 +6,7 @@ import type { FrontmatterComun } from '@rimor/formato';
 import type { BusquedaPendiente } from '../../captura/compositor';
 import { fmtHora } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
-import { Boton, IconoTipo } from '../../ui/componentes';
+import { Boton, FilaElemento } from '../../ui/componentes';
 import { Icono } from '../../ui/iconos/Icono';
 import { SimboloRimor } from '../../ui/marca/SimboloRimor';
 
@@ -15,9 +15,11 @@ interface Props {
   resultado: { total: number; resultados: FrontmatterComun[] };
   alAbrir: (ref: string) => void;
   alBuscar: (texto: string) => void;
+  /** La línea de resumen de cada resultado (el resumen legible de su lector). */
+  resumen: (fm: FrontmatterComun) => string;
 }
 
-export function MensajeBusqueda({ busqueda, resultado, alAbrir, alBuscar }: Props) {
+export function MensajeBusqueda({ busqueda, resultado, alAbrir, alBuscar, resumen }: Props) {
   const { t } = useT();
   const fecha = new Date(busqueda.en);
   return (
@@ -44,11 +46,7 @@ export function MensajeBusqueda({ busqueda, resultado, alAbrir, alBuscar }: Prop
           {resultado.resultados.length > 0 && (
             <div className="list">
               {resultado.resultados.map((fm) => (
-                <button key={fm.id} type="button" className="it" onClick={() => alAbrir(fm.ref)}>
-                  <IconoTipo tipo={fm.tipo} denso />
-                  <span className="sm">{fm.titulo}</span>
-                  <span className="mono xs muted">{fm.ref}</span>
-                </button>
+                <FilaElemento key={fm.id} fm={fm} resumen={resumen(fm)} alAbrir={alAbrir} />
               ))}
             </div>
           )}

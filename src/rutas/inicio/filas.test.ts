@@ -77,6 +77,18 @@ describe('filasDelFeed', () => {
     ).toBe(false);
   });
 
+  it('una búsqueda o las ideas de hoy no le quitan el sitio al día más antiguo cargado', () => {
+    const ocho = Array.from({ length: 8 }, (_, i) => fm(i + 1, 10 + i, 9));
+    const busqueda = { texto: 'x', en: new Date(2026, 9, 18, 8, 0).toISOString() };
+    for (const extra of [{ busquedas: [busqueda] }, { conIdeas: true }]) {
+      const refs = filasDelFeed(ocho, opciones({ dias: 8, ...extra })).flatMap((f) =>
+        f.t === 'mensaje' ? [f.fm.ref] : [],
+      );
+      expect(refs).toContain('TXT-0001');
+      expect(refs).toHaveLength(8);
+    }
+  });
+
   it('solo los días cargados, empezando por el más reciente', () => {
     const filas = filasDelFeed(elementos, opciones({ dias: 2 }));
     expect(filas.filter((f) => f.t === 'dia').map((f) => (f.t === 'dia' ? f.etiqueta : ''))).toEqual(['Ayer', 'Hoy']);

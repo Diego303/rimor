@@ -4,7 +4,7 @@
  * naranja mientras está fresco; anillo de foco si es el seleccionado con el teclado.
  */
 import type { Elemento, FrontmatterComun } from '@rimor/formato';
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { fmtHora } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { RespuestaRimor } from '../../respuestas/RespuestaRimor';
@@ -38,40 +38,62 @@ export interface PropsMensaje {
   fresco: boolean;
   /** La respuesta ya resuelta con «No»: no se vuelven a ofrecer sus acciones. */
   sinAcciones: boolean;
+  /** En una pestaña que solo lee no se ofrece nada que escriba. */
+  soloLectura: boolean;
+  /** Si no hay original que enseñar (un adjunto), la vista previa es el resumen legible del lector. */
+  resumen: string;
+  /** Posición del mensaje entre los del feed (1…) y cuántos hay, para los lectores de pantalla. */
+  posicion: number;
+  total: number;
   alAbrir: (ref: string) => void;
   alResponder: (ref: string) => void;
   alArchivar: (fm: FrontmatterComun) => void;
   alAccion: (fm: FrontmatterComun, accion: AccionRespuesta) => void;
 }
 
-function Respuesta({
-  el,
-  alAbrir,
-  alAccion,
-  sinAcciones,
-}: { el: Elemento } & Pick<PropsMensaje, 'alAbrir' | 'alAccion' | 'sinAcciones'>) {
-  const respuesta = useRespuesta(el);
-  if (respuesta === 'desactivada') return null;
-  const lista: (AccionRespuesta | undefined)[] = [...(respuesta?.acciones ?? [])];
-  const ofrecidas = lista.filter((a): a is AccionRespuesta => !!a);
-  const acciones = sinAcciones ? [] : ofrecidas.filter((a) => accionSoportada(a.id));
+/** La fila de acciones: las del lector, un hueco, «Responder» y «Archivar» (como `msgHTML`). */
+function Acciones({ p, acciones }: { p: PropsMensaje; acciones: readonly AccionRespuesta[] }) {
+  const { t } = useT();
+  return (
+    <div className="mact">
+      {acciones.map((a) => (
+        <Boton
+          key={a.id}
+          pequeno
+          {...(a.principal ? { variante: 'primario' as const } : {})}
+          onClick={() => p.alAccion(p.fm, a)}
+        >
+          {a.etiqueta}
+        </Boton>
+      ))}
+      <span className="sp" />
+      {!p.soloLectura && (
+        <>
+          <button type="button" className="ibtn" onClick={() => p.alResponder(p.fm.ref)}>
+            <Icono nombre="responder" tamano={14} />
+            {t('pantallas.inicio.responder')}
+          </button>
+          <button type="button" className="ibtn" onClick={() => p.alArchivar(p.fm)}>
+            <Icono nombre="archivar" tamano={14} />
+            {t('pantallas.inicio.archivar')}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** La respuesta (se pide con prioridad: está en pantalla) y las acciones que trae. */
+function ConRespuesta({ el, p }: { el: Elemento; p: PropsMensaje }) {
+  const respuesta = useRespuesta(el, { prioridad: 'visible' });
+  const lista: (AccionRespuesta | undefined)[] =
+    respuesta && respuesta !== 'desactivada' ? [...(respuesta.acciones ?? [])] : [];
+  const acciones =
+    p.sinAcciones || p.soloLectura ? [] : lista.filter((a): a is AccionRespuesta => !!a && accionSoportada(a.id));
   return (
     <>
-      <RespuestaRimor respuesta={respuesta} alAbrir={alAbrir} />
-      {acciones.length > 0 && (
-        <div className="mact acciones-lector">
-          {acciones.map((a) => (
-            <Boton
-              key={a.id}
-              pequeno
-              {...(a.principal ? { variante: 'primario' as const } : {})}
-              onClick={() => alAccion(el.frontmatter, a)}
-            >
-              {a.etiqueta}
-            </Boton>
-          ))}
-        </div>
-      )}
+      {respuesta !== 'desactivada' && <RespuestaRimor respuesta={respuesta} alAbrir={p.alAbrir} anunciar={p.fresco} />}
+      <Acciones p={p} acciones={acciones} />
     </>
   );
 }
@@ -79,17 +101,27 @@ function Respuesta({
 export const Mensaje = memo(function Mensaje(p: PropsMensaje) {
   const { t } = useT();
   const el = useElemento(p.fm);
-  const previa = vistaPrevia(el, p.fm.titulo);
+  const previa = vistaPrevia(el, p.fm.titulo) ?? (el && el.original === null ? p.resumen || null : null);
   const fecha = new Date(p.fm.creado);
+  // El seleccionado con el teclado recibe el foco: un lector de pantalla lo anuncia y Enter actúa sobre él.
+  const articulo = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (p.seleccionado) articulo.current?.focus({ preventScroll: true });
+  }, [p.seleccionado]);
   return (
     <article
+      ref={articulo}
+      tabIndex={-1}
       className={clases('msg', p.fresco && 'fresh', p.seleccionado && 'sel', p.marcado && 'marcado')}
       aria-current={p.seleccionado ? true : undefined}
+      aria-posinset={p.posicion}
+      aria-setsize={p.total}
+      aria-labelledby={`titulo-${p.fm.id}`}
       data-ref={p.fm.ref}
     >
       <div className="mhead">
         <IconoTipo tipo={p.fm.tipo} />
-        <button type="button" className="tt" onClick={() => p.alAbrir(p.fm.ref)}>
+        <button type="button" className="tt" id={`titulo-${p.fm.id}`} onClick={() => p.alAbrir(p.fm.ref)}>
           {p.fm.titulo}
         </button>
         {p.fm.fijado && (
@@ -103,21 +135,13 @@ export const Mensaje = memo(function Mensaje(p: PropsMensaje) {
       </div>
       {previa && <div className="mprev">{previa}</div>}
       {el ? (
-        <Respuesta el={el} alAbrir={p.alAbrir} alAccion={p.alAccion} sinAcciones={p.sinAcciones} />
+        <ConRespuesta el={el} p={p} />
       ) : (
-        <RespuestaRimor respuesta={null} />
+        <>
+          <RespuestaRimor respuesta={null} anunciar={false} />
+          <Acciones p={p} acciones={[]} />
+        </>
       )}
-      <div className="mact">
-        <span className="sp" />
-        <button type="button" className="ibtn" onClick={() => p.alResponder(p.fm.ref)}>
-          <Icono nombre="responder" tamano={14} />
-          {t('pantallas.inicio.responder')}
-        </button>
-        <button type="button" className="ibtn" onClick={() => p.alArchivar(p.fm)}>
-          <Icono nombre="archivar" tamano={14} />
-          {t('pantallas.inicio.archivar')}
-        </button>
-      </div>
     </article>
   );
 });

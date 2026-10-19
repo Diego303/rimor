@@ -125,7 +125,6 @@
         "mediciones": "Some measurements",
         "idea": "An idea"
       },
-      "cargando": "Loading earlier days…",
       "seleccionados": {
         "one": "{n} selected",
         "other": "{n} selected"

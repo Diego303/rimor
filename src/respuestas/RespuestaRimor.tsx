@@ -15,9 +15,14 @@ interface Props {
   respuesta: Respuesta | null;
   /** Abrir un elemento al pulsar una ref; sin ella, las refs se pintan en mono sin botón. */
   alAbrir?: (ref: string) => void;
+  /**
+   * Anunciarla a los lectores de pantalla cuando llega (`aria-live`). En un feed solo la de lo recién capturado: al
+   * desplazarse, cada mensaje que se monta no debe anunciarse.
+   */
+  anunciar?: boolean;
 }
 
-export function RespuestaRimor({ respuesta, alAbrir }: Props) {
+export function RespuestaRimor({ respuesta, alAbrir, anunciar = true }: Props) {
   const { t } = useT();
   return (
     <div className="rimor">
@@ -28,7 +33,7 @@ export function RespuestaRimor({ respuesta, alAbrir }: Props) {
           <Senal estado="contestando" decorativa tamano={13} etiqueta="" />
         )}
       </span>
-      <p aria-live="polite">
+      <p aria-live={anunciar ? 'polite' : undefined}>
         {respuesta
           ? // biome-ignore lint/suspicious/noArrayIndexKey: los fragmentos de una respuesta no se reordenan ni cambian.
             respuesta.texto.map((f, i) => <Pieza key={i} f={f} alAbrir={alAbrir} />)

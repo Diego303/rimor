@@ -18,6 +18,7 @@ import { vuelven } from '../../lectores/idea/resurgir';
 import { useLectoresOpcional } from '../../lectores/Lectores';
 import type { Accion } from '../../respuestas/tipos';
 import type { Atajo } from '../../ui/atajos/atajos';
+import { esControlInteractivo } from '../../ui/atajos/atajos';
 import { useAtajos } from '../../ui/atajos/useAtajos';
 import { Boton, Segmentado } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
@@ -101,22 +102,26 @@ export function Inicio() {
       }),
     [elementos, filtro, diasCargados, ahora, idioma, t, busquedas, conIdeas],
   );
+  /** El resumen legible del lector de un elemento («Go · 15 líneas»). */
   const legible = useCallback(
     (fm: FrontmatterComun) =>
       lectores?.registro.paraElemento({ frontmatter: fm })?.resumenLegible?.(fm.lector.resumen, idioma) ?? '',
     [lectores, idioma],
   );
+  // La búsqueda mira también el nombre del tipo en el idioma de la interfaz («Error», «Log»).
+  const buscable = useCallback((fm: FrontmatterComun) => `${t(`tipos.${fm.tipo}`)} ${legible(fm)}`, [t, legible]);
   const resultadosBusqueda = useMemo(
-    () => new Map(busquedas.map((b) => [b, buscarEnMemoria(elementos, b.texto, legible)] as const)),
-    [busquedas, elementos, legible],
+    () => new Map(busquedas.map((b) => [b, buscarEnMemoria(elementos, b.texto, buscable)] as const)),
+    [busquedas, elementos, buscable],
   );
 
   const abrir = useCallback(
     (ref: string) => {
-      useFrescos.getState().abierto(ref);
+      const id = espacio?.repositorio.frontmatter(ref)?.id;
+      if (id) useFrescos.getState().abierto(id);
       void navegar({ to: '/e/$ref', params: { ref } });
     },
-    [navegar],
+    [navegar, espacio],
   );
 
   /** Cambia el frontmatter de un elemento; `null` si no se pudo. */
@@ -174,18 +179,22 @@ export function Inicio() {
       avisos?.avisar(
         hecho ? t('pantallas.inicio.anadidoA', { ref: fm.ref, coleccion }) : t('pantallas.inicio.noAnadido'),
       );
+      return hecho;
     },
     [actualizar, avisos, t],
   );
 
   const alAccion = useCallback(
-    (fm: FrontmatterComun, accion: Accion) => {
-      if (accion.id.startsWith('coleccion:')) void anadirColeccion(fm, accion.id.slice('coleccion:'.length));
-      // Resuelta (también con «No»): no se vuelve a ofrecer.
-      setSinAcciones((s) => new Set(s).add(fm.id));
+    async (fm: FrontmatterComun, accion: Accion) => {
+      const resuelta = accion.id.startsWith('coleccion:')
+        ? await anadirColeccion(fm, accion.id.slice('coleccion:'.length))
+        : true;
+      // Resuelta (también con «No»): no se vuelve a ofrecer en esta sesión. Si falló, sigue ahí para reintentarlo.
+      if (resuelta) setSinAcciones((s) => new Set(s).add(fm.id));
     },
     [anadirColeccion],
   );
+  const alArchivar = useCallback((fm: FrontmatterComun) => void archivar(fm), [archivar]);
 
   const responder = useCallback((ref: string) => responderA(ref), [responderA]);
 
@@ -210,22 +219,47 @@ export function Inicio() {
       const ref = tipoPara;
       setTipoPara(null);
       if (!ref || !espacio) return;
-      const nueva = await cambiarTipo(ref, lector, espacio.repositorio).catch(() => null);
+      const fm = espacio.repositorio.frontmatter(ref);
+      const anterior = fm ? lectores?.registro.paraElemento({ frontmatter: fm }) : undefined;
+      const nueva = await cambiarTipo(ref, lector, espacio.repositorio, anterior ? { anterior } : {}).catch(() => null);
       if (!nueva) return avisos?.avisar(t('pantallas.inicio.noCambiado'));
       void espacio.contadores.contar('correccionesDeTipo').catch(() => undefined);
-      if (seleccionado === ref) setSeleccionado(nueva);
+      // La selección y la marca siguen al elemento con su ref nueva.
+      setSeleccionado((s) => (s === ref ? nueva : s));
+      setMarcados((m) => {
+        if (!m.has(ref)) return m;
+        const nuevo = new Set(m);
+        nuevo.delete(ref);
+        return nuevo.add(nueva);
+      });
       avisos?.avisar(t('pantallas.inicio.tipoCambiado', { tipo: t(`tipos.${lector.tipo}`), ref: nueva }));
     },
-    [tipoPara, espacio, avisos, t, seleccionado],
+    [tipoPara, espacio, lectores, avisos, t],
   );
 
   // Triaje con teclado (plan §9.1). El gestor no los atiende dentro de un campo de texto.
   // Los atajos leen siempre el feed y la selección de ahora (no los del momento en que se registraron): una tecla
   // pulsada justo después de un cambio actúa sobre lo que se ve.
-  const actual = useRef({ filas, seleccionado });
+  const actual = useRef({ filas, seleccionado, marcados });
   useLayoutEffect(() => {
-    actual.current = { filas, seleccionado };
+    actual.current = { filas, seleccionado, marcados };
   });
+
+  // Si lo seleccionado deja de estar en el feed (archivado, borrado, filtrado), la selección pasa al vecino que
+  // ocupa su sitio; las marcas de lo que ya no está, se quitan.
+  const posicionSeleccion = useRef(-1);
+  useEffect(() => {
+    const refs = filas.flatMap((f) => (f.t === 'mensaje' ? [f.fm.ref as string] : []));
+    if (seleccionado) {
+      const i = refs.indexOf(seleccionado);
+      if (i >= 0) posicionSeleccion.current = i;
+      else setSeleccionado(refs.length ? (refs[Math.min(posicionSeleccion.current, refs.length - 1)] ?? null) : null);
+    }
+    setMarcados((m) => {
+      const vivos = [...m].filter((r) => refs.includes(r));
+      return vivos.length === m.size ? m : new Set(vivos);
+    });
+  }, [filas, seleccionado]);
   const conSeleccion = useCallback(
     (hacer: (fm: FrontmatterComun) => void) => () => {
       const fm = mensajeDe(actual.current.filas, actual.current.seleccionado);
@@ -245,11 +279,17 @@ export function Inicio() {
         descripcion: 'atajos.feedAnterior',
         accion: () => setSeleccionado((s) => moverSeleccion(actual.current.filas, s, -1)),
       },
-      { teclas: 'enter', descripcion: 'atajos.feedAbrir', accion: conSeleccion((fm) => abrir(fm.ref)) },
-      { teclas: 'r', descripcion: 'atajos.feedResponder', accion: conSeleccion((fm) => responder(fm.ref)) },
+      {
+        teclas: 'enter',
+        descripcion: 'atajos.feedAbrir',
+        accion: conSeleccion((fm) => abrir(fm.ref)),
+        // Sobre un botón o un enlace, Enter es suyo; sin selección, no hay nada que abrir.
+        cuando: () => !!actual.current.seleccionado && !esControlInteractivo(document.activeElement),
+      },
       ...(soloLectura
         ? []
         : ([
+            { teclas: 'r', descripcion: 'atajos.feedResponder', accion: conSeleccion((fm) => responder(fm.ref)) },
             {
               teclas: 'c',
               descripcion: 'atajos.feedColeccion',
@@ -260,7 +300,12 @@ export function Inicio() {
             { teclas: 't', descripcion: 'atajos.feedTipo', accion: conSeleccion((fm) => setTipoPara(fm.ref)) },
           ] satisfies Atajo[])),
       { teclas: 'x', descripcion: 'atajos.feedSeleccionar', accion: conSeleccion((fm) => marcar(fm.ref)) },
-      { teclas: 'escape', descripcion: 'atajos.feedVaciarSeleccion', accion: () => setMarcados(new Set()) },
+      {
+        teclas: 'escape',
+        descripcion: 'atajos.feedVaciarSeleccion',
+        accion: () => setMarcados(new Set()),
+        cuando: () => actual.current.marcados.size > 0,
+      },
     ],
     [conSeleccion, abrir, responder, archivar, fijar, marcar, soloLectura],
   );
@@ -268,6 +313,13 @@ export function Inicio() {
 
   const masDias = diasCargados < dias.length;
   const cargarAnteriores = useCallback(() => setDiasCargados((d) => d + DIAS_POR_TANDA), []);
+
+  // La posición de cada mensaje entre los del feed (para `aria-posinset`).
+  const posiciones = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const f of filas) if (f.t === 'mensaje') m.set(f.fm.id, m.size + 1);
+    return m;
+  }, [filas]);
 
   const pintar = useCallback(
     (fila: FilaFeed) => {
@@ -283,6 +335,7 @@ export function Inicio() {
               resultado={resultadosBusqueda.get(fila.busqueda) ?? { total: 0, resultados: [] }}
               alAbrir={abrir}
               alBuscar={(texto) => void navegar({ to: '/buscar', search: { q: texto } })}
+              resumen={legible}
             />
           );
         case 'mensaje':
@@ -291,12 +344,16 @@ export function Inicio() {
               fm={fila.fm}
               seleccionado={seleccionado === fila.fm.ref}
               marcado={marcados.has(fila.fm.ref)}
-              fresco={esFresco(capturados, fila.fm.ref, ahora.getTime())}
+              fresco={esFresco(capturados, fila.fm.id, ahora.getTime())}
               sinAcciones={sinAcciones.has(fila.fm.id)}
+              soloLectura={soloLectura}
+              resumen={legible(fila.fm)}
+              posicion={posiciones.get(fila.fm.id) ?? 0}
+              total={posiciones.size}
               alAbrir={abrir}
               alResponder={responder}
-              alArchivar={(fm) => void archivar(fm)}
-              alAccion={alAccion}
+              alArchivar={alArchivar}
+              alAccion={(fm, a) => void alAccion(fm, a)}
             />
           );
       }
@@ -310,8 +367,11 @@ export function Inicio() {
       capturados,
       ahora,
       sinAcciones,
+      soloLectura,
+      legible,
+      posiciones,
       responder,
-      archivar,
+      alArchivar,
       alAccion,
     ],
   );
@@ -349,16 +409,13 @@ export function Inicio() {
             <span className="sm">{t('pantallas.inicio.nadaSinClasificarTexto')}</span>
           </div>
         ) : (
-          <>
-            {masDias && <p className="xs faint cargando-dias">{t('pantallas.inicio.cargando')}</p>}
-            <Feed
-              filas={filas}
-              pintar={pintar}
-              enfocado={seleccionado}
-              etiqueta={t('pantallas.inicio.feed')}
-              {...(masDias ? { alLlegarArriba: cargarAnteriores } : {})}
-            />
-          </>
+          <Feed
+            filas={filas}
+            pintar={pintar}
+            enfocado={seleccionado}
+            etiqueta={t('pantallas.inicio.feed')}
+            {...(masDias ? { alLlegarArriba: cargarAnteriores } : {})}
+          />
         )}
       </Pantalla>
       <div className="col ccol">

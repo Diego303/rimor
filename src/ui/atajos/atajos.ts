@@ -11,6 +11,11 @@ export interface Atajo {
   accion: () => void;
   /** Se atiende también con el foco en un campo de texto. */
   enCampos?: boolean;
+  /**
+   * Si devuelve `false`, el atajo no se atiende y la tecla sigue su camino (`Enter` sobre un botón lo pulsa en vez de
+   * abrir lo seleccionado). Se mira en el momento de la pulsación.
+   */
+  cuando?: () => boolean;
 }
 
 export interface TeclaPulsada {
@@ -74,7 +79,9 @@ export class GestorAtajos {
     const conModificador = Boolean(t.ctrlKey || t.metaKey || t.altKey);
     const tecla = describir(t);
     const ahora = this.reloj();
-    const activos = this.activos().filter((a) => !t.enCampo || a.enCampos || conModificador);
+    const activos = this.activos().filter(
+      (a) => (!t.enCampo || a.enCampos || conModificador) && (!a.cuando || a.cuando()),
+    );
 
     if (this.prefijo && ahora <= this.prefijoHasta) {
       const secuencia = `${this.prefijo} ${tecla}`;
@@ -104,6 +111,17 @@ export class GestorAtajos {
   lista(): { ambito: string; atajos: Atajo[] }[] {
     return [...this.ambitos].map(([ambito, atajos]) => ({ ambito, atajos }));
   }
+}
+
+/** ¿El foco está en un control que ya hace algo con `Enter` o `Espacio` (botón, enlace, resumen, campo)? */
+export function esControlInteractivo(el: Element | null): boolean {
+  if (!el) return false;
+  if (esCampoDeTexto(el)) return true;
+  const etiqueta = el.tagName;
+  if (etiqueta === 'BUTTON' || etiqueta === 'SUMMARY' || etiqueta === 'INPUT' || etiqueta === 'SELECT') return true;
+  if (etiqueta === 'A' && el.hasAttribute('href')) return true;
+  const rol = el.getAttribute('role');
+  return rol === 'button' || rol === 'link' || rol === 'menuitem' || rol === 'tab' || rol === 'checkbox';
 }
 
 /** ¿El elemento con el foco es un campo de texto? */

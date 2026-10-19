@@ -92,7 +92,7 @@ describe('Inicio', () => {
       await repo.guardarElemento(capturado(2, 'Probar ureq con 64 KB', 20));
       await repo.guardarElemento(capturado(3, 'Notas de la reunión', 10));
     });
-    useFrescos.getState().anadir(['TXT-0003']);
+    useFrescos.getState().anadir([repo.frontmatter('TXT-0003')?.id ?? '']);
 
     // Los mensajes, en orden cronológico, bajo «Hoy»; el fresco, con su borde.
     await screen.findByRole('button', { name: 'Notas de la reunión' }, PRIMERA_CARGA);
@@ -155,9 +155,23 @@ describe('Inicio', () => {
     await waitFor(() => expect(repo.frontmatter('IDE-0001')?.estado).toBe('archivado'), ESCRITURA);
     await waitFor(() => expect(refs()).toEqual(['TXT-0001', 'TXT-0003']), ESCRITURA);
 
-    // Enter: abrir.
+    // Lo seleccionado ya no está (archivado): la selección pasa al vecino que ocupa su sitio.
+    expect(seleccionado()).toBe('TXT-0003');
+
+    // Enter sobre un botón es del botón: no abre lo seleccionado ni se pierde la tecla.
+    const archivarUno = document.querySelector('.msg[data-ref="TXT-0001"] .mact .ibtn:last-child') as HTMLElement;
+    archivarUno.focus();
+    let siguio = false;
+    await act(() => {
+      siguio = fireEvent.keyDown(archivarUno, { key: 'Enter' });
+    });
+    expect(siguio).toBe(true);
+    expect(router.state.location.pathname).toBe('/');
+
+    // Enter: abrir (con el foco en el mensaje seleccionado, como lo deja j/k).
     await tecla('j');
     expect(seleccionado()).toBe('TXT-0003');
+    expect(document.activeElement?.getAttribute('data-ref')).toBe('TXT-0003');
     await tecla('Enter');
     await waitFor(() => expect(router.state.location.pathname).toBe('/e/TXT-0003'), ESCRITURA);
   }, 30_000);

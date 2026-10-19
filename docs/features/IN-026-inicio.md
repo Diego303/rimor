@@ -111,3 +111,37 @@ Cubre las ocho tareas, la prueba de triaje y la de 5.000 elementos (adaptadas: s
 - La búsqueda del feed busca en memoria (título, ref, tipo, colecciones, etiquetas y resumen legible) hasta que llegue IN-032.
 - Pruebas: Inicio, la carcasa y la app cargan Inicio una vez antes de sus pruebas (con todos los lectores, su primera transformación en `/mnt/d` tarda segundos); el corpus de captura va en una prueba por carpeta.
 
+
+## Verificación
+
+**`pnpm verificar`** (2026-10-19): tipos 0 errores; Biome, colores y textos, OK; Vitest 59 archivos y 995 pruebas, OK; construcción OK; carga inicial 212,6 KB.
+
+| Criterio | Evidencia |
+|---|---|
+| Feed por días, lista virtual, carga hacia atrás | `filas.test.ts` (días locales, orden, filtros, búsquedas e ideas sin quitar días, ventana); `Feed.test.tsx` con un contenedor que se desplaza: al montar no carga nada y queda abajo; al llegar arriba, una tanda y la vista se queda donde estaba; con 5.000 mensajes monta 12 filas |
+| Mensaje | Prueba de Inicio: icono, título, hora, vista previa, respuesta, acciones en la misma fila que «Responder» y «Archivar», fresco |
+| «Todo / Sin clasificar · N» | Prueba de Inicio |
+| Búsquedas con 5 resultados y «Abrir en Buscar» | Prueba de Inicio y de `buscarEnMemoria`; resultados como filas de elemento (`itemRow`) |
+| Ideas que vuelven | En «Hoy», solo en «Todo» |
+| Triaje con teclado | Prueba de Inicio de punta a punta (happy-dom, sin Playwright): `j`, `k`, `Enter`, `r`, `c`, `e`, `f`, `t`, `x`, `Esc`; nada dentro de un campo ni con un diálogo abierto; `Enter` sobre un botón es del botón |
+| Primer uso | Ejemplos que llenan el compositor |
+| 5.000 elementos sin tareas de más de 50 ms | Preparar las filas, el mejor de tres por debajo de 50 ms; la lista monta unas decenas de nodos. El desplazamiento fluido en un navegador real queda para cuando se use Playwright |
+
+### Revisión independiente
+
+Hallazgos corregidos, con prueba:
+
+1. **Carga hacia atrás en cascada y vista sin anclar**: los días anteriores se piden desde el desplazamiento del contenedor (nunca en el primer pintado), una tanda cada vez, y lo añadido arriba se compensa en el desplazamiento; el anclaje abajo solo cuando llega una fila nueva al final.
+2. **`Enter` se quedaba la tecla sobre cualquier botón**: los atajos pueden decir cuándo valen (`cuando`); `Enter` solo con algo seleccionado y fuera de botones, enlaces y campos; `Esc` solo con algo marcado.
+3. **El día más antiguo desaparecía con una búsqueda o ideas hoy**: los días cargados se cuentan por sus mensajes.
+4. **`cambiarTipo` liberaba la ref vieja**: el repositorio indexa los alias (siguen llevando al elemento, también tras releer los archivos) y `refs()` los incluye.
+5. **`cambiarTipo` guardaba con un lector que fallaba y mezclaba metadatos**: sin borrador no se guarda; las claves propias del lector anterior se quitan; el estado se conserva si es común o vale en el tipo nuevo; el alias no contiene la ref vigente; se escribe en turno y no pisa una edición hecha mientras se leía.
+6. **El feed volvía a lo seleccionado cada minuto**: solo cuando cambia la selección.
+7. **Respuestas encoladas de lo que ya no se ve**: se piden con prioridad `visible` y se retiran de la cola al desmontarse el mensaje.
+8. **Resultados de búsqueda distintos de la referencia**: `FilaElemento` (icono, título en negrita, resumen y fecha), reutilizable.
+9. **Acciones del lector en otra fila**: en la de «Responder» y «Archivar», antes del hueco.
+10. **Leves**: sin «Cargando días anteriores…»; el margen de la lista se vuelve a medir si cambia la columna; la caja de colección empieza vacía cada vez; en una pestaña que solo lee no se ofrecen «Responder», «Archivar» ni las acciones del lector; si lo seleccionado desaparece, la selección pasa al vecino y las marcas de lo que ya no está se quitan; lo fresco va por id (sobrevive a un cambio de tipo); la búsqueda no casa con el nombre interno del tipo y sí con el traducido; sin original, la vista previa es el resumen legible; el seleccionado recibe el foco (un lector de pantalla lo anuncia), los mensajes llevan `aria-posinset` y `aria-setsize`, y solo lo fresco se anuncia al llegar su respuesta; una acción que falla se puede reintentar; `alArchivar` estable.
+
+Sin cambiar: «No» en una respuesta se recuerda en la sesión, no en el archivo.
+
+Añadido para las siguientes IN: estados ligeros comunes en `espacio/estados.ts` y `Lector.estados` (los propios del tipo; la idea declara los suyos), que IN-027 usa.

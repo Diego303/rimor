@@ -164,6 +164,8 @@ export class Repositorio {
       this.idPorRef.set(ref, id);
       if (frontmatter) this.fms.set(id, frontmatter);
     }
+    // Los alias, después de todas las refs vigentes: una ref vigente siempre gana a un alias.
+    for (const { id, frontmatter } of entradas) this.indexarAlias(id, frontmatter?.alias);
   }
 
   /** Frontmatter de los elementos que no están en la papelera. */
@@ -184,12 +186,28 @@ export class Repositorio {
   }
 
   private indexar(el: Elemento, ruta: string): void {
-    const { id, ref } = el.frontmatter;
+    const { id, ref, alias } = el.frontmatter;
     const previa = this.porId.get(id);
-    if (previa && previa.ref !== ref) this.idPorRef.delete(previa.ref);
+    // Una ref que deja de ser la suya y no queda como alias se libera.
+    if (previa && previa.ref !== ref && !alias?.includes(previa.ref as never) && this.idPorRef.get(previa.ref) === id)
+      this.idPorRef.delete(previa.ref);
     this.porId.set(id, { id, ref, ruta, enPapelera: ruta.startsWith(`${CARPETA_PAPELERA}/`) });
     this.idPorRef.set(ref, id);
+    this.indexarAlias(id, alias);
     this.fms.set(id, el.frontmatter);
+  }
+
+  /**
+   * Los alias (refs anteriores, al cambiar el tipo o al importar) siguen llevando a su elemento y no se vuelven a
+   * asignar: `refs()` los incluye. Nunca pisan una ref vigente de otro elemento.
+   */
+  private indexarAlias(id: string, alias: readonly string[] | undefined): void {
+    for (const a of alias ?? []) if (!this.idPorRef.has(a)) this.idPorRef.set(a, id);
+  }
+
+  /** Quita del índice todas las refs (la vigente y sus alias) que llevan a un elemento. */
+  private olvidarRefs(id: string): void {
+    for (const [r, i] of [...this.idPorRef]) if (i === id) this.idPorRef.delete(r);
   }
 
   /** Entrada del índice por ref o por id. */
@@ -201,7 +219,7 @@ export class Repositorio {
     return this.porId.values();
   }
 
-  /** Refs en uso (también las de la papelera), para asignar la siguiente. */
+  /** Refs en uso (también las de la papelera y los alias), para asignar la siguiente sin reutilizar ninguna. */
   refs(): IterableIterator<string> {
     return this.idPorRef.keys();
   }
@@ -335,7 +353,7 @@ export class Repositorio {
       await this.almacen.borrar(e.ruta);
       this.porId.delete(id);
       this.fms.delete(id);
-      if (this.idPorRef.get(e.ref) === id) this.idPorRef.delete(e.ref);
+      this.olvidarRefs(id);
       await this.cache?.borrarElementos([id]);
       this.cambio();
       return true;
@@ -372,7 +390,7 @@ export class Repositorio {
       this.porId.delete(id);
       this.fms.delete(id);
       borrados.push(id);
-      if (this.idPorRef.get(e.ref) === id) this.idPorRef.delete(e.ref);
+      this.olvidarRefs(id);
     }
     await this.cache?.borrarElementos(borrados);
     if (entradas.length) this.cambio();

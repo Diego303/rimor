@@ -1,7 +1,7 @@
 /**
  * El feed de Inicio con lista virtual (D17, `@tanstack/react-virtual`): solo monta las filas visibles (y un margen),
- * con alturas medidas, anclado abajo como un chat y con la carga de días anteriores al llegar arriba. Pinta lo
- * que le dan; las acciones y el teclado van en `Inicio`.
+ * con alturas medidas, anclado abajo como un chat y con la carga de días anteriores al llegar arriba desplazándose
+ * (conservando la posición). Pinta lo que le dan; las acciones y el teclado van en `Inicio`.
  */
 import type { FrontmatterComun } from '@rimor/formato';
 import { measureElement, observeElementRect, useVirtualizer } from '@tanstack/react-virtual';
@@ -25,6 +25,8 @@ const ALTO_SIN_MEDIDA = 800;
 const ALTO_ESTIMADO = 150;
 /** Filas que se montan por encima y por debajo de las visibles. */
 const MARGEN = 6;
+/** A cuántos píxeles del principio se piden los días anteriores. */
+const UMBRAL_ARRIBA_PX = 300;
 
 /** El contenedor que se desplaza: `main.amain` de la carcasa. */
 const contenedorDe = (el: HTMLElement | null): HTMLElement | null =>
@@ -51,7 +53,8 @@ export function Feed({ filas, pintar, enfocado, alLlegarArriba, etiqueta }: Prop
       ),
   });
 
-  // Dónde empieza la lista dentro del contenedor (debajo de la cabecera y de las tarjetas de arriba).
+  // Dónde empieza la lista dentro del contenedor (debajo de la cabecera y de las tarjetas de arriba). Se vuelve a
+  // medir si cambia el contenedor o la columna (aparece o desaparece una tarjeta encima).
   useLayoutEffect(() => {
     const contenedor = contenedorDe(lista.current);
     if (!lista.current || !contenedor) return;
@@ -64,40 +67,60 @@ export function Feed({ filas, pintar, enfocado, alLlegarArriba, etiqueta }: Prop
     medir();
     const observador = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(medir);
     observador?.observe(contenedor);
+    if (lista.current.parentElement) observador?.observe(lista.current.parentElement);
     return () => observador?.disconnect();
   }, []);
 
-  // Anclado abajo: al abrir, y cuando llega algo nuevo al final, se ve lo último.
+  // Días anteriores pedidos y aún no pintados: el alto y el desplazamiento de entonces, para conservar la posición.
+  const pendiente = useRef<{ total: number; scroll: number } | null>(null);
+
+  // Anclado abajo: al abrir, y cuando llega algo nuevo al final (no al cargar días anteriores, que van arriba).
   const ultima = filas.at(-1)?.clave;
   const total = filas.length;
   // biome-ignore lint/correctness/useExhaustiveDependencies: solo cuando cambia la última fila, no en cada medida.
   useEffect(() => {
-    if (total) virtual.scrollToIndex(total - 1, { align: 'end' });
+    if (total && !pendiente.current) virtual.scrollToIndex(total - 1, { align: 'end' });
   }, [ultima]);
 
-  // Días anteriores: al llegar a las primeras filas, se piden y se conserva la fila que estaba arriba.
-  const items = virtual.getVirtualItems();
-  const primera = items[0]?.index ?? 0;
-  const anclaArriba = useRef<string | null>(null);
+  // Al llegar arriba desplazándose (nunca en el primer pintado), se piden los días anteriores, de tanda en tanda.
+  const pedir = useRef(alLlegarArriba);
+  pedir.current = alLlegarArriba;
   useEffect(() => {
-    if (!alLlegarArriba || primera > 1 || !filas.length) return;
-    anclaArriba.current = filas[primera]?.clave ?? null;
-    alLlegarArriba();
-  }, [primera, alLlegarArriba, filas]);
-  useEffect(() => {
-    const clave = anclaArriba.current;
-    if (!clave) return;
-    const i = filas.findIndex((f) => f.clave === clave);
-    if (i > 0) virtual.scrollToIndex(i, { align: 'start' });
-    anclaArriba.current = null;
-  }, [filas, virtual]);
+    const contenedor = contenedorDe(lista.current);
+    if (!contenedor) return undefined;
+    const alDesplazar = () => {
+      if (!pedir.current || pendiente.current) return;
+      if (contenedor.scrollTop - virtual.options.scrollMargin > UMBRAL_ARRIBA_PX) return;
+      pendiente.current = { total: virtual.getTotalSize(), scroll: contenedor.scrollTop };
+      pedir.current();
+    };
+    contenedor.addEventListener('scroll', alDesplazar, { passive: true });
+    return () => contenedor.removeEventListener('scroll', alDesplazar);
+  }, [virtual]);
 
-  // El seleccionado con el teclado, siempre a la vista.
+  // Cuando llegan: lo que se añadió arriba se compensa en el desplazamiento, y la vista no se mueve.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: al cambiar las filas.
+  useLayoutEffect(() => {
+    const p = pendiente.current;
+    if (!p) return;
+    pendiente.current = null;
+    const contenedor = contenedorDe(lista.current);
+    const crecio = virtual.getTotalSize() - p.total;
+    if (contenedor && crecio > 0) contenedor.scrollTop = p.scroll + crecio;
+  }, [filas]);
+
+  // El seleccionado con el teclado, a la vista; solo cuando cambia la selección (no cada vez que cambian las filas:
+  // quien se ha desplazado con el ratón no vuelve allí sin pedirlo).
+  const filasActuales = useRef(filas);
+  filasActuales.current = filas;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: solo cuando cambia la selección.
   useEffect(() => {
     if (!enfocado) return;
-    const i = filas.findIndex((f) => f.t === 'mensaje' && f.fm.ref === enfocado);
+    const i = filasActuales.current.findIndex((f) => f.t === 'mensaje' && f.fm.ref === enfocado);
     if (i >= 0) virtual.scrollToIndex(i, { align: 'auto' });
-  }, [enfocado, filas, virtual]);
+  }, [enfocado]);
+
+  const items = virtual.getVirtualItems();
 
   return (
     <div

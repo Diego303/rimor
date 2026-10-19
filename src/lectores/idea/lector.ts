@@ -51,6 +51,7 @@ export const lectorIdea: Lector<DatosIdea> = {
   tipo: 'idea',
   version: 1,
   textos,
+  estados: ESTADOS_IDEA,
 
   // Un archivo soltado nunca es una idea (un `.env` o un `.yaml` de una línea): lo deciden su tipo o Texto.
   detectar: (e: Entrada) => (!e.archivos?.length && e.texto !== undefined && pareceIdea(e.texto) ? 0.7 : 0),

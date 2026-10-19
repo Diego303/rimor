@@ -1217,9 +1217,6 @@ pre.code.codigo .ln {
   color: var(--muted);
   display: inline-grid;
 }
-.acciones-lector {
-  padding-left: 40px;
-}
 .cuerpo-busqueda {
   min-width: 0;
   flex: 1;

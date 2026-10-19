@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { describir, ESPERA_SECUENCIA_MS, GestorAtajos } from './atajos';
+import { describir, ESPERA_SECUENCIA_MS, esControlInteractivo, GestorAtajos } from './atajos';
 
 describe('describir', () => {
   it('normaliza teclas y modificadores', () => {
@@ -77,5 +77,38 @@ describe('GestorAtajos', () => {
     const g = new GestorAtajos();
     g.registrar('global', [{ teclas: 'g h', descripcion: 'atajos.irInicio', accion: vi.fn() }]);
     expect(g.pulsar({ key: 'Shift', shiftKey: true })).toBe(false);
+  });
+});
+
+describe('atajos condicionados', () => {
+  it('con `cuando` falso no se atienden y la tecla sigue su camino', () => {
+    const g = new GestorAtajos();
+    let puede = false;
+    let abiertos = 0;
+    g.registrar('inicio', [
+      { teclas: 'enter', descripcion: 'atajos.ayuda', accion: () => abiertos++, cuando: () => puede },
+    ]);
+    expect(g.pulsar({ key: 'Enter' })).toBe(false);
+    puede = true;
+    expect(g.pulsar({ key: 'Enter' })).toBe(true);
+    expect(abiertos).toBe(1);
+  });
+
+  it('controles que ya hacen algo con Enter', () => {
+    // Elementos mínimos (estas pruebas corren sin DOM).
+    const el = (tagName: string, atributos: Record<string, string> = {}) =>
+      ({
+        tagName,
+        isContentEditable: false,
+        hasAttribute: (a: string) => a in atributos,
+        getAttribute: (a: string) => atributos[a] ?? null,
+      }) as unknown as Element;
+    const boton = el('BUTTON');
+    const enlace = el('A', { href: '#/x' });
+    const articulo = el('ARTICLE');
+    const conRol = el('DIV', { role: 'button' });
+    expect([boton, enlace, conRol].every(esControlInteractivo)).toBe(true);
+    expect(esControlInteractivo(articulo)).toBe(false);
+    expect(esControlInteractivo(null)).toBe(false);
   });
 });

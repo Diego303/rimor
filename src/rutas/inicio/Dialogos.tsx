@@ -19,45 +19,53 @@ export const limpiarColeccion = (s: string) => s.trim().replace(/^@/, '').replac
 
 export function DialogoColeccion({ refe, existentes, alElegir, alCerrar }: PropsColeccion) {
   const { t } = useT();
+  return (
+    <Dialogo abierto={refe !== null} alCerrar={alCerrar} titulo={t('pantallas.inicio.coleccionTitulo')}>
+      {/* Dentro del diálogo: se monta en cada apertura, con la caja vacía. */}
+      <FormularioColeccion existentes={existentes} alElegir={alElegir} alCerrar={alCerrar} />
+    </Dialogo>
+  );
+}
+
+function FormularioColeccion({ existentes, alElegir, alCerrar }: Omit<PropsColeccion, 'refe'>) {
+  const { t } = useT();
   const [valor, setValor] = useState('');
   const lista = useId();
   const nombre = limpiarColeccion(valor);
   return (
-    <Dialogo abierto={refe !== null} alCerrar={alCerrar} titulo={t('pantallas.inicio.coleccionTitulo')}>
-      <form
-        method="dialog"
-        className="formulario-dialogo"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (nombre) alElegir(nombre);
-        }}
-      >
-        <label className="xs muted">
-          {t('pantallas.inicio.coleccionCampo')}
-          <input
-            type="text"
-            list={lista}
-            value={valor}
-            onChange={(e) => setValor(e.target.value)}
-            // biome-ignore lint/a11y/noAutofocus: el diálogo se abre para escribir el nombre.
-            autoFocus
-          />
-        </label>
-        <datalist id={lista}>
-          {existentes.map((c) => (
-            <option key={c} value={c} />
-          ))}
-        </datalist>
-        <div className="row">
-          <Boton variante="primario" pequeno type="submit" disabled={!nombre}>
-            {t('pantallas.inicio.coleccionAnadir')}
-          </Boton>
-          <Boton pequeno onClick={alCerrar}>
-            {t('pantallas.inicio.cancelar')}
-          </Boton>
-        </div>
-      </form>
-    </Dialogo>
+    <form
+      method="dialog"
+      className="formulario-dialogo"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (nombre) alElegir(nombre);
+      }}
+    >
+      <label className="xs muted">
+        {t('pantallas.inicio.coleccionCampo')}
+        <input
+          type="text"
+          list={lista}
+          value={valor}
+          onChange={(e) => setValor(e.target.value)}
+          // biome-ignore lint/a11y/noAutofocus: el diálogo se abre para escribir el nombre.
+          autoFocus
+        />
+      </label>
+      <datalist id={lista}>
+        {existentes.map((c) => (
+          <option key={c} value={c} />
+        ))}
+      </datalist>
+      <div className="row">
+        <Boton variante="primario" pequeno type="submit" disabled={!nombre}>
+          {t('pantallas.inicio.coleccionAnadir')}
+        </Boton>
+        <Boton pequeno onClick={alCerrar}>
+          {t('pantallas.inicio.cancelar')}
+        </Boton>
+      </div>
+    </form>
   );
 }
 

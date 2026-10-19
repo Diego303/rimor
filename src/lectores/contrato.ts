@@ -112,6 +112,8 @@ export interface Lector<D = unknown> {
   acciones?: AccionLector<D>[];
   cifras?: Record<string, FuncionCifra<D>>;
   incrustaciones?: Record<string, Incrustacion<D>>;
+  /** Estados propios del tipo, además de los comunes (`espacio/estados.ts`): los de una idea, por ejemplo. */
+  estados?: readonly string[];
   /** Contenido derivado que entra en la búsqueda. */
   textoIndexable?(d: D): string;
 }

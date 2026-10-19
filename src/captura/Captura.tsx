@@ -145,7 +145,7 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
       // Lo que Rimor ha ahorrado (MET-06): un error que ya había pasado, reconocido por su huella.
       for (const c of creados) void contarSiReconocido(c);
       // El feed los marca como frescos (borde naranja) durante unos minutos.
-      if (creados.length) useFrescos.getState().anadir(creados.map((c) => c.elemento.frontmatter.ref));
+      if (creados.length) useFrescos.getState().anadir(creados.map((c) => c.elemento.frontmatter.id));
     },
     [avisar, t, idioma, alAbrir, capturador, espacio, contarSiReconocido],
   );
