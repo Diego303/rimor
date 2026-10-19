@@ -7,11 +7,12 @@ import { useT } from '../../i18n/useT';
 import { Segmentado, Tarjeta } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import type { PropsVista } from '../contrato';
-import { ESTADOS_ELEGIBLES, type EstadoIdea } from './lector';
+import { cifrasDe, DetallesElemento } from '../DetallesElemento';
+import { type DatosIdea, ESTADOS_ELEGIBLES, type EstadoIdea, lectorIdea } from './lector';
 import { estadoDe } from './resurgir';
 import { textos } from './textos';
 
-export default function VistaIdea({ el }: PropsVista) {
+export default function VistaIdea({ el, datos }: PropsVista<DatosIdea>) {
   const { idioma } = useT();
   const espacio = useEspacioOpcional();
   const soloLectura = useEspacio((s) => s.soloLectura);
@@ -50,18 +51,21 @@ export default function VistaIdea({ el }: PropsVista) {
   }
 
   return (
-    <Tarjeta>
-      <p>{el.original}</p>
-      {puede ? (
-        <Segmentado
-          etiqueta={textos.t(idioma, 'estado')}
-          valor={estado}
-          alCambiar={(v) => void cambiar(v)}
-          opciones={ESTADOS_ELEGIBLES.map((e) => ({ valor: e, etiqueta: textos.t(idioma, `estados.${e}`) }))}
-        />
-      ) : (
-        <p className="sm muted">{textos.t(idioma, `estados.${estado}`)}</p>
-      )}
-    </Tarjeta>
+    <>
+      <Tarjeta>
+        <p>{el.original}</p>
+        {puede ? (
+          <Segmentado
+            etiqueta={textos.t(idioma, 'estado')}
+            valor={estado}
+            alCambiar={(v) => void cambiar(v)}
+            opciones={ESTADOS_ELEGIBLES.map((e) => ({ valor: e, etiqueta: textos.t(idioma, `estados.${e}`) }))}
+          />
+        ) : (
+          <p className="sm muted">{textos.t(idioma, `estados.${estado}`)}</p>
+        )}
+      </Tarjeta>
+      <DetallesElemento refe={el.frontmatter.ref} cifras={cifrasDe(lectorIdea, datos)} />
+    </>
   );
 }

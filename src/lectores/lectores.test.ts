@@ -129,12 +129,11 @@ describe('ColaDerivados', () => {
     await expect(b).rejects.toSatisfy(esCancelado);
     await expect(a).rejects.toSatisfy(esCancelado);
     m.soltarSiguiente();
-    await esperarVuelta();
-    await esperarVuelta();
+    // Lo cancelado en marcha termina y se guarda en la caché (asíncrona): se espera a que la cola quede vacía.
+    await vi.waitFor(() => expect(cola.pendientes).toBe(0));
     expect(m.empezados).toEqual(['TXT-0001']);
-    expect(cola.pendientes).toBe(0);
     const fm = elementoFalso(1, 'abcd').frontmatter;
-    expect(await cache.derivado(fm.id, 'falso', 1, fm.hash)).toEqual({ largo: 4 });
+    await vi.waitFor(async () => expect(await cache.derivado(fm.id, 'falso', 1, fm.hash)).toEqual({ largo: 4 }));
     // Una señal ya cancelada ni siquiera entra.
     await expect(cola.pedir(elementoFalso(3), { senal: AbortSignal.abort() })).rejects.toSatisfy(esCancelado);
     cache.cerrar();

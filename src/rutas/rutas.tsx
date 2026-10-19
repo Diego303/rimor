@@ -43,13 +43,18 @@ const datos = createRoute({
   path: '/datos',
   component: lazyRouteComponent(() => import('./datos/Datos'), 'Datos'),
 });
+const papelera = createRoute({
+  getParentRoute: () => raiz,
+  path: '/papelera',
+  component: lazyRouteComponent(() => import('./papelera/Papelera'), 'Papelera'),
+});
 const ajustes = createRoute({
   getParentRoute: () => raiz,
   path: '/ajustes',
   component: lazyRouteComponent(() => import('./ajustes/Ajustes'), 'Ajustes'),
 });
 
-const arbol = raiz.addChildren([inicio, elemento, hilo, buscar, coleccion, datos, ajustes]);
+const arbol = raiz.addChildren([inicio, elemento, hilo, buscar, coleccion, datos, papelera, ajustes]);
 
 /** Crea el router; las pruebas pasan un historial en memoria. */
 export function crearRouter(historial: RouterHistory = createHashHistory()) {

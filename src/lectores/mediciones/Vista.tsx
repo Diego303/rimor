@@ -8,6 +8,7 @@ import { fmtCifra, type Idioma } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { Detalles, Hueco, Huecos, Tabla, Tarjeta, Veredicto } from '../../ui/componentes';
 import type { PropsVista } from '../contrato';
+import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { GraficoPuntos } from './GraficoPuntos';
 import {
   type DatosMediciones,
@@ -61,13 +62,16 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
       (a) => `${varias ? t('aviso.prefijo', { etiqueta: nombre }) : ''}${textoAviso(a, s, escala, idioma, t)}`,
     ),
   );
-  const cifras = Object.entries(lectorMediciones.cifras ?? {}).map(([nombre, f]) => [nombre, f(datos).texto] as const);
+  const cifras = cifrasDe(lectorMediciones, datos);
 
   if (!primera || !primera.s.d.n) {
     return (
-      <Tarjeta>
-        <p className="sm muted">{t('respuesta.vacia')}</p>
-      </Tarjeta>
+      <>
+        <Tarjeta>
+          <p className="sm muted">{t('respuesta.vacia')}</p>
+        </Tarjeta>
+        <DetallesElemento refe={el.frontmatter.ref} />
+      </>
     );
   }
 
@@ -156,49 +160,44 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
         </Detalles>
       )}
 
-      <Detalles resumen={t('detalles')}>
-        <dl className="kv">
-          <dt>{t('formato')}</dt>
-          <dd>{t(`formatos.${datos.formato}`)}</dd>
-        </dl>
-        {filas.map(({ nombre, s }, i) => {
-          const f = fmt(s);
-          return (
-            // biome-ignore lint/suspicious/noArrayIndexKey: dos series pueden llamarse igual; el orden es fijo.
-            <div key={i}>
-              {varias && (
-                <p className="sm">
-                  <b>{nombre}</b>
-                </p>
-              )}
-              <dl className="kv">
-                <dt>{t('estadisticos.media')}</dt>
-                <dd className="mono">{f.conUnidad(s.d.media)}</dd>
-                <dt>{t('estadisticos.desviacion')}</dt>
-                <dd className="mono">{s.d.n > 1 ? f.conUnidad(s.d.desviacion) : '—'}</dd>
-                <dt>{t('estadisticos.minimo')}</dt>
-                <dd className="mono">{f.conUnidad(s.d.minimo)}</dd>
-                <dt>{t('estadisticos.maximo')}</dt>
-                <dd className="mono">{f.conUnidad(s.d.maximo)}</dd>
-                <dt>{t('estadisticos.p5')}</dt>
-                <dd className="mono">{f.conUnidad(s.d.p5)}</dd>
-                <dt>{t('estadisticos.p95')}</dt>
-                <dd className="mono">{f.conUnidad(s.d.p95)}</dd>
-              </dl>
-            </div>
-          );
-        })}
-        <p className="xs muted">
-          {t('cifras')} <span className="mono">{t('sintaxisCifra', { ref: el.frontmatter.ref })}</span>:
-        </p>
-        <div className="row">
-          {cifras.map(([nombre, valor]) => (
-            <span key={nombre} className="st">
-              <span className="mono">{nombre}</span> {valor}
-            </span>
-          ))}
-        </div>
-      </Detalles>
+      <DetallesElemento
+        refe={el.frontmatter.ref}
+        cifras={cifras}
+        anexo={
+          <>
+            {filas.map(({ nombre, s }, i) => {
+              const f = fmt(s);
+              return (
+                // biome-ignore lint/suspicious/noArrayIndexKey: dos series pueden llamarse igual; el orden es fijo.
+                <div key={i}>
+                  {varias && (
+                    <p className="sm">
+                      <b>{nombre}</b>
+                    </p>
+                  )}
+                  <dl className="kv">
+                    <dt>{t('estadisticos.media')}</dt>
+                    <dd className="mono">{f.conUnidad(s.d.media)}</dd>
+                    <dt>{t('estadisticos.desviacion')}</dt>
+                    <dd className="mono">{s.d.n > 1 ? f.conUnidad(s.d.desviacion) : '—'}</dd>
+                    <dt>{t('estadisticos.minimo')}</dt>
+                    <dd className="mono">{f.conUnidad(s.d.minimo)}</dd>
+                    <dt>{t('estadisticos.maximo')}</dt>
+                    <dd className="mono">{f.conUnidad(s.d.maximo)}</dd>
+                    <dt>{t('estadisticos.p5')}</dt>
+                    <dd className="mono">{f.conUnidad(s.d.p5)}</dd>
+                    <dt>{t('estadisticos.p95')}</dt>
+                    <dd className="mono">{f.conUnidad(s.d.p95)}</dd>
+                  </dl>
+                </div>
+              );
+            })}
+          </>
+        }
+      >
+        <dt>{t('formato')}</dt>
+        <dd>{t(`formatos.${datos.formato}`)}</dd>
+      </DetallesElemento>
     </>
   );
 }

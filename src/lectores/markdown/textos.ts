@@ -20,7 +20,6 @@ export const textos = definirTextos(
     indice: 'Índice',
     irA: 'Ir a «{titulo}»',
     documento: 'Documento',
-    detalles: 'Detalles',
     etiquetaPalabras: 'Palabras',
     etiquetaSecciones: 'Secciones',
     frontmatter: 'Frontmatter',
@@ -30,8 +29,6 @@ export const textos = definirTextos(
     bloques: 'Bloques de código',
     ninguno: 'Ninguno',
     menciones: 'Menciona',
-    cifras: 'Cifras que puedes citar en un documento con',
-    sintaxisCifra: '{{{ref}.nombre}}',
   },
   {
     analizando: 'Reading sections and tasks',
@@ -51,7 +48,6 @@ export const textos = definirTextos(
     indice: 'Contents',
     irA: 'Go to “{titulo}”',
     documento: 'Document',
-    detalles: 'Details',
     etiquetaPalabras: 'Words',
     etiquetaSecciones: 'Sections',
     frontmatter: 'Frontmatter',
@@ -61,7 +57,5 @@ export const textos = definirTextos(
     bloques: 'Code blocks',
     ninguno: 'None',
     menciones: 'Mentions',
-    cifras: 'Figures you can cite in a document with',
-    sintaxisCifra: '{{{ref}.nombre}}',
   },
 );

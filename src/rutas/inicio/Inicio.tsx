@@ -3,13 +3,15 @@
  * días con lo capturado y la respuesta de Rimor, las búsquedas del compositor, las ideas que vuelven, el triaje
  * con teclado y el compositor fijo abajo.
  */
-import { type FrontmatterComun, isoConZona } from '@rimor/formato';
+import type { FrontmatterComun } from '@rimor/formato';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCompositor } from '../../captura/compositor';
 import { cambiarTipo, sePuedeCambiar } from '../../captura/reprocesar';
 import { TarjetaPersistencia } from '../../espacio/Avisos';
 import { useEspacioOpcional } from '../../espacio/Espacio';
+import { anadirColeccion as conColeccion, conEstado, conFijado } from '../../espacio/ediciones';
+import { useEdicion } from '../../espacio/useEdicion';
 import { useEspacio } from '../../estado/espacio';
 import { esFresco, useFrescos } from '../../estado/frescos';
 import { useT } from '../../i18n/useT';
@@ -124,64 +126,45 @@ export function Inicio() {
     [navegar, espacio],
   );
 
-  /** Cambia el frontmatter de un elemento; `null` si no se pudo. */
-  const actualizar = useCallback(
-    async (fm: FrontmatterComun, cambio: (f: FrontmatterComun) => FrontmatterComun) => {
-      if (!espacio) return false;
-      const r = await espacio.repositorio
-        .actualizarElemento(fm.id, (el) => ({
-          ...el,
-          frontmatter: { ...cambio(el.frontmatter), modificado: isoConZona(new Date()) },
-        }))
-        .catch(() => null);
-      return !!r?.ok;
-    },
-    [espacio],
-  );
+  const { editarFrontmatter } = useEdicion();
 
   const archivar = useCallback(
     async (fm: FrontmatterComun) => {
       const previo = fm.estado;
-      const hecho = await actualizar(fm, (f) => ({ ...f, estado: 'archivado' }));
+      const hecho = await editarFrontmatter(fm.id, (f) => conEstado(f, 'archivado'));
       if (!hecho) return avisos?.avisar(t('pantallas.inicio.noArchivado'));
       avisos?.avisar(t('pantallas.inicio.archivado', { ref: fm.ref }), {
         accion: {
           etiqueta: t('pantallas.inicio.deshacer'),
-          alPulsar: () =>
-            void actualizar(fm, (f) => {
-              const { estado: _, ...resto } = f;
-              return previo ? { ...resto, estado: previo } : resto;
-            }),
+          alPulsar: () => void editarFrontmatter(fm.id, (f) => conEstado(f, previo)),
         },
       });
     },
-    [actualizar, avisos, t],
+    [editarFrontmatter, avisos, t],
   );
 
   const fijar = useCallback(
     async (fm: FrontmatterComun) => {
-      const fijado = !fm.fijado;
-      const hecho = await actualizar(fm, (f) => {
-        const { fijado: _, ...resto } = f;
-        return fijado ? { ...resto, fijado: true } : resto;
+      // Se alterna lo que hay al escribir (no lo pintado): dos `f` seguidos fijan y sueltan.
+      let fijado = false;
+      const hecho = await editarFrontmatter(fm.id, (f) => {
+        fijado = !f.fijado;
+        return conFijado(f, fijado);
       });
       if (hecho) avisos?.avisar(t(fijado ? 'pantallas.inicio.fijado' : 'pantallas.inicio.soltado', { ref: fm.ref }));
     },
-    [actualizar, avisos, t],
+    [editarFrontmatter, avisos, t],
   );
 
   const anadirColeccion = useCallback(
     async (fm: FrontmatterComun, coleccion: string) => {
-      const hecho = await actualizar(fm, (f) => ({
-        ...f,
-        colecciones: [...new Set([...(f.colecciones ?? []), coleccion])],
-      }));
+      const hecho = await editarFrontmatter(fm.id, (f) => conColeccion(f, coleccion));
       avisos?.avisar(
         hecho ? t('pantallas.inicio.anadidoA', { ref: fm.ref, coleccion }) : t('pantallas.inicio.noAnadido'),
       );
       return hecho;
     },
-    [actualizar, avisos, t],
+    [editarFrontmatter, avisos, t],
   );
 
   const alAccion = useCallback(

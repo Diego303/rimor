@@ -165,6 +165,12 @@ export function fmtFechaRelativa(fecha: Date, ahora: Date, idioma: Idioma, zona?
   return diaMes(p, idioma, p.anio !== hoy.anio);
 }
 
+/** Cuántos días civiles van de `fecha` a `ahora` en la zona indicada: 0 es hoy, 1 ayer; `NaN` si no son fechas. */
+export function diasDesde(fecha: Date, ahora: Date, zona?: string): number {
+  if (!valida(fecha) || !valida(ahora)) return Number.NaN;
+  return numeroDia(partes(ahora, zona)) - numeroDia(partes(fecha, zona));
+}
+
 /** Día y mes, con año si no es el actual: «2 oct» (para separadores del feed). */
 export function fmtDia(fecha: Date, ahora: Date, idioma: Idioma, zona?: string): string {
   if (!valida(fecha) || !valida(ahora)) return NO_FINITO;

@@ -4,7 +4,7 @@ import { useT } from '../../i18n/useT';
 import { Boton, Kbd } from '../componentes';
 import { useGestorAtajos } from './useAtajos';
 
-const TECLAS = ['ctrl', 'shift', 'alt', 'space', 'enter', 'escape'] as const;
+const TECLAS = ['ctrl', 'shift', 'alt', 'space', 'enter', 'escape', 'delete'] as const;
 type Tecla = (typeof TECLAS)[number];
 const esTeclaConNombre = (k: string): k is Tecla => (TECLAS as readonly string[]).includes(k);
 

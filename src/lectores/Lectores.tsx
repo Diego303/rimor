@@ -15,6 +15,7 @@ import { Senal } from '../ui/marca/Senal';
 import { useEsperaVisible } from '../ui/marca/useEsperaVisible';
 import { cargarTextoAdjunto } from './adjuntos';
 import type { Lector } from './contrato';
+import { DetallesElemento } from './DetallesElemento';
 import { ColaDerivados, type Ejecutor, esCancelado, type Progreso } from './derivados';
 import { crearEjecutor } from './ejecutor';
 import { REGISTRO, type Registro } from './registro';
@@ -154,9 +155,17 @@ export function useDerivado<D = unknown>(el: Elemento): EstadoDerivado<D> {
   return estado.clave === clave ? estado.valor : { estado: 'calculando' };
 }
 
-/** El original tal cual, para cuando no hay lector, ni vista, o el lector falla. */
+/**
+ * El original tal cual, para cuando no hay lector, ni vista, o el lector falla; con los detalles comunes del
+ * elemento (desde ahí se le puede cambiar el tipo).
+ */
 function Original({ el }: { el: Elemento }) {
-  return <pre className="code">{el.original ?? ''}</pre>;
+  return (
+    <>
+      <pre className="code">{el.original ?? ''}</pre>
+      <DetallesElemento refe={el.frontmatter.ref} />
+    </>
+  );
 }
 
 /** Resumen del frontmatter en una línea, si el lector sabe decirlo (un resumen de otra forma no lo rompe). */

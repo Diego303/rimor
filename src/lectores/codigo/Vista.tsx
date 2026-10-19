@@ -6,8 +6,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fmtNumero } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
-import { Detalles, Tarjeta } from '../../ui/componentes';
+import { Tarjeta } from '../../ui/componentes';
 import type { PropsVista } from '../contrato';
+import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { type DatosCodigo, lectorCodigo, nombreDeLenguaje } from './lector';
 import { resaltar, type Trozo, tieneResaltado } from './resaltado';
 import { textos } from './textos';
@@ -33,7 +34,7 @@ export default function VistaCodigo({ el, datos }: PropsVista<DatosCodigo>) {
 
   const lineas: Trozo[][] = resaltado ?? codigo.split('\n').map((l) => [{ texto: l, clases: '' }]);
   const lenguaje = nombreDeLenguaje(datos.lenguaje, idioma);
-  const cifras = Object.entries(lectorCodigo.cifras ?? {}).map(([nombre, f]) => [nombre, f(datos).texto] as const);
+  const cifras = cifrasDe(lectorCodigo, datos);
 
   return (
     <>
@@ -66,31 +67,19 @@ export default function VistaCodigo({ el, datos }: PropsVista<DatosCodigo>) {
         {datos.lenguaje && !tieneResaltado(datos.lenguaje) && <p className="xs muted">{t('sinResaltado')}</p>}
       </Tarjeta>
 
-      <Detalles resumen={t('detalles')}>
-        <dl className="kv">
-          <dt>{t('lenguaje')}</dt>
-          <dd>
-            {lenguaje ?? t('sinLenguaje')}
-            {lenguaje && <span className="xs muted"> ({t(`comoSeSupo.${datos.comoSeSupo}`)})</span>}
-          </dd>
-          <dt>{t('etiquetaLineas')}</dt>
-          <dd className="mono">{fmtNumero(datos.lineas, idioma)}</dd>
-          <dt>{t('caracteres')}</dt>
-          <dd className="mono">{fmtNumero(datos.caracteres, idioma)}</dd>
-          <dt>{t('definiciones')}</dt>
-          <dd className="mono">{datos.definiciones.length ? datos.definiciones.join(' · ') : t('ninguna')}</dd>
-        </dl>
-        <p className="xs muted">
-          {t('cifras')} <span className="mono">{t('sintaxisCifra', { ref: el.frontmatter.ref })}</span>:
-        </p>
-        <div className="row">
-          {cifras.map(([nombre, valor]) => (
-            <span key={nombre} className="st">
-              <span className="mono">{nombre}</span> {valor}
-            </span>
-          ))}
-        </div>
-      </Detalles>
+      <DetallesElemento refe={el.frontmatter.ref} cifras={cifras}>
+        <dt>{t('lenguaje')}</dt>
+        <dd>
+          {lenguaje ?? t('sinLenguaje')}
+          {lenguaje && <span className="xs muted"> ({t(`comoSeSupo.${datos.comoSeSupo}`)})</span>}
+        </dd>
+        <dt>{t('etiquetaLineas')}</dt>
+        <dd className="mono">{fmtNumero(datos.lineas, idioma)}</dd>
+        <dt>{t('caracteres')}</dt>
+        <dd className="mono">{fmtNumero(datos.caracteres, idioma)}</dd>
+        <dt>{t('definiciones')}</dt>
+        <dd className="mono">{datos.definiciones.length ? datos.definiciones.join(' · ') : t('ninguna')}</dd>
+      </DetallesElemento>
     </>
   );
 }

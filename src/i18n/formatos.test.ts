@@ -1,6 +1,7 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
+  diasDesde,
   fmtBytes,
   fmtCifra,
   fmtDia,
@@ -132,6 +133,15 @@ describe('fechas', () => {
     expect(fmtFechaRelativa(fecha, despues, 'es', 'Europe/Madrid')).toBe('hoy, 00:30');
     expect(fmtFechaRelativa(fecha, despues, 'es', 'America/New_York')).toBe('ayer, 18:30');
     expect(fmtHora(fecha, 'UTC')).toBe('22:30');
+  });
+
+  it('días civiles desde una fecha, en su zona', () => {
+    const fecha = new Date('2026-10-16T22:30:00Z');
+    const despues = new Date('2026-10-17T08:00:00Z');
+    expect(diasDesde(fecha, despues, 'Europe/Madrid')).toBe(0);
+    expect(diasDesde(fecha, despues, 'America/New_York')).toBe(1);
+    expect(diasDesde(new Date('2026-09-30T12:00:00Z'), despues, 'UTC')).toBe(17);
+    expect(diasDesde(new Date('no'), despues)).toBeNaN();
   });
 
   it('fecha completa y día para separadores', () => {

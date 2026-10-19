@@ -38,7 +38,6 @@ export const textos = definirTextos(
       },
       prefijo: '{etiqueta}: ',
     },
-    detalles: 'Detalles',
     formato: 'Formato',
     formatos: {
       lineas: 'Una medida por línea',
@@ -53,8 +52,6 @@ export const textos = definirTextos(
       p5: 'Percentil 5',
       p95: 'Percentil 95',
     },
-    cifras: 'Cifras que puedes citar en un documento con',
-    sintaxisCifra: '{{{ref}.nombre}}',
   },
   {
     analizando: 'Working out the median and its interval',
@@ -92,7 +89,6 @@ export const textos = definirTextos(
       },
       prefijo: '{etiqueta}: ',
     },
-    detalles: 'Details',
     formato: 'Format',
     formatos: {
       lineas: 'One measurement per line',
@@ -107,7 +103,5 @@ export const textos = definirTextos(
       p5: '5th percentile',
       p95: '95th percentile',
     },
-    cifras: 'Figures you can cite in a document with',
-    sintaxisCifra: '{{{ref}.nombre}}',
   },
 );

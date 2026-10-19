@@ -24,6 +24,12 @@
     "documento": "Document",
     "hilo": "Thread"
   },
+  "estados": {
+    "nuevo": "new",
+    "en-uso": "in use",
+    "resuelto": "solved",
+    "archivado": "archived"
+  },
   "tema": {
     "etiqueta": "Theme",
     "sistema": "System",
@@ -69,7 +75,8 @@
       "alt": "Alt",
       "space": "Space",
       "enter": "Enter",
-      "escape": "Esc"
+      "escape": "Esc",
+      "delete": "Del"
     },
     "enfocarCompositor": "Write in the composer",
     "feedSiguiente": "Next in the feed",
@@ -81,7 +88,13 @@
     "feedFijar": "Pin or unpin",
     "feedTipo": "Change type",
     "feedSeleccionar": "Select to compare or group",
-    "feedVaciarSeleccion": "Clear the selection"
+    "feedVaciarSeleccion": "Clear the selection",
+    "elementoTitulo": "Edit the title",
+    "elementoEstado": "Change the status",
+    "elementoTipo": "Change type",
+    "elementoFijar": "Pin or unpin",
+    "elementoNota": "Write a note",
+    "elementoPapelera": "Move to the bin"
   },
   "errores": {
     "pantalla": {
@@ -143,8 +156,99 @@
     },
     "elemento": {
       "titulo": "Item",
-      "vacioTitulo": "Item view",
-      "vacio": "Here you will see what Rimor computed from this item."
+      "noEncontradoTitulo": "I cannot find this item",
+      "noEncontrado": "It may have been emptied from the bin, or the address is not that of any item.",
+      "volver": "Back to Home",
+      "editarTitulo": "Edit the title",
+      "campoTitulo": "Title",
+      "cuando": {
+        "hoy": "today at {hora}",
+        "ayer": "yesterday at {hora}",
+        "otro": "on {dia} at {hora}"
+      },
+      "origen": {
+        "pegado": "Pasted {cuando}",
+        "soltado": "Dropped {cuando}",
+        "compartido": "Shared {cuando}",
+        "terminal": "Sent from the terminal {cuando}",
+        "importado": "Imported {cuando}"
+      },
+      "origenes": {
+        "pegado": "Pasted",
+        "soltado": "Dropped",
+        "compartido": "Shared",
+        "terminal": "From the terminal",
+        "importado": "Imported"
+      },
+      "cambiarEstado": "Status: {estado}. Change",
+      "estadoTitulo": "Status of {ref}",
+      "estadoCambiado": "{ref}: {estado}",
+      "fijar": "Pin",
+      "soltar": "Unpin",
+      "aPapelera": "Move to the bin",
+      "enPapelera": "It is in the bin: it will be deleted for good when the bin is emptied.",
+      "restaurar": "Restore",
+      "movido": "{ref} is in the bin",
+      "restaurado": "{ref} restored",
+      "noMovido": "It could not be moved to the bin.",
+      "noRestaurado": "It could not be restored.",
+      "noGuardado": "It could not be saved.",
+      "colecciones": {
+        "one": "Collection",
+        "other": "Collections"
+      },
+      "etiquetas": "Tags",
+      "ninguna": "None",
+      "editarColecciones": "Edit the collections",
+      "editarEtiquetas": "Edit the tags",
+      "campoColecciones": "Collections, separated by spaces",
+      "campoEtiquetas": "Tags, separated by spaces",
+      "ocultados": "Hidden secrets",
+      "origenFila": "Origin",
+      "modificado": "Modified",
+      "tipo": "Type",
+      "cambiarTipo": "Change type",
+      "original": "Original",
+      "verOriginal": "View original",
+      "originalTitulo": "Original of {ref}",
+      "adjunto": "{nombre} · {tam}",
+      "copiar": "Copy",
+      "copiado": "Copied",
+      "noCopiado": "It could not be copied.",
+      "descargar": "Download",
+      "noDisponible": "The file is not in the workspace.",
+      "cerrar": "Close",
+      "referencia": "Reference",
+      "antes": "formerly {alias}",
+      "notas": "Notes",
+      "anadirNota": "Add a note",
+      "editarNota": "Edit the note",
+      "campoNota": "Your notes",
+      "guiaNota": "Ctrl+Enter or leaving the field saves · Esc leaves the note as it was"
+    },
+    "papelera": {
+      "titulo": "Bin",
+      "meta": {
+        "one": "{n} item, it can be restored",
+        "other": "{n} items, they can be restored"
+      },
+      "vaciaTitulo": "The bin is empty",
+      "vacia": "What you move to the bin stays here until you empty it.",
+      "lista": "In the bin",
+      "restaurar": "Restore {ref}",
+      "vaciar": "Empty the bin",
+      "vaciarTitulo": "Empty the bin?",
+      "vaciarTexto": {
+        "one": "{n} item will be deleted for good. A ZIP with it is downloaded first.",
+        "other": "{n} items will be deleted for good. A ZIP with all of them is downloaded first."
+      },
+      "confirmar": "Download the ZIP and empty",
+      "cancelar": "Cancel",
+      "vaciada": {
+        "one": "Deleted {n} item; the ZIP is in your downloads.",
+        "other": "Deleted {n} items; the ZIP is in your downloads."
+      },
+      "noVaciada": "The ZIP could not be made: nothing was deleted."
     },
     "hilo": {
       "titulo": "Thread",
@@ -162,7 +266,19 @@
       "vacio": "Add items with @collection when capturing."
     },
     "datos": {
-      "titulo": "Data and backups"
+      "titulo": "Data and backups",
+      "espacios": "Workspaces and bin",
+      "espacioActivo": {
+        "one": "{n} item · active",
+        "other": "{n} items · active"
+      },
+      "papelera": "Bin",
+      "papeleraN": {
+        "one": "{n} item, it can be restored",
+        "other": "{n} items, they can be restored"
+      },
+      "papeleraVacia": "Empty",
+      "verPapelera": "Open the bin"
     },
     "ajustes": {
       "titulo": "Settings",
@@ -222,7 +338,10 @@
       "titulo": "Could not analyse it",
       "texto": "The reader failed on this item. Here is the original as it is."
     },
-    "progreso": "{texto}: {hechas} of {total}"
+    "progreso": "{texto}: {hechas} of {total}",
+    "detalles": "Details",
+    "cifras": "Figures you can cite in a document with",
+    "sintaxisCifra": "{{{ref}.name}}"
   },
   "captura": {
     "guardado": {

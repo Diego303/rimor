@@ -87,6 +87,46 @@ describe('Repositorio', () => {
     expect(await listarTodo(almacen)).toEqual([]);
   });
 
+  it('la papelera: su lista, sus archivos para el ZIP y vaciar solo lo copiado, con los adjuntos que nadie usa', async () => {
+    const almacen = new AlmacenMemoria();
+    const repo = new Repositorio(almacen);
+    const compartido = await repo.guardarAdjunto(new Uint8Array([1, 2, 3]), 'bin');
+    const propio = await repo.guardarAdjunto(new Uint8Array([4, 5]), 'bin');
+    const adjunto = (a: { hash: string; ruta: string }, tam: number) => ({ hash: a.hash, ruta: a.ruta, tam });
+    const otroId = (n: number) => `01JAB4C2Q2X8M5N7P0R4S6T8V${n}`;
+    await repo.guardarElemento(elemento({ adjunto: adjunto(compartido, 3) }));
+    await repo.guardarElemento(
+      elemento({ id: otroId(1), ref: 'LOG-0043', titulo: 'Con el mismo', adjunto: adjunto(compartido, 3) }),
+    );
+    await repo.guardarElemento(
+      elemento({ id: otroId(2), ref: 'LOG-0044', titulo: 'Propio', adjunto: adjunto(propio, 2) }),
+    );
+    await repo.guardarElemento(elemento({ id: otroId(3), ref: 'LOG-0045', titulo: 'Después' }));
+    await repo.moverAPapelera('LOG-0042');
+    await repo.moverAPapelera('LOG-0044');
+    expect(
+      repo
+        .enPapelera()
+        .map((fm) => fm.ref)
+        .sort(),
+    ).toEqual(['LOG-0042', 'LOG-0044']);
+
+    // El ZIP lleva los dos .md de la papelera y solo el adjunto que no usa nadie más.
+    const ids = repo.enPapelera().map((fm) => fm.id);
+    const archivos = await repo.archivosDePapelera(ids);
+    expect(archivos.map((a) => a.ruta).sort()).toEqual(
+      [propio.ruta, repo.buscar('LOG-0042')?.ruta, repo.buscar('LOG-0044')?.ruta].sort(),
+    );
+
+    // Mientras se hacía el ZIP, otro fue a la papelera: no se borra (no está en la copia).
+    await repo.moverAPapelera('LOG-0045');
+    expect(await repo.vaciarPapelera(ids)).toBe(2);
+    expect(repo.enPapelera().map((fm) => fm.ref)).toEqual(['LOG-0045']);
+    expect(await almacen.existe(propio.ruta)).toBe(false);
+    expect(await almacen.existe(compartido.ruta)).toBe(true);
+    expect(repo.buscar('LOG-0042')).toBeUndefined();
+  });
+
   it('cargar reconstruye el índice desde los archivos, también la papelera', async () => {
     const almacen = new AlmacenMemoria();
     const repo = new Repositorio(almacen);

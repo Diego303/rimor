@@ -8,6 +8,7 @@ import { fmtDuracion, fmtNumero } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { Boton, Detalles } from '../../ui/componentes';
 import type { PropsVista } from '../contrato';
+import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { useOriginal } from '../useOriginal';
 import type { Barra, DatosLog, Nivel } from './analisis';
 import { lectorLog } from './lector';
@@ -144,7 +145,7 @@ export default function VistaLog({ el, datos }: PropsVista<DatosLog>) {
       : datos.histograma?.paso === 'dia'
         ? t('histogramaDia')
         : t('histograma');
-  const cifras = Object.entries(lectorLog.cifras ?? {}).map(([nombre, f]) => [nombre, f(datos).texto] as const);
+  const cifras = cifrasDe(lectorLog, datos);
   const nivel = (n: Nivel) => datos.niveles[n];
   const elegir = (i: number) => setElegida(elegida === i ? null : i);
 
@@ -244,58 +245,46 @@ export default function VistaLog({ el, datos }: PropsVista<DatosLog>) {
         {lineas.length > MAX_LINEAS && <p className="xs muted">{t('mostrando', { n: MAX_LINEAS })}</p>}
       </Detalles>
 
-      <Detalles resumen={t('detalles')}>
-        <dl className="kv">
-          <dt>{t('formato')}</dt>
-          <dd>{t(`formatos.${datos.formato}`)}</dd>
-          {datos.desde && datos.hasta && (
-            <>
-              <dt>{t('rango')}</dt>
-              <dd>
-                {datos.desde} – {datos.hasta}
-                {datos.duracionMs !== null && ` · ${fmtDuracion(datos.duracionMs, idioma)}`}
-              </dd>
-            </>
-          )}
-          {datos.primerError && (
-            <>
-              <dt>{t('primerError')}</dt>
-              <dd className="mono xs">
-                {t('linea', { n: datos.primerError.linea })} · {datos.primerError.texto}
-              </dd>
-            </>
-          )}
-          {datos.ultimoError && datos.ultimoError.linea !== datos.primerError?.linea && (
-            <>
-              <dt>{t('ultimoError')}</dt>
-              <dd className="mono xs">
-                {t('linea', { n: datos.ultimoError.linea })} · {datos.ultimoError.texto}
-              </dd>
-            </>
-          )}
-          {datos.pares.length > 0 && (
-            <>
-              <dt>{t('pares')}</dt>
-              <dd className="mono xs">
-                {datos.pares
-                  .slice(0, 8)
-                  .map((p) => `${p.clave} (${p.valores.map((v) => v.valor).join(', ')})`)
-                  .join(' · ')}
-              </dd>
-            </>
-          )}
-        </dl>
-        <p className="xs muted">
-          {t('cifras')} <span className="mono">{t('sintaxisCifra', { ref: el.frontmatter.ref })}</span>:
-        </p>
-        <div className="row">
-          {cifras.map(([nombre, valor]) => (
-            <span key={nombre} className="st">
-              <span className="mono">{nombre}</span> {valor}
-            </span>
-          ))}
-        </div>
-      </Detalles>
+      <DetallesElemento refe={el.frontmatter.ref} cifras={cifras}>
+        <dt>{t('formato')}</dt>
+        <dd>{t(`formatos.${datos.formato}`)}</dd>
+        {datos.desde && datos.hasta && (
+          <>
+            <dt>{t('rango')}</dt>
+            <dd>
+              {datos.desde} – {datos.hasta}
+              {datos.duracionMs !== null && ` · ${fmtDuracion(datos.duracionMs, idioma)}`}
+            </dd>
+          </>
+        )}
+        {datos.primerError && (
+          <>
+            <dt>{t('primerError')}</dt>
+            <dd className="mono xs">
+              {t('linea', { n: datos.primerError.linea })} · {datos.primerError.texto}
+            </dd>
+          </>
+        )}
+        {datos.ultimoError && datos.ultimoError.linea !== datos.primerError?.linea && (
+          <>
+            <dt>{t('ultimoError')}</dt>
+            <dd className="mono xs">
+              {t('linea', { n: datos.ultimoError.linea })} · {datos.ultimoError.texto}
+            </dd>
+          </>
+        )}
+        {datos.pares.length > 0 && (
+          <>
+            <dt>{t('pares')}</dt>
+            <dd className="mono xs">
+              {datos.pares
+                .slice(0, 8)
+                .map((p) => `${p.clave} (${p.valores.map((v) => v.valor).join(', ')})`)
+                .join(' · ')}
+            </dd>
+          </>
+        )}
+      </DetallesElemento>
     </>
   );
 }

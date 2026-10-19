@@ -12,6 +12,7 @@ import { useT } from '../../i18n/useT';
 import { Boton, Detalles, Hueco, Huecos, Tarjeta } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import type { PropsVista } from '../contrato';
+import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { escrituraDe, sustituir, trozosDe } from './analisis';
 import { type DatosPrompt, lectorPrompt } from './lector';
 import {
@@ -274,7 +275,7 @@ export default function VistaPrompt({ el, datos }: PropsVista<DatosPrompt>) {
   const [resultados, setResultados] = useState(() => resultadosDe(el.frontmatter));
   // Cuando llega el elemento releído (o otro), manda lo que dice su frontmatter.
   useEffect(() => setResultados(resultadosDe(el.frontmatter)), [el.frontmatter]);
-  const cifras = Object.entries(lectorPrompt.cifras ?? {}).map(([nombre, f]) => [nombre, f(datos).texto] as const);
+  const cifras = cifrasDe(lectorPrompt, datos);
 
   return (
     <>
@@ -297,37 +298,25 @@ export default function VistaPrompt({ el, datos }: PropsVista<DatosPrompt>) {
 
       <Resultados el={el} resultados={resultados} alGuardar={(r) => setResultados((p) => [...p, r])} t={t} />
 
-      <Detalles resumen={t('detalles')}>
-        <dl className="kv">
-          <dt>{t('tokensAprox')}</dt>
-          <dd>
-            <span className="mono">{fmtNumero(datos.tokens, idioma)}</span>{' '}
-            <span className="xs muted">({t('comoSeCuentan')})</span>
-          </dd>
-          <dt>{t('lineas')}</dt>
-          <dd className="mono">{fmtNumero(datos.lineas, idioma)}</dd>
-          <dt>{t('forma')}</dt>
-          <dd>{t(`formas.${datos.forma}`)}</dd>
-          {datos.destino && (
-            <>
-              <dt>{t('destino')}</dt>
-              <dd>{datos.destino}</dd>
-            </>
-          )}
-          <dt>{t('secciones')}</dt>
-          <dd>{datos.secciones.length ? datos.secciones.join(' · ') : t('ninguna')}</dd>
-        </dl>
-        <p className="xs muted">
-          {t('cifras')} <span className="mono">{t('sintaxisCifra', { ref: el.frontmatter.ref })}</span>:
-        </p>
-        <div className="row">
-          {cifras.map(([nombre, valor]) => (
-            <span key={nombre} className="st">
-              <span className="mono">{nombre}</span> {valor}
-            </span>
-          ))}
-        </div>
-      </Detalles>
+      <DetallesElemento refe={el.frontmatter.ref} cifras={cifras}>
+        <dt>{t('tokensAprox')}</dt>
+        <dd>
+          <span className="mono">{fmtNumero(datos.tokens, idioma)}</span>{' '}
+          <span className="xs muted">({t('comoSeCuentan')})</span>
+        </dd>
+        <dt>{t('lineas')}</dt>
+        <dd className="mono">{fmtNumero(datos.lineas, idioma)}</dd>
+        <dt>{t('forma')}</dt>
+        <dd>{t(`formas.${datos.forma}`)}</dd>
+        {datos.destino && (
+          <>
+            <dt>{t('destino')}</dt>
+            <dd>{datos.destino}</dd>
+          </>
+        )}
+        <dt>{t('secciones')}</dt>
+        <dd>{datos.secciones.length ? datos.secciones.join(' · ') : t('ninguna')}</dd>
+      </DetallesElemento>
     </>
   );
 }

@@ -3,6 +3,7 @@
  * autocompletado o una lista de botones.
  */
 import { useId, useState } from 'react';
+import { limpiarColeccion } from '../../espacio/ediciones';
 import { useT } from '../../i18n/useT';
 import type { Lector } from '../../lectores/contrato';
 import { Boton, Dialogo, IconoTipo } from '../../ui/componentes';
@@ -13,9 +14,6 @@ interface PropsColeccion {
   alElegir: (coleccion: string) => void;
   alCerrar: () => void;
 }
-
-/** Nombre de colección limpio: sin espacios de más ni `@`. */
-export const limpiarColeccion = (s: string) => s.trim().replace(/^@/, '').replace(/\s+/g, '-').toLowerCase();
 
 export function DialogoColeccion({ refe, existentes, alElegir, alCerrar }: PropsColeccion) {
   const { t } = useT();

@@ -9,7 +9,7 @@ pinta. Esta carpeta es un lector completo que funciona (cuenta líneas y palabra
 |---|---|
 | `lector.ts` | El núcleo (`Lector<D>` de `../contrato.ts`): `detectar`, `leer`, `derivar`, `resumen`, `respuesta` y lo opcional (`resumenLegible`, `cifras`, `acciones`, `incrustaciones`, `textoIndexable`). TS puro: se ejecuta también en el Worker de derivados, así que no puede importar React ni nada del DOM. |
 | `textos.ts` | Sus textos en español (base) e inglés, con `definirTextos`. `analizando` es obligatorio: se enseña junto a la animación mientras `derivar` trabaja. |
-| `Vista.tsx` | Vista completa (export por defecto), con el elemento y los datos derivados. Se carga en diferido. |
+| `Vista.tsx` | Vista completa (export por defecto), con el elemento y los datos derivados. Se carga en diferido. Termina con un único `DetallesElemento` (de `../DetallesElemento.tsx`): sus filas propias como hijos y sus cifras con `cifrasDe`; la pantalla del elemento añade dentro lo común (colecciones, etiquetas, origen, tipo, referencia). |
 | `Tarjeta.tsx` | Vista previa en mosaico (export por defecto), solo con el elemento. Opcional. |
 | `fixtures/` | Ejemplos reales para las pruebas y para el corpus de detección (IN-013). |
 | `plantilla.test.ts` | Pruebas del lector. |

@@ -112,8 +112,13 @@ export interface Lector<D = unknown> {
   acciones?: AccionLector<D>[];
   cifras?: Record<string, FuncionCifra<D>>;
   incrustaciones?: Record<string, Incrustacion<D>>;
-  /** Estados propios del tipo, además de los comunes (`espacio/estados.ts`): los de una idea, por ejemplo. */
+  /**
+   * Estados propios del tipo, además de los comunes (`espacio/estados.ts`): los de una idea, por ejemplo. El
+   * primero es el de un elemento sin estado (si no hay propios, «nuevo»).
+   */
   estados?: readonly string[];
+  /** Los propios que se eligen a mano (si falta, todos): «convertida» lo pone la app al convertir una idea. */
+  estadosElegibles?: readonly string[];
   /** Contenido derivado que entra en la búsqueda. */
   textoIndexable?(d: D): string;
 }

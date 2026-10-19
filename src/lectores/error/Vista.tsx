@@ -13,6 +13,7 @@ import { construirContexto } from '../../respuestas/contexto';
 import { Boton, Detalles, Tarjeta, Veredicto } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import type { Contexto, PropsVista } from '../contrato';
+import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { type DatosError, lectorError } from './lector';
 import { textos } from './textos';
 
@@ -106,9 +107,7 @@ export default function VistaError({ el, datos }: PropsVista<DatosError>) {
     } else avisos?.avisar(t('noGuardado'));
   }
 
-  const cifras = Object.entries(lectorError.cifras ?? {}).map(
-    ([nombre, f]) => [nombre, f(datos, ctx ?? undefined, el).texto] as const,
-  );
+  const cifras = cifrasDe(lectorError, datos, ctx ?? undefined, el);
 
   return (
     <>
@@ -207,24 +206,12 @@ export default function VistaError({ el, datos }: PropsVista<DatosError>) {
         <pre className="code traza-original">{el.original ?? ''}</pre>
       </Detalles>
 
-      <Detalles resumen={t('detalles')}>
-        <dl className="kv">
-          <dt>{t('huella')}</dt>
-          <dd className="mono">{datos.huella}</dd>
-          <dt>{t('comoSeCalcula')}</dt>
-          <dd>{t('explicacionHuella')}</dd>
-        </dl>
-        <p className="xs muted">
-          {t('cifras')} <span className="mono">{t('sintaxisCifra', { ref: el.frontmatter.ref })}</span>:
-        </p>
-        <div className="row">
-          {cifras.map(([nombre, valor]) => (
-            <span key={nombre} className="st">
-              <span className="mono">{nombre}</span> {valor}
-            </span>
-          ))}
-        </div>
-      </Detalles>
+      <DetallesElemento refe={el.frontmatter.ref} cifras={cifras}>
+        <dt>{t('huella')}</dt>
+        <dd className="mono">{datos.huella}</dd>
+        <dt>{t('comoSeCalcula')}</dt>
+        <dd>{t('explicacionHuella')}</dd>
+      </DetallesElemento>
     </>
   );
 }

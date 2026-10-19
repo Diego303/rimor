@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-19 18:29
-**Ahora:** IN-027 · Vista de elemento, estados, fijar y papelera · fase análisis y diseño
+**Última actualización:** 2026-10-19 19:13
+**Ahora:** IN-027 · Vista de elemento, estados, fijar y papelera · fase implementación
 **Siguiente:** IN-028 · Comparaciones de logs y mediciones
 **Progreso:** F0 9/9 · v0.1 28/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 37/99
 
@@ -46,7 +46,7 @@
 | IN-024 | Lector Documento Markdown | v0.1 | 4 | hecha | 77638b0 39b2632 5a6c03e | docs/features/IN-024-markdown.md |
 | IN-025 | Lector Código | v0.1 | 4 | hecha | 7c063ed 976f145 9926e80 | docs/features/IN-025-codigo.md |
 | IN-026 | Inicio: feed y triaje | v0.1 | 5 | hecha | c71fe34 3387a22 3e903c6 | docs/features/IN-026-inicio.md |
-| IN-027 | Vista de elemento, estados, fijar y papelera | v0.1 | 5 | en análisis y diseño | — | docs/features/IN-027-elemento.md |
+| IN-027 | Vista de elemento, estados, fijar y papelera | v0.1 | 5 | en implementación | 8e26cc6 | docs/features/IN-027-elemento.md |
 | IN-028 | Comparaciones de logs y mediciones | v0.1 | 5 | pendiente | — | — |
 | IN-029 | Versiones e historial | v0.1 | 5 | pendiente | — | — |
 | IN-030 | Hilos | v0.1 | 5 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-19 | IN-027 | análisis y diseño | cabecera editable, un solo «Detalles» con lo común, estados, notas, cambiar tipo, fijar y papelera con ZIP previo | … |
+| 2026-10-19 | IN-027 | implementación | cabecera editable, «Detalles» común en las once vistas, estados, notas, cambiar tipo, fijar y papelera con ZIP previo | … |
+| 2026-10-19 | IN-027 | análisis y diseño | cabecera editable, un solo «Detalles» con lo común, estados, notas, cambiar tipo, fijar y papelera con ZIP previo | 8e26cc6 |
 | 2026-10-19 | IN-026 | verificación | OK (995 pruebas; 10 grupos de hallazgos de la revisión corregidos) | 3e903c6 |
 | 2026-10-19 | IN-026 | implementación | OK (987 pruebas; triaje completo con teclado; 5.000 elementos) | 3387a22 |
 | 2026-10-19 | IN-026 | análisis y diseño | feed por días con lista virtual, mensajes, búsquedas, ideas y triaje con teclado | c71fe34 |

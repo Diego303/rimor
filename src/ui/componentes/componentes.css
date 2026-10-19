@@ -1450,3 +1450,72 @@ pre.code.codigo .ln {
   color: var(--muted);
   padding: 0 4px 6px;
 }
+/* Vista de elemento (IN-027): edición en el sitio, chip de estado pulsable, acciones de la cabecera y notas. */
+.en-sitio {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: text;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+.en-sitio:hover {
+  background: var(--panel-2);
+}
+.en-sitio-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.ah h2 .en-sitio-campo input {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  padding: 2px 8px;
+}
+.kv .en-sitio-campo input {
+  padding: 3px 8px;
+}
+.sugerencias-en-sitio {
+  flex-wrap: wrap;
+}
+.st-boton {
+  border: 0;
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.acciones-elemento {
+  gap: 2px;
+}
+.acciones-elemento .ibtn[aria-pressed="true"] {
+  color: var(--accent);
+}
+.lista-estados .it {
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-items: start;
+  color: var(--accent);
+}
+.original-elemento {
+  max-height: 60vh;
+  overflow: auto;
+}
+.notas-elemento textarea {
+  font-family: var(--f-b);
+  font-size: 0.875rem;
+  resize: none;
+  overflow: hidden;
+}
+.fila-papelera {
+  flex-wrap: nowrap;
+}
+.fila-papelera .it {
+  flex: 1;
+  min-width: 0;
+}

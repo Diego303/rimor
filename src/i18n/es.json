@@ -24,6 +24,12 @@
     "documento": "Documento",
     "hilo": "Hilo"
   },
+  "estados": {
+    "nuevo": "nuevo",
+    "en-uso": "en uso",
+    "resuelto": "resuelto",
+    "archivado": "archivado"
+  },
   "tema": {
     "etiqueta": "Tema",
     "sistema": "Sistema",
@@ -69,7 +75,8 @@
       "alt": "Alt",
       "space": "Espacio",
       "enter": "Intro",
-      "escape": "Esc"
+      "escape": "Esc",
+      "delete": "Supr"
     },
     "enfocarCompositor": "Escribir en el compositor",
     "feedSiguiente": "Siguiente en el feed",
@@ -81,7 +88,13 @@
     "feedFijar": "Fijar o soltar",
     "feedTipo": "Cambiar tipo",
     "feedSeleccionar": "Seleccionar para comparar o agrupar",
-    "feedVaciarSeleccion": "Vaciar la selección"
+    "feedVaciarSeleccion": "Vaciar la selección",
+    "elementoTitulo": "Editar el título",
+    "elementoEstado": "Cambiar el estado",
+    "elementoTipo": "Cambiar tipo",
+    "elementoFijar": "Fijar o soltar",
+    "elementoNota": "Escribir una nota",
+    "elementoPapelera": "Mover a la papelera"
   },
   "errores": {
     "pantalla": {
@@ -143,8 +156,99 @@
     },
     "elemento": {
       "titulo": "Elemento",
-      "vacioTitulo": "Vista del elemento",
-      "vacio": "Aquí verás lo que Rimor ha calculado de este elemento."
+      "noEncontradoTitulo": "No encuentro este elemento",
+      "noEncontrado": "Puede que se vaciara de la papelera o que la dirección no sea la de ningún elemento.",
+      "volver": "Volver a Inicio",
+      "editarTitulo": "Editar el título",
+      "campoTitulo": "Título",
+      "cuando": {
+        "hoy": "hoy a las {hora}",
+        "ayer": "ayer a las {hora}",
+        "otro": "el {dia} a las {hora}"
+      },
+      "origen": {
+        "pegado": "Pegado {cuando}",
+        "soltado": "Soltado {cuando}",
+        "compartido": "Compartido {cuando}",
+        "terminal": "Enviado desde la terminal {cuando}",
+        "importado": "Importado {cuando}"
+      },
+      "origenes": {
+        "pegado": "Pegado",
+        "soltado": "Soltado",
+        "compartido": "Compartido",
+        "terminal": "Desde la terminal",
+        "importado": "Importado"
+      },
+      "cambiarEstado": "Estado: {estado}. Cambiar",
+      "estadoTitulo": "Estado de {ref}",
+      "estadoCambiado": "{ref}: {estado}",
+      "fijar": "Fijar",
+      "soltar": "Soltar",
+      "aPapelera": "Mover a la papelera",
+      "enPapelera": "Está en la papelera: se borrará para siempre al vaciarla.",
+      "restaurar": "Restaurar",
+      "movido": "{ref} está en la papelera",
+      "restaurado": "{ref} restaurado",
+      "noMovido": "No se pudo mover a la papelera.",
+      "noRestaurado": "No se pudo restaurar.",
+      "noGuardado": "No se pudo guardar.",
+      "colecciones": {
+        "one": "Colección",
+        "other": "Colecciones"
+      },
+      "etiquetas": "Etiquetas",
+      "ninguna": "Ninguna",
+      "editarColecciones": "Editar las colecciones",
+      "editarEtiquetas": "Editar las etiquetas",
+      "campoColecciones": "Colecciones, separadas por espacios",
+      "campoEtiquetas": "Etiquetas, separadas por espacios",
+      "ocultados": "Secretos ocultados",
+      "origenFila": "Origen",
+      "modificado": "Modificado",
+      "tipo": "Tipo",
+      "cambiarTipo": "Cambiar tipo",
+      "original": "Original",
+      "verOriginal": "Ver original",
+      "originalTitulo": "Original de {ref}",
+      "adjunto": "{nombre} · {tam}",
+      "copiar": "Copiar",
+      "copiado": "Copiado",
+      "noCopiado": "No se pudo copiar.",
+      "descargar": "Descargar",
+      "noDisponible": "El archivo no está en el espacio.",
+      "cerrar": "Cerrar",
+      "referencia": "Referencia",
+      "antes": "antes {alias}",
+      "notas": "Notas",
+      "anadirNota": "Añadir una nota",
+      "editarNota": "Editar la nota",
+      "campoNota": "Tus notas",
+      "guiaNota": "Ctrl+Intro o salir del campo guarda · Esc deja la nota como estaba"
+    },
+    "papelera": {
+      "titulo": "Papelera",
+      "meta": {
+        "one": "{n} elemento, se puede restaurar",
+        "other": "{n} elementos, se pueden restaurar"
+      },
+      "vaciaTitulo": "La papelera está vacía",
+      "vacia": "Lo que muevas a la papelera se queda aquí hasta que la vacíes.",
+      "lista": "En la papelera",
+      "restaurar": "Restaurar {ref}",
+      "vaciar": "Vaciar la papelera",
+      "vaciarTitulo": "¿Vaciar la papelera?",
+      "vaciarTexto": {
+        "one": "Se borrará para siempre {n} elemento. Antes se descargará un ZIP con él.",
+        "other": "Se borrarán para siempre {n} elementos. Antes se descargará un ZIP con todos."
+      },
+      "confirmar": "Descargar el ZIP y vaciar",
+      "cancelar": "Cancelar",
+      "vaciada": {
+        "one": "Borrado {n} elemento; el ZIP está en tus descargas.",
+        "other": "Borrados {n} elementos; el ZIP está en tus descargas."
+      },
+      "noVaciada": "No se pudo hacer el ZIP: no se ha borrado nada."
     },
     "hilo": {
       "titulo": "Hilo",
@@ -162,7 +266,19 @@
       "vacio": "Añade elementos con @colección al capturar."
     },
     "datos": {
-      "titulo": "Datos y copias"
+      "titulo": "Datos y copias",
+      "espacios": "Espacios y papelera",
+      "espacioActivo": {
+        "one": "{n} elemento · activo",
+        "other": "{n} elementos · activo"
+      },
+      "papelera": "Papelera",
+      "papeleraN": {
+        "one": "{n} elemento, se puede restaurar",
+        "other": "{n} elementos, se pueden restaurar"
+      },
+      "papeleraVacia": "Vacía",
+      "verPapelera": "Ver la papelera"
     },
     "ajustes": {
       "titulo": "Ajustes",
@@ -222,7 +338,10 @@
       "titulo": "No se pudo analizar",
       "texto": "El lector falló con este elemento. Aquí tienes el original tal cual."
     },
-    "progreso": "{texto}: {hechas} de {total}"
+    "progreso": "{texto}: {hechas} de {total}",
+    "detalles": "Detalles",
+    "cifras": "Cifras que puedes citar en un documento con",
+    "sintaxisCifra": "{{{ref}.nombre}}"
   },
   "captura": {
     "guardado": {

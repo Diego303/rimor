@@ -6,8 +6,9 @@ import { useT } from '../../i18n/useT';
 import { Boton, Tarjeta } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import type { PropsVista } from '../contrato';
+import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { descargar } from '../descargar';
-import type { DatosArchivo } from './lector';
+import { type DatosArchivo, lectorArchivo } from './lector';
 import { textos } from './textos';
 
 export default function VistaArchivo({ el, datos }: PropsVista<DatosArchivo>) {
@@ -28,20 +29,23 @@ export default function VistaArchivo({ el, datos }: PropsVista<DatosArchivo>) {
   }
 
   return (
-    <Tarjeta>
-      <dl className="kv">
-        <dt>{t('nombre')}</dt>
-        <dd className="mono">{datos.nombre}</dd>
-        <dt>{t('tamano')}</dt>
-        <dd>{fmtBytes(datos.tam, idioma)}</dd>
-        <dt>{t('tipo')}</dt>
-        <dd className="mono">{datos.mime || t('sinTipo')}</dd>
-      </dl>
-      <div className="row">
-        <Boton onClick={() => void bajar()} disabled={bajando || !ruta}>
-          {t('descargar')}
-        </Boton>
-      </div>
-    </Tarjeta>
+    <>
+      <Tarjeta>
+        <dl className="kv">
+          <dt>{t('nombre')}</dt>
+          <dd className="mono">{datos.nombre}</dd>
+          <dt>{t('tamano')}</dt>
+          <dd>{fmtBytes(datos.tam, idioma)}</dd>
+          <dt>{t('tipo')}</dt>
+          <dd className="mono">{datos.mime || t('sinTipo')}</dd>
+        </dl>
+        <div className="row">
+          <Boton onClick={() => void bajar()} disabled={bajando || !ruta}>
+            {t('descargar')}
+          </Boton>
+        </div>
+      </Tarjeta>
+      <DetallesElemento refe={el.frontmatter.ref} cifras={cifrasDe(lectorArchivo, datos)} />
+    </>
   );
 }

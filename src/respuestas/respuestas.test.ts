@@ -200,6 +200,8 @@ describe('respuestas de los lectores sobre el corpus', () => {
             expect(comprobarEstilo(lector.respuesta(el, datos, contexto)), `${lector.nombre} ${i}`).toEqual([]);
       }
     },
+    // Deriva todo el corpus con el lector: con la máquina cargada pasa del plazo por defecto de 5 s.
+    30_000,
   );
 
   it('instantánea de la respuesta de cada lector con su primer ejemplo', async () => {

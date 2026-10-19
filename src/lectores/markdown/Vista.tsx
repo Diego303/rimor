@@ -6,9 +6,10 @@
 import { fmtNumero } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { idDeAncla } from '../../ui/anclas';
-import { Detalles, Medidor, Tarjeta } from '../../ui/componentes';
+import { Medidor, Tarjeta } from '../../ui/componentes';
 import MarkdownSeguro from '../../ui/componentes/MarkdownSeguro';
 import type { PropsVista } from '../contrato';
+import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { cuerpoDe } from './deteccion';
 import { type DatosMarkdown, indiceDe } from './indice';
 import { lectorMarkdown } from './lector';
@@ -31,7 +32,7 @@ export default function VistaMarkdown({ el, datos }: PropsVista<DatosMarkdown>) 
   // El mismo cuerpo que analizó el lector (sin frontmatter, con saltos normalizados): así las anclas coinciden.
   const { cuerpo, frontmatter } = cuerpoDe(el.original ?? '');
   const { hechas, total } = datos.tareas;
-  const cifras = Object.entries(lectorMarkdown.cifras ?? {}).map(([nombre, f]) => [nombre, f(datos).texto] as const);
+  const cifras = cifrasDe(lectorMarkdown, datos);
   const lenguajes = Object.entries(datos.bloques.lenguajes).sort((a, b) => b[1] - a[1]);
 
   const lista = indice.length > 0 && (
@@ -70,55 +71,50 @@ export default function VistaMarkdown({ el, datos }: PropsVista<DatosMarkdown>) 
         <MarkdownSeguro texto={cuerpo} anclas />
       </Tarjeta>
 
-      <Detalles resumen={t('detalles')}>
-        <dl className="kv">
-          <dt>{t('etiquetaSecciones')}</dt>
-          <dd className="mono">{fmtNumero(indice.length, idioma)}</dd>
-          <dt>{t('etiquetaPalabras')}</dt>
-          <dd className="mono">{fmtNumero(datos.palabras, idioma)}</dd>
-          <dt>{t('enlaces')}</dt>
-          <dd>
-            {datos.enlaces.length ? (
-              <span className="lista-enlaces">
-                {datos.enlaces.slice(0, ENLACES_VISIBLES).map((u) => (
-                  <span key={u} className="mono xs">
-                    {u}
-                  </span>
-                ))}
-                {datos.enlaces.length > ENLACES_VISIBLES && (
-                  <span className="xs muted">{t('masEnlaces', { n: datos.enlaces.length - ENLACES_VISIBLES })}</span>
-                )}
-              </span>
-            ) : (
-              t('ninguno')
-            )}
-          </dd>
-          <dt>{t('bloques')}</dt>
-          <dd>{lenguajes.length ? lenguajes.map(([l, n]) => `${l} (${n})`).join(' · ') : t('ninguno')}</dd>
-          {datos.menciones.length > 0 && (
-            <>
-              <dt>{t('menciones')}</dt>
-              <dd className="mono">{datos.menciones.join(' · ')}</dd>
-            </>
-          )}
-        </dl>
-        {frontmatter !== null && (
+      <DetallesElemento
+        refe={el.frontmatter.ref}
+        cifras={cifras}
+        anexo={
           <>
-            <p className="xs muted">{t('frontmatter')}</p>
-            <pre className="code">{frontmatter}</pre>
+            {frontmatter !== null && (
+              <>
+                <p className="xs muted">{t('frontmatter')}</p>
+                <pre className="code">{frontmatter}</pre>
+              </>
+            )}
+          </>
+        }
+      >
+        <dt>{t('etiquetaSecciones')}</dt>
+        <dd className="mono">{fmtNumero(indice.length, idioma)}</dd>
+        <dt>{t('etiquetaPalabras')}</dt>
+        <dd className="mono">{fmtNumero(datos.palabras, idioma)}</dd>
+        <dt>{t('enlaces')}</dt>
+        <dd>
+          {datos.enlaces.length ? (
+            <span className="lista-enlaces">
+              {datos.enlaces.slice(0, ENLACES_VISIBLES).map((u) => (
+                <span key={u} className="mono xs">
+                  {u}
+                </span>
+              ))}
+              {datos.enlaces.length > ENLACES_VISIBLES && (
+                <span className="xs muted">{t('masEnlaces', { n: datos.enlaces.length - ENLACES_VISIBLES })}</span>
+              )}
+            </span>
+          ) : (
+            t('ninguno')
+          )}
+        </dd>
+        <dt>{t('bloques')}</dt>
+        <dd>{lenguajes.length ? lenguajes.map(([l, n]) => `${l} (${n})`).join(' · ') : t('ninguno')}</dd>
+        {datos.menciones.length > 0 && (
+          <>
+            <dt>{t('menciones')}</dt>
+            <dd className="mono">{datos.menciones.join(' · ')}</dd>
           </>
         )}
-        <p className="xs muted">
-          {t('cifras')} <span className="mono">{t('sintaxisCifra', { ref: el.frontmatter.ref })}</span>:
-        </p>
-        <div className="row">
-          {cifras.map(([nombre, valor]) => (
-            <span key={nombre} className="st">
-              <span className="mono">{nombre}</span> {valor}
-            </span>
-          ))}
-        </div>
-      </Detalles>
+      </DetallesElemento>
     </>
   );
 }

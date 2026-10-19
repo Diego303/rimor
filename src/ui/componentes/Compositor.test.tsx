@@ -92,7 +92,8 @@ describe('Compositor', () => {
     fireEvent.keyDown(area, { key: 'Enter' });
     await waitFor(() => expect(repositorio?.elementos()).toHaveLength(1));
     expect(repositorio?.elementos()[0]).toMatchObject({ tipo: 'texto', colecciones: ['gateway'], etiquetas: ['rust'] });
-    expect(useCompositor.getState().texto).toBe('');
+    // Se vacía al terminar de guardar, un momento después de que el elemento esté en el repositorio.
+    await waitFor(() => expect(useCompositor.getState().texto).toBe(''));
     expect(await screen.findByRole('button', { name: 'Deshacer' })).toBeTruthy();
   });
 

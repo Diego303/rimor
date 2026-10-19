@@ -51,13 +51,13 @@ Lo común, en `dl.kv`: referencia (y alias), origen y fecha completa, secretos o
 
 ## Tareas
 
-- [ ] Cabecera común: chip de tipo, estado, título editable en el sitio y línea de meta.
-- [ ] Cuerpo: la `Vista` del lector.
-- [ ] Detalles comunes plegados: colecciones, etiquetas, origen, secretos ocultados, ref, cifras citables y «Ver original».
-- [ ] Corregir el tipo en un clic (reprocesa con el otro lector y suma una corrección al contador).
-- [ ] Notas del usuario (cuerpo del `.md`) con editor simple.
-- [ ] Estados ligeros (nuevo, en uso, resuelto, archivado) y los propios de cada tipo.
-- [ ] Fijar, mover a la papelera, restaurar y vaciar la papelera (con ZIP previo).
+- [x] Cabecera común: chip de tipo, estado, título editable en el sitio y línea de meta.
+- [x] Cuerpo: la `Vista` del lector.
+- [x] Detalles comunes plegados: colecciones, etiquetas, origen, secretos ocultados, ref, cifras citables y «Ver original».
+- [x] Corregir el tipo en un clic (reprocesa con el otro lector y suma una corrección al contador).
+- [x] Notas del usuario (cuerpo del `.md`) con editor simple.
+- [x] Estados ligeros (nuevo, en uso, resuelto, archivado) y los propios de cada tipo.
+- [x] Fijar, mover a la papelera, restaurar y vaciar la papelera (con ZIP previo).
 
 ## Pruebas previstas
 
@@ -84,4 +84,28 @@ Lo común, en `dl.kv`: referencia (y alias), origen y fecha completa, secretos o
 ## Autorrevisión
 
 Cubre las siete tareas. Lo aprendido en IN-021 a IN-026 que aplica aquí: las ediciones van en turno (`actualizarElemento`) y no pisan lo que cambió mientras tanto; los atajos de pantalla leen el estado del momento; las pruebas de pantalla cargan sus módulos antes (el disco es lento); y lo visual sigue la referencia: un solo «Detalles» por pantalla.
+
+## Implementación
+
+- **Pantalla** (`src/rutas/elemento/`): `Elemento.tsx` resuelve la ref (un alias o el id llevan a la vigente con `replace`) y pinta `PantallaElemento`; `useElementoVivo` relee el archivo cuando su frontmatter cambia en el repositorio (cada guardado deja un objeto nuevo; moverlo cambia la ruta), también desde Inicio u otra pestaña. `Cabecera.tsx` (chips, título, meta y acciones), `Comunes.tsx` (filas comunes de «Detalles» y `sugerir`), `Notas.tsx`, `Dialogos.tsx` (estado y original) y `estados.ts` (nombre de un estado en el idioma).
+- **Un solo «Detalles»**: `src/lectores/DetallesElemento.tsx` con `ContextoDetalles` (las filas comunes que pone la pantalla), las filas propias del lector como hijos, un `anexo` (los estadísticos por serie de Mediciones, el frontmatter de Markdown) y las cifras (`cifrasDe`). Las once vistas lo usan y sus textos `detalles`, `cifras` y `sintaxisCifra` pasan a `lectores.*`. `VistaElemento` lo pinta también con el original cuando el lector falla o no tiene vista (para poder cambiarle el tipo).
+- **Edición en el sitio**: `src/ui/componentes/EnSitio.tsx` (título, colecciones, etiquetas): el nombre del botón es lo que se ve y lo que hace va en `title`; `Enter` o salir guardan una sola vez, `Esc` cancela sin llegar a los atajos; las sugerencias completan la última palabra sin terminar la edición.
+- **Ediciones comunes**: `src/espacio/ediciones.ts` (puras: `conFijado`, `conEstado`, `conColecciones`, `conEtiquetas`, `listaDeTexto`, `tituloNuevo`, `limpiarColeccion`, `limpiarEtiqueta`) y `useEdicion` (en turno, con `modificado`). Inicio pasa a usarlas. Fijar alterna lo que hay al escribir, no lo pintado.
+- **Estados**: `espacio/estados.ts` suma `estadoVisible`, `estadosPosibles` y `tonoDeEstado`; el contrato, `Lector.estadosElegibles` (la idea no deja elegir «convertida» a mano).
+- **Papelera**: el repositorio suma `enPapelera()`, `archivosDePapelera(ids)` y `vaciarPapelera(ids)` (solo lo copiado y los adjuntos que ya no usa nadie); `espacio/papelera.ts` hace el ZIP (fflate 0.8.3, `zipSync`, texto comprimido y adjuntos tal cual) y `vaciarConCopia` borra solo tras entregarlo. Ruta `/papelera`; Datos y copias suma «Espacios y papelera».
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| El estado va en el chip de la cabecera, no también en «Detalles» | Ya se ve y se cambia arriba con un clic (`s`); repetirlo abajo sería duplicar el mismo control. |
+| A la derecha de la cabecera, dos iconos (fijar y papelera) en lugar de un menú | Un clic, como pide la aceptación; la referencia no muestra menú y el tipo se cambia desde «Detalles». |
+| ZIP de la papelera en el hilo principal (`zipSync`) | Es pequeño y raro; IN-035 lo cambiará por su ZIP en streaming en un Worker. |
+| Vaciar borra solo lo que entró en el ZIP | Si algo llega a la papelera mientras se hace la copia, no se pierde sin copia. |
+| Los nombres de los estados propios, en minúsculas | Como los chips de la referencia (`nuevo`, `semilla`). |
+| Dos pruebas antiguas esperan al estado final en vez de a ticks fijos (cola de derivados, compositor) y la de estilo de las respuestas sobre el corpus tiene 30 s | Fallaban solo con la máquina saturada (carga 24); lo que comprueban no cambia. |
+
+## Pruebas
+
+`ediciones.test.ts` (ediciones y estados), `papelera.test.ts` (ZIP, borrar solo tras entregarlo, nombre), `repositorio.test.ts` (lista, archivos y vaciado selectivo con adjuntos), `EnSitio.test.tsx`, `formatos.test.ts` (`diasDesde`), `Elemento.test.tsx` (cabecera, título, estados con teclado, fijar dos veces, «Detalles» con colecciones, etiquetas, original y cambiar tipo con su alias, notas, estados de una idea, papelera con deshacer, solo lectura de verdad con el cerrojo ocupado, ref que no existe) y `Papelera.test.tsx` (desde Datos, lista y restaurar, vaciar con ZIP y sin borrar si falla).
 

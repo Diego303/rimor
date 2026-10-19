@@ -21,6 +21,7 @@ describe('Carcasa', () => {
   // prueba mida lo que pinta y no la primera transformación de sus módulos.
   beforeAll(async () => {
     await import('./inicio/Inicio');
+    await import('./elemento/Elemento');
   }, 120_000);
 
   afterEach(() =>

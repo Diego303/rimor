@@ -6,8 +6,9 @@ import { useT } from '../../i18n/useT';
 import { Boton, Tarjeta } from '../../ui/componentes';
 import MarkdownSeguro from '../../ui/componentes/MarkdownSeguro';
 import type { PropsVista } from '../contrato';
+import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { descargar } from '../descargar';
-import type { DatosTexto } from './lector';
+import { type DatosTexto, lectorTexto } from './lector';
 import { textos } from './textos';
 
 /** De un texto guardado aparte, lo que se pinta (en plano: Markdown de varios MB bloquearía la página). */
@@ -85,6 +86,7 @@ export default function VistaTexto({ el, datos }: PropsVista<DatosTexto>) {
           </div>
         </Tarjeta>
       )}
+      <DetallesElemento refe={el.frontmatter.ref} cifras={cifrasDe(lectorTexto, datos)} />
     </>
   );
 }

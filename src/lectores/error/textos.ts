@@ -49,13 +49,10 @@ export const textos = definirTextos(
     tuCodigo: 'Dónde, en tu código',
     librerias: { one: 'Librerías y sistema ({n} marco)', other: 'Librerías y sistema ({n} marcos)' },
     original: 'Traza original',
-    detalles: 'Detalles',
     huella: 'Huella',
     comoSeCalcula: 'Cómo se calcula',
     explicacionHuella:
       'Lenguaje, tipo de error, mensaje sin números ni rutas y los dos marcos de tu código más cercanos al error (archivo y función)',
-    cifras: 'Cifras que puedes citar en un documento con',
-    sintaxisCifra: '{{{ref}.nombre}}',
     sinMarcosPropios: 'Ningún marco de la traza es de tu código.',
   },
   {
@@ -105,13 +102,10 @@ export const textos = definirTextos(
     tuCodigo: 'Where, in your code',
     librerias: { one: 'Libraries and system ({n} frame)', other: 'Libraries and system ({n} frames)' },
     original: 'Original trace',
-    detalles: 'Details',
     huella: 'Fingerprint',
     comoSeCalcula: 'How it is computed',
     explicacionHuella:
       'Language, error type, message without numbers or paths and the two frames from your code closest to the error (file and function)',
-    cifras: 'Figures you can cite in a document with',
-    sintaxisCifra: '{{{ref}.name}}',
     sinMarcosPropios: 'No frame in the trace is from your code.',
   },
 );

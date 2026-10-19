@@ -43,7 +43,6 @@ export const textos = definirTextos(
     cancelar: 'Cancelar',
     resultadoGuardado: 'Resultado guardado',
     noGuardado: 'No se pudo guardar.',
-    detalles: 'Detalles',
     tokensAprox: 'Tokens (aprox.)',
     comoSeCuentan: '4 caracteres por token',
     lineas: 'Líneas',
@@ -51,8 +50,6 @@ export const textos = definirTextos(
     destino: 'Destino',
     secciones: 'Secciones',
     ninguna: 'Ninguna',
-    cifras: 'Cifras que puedes citar en un documento con',
-    sintaxisCifra: '{{{ref}.nombre}}',
   },
   {
     analizando: 'Looking for variables and sections',
@@ -95,7 +92,6 @@ export const textos = definirTextos(
     cancelar: 'Cancel',
     resultadoGuardado: 'Result saved',
     noGuardado: 'It could not be saved.',
-    detalles: 'Details',
     tokensAprox: 'Tokens (approx.)',
     comoSeCuentan: '4 characters per token',
     lineas: 'Lines',
@@ -103,7 +99,5 @@ export const textos = definirTextos(
     destino: 'Target',
     secciones: 'Sections',
     ninguna: 'None',
-    cifras: 'Figures you can cite in a document with',
-    sintaxisCifra: '{{{ref}.nombre}}',
   },
 );

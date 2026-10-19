@@ -24,7 +24,6 @@ export const textos = definirTextos(
       conLenguaje: 'Código {lenguaje}, {lineas}.',
       sinLenguaje: 'Código de {lineas}.',
     },
-    detalles: 'Detalles',
     lenguaje: 'Lenguaje',
     sinLenguaje: 'Sin reconocer',
     comoSeSupo: {
@@ -38,8 +37,6 @@ export const textos = definirTextos(
     caracteres: 'Caracteres',
     definiciones: 'Definiciones',
     ninguna: 'Ninguna',
-    cifras: 'Cifras que puedes citar en un documento con',
-    sintaxisCifra: '{{{ref}.nombre}}',
   },
   {
     analizando: 'Recognising the language',
@@ -49,7 +46,6 @@ export const textos = definirTextos(
       conLenguaje: '{lenguaje} code, {lineas}.',
       sinLenguaje: 'Code of {lineas}.',
     },
-    detalles: 'Details',
     lenguaje: 'Language',
     sinLenguaje: 'Not recognised',
     comoSeSupo: {
@@ -63,7 +59,5 @@ export const textos = definirTextos(
     caracteres: 'Characters',
     definiciones: 'Definitions',
     ninguna: 'None',
-    cifras: 'Figures you can cite in a document with',
-    sintaxisCifra: '{{{ref}.nombre}}',
   },
 );
