@@ -239,16 +239,21 @@
       "vaciar": "Vaciar la papelera",
       "vaciarTitulo": "¿Vaciar la papelera?",
       "vaciarTexto": {
-        "one": "Se borrará para siempre {n} elemento. Antes se descargará un ZIP con él.",
-        "other": "Se borrarán para siempre {n} elementos. Antes se descargará un ZIP con todos."
+        "one": "Se borrará para siempre {n} elemento. Primero descarga el ZIP con él; después podrás vaciarla.",
+        "other": "Se borrarán para siempre {n} elementos. Primero descarga el ZIP con todos; después podrás vaciarla."
       },
-      "confirmar": "Descargar el ZIP y vaciar",
+      "confirmar": "Vaciar la papelera",
       "cancelar": "Cancelar",
       "vaciada": {
-        "one": "Borrado {n} elemento; el ZIP está en tus descargas.",
-        "other": "Borrados {n} elementos; el ZIP está en tus descargas."
+        "one": "Borrado {n} elemento de la papelera.",
+        "other": "Borrados {n} elementos de la papelera."
       },
-      "noVaciada": "No se pudo hacer el ZIP: no se ha borrado nada."
+      "noVaciada": "No se pudo hacer el ZIP: no se ha borrado nada.",
+      "preparando": "Preparando el ZIP…",
+      "descargarZip": "Descargar el ZIP",
+      "descargada": "Comprueba que el ZIP está en tus descargas antes de vaciar.",
+      "noDescargada": "No se pudo descargar el ZIP: no se ha borrado nada.",
+      "noBorrada": "No se pudo vaciar del todo: lo que no se borró sigue en la papelera."
     },
     "hilo": {
       "titulo": "Hilo",

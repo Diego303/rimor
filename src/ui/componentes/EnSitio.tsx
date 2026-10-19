@@ -25,9 +25,12 @@ interface Props {
   children: ReactNode;
 }
 
-/** Cambia la última palabra (la que se está escribiendo) por `palabra`, y deja un espacio para la siguiente. */
+/**
+ * Cambia la última palabra (la que se está escribiendo) por `palabra`, y deja un espacio para la siguiente. Las
+ * palabras se separan con espacios o comas, como al guardar la lista.
+ */
 export function completarUltima(texto: string, palabra: string): string {
-  const base = /\s$/.test(texto) || !texto ? texto : texto.replace(/\S+$/, '');
+  const base = /[\s,]$/.test(texto) || !texto ? texto : texto.replace(/[^\s,]+$/, '');
   return `${base}${palabra} `;
 }
 
@@ -112,8 +115,9 @@ export function EnSitio({
           if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
             e.preventDefault();
             terminar(texto, true);
-          } else if (e.key === 'Escape') {
-            // Esc es del campo: no cierra nada más ni llega a los atajos de la pantalla.
+          } else if (e.key === 'Escape' && !e.nativeEvent.isComposing) {
+            // Esc es del campo: no cierra nada más ni llega a los atajos de la pantalla. (Durante una composición
+            // de IME, Esc es del IME: cancela lo que se compone, no la edición.)
             e.preventDefault();
             e.stopPropagation();
             terminar(null, true);

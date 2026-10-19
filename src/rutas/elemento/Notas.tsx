@@ -78,10 +78,11 @@ function EditorNotas({ notas, alTerminar }: Pick<Props, 'notas' | 'alTerminar'>)
         onChange={(e) => setTexto(e.target.value)}
         onBlur={() => terminar(texto)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !e.nativeEvent.isComposing) {
             e.preventDefault();
             terminar(texto);
-          } else if (e.key === 'Escape') {
+          } else if (e.key === 'Escape' && !e.nativeEvent.isComposing) {
+            // (Durante una composición de IME, Esc es del IME.)
             e.preventDefault();
             e.stopPropagation();
             terminar(null);

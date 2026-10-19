@@ -150,10 +150,11 @@ interface PropsResultados {
   resultados: readonly ResultadoPrompt[];
   /** Se ha guardado uno: la lista lo enseña ya, sin esperar a que llegue el elemento releído. */
   alGuardar: (r: ResultadoPrompt) => void;
+  editable: boolean;
   t: T;
 }
 
-function Resultados({ el, resultados, alGuardar, t }: PropsResultados) {
+function Resultados({ el, resultados, alGuardar, editable, t }: PropsResultados) {
   const { idioma } = useT();
   const espacio = useEspacioOpcional();
   const soloLectura = useEspacio((s) => s.soloLectura);
@@ -220,7 +221,8 @@ function Resultados({ el, resultados, alGuardar, t }: PropsResultados) {
       ) : (
         <p className="sm muted">{t('sinResultados')}</p>
       )}
-      {!soloLectura &&
+      {editable &&
+        !soloLectura &&
         espacio &&
         (abierto ? (
           <div className="nuevo-resultado">
@@ -268,7 +270,7 @@ function Resultados({ el, resultados, alGuardar, t }: PropsResultados) {
   );
 }
 
-export default function VistaPrompt({ el, datos }: PropsVista<DatosPrompt>) {
+export default function VistaPrompt({ el, datos, editable = true }: PropsVista<DatosPrompt>) {
   const { idioma } = useT();
   const t = textos.t.bind(textos, idioma) as unknown as T;
   const trozos = useMemo(() => trozosDe(el.original ?? ''), [el.original]);
@@ -296,7 +298,13 @@ export default function VistaPrompt({ el, datos }: PropsVista<DatosPrompt>) {
 
       {datos.variables.length > 0 && <CopiarConValores el={el} datos={datos} resultados={resultados} t={t} />}
 
-      <Resultados el={el} resultados={resultados} alGuardar={(r) => setResultados((p) => [...p, r])} t={t} />
+      <Resultados
+        el={el}
+        resultados={resultados}
+        alGuardar={(r) => setResultados((p) => [...p, r])}
+        editable={editable}
+        t={t}
+      />
 
       <DetallesElemento refe={el.frontmatter.ref} cifras={cifras}>
         <dt>{t('tokensAprox')}</dt>

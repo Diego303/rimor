@@ -3,7 +3,7 @@ import { strFromU8, unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { AlmacenMemoria } from '../almacen/memoria';
 import { Repositorio } from '../almacen/repositorio';
-import { nombreZipPapelera, vaciarConCopia } from './papelera';
+import { nombreZipPapelera, prepararCopia } from './papelera';
 
 const elemento = (n: number): Elemento => ({
   frontmatter: {
@@ -31,11 +31,11 @@ async function conPapelera() {
 }
 
 describe('vaciar la papelera con copia', () => {
-  it('entrega un ZIP con lo que había y después lo borra', async () => {
+  it('el ZIP lleva lo que había; vaciar con él borra solo eso', async () => {
     const repo = await conPapelera();
-    const zips: Uint8Array[] = [];
-    expect(await vaciarConCopia(repo, (z) => zips.push(z))).toBe(2);
-    const archivos = unzipSync(zips[0] ?? new Uint8Array());
+    const copia = await prepararCopia(repo);
+    if (!copia) throw new Error('sin copia');
+    const archivos = unzipSync(copia.zip);
     expect(Object.keys(archivos).sort()).toEqual([
       'papelera/elementos/2026/10/TXT-0001--nota-1.md',
       'papelera/elementos/2026/10/TXT-0002--nota-2.md',
@@ -43,25 +43,16 @@ describe('vaciar la papelera con copia', () => {
     expect(strFromU8(archivos['papelera/elementos/2026/10/TXT-0001--nota-1.md'] ?? new Uint8Array())).toContain(
       'texto 1',
     );
-    expect(repo.enPapelera()).toEqual([]);
-    expect(repo.elementos().map((fm) => fm.ref)).toEqual(['TXT-0003']);
-  });
-
-  it('si la copia no se puede entregar, no se borra nada', async () => {
-    const repo = await conPapelera();
-    await expect(
-      vaciarConCopia(repo, () => {
-        throw new Error('sin descarga');
-      }),
-    ).rejects.toThrow('sin descarga');
+    // Preparar no borra nada.
     expect(repo.enPapelera()).toHaveLength(2);
+    // Lo que llega a la papelera después de la copia no se borra con ella.
+    await repo.moverAPapelera('TXT-0003');
+    expect(await repo.vaciarPapelera(copia)).toBe(2);
+    expect(repo.enPapelera().map((fm) => fm.ref)).toEqual(['TXT-0003']);
   });
 
   it('con la papelera vacía no hay copia', async () => {
-    const repo = new Repositorio(new AlmacenMemoria());
-    let llamado = false;
-    expect(await vaciarConCopia(repo, () => (llamado = true))).toBe(0);
-    expect(llamado).toBe(false);
+    expect(await prepararCopia(new Repositorio(new AlmacenMemoria()))).toBeNull();
   });
 
   it('nombre del ZIP con el espacio y el día', () => {

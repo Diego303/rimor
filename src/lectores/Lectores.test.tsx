@@ -10,6 +10,7 @@ import { AlmacenMemoria } from '../almacen/memoria';
 import type { Cerrojos } from '../almacen/pestanas';
 import { type DependenciasProveedor, ProveedorEspacio, useEspacioAbierto } from '../espacio/Espacio';
 import { lectorPlantilla } from './_plantilla/lector';
+import { ContextoDetalles } from './DetallesElemento';
 import type { Ejecutor } from './derivados';
 import { ejecutorEnHilo } from './ejecutor';
 import { ProveedorLectores, TarjetaElemento, VistaElemento } from './Lectores';
@@ -93,6 +94,36 @@ async function elementoDePlantilla(): Promise<Elemento> {
 }
 
 describe('lector de punta a punta', () => {
+  it('mientras deriva, lo común de «Detalles» que pone la pantalla ya se puede usar', async () => {
+    const registro = crearRegistro([lectorPlantilla]);
+    const retenido = ejecutorRetenido(registro);
+    const el = await elementoDePlantilla();
+    render(
+      <ProveedorEspacio dependencias={dependencias()}>
+        <ProveedorLectores registro={registro} ejecutar={retenido.ejecutar}>
+          <ContextoDetalles.Provider
+            value={
+              <>
+                <dt>Común</dt>
+                <dd>sí</dd>
+              </>
+            }
+          >
+            <ConElemento el={el}>{(e) => <VistaElemento el={e} />}</ConElemento>
+          </ContextoDetalles.Provider>
+        </ProveedorLectores>
+      </ProveedorEspacio>,
+    );
+    expect(await screen.findByText('Común', {}, { timeout: 4000 })).toBeTruthy();
+    // Aún sin la vista del lector (sus estadísticas): solo lo común.
+    expect(screen.queryByText('palabras', { selector: '.stat span' })).toBeNull();
+    retenido.soltar();
+    expect(await screen.findByText('palabras', { selector: '.stat span' }, { timeout: 4000 })).toBeTruthy();
+    // Un solo «Detalles», también cuando llega la vista.
+    expect(screen.getAllByText('Detalles', { selector: 'summary' })).toHaveLength(1);
+    expect(screen.getByText('Común')).toBeTruthy();
+  });
+
   it('la plantilla registrada: resumen y «analizando» mientras deriva, después su vista y su tarjeta', async () => {
     const registro = crearRegistro([lectorPlantilla]);
     const retenido = ejecutorRetenido(registro);

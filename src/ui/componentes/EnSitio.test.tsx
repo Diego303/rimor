@@ -62,6 +62,15 @@ describe('EnSitio', () => {
     expect(llego).toBe(false);
   });
 
+  it('Esc durante una composición de IME es del IME: no cancela la edición', () => {
+    const hechos: (string | null)[] = [];
+    render(<Prueba alTerminar={(t) => hechos.push(t)} />);
+    const campo = editar();
+    fireEvent.keyDown(campo, { key: 'Escape', isComposing: true });
+    expect(hechos).toEqual([]);
+    expect(screen.getByRole('textbox', { name: 'Editar' })).toBeTruthy();
+  });
+
   it('salir del campo guarda una sola vez', () => {
     const hechos: (string | null)[] = [];
     render(<Prueba alTerminar={(t) => hechos.push(t)} />);
@@ -102,6 +111,9 @@ describe('completar y sugerir', () => {
     expect(completarUltima('prompts gat', 'gateway')).toBe('prompts gateway ');
     expect(completarUltima('prompts ', 'gateway')).toBe('prompts gateway ');
     expect(completarUltima('', 'gateway')).toBe('gateway ');
+    // Separadas por comas, como al guardar: no se pierde lo de antes de la coma.
+    expect(completarUltima('gateway,ges', 'gestion')).toBe('gateway,gestion ');
+    expect(completarUltima('gateway,', 'prompts')).toBe('gateway,prompts ');
   });
 
   it('sugiere las existentes que empiezan por lo escrito y no están ya', () => {

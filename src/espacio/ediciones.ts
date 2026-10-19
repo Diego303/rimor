@@ -41,6 +41,20 @@ export const conColecciones = (fm: FrontmatterComun, colecciones: readonly strin
 export const conEtiquetas = (fm: FrontmatterComun, etiquetas: readonly string[]): FrontmatterComun =>
   etiquetas.length ? { ...fm, etiquetas: [...etiquetas] } : sin(fm, 'etiquetas');
 
+/**
+ * Aplica a la lista de ahora lo que cambió entre `antes` y `despues` (lo que se quitó y lo que se añadió al
+ * editarla), sin perder lo que otro añadió mientras tanto.
+ */
+export function aplicarCambios(
+  ahora: readonly string[],
+  antes: readonly string[],
+  despues: readonly string[],
+): string[] {
+  const quitadas = new Set(antes.filter((x) => !despues.includes(x)));
+  const quedan = ahora.filter((x) => !quitadas.has(x));
+  return [...quedan, ...despues.filter((x) => !quedan.includes(x) && !antes.includes(x))];
+}
+
 /** Añade una colección (si no estaba). */
 export const anadirColeccion = (fm: FrontmatterComun, coleccion: string): FrontmatterComun =>
   conColecciones(fm, [...new Set([...(fm.colecciones ?? []), coleccion])]);

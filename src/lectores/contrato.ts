@@ -127,6 +127,11 @@ export interface Lector<D = unknown> {
 export interface PropsVista<D = unknown> {
   el: Elemento;
   datos: D;
+  /**
+   * Si se puede editar desde la vista (estado, notas, resultados). La pantalla dice que no si el elemento está en
+   * la papelera; la vista mira además si la pestaña solo lee. Si falta, sí.
+   */
+  editable?: boolean;
 }
 
 /** Props de `Tarjeta.tsx` (export por defecto) de un lector. */

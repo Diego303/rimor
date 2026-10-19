@@ -4,7 +4,7 @@
  * y la referencia con sus alias.
  */
 import type { FrontmatterComun } from '@rimor/formato';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { limpiarColeccion, limpiarEtiqueta } from '../../espacio/ediciones';
 import { fmtBytes, fmtFecha } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
@@ -44,8 +44,9 @@ interface Props {
   editable: boolean;
   /** Todas las colecciones y etiquetas del espacio, para sugerirlas. */
   existentes: () => { colecciones: string[]; etiquetas: string[] };
-  alGuardarColecciones: (texto: string) => void;
-  alGuardarEtiquetas: (texto: string) => void;
+  /** Lo escrito y la lista que había al empezar a editar (para aplicar solo lo que cambió). */
+  alGuardarColecciones: (texto: string, inicial: readonly string[]) => void;
+  alGuardarEtiquetas: (texto: string, inicial: readonly string[]) => void;
   alCambiarTipo: () => void;
   alVerOriginal: () => void;
 }
@@ -67,9 +68,15 @@ export function FilasComunes({
   const colecciones = fm.colecciones ?? [];
   const etiquetas = fm.etiquetas ?? [];
   const ninguna = <span className="muted">{t('pantallas.elemento.ninguna')}</span>;
-  const terminar = (guardar: (texto: string) => void) => (texto: string | null) => {
+  // La lista al empezar a editar: lo que cambie mientras se escribe (otra pestaña, Inicio) no se pisa.
+  const inicial = useRef<readonly string[]>([]);
+  const empezar = (cual: 'colecciones' | 'etiquetas') => {
+    inicial.current = cual === 'colecciones' ? colecciones : etiquetas;
+    setEditando(cual);
+  };
+  const terminar = (guardar: Props['alGuardarColecciones']) => (texto: string | null) => {
     setEditando(null);
-    if (texto !== null) guardar(texto);
+    if (texto !== null) guardar(texto, inicial.current);
   };
   const modificado = fm.modificado !== fm.creado;
 
@@ -86,7 +93,7 @@ export function FilasComunes({
               ? t('pantallas.elemento.campoColecciones')
               : t('pantallas.elemento.editarColecciones')
           }
-          alEmpezar={() => setEditando('colecciones')}
+          alEmpezar={() => empezar('colecciones')}
           alTerminar={terminar(alGuardarColecciones)}
           sugerencias={(texto) => sugerir(texto, nombres.colecciones, limpiarColeccion)}
         >
@@ -102,7 +109,7 @@ export function FilasComunes({
           etiqueta={
             editando === 'etiquetas' ? t('pantallas.elemento.campoEtiquetas') : t('pantallas.elemento.editarEtiquetas')
           }
-          alEmpezar={() => setEditando('etiquetas')}
+          alEmpezar={() => empezar('etiquetas')}
           alTerminar={terminar(alGuardarEtiquetas)}
           sugerencias={(texto) => sugerir(texto, nombres.etiquetas, limpiarEtiqueta).map((e) => `#${e}`)}
         >

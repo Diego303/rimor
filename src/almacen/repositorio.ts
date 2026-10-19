@@ -23,6 +23,15 @@ export const CARPETA_HISTORIAL = 'historial';
 /** Diario de la operación de varios pasos en curso (renombrar, papelera, restaurar): si se corta, se termina al cargar. */
 export const RUTA_DIARIO = '.rimor/operacion.json';
 
+/** Lo que se copió de la papelera (ver `copiaDePapelera`). */
+export interface CopiaPapelera {
+  /** Los elementos que entraron en la copia. */
+  ids: string[];
+  /** Los adjuntos que entraron (los que solo usaban ellos). */
+  adjuntos: string[];
+  archivos: { ruta: string; datos: Uint8Array }[];
+}
+
 export interface EntradaIndice {
   id: string;
   ref: string;
@@ -385,53 +394,69 @@ export class Repositorio {
   }
 
   /**
-   * Los archivos de los elementos de la papelera (todos, o los de `ids`) y los adjuntos que solo usan ellos, con
-   * sus rutas en el espacio: lo que se copia en un ZIP antes de vaciarla.
+   * Copia de lo que hay ahora en la papelera, para el ZIP previo a vaciarla: los archivos de sus elementos y los
+   * adjuntos que solo usan ellos, con sus rutas en el espacio. Dice qué elementos y adjuntos entraron, que son
+   * lo único que `vaciarPapelera` borrará después.
    */
-  async archivosDePapelera(ids?: readonly string[]): Promise<{ ruta: string; datos: Uint8Array }[]> {
-    const elegidos = this.dePapelera(ids);
-    const archivos: { ruta: string; datos: Uint8Array }[] = [];
-    for (const e of elegidos) {
+  async copiaDePapelera(): Promise<CopiaPapelera> {
+    const copia: CopiaPapelera = { ids: [], adjuntos: [], archivos: [] };
+    for (const e of this.dePapelera()) {
       const datos = await this.almacen.leer(e.ruta);
-      if (datos) archivos.push({ ruta: e.ruta, datos });
+      // Si ya no está (se restauró mientras tanto), no entra en la copia ni se borrará.
+      if (!datos) continue;
+      copia.ids.push(e.id);
+      copia.archivos.push({ ruta: e.ruta, datos });
     }
-    for (const ruta of this.adjuntosSoloDe(elegidos.map((e) => e.id))) {
+    for (const ruta of this.adjuntosSoloDe(copia.ids)) {
       const datos = await this.almacen.leer(ruta);
-      if (datos) archivos.push({ ruta, datos });
+      if (!datos) continue;
+      copia.adjuntos.push(ruta);
+      copia.archivos.push({ ruta, datos });
     }
-    return archivos;
+    return copia;
   }
 
   /**
-   * Borra definitivamente lo que hay en la papelera (todo, o solo los elementos de `ids`: los que se copiaron en
-   * el ZIP previo, que hace quien llama) y los adjuntos que ya no usa nadie. Devuelve los elementos borrados.
+   * Borra para siempre lo que hay en la papelera: todo o, con `copiado`, solo los elementos y adjuntos que
+   * entraron en el ZIP previo (lo hace quien llama). Cada elemento se borra en su turno y solo si sigue en la
+   * papelera (restaurar a la vez gana); un adjunto, solo si ya no lo usa nadie. Si falla a medias, lo borrado ya
+   * no está en el índice y el resto sigue en la papelera. Devuelve cuántos elementos se borraron.
    */
-  async vaciarPapelera(ids?: readonly string[]): Promise<number> {
+  async vaciarPapelera(copiado?: Pick<CopiaPapelera, 'ids' | 'adjuntos'>): Promise<number> {
     this.comprobarEscritura();
-    const elegidos = this.dePapelera(ids);
-    const adjuntos = this.adjuntosSoloDe(elegidos.map((e) => e.id));
-    // Sin `ids`, también lo que haya en la carpeta sin estar en el índice (un archivo que no se pudo leer).
-    const rutas = ids
-      ? elegidos.map((e) => e.ruta)
-      : (await listarTodo(this.almacen, `${CARPETA_PAPELERA}/`)).map((e) => e.ruta);
-    for (const ruta of rutas) await this.almacen.borrar(ruta);
-    for (const { id } of elegidos) {
-      this.porId.delete(id);
-      this.fms.delete(id);
-      this.olvidarRefs(id);
+    const ids = copiado ? copiado.ids : this.dePapelera().map((e) => e.id);
+    const adjuntos = copiado ? copiado.adjuntos : this.adjuntosSoloDe(ids);
+    let borrados = 0;
+    try {
+      for (const id of ids) {
+        const borrado = await this.enTurno(id, async () => {
+          const e = this.porId.get(id);
+          if (!e?.enPapelera) return false;
+          await this.almacen.borrar(e.ruta);
+          this.porId.delete(id);
+          this.fms.delete(id);
+          this.olvidarRefs(id);
+          await this.cache?.borrarElementos([id]);
+          return true;
+        });
+        if (borrado) borrados++;
+      }
+      for (const ruta of adjuntos) if (!this.usaAdjunto(ruta)) await this.almacen.borrar(ruta);
+      // Sin copia, también lo que haya en la carpeta sin estar en el índice (un archivo que no se pudo leer).
+      if (!copiado) {
+        const conocidas = new Set([...this.porId.values()].map((e) => e.ruta));
+        for (const e of await listarTodo(this.almacen, `${CARPETA_PAPELERA}/`))
+          if (!conocidas.has(e.ruta)) await this.almacen.borrar(e.ruta);
+      }
+    } finally {
+      if (borrados) this.cambio();
     }
-    for (const ruta of adjuntos) await this.almacen.borrar(ruta);
-    await this.cache?.borrarElementos(elegidos.map((e) => e.id));
-    if (rutas.length) this.cambio();
-    return elegidos.length;
+    return borrados;
   }
 
-  /** Las entradas de la papelera (todas, o las de `ids`). */
-  private dePapelera(ids?: readonly string[]): EntradaIndice[] {
-    const todas = [...this.porId.values()].filter((e) => e.enPapelera);
-    if (!ids) return todas;
-    const pedidos = new Set(ids);
-    return todas.filter((e) => pedidos.has(e.id));
+  /** Las entradas de la papelera. */
+  private dePapelera(): EntradaIndice[] {
+    return [...this.porId.values()].filter((e) => e.enPapelera);
   }
 
   /** Los adjuntos que usan los elementos `ids` y ningún otro. */

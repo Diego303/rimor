@@ -10,10 +10,10 @@ import { fmtBytes } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import type { Lector } from '../../lectores/contrato';
 import { descargar } from '../../lectores/descargar';
+import { nombreDeEstado } from '../../lectores/nombreEstado';
 import { Boton, Dialogo, Estado } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { Icono } from '../../ui/iconos/Icono';
-import { nombreDeEstado } from './estados';
 
 interface PropsEstado {
   abierto: boolean;

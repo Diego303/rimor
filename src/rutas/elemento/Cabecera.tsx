@@ -7,10 +7,10 @@ import { estadoVisible, tonoDeEstado } from '../../espacio/estados';
 import { diasDesde, fmtDia, fmtHora, type Idioma } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import type { Lector } from '../../lectores/contrato';
+import { nombreDeEstado } from '../../lectores/nombreEstado';
 import { clases } from '../../ui/clases';
 import { Boton, ChipTipo, Estado } from '../../ui/componentes';
 import { EnSitio } from '../../ui/componentes/EnSitio';
-import { nombreDeEstado } from './estados';
 
 type T = ReturnType<typeof useT>['t'];
 
@@ -111,10 +111,17 @@ export function AccionesElemento({ fijado, enPapelera, alFijar, alPapelera, alRe
         {t('pantallas.elemento.restaurar')}
       </Boton>
     );
-  const fijar = t(fijado ? 'pantallas.elemento.soltar' : 'pantallas.elemento.fijar');
+  // Nombre fijo con `aria-pressed` («Fijar, pulsado»); la ayuda emergente dice lo que hará el clic.
   return (
     <div className="row acciones-elemento">
-      <Boton variante="icono" icono="fijar" aria-pressed={fijado} aria-label={fijar} title={fijar} onClick={alFijar} />
+      <Boton
+        variante="icono"
+        icono="fijar"
+        aria-pressed={fijado}
+        aria-label={t('pantallas.elemento.fijar')}
+        title={t(fijado ? 'pantallas.elemento.soltar' : 'pantallas.elemento.fijar')}
+        onClick={alFijar}
+      />
       <Boton
         variante="icono"
         icono="papelera"

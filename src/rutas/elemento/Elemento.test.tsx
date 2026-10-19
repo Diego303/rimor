@@ -83,6 +83,10 @@ const leer = async (repo: { leerElemento: (r: string) => Promise<{ ok: boolean; 
 
 describe('Elemento', () => {
   beforeAll(async () => {
+    // También las pantallas a las que lleva (Inicio al mover a la papelera, Datos al montar): que su carga en
+    // diferido no termine después de la prueba.
+    await import('../inicio/Inicio');
+    await import('../datos/Datos');
     await import('./Elemento');
     await import('../../lectores/texto/Vista');
     await import('../../lectores/idea/Vista');
@@ -140,7 +144,7 @@ describe('Elemento', () => {
     await tecla('f');
     await waitFor(() => expect(repo.frontmatter('TXT-0001')?.fijado).toBe(true), ESCRITURA);
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Soltar' }).getAttribute('aria-pressed')).toBe('true'),
+      expect(screen.getByRole('button', { name: 'Fijar' }).getAttribute('aria-pressed')).toBe('true'),
     );
     // Dos seguidos, antes de que se relea: sueltan y vuelven a fijar (cada uno alterna lo que hay al escribir).
     await tecla('f');
@@ -246,6 +250,22 @@ describe('Elemento', () => {
     ]);
     fireEvent.click(screen.getByRole('button', { name: 'explorando' }));
     await waitFor(() => expect(repo.frontmatter('IDE-0001')?.estado).toBe('explorando'), ESCRITURA);
+
+    // Un estado común en una idea: su vista lo nombra (no la clave) y su segmentado queda sin marcar.
+    const segmentado = await screen.findByRole('group', { name: 'Estado de la idea' }, PRIMERA_CARGA);
+    await tecla('s');
+    fireEvent.click(await screen.findByRole('button', { name: 'resuelto' }));
+    await waitFor(() => expect(repo.frontmatter('IDE-0001')?.estado).toBe('resuelto'), ESCRITURA);
+    await waitFor(() =>
+      expect([...segmentado.querySelectorAll('[aria-pressed="true"]')].map((b) => b.textContent)).toEqual([]),
+    );
+    expect(document.body.textContent).not.toContain('estados.');
+
+    // En la papelera, su vista tampoco deja cambiarlo.
+    await act(async () => void (await repo.moverAPapelera('IDE-0001')));
+    expect(await screen.findByText(/Está en la papelera/, {}, PRIMERA_CARGA)).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole('group', { name: 'Estado de la idea' })).toBeNull());
+    expect(screen.getByText('resuelto', { selector: '.card p' })).toBeTruthy();
   }, 40_000);
 
   it('papelera: Supr la mueve y vuelve a Inicio con deshacer; dentro, solo se lee y se restaura', async () => {

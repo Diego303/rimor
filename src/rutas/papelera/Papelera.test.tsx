@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { type Elemento, hashOriginal } from '@rimor/formato';
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { IDBFactory } from 'fake-indexeddb';
 import { unzipSync } from 'fflate';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -119,30 +119,49 @@ describe('Papelera', () => {
     await waitFor(() => expect(document.querySelectorAll('.fila-papelera')).toHaveLength(1));
   }, 30_000);
 
-  it('vaciar: primero el ZIP con lo que había, después se borra', async () => {
+  it('vaciar en dos pasos: primero se descarga el ZIP con lo que había; después se borra lo que entró', async () => {
     const { repo } = await montar('/papelera');
     fireEvent.click(await screen.findByRole('button', { name: 'Vaciar la papelera' }, PRIMERA_CARGA));
+    const dialogo = within(document.querySelector('dialog') as HTMLElement);
     expect(
-      screen.getByText('Se borrarán para siempre 2 elementos. Antes se descargará un ZIP con todos.'),
+      dialogo.getByText(
+        'Se borrarán para siempre 2 elementos. Primero descarga el ZIP con todos; después podrás vaciarla.',
+      ),
     ).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Descargar el ZIP y vaciar' }));
-    await waitFor(() => expect(repo.enPapelera()).toEqual([]), ESCRITURA);
+    // Sin el ZIP descargado no se puede vaciar.
+    const vaciar = dialogo.getByRole('button', { name: 'Vaciar la papelera' }) as HTMLButtonElement;
+    expect(vaciar.disabled).toBe(true);
+    // Mientras tanto, nada se restaura (lo copiado se va a borrar).
+    expect((screen.getByRole('button', { name: 'Restaurar TXT-0001' }) as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(await dialogo.findByRole('button', { name: 'Descargar el ZIP' }));
     expect(descargas.hechas).toHaveLength(1);
     expect(descargas.hechas[0]?.nombre).toMatch(/^rimor-.+-papelera-\d{4}-\d{2}-\d{2}\.zip$/);
     expect(Object.keys(unzipSync(descargas.hechas[0]?.bytes ?? new Uint8Array())).sort()).toEqual([
       'papelera/elementos/2026/10/TXT-0001--primero.md',
       'papelera/elementos/2026/10/TXT-0002--segundo.md',
     ]);
+    expect(repo.enPapelera()).toHaveLength(2);
+    expect(vaciar.disabled).toBe(false);
+    fireEvent.click(vaciar);
+    await waitFor(() => expect(repo.enPapelera()).toEqual([]), ESCRITURA);
     expect(repo.elementos().map((fm) => fm.ref)).toEqual(['TXT-0003']);
     expect(await screen.findByText('La papelera está vacía')).toBeTruthy();
   }, 30_000);
 
-  it('si el ZIP no se puede descargar, no se borra nada', async () => {
+  it('si el ZIP no se puede descargar, no se puede vaciar ni se borra nada', async () => {
     descargas.fallar = true;
     const { repo } = await montar('/papelera');
     fireEvent.click(await screen.findByRole('button', { name: 'Vaciar la papelera' }, PRIMERA_CARGA));
-    fireEvent.click(screen.getByRole('button', { name: 'Descargar el ZIP y vaciar' }));
-    expect((await screen.findAllByText('No se pudo hacer el ZIP: no se ha borrado nada.')).length).toBeGreaterThan(0);
+    const dialogo = within(document.querySelector('dialog') as HTMLElement);
+    fireEvent.click(await dialogo.findByRole('button', { name: 'Descargar el ZIP' }));
+    expect((await screen.findAllByText('No se pudo descargar el ZIP: no se ha borrado nada.')).length).toBeGreaterThan(
+      0,
+    );
+    expect((dialogo.getByRole('button', { name: 'Vaciar la papelera' }) as HTMLButtonElement).disabled).toBe(true);
+    // Cancelar deja todo como estaba y se vuelve a poder restaurar.
+    fireEvent.click(dialogo.getByRole('button', { name: 'Cancelar' }));
     expect(repo.enPapelera()).toHaveLength(2);
+    expect((screen.getByRole('button', { name: 'Restaurar TXT-0001' }) as HTMLButtonElement).disabled).toBe(false);
   }, 30_000);
 });

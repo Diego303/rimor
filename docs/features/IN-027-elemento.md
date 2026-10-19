@@ -92,7 +92,8 @@ Cubre las siete tareas. Lo aprendido en IN-021 a IN-026 que aplica aquí: las ed
 - **Edición en el sitio**: `src/ui/componentes/EnSitio.tsx` (título, colecciones, etiquetas): el nombre del botón es lo que se ve y lo que hace va en `title`; `Enter` o salir guardan una sola vez, `Esc` cancela sin llegar a los atajos; las sugerencias completan la última palabra sin terminar la edición.
 - **Ediciones comunes**: `src/espacio/ediciones.ts` (puras: `conFijado`, `conEstado`, `conColecciones`, `conEtiquetas`, `listaDeTexto`, `tituloNuevo`, `limpiarColeccion`, `limpiarEtiqueta`) y `useEdicion` (en turno, con `modificado`). Inicio pasa a usarlas. Fijar alterna lo que hay al escribir, no lo pintado.
 - **Estados**: `espacio/estados.ts` suma `estadoVisible`, `estadosPosibles` y `tonoDeEstado`; el contrato, `Lector.estadosElegibles` (la idea no deja elegir «convertida» a mano).
-- **Papelera**: el repositorio suma `enPapelera()`, `archivosDePapelera(ids)` y `vaciarPapelera(ids)` (solo lo copiado y los adjuntos que ya no usa nadie); `espacio/papelera.ts` hace el ZIP (fflate 0.8.3, `zipSync`, texto comprimido y adjuntos tal cual) y `vaciarConCopia` borra solo tras entregarlo. Ruta `/papelera`; Datos y copias suma «Espacios y papelera».
+- **Papelera**: el repositorio suma `enPapelera()`, `copiaDePapelera()` (los archivos, y qué elementos y adjuntos entraron) y `vaciarPapelera(copia)`, que borra cada elemento en su turno y solo si sigue en la papelera, y cada adjunto copiado solo si ya no lo usa nadie; `espacio/papelera.ts` hace el ZIP (fflate 0.8.3, `zipSync`, texto comprimido y adjuntos tal cual) con `prepararCopia`. Vaciar va en dos pasos en el diálogo: «Descargar el ZIP» y, después, «Vaciar la papelera». Ruta `/papelera`; Datos y copias suma «Espacios y papelera».
+- **Editar desde las vistas**: `PropsVista.editable` (la pantalla dice que no en la papelera); las vistas de idea, error y prompt lo miran además de la pestaña de solo lectura.
 
 ### Decisiones tomadas al implementar
 
@@ -102,10 +103,46 @@ Cubre las siete tareas. Lo aprendido en IN-021 a IN-026 que aplica aquí: las ed
 | A la derecha de la cabecera, dos iconos (fijar y papelera) en lugar de un menú | Un clic, como pide la aceptación; la referencia no muestra menú y el tipo se cambia desde «Detalles». |
 | ZIP de la papelera en el hilo principal (`zipSync`) | Es pequeño y raro; IN-035 lo cambiará por su ZIP en streaming en un Worker. |
 | Vaciar borra solo lo que entró en el ZIP | Si algo llega a la papelera mientras se hace la copia, no se pierde sin copia. |
+| Vaciar en dos pasos (descargar el ZIP, después vaciar) | El navegador no dice si una descarga se guardó (ni si la bloqueó o se canceló): borrar justo después de pedirla podría dejar la papelera vacía sin copia. La descarga va con el clic del usuario. |
+| «Detalles» antes de la vista solo con «Analizando» a la vista (más de 400 ms) | En un análisis rápido el plegado aparecería y se volvería a montar con la vista al instante, y se perdería una edición empezada. |
+| `Supr` y también `#` para la papelera | En un teclado sin Supr (portátiles Mac). |
 | Los nombres de los estados propios, en minúsculas | Como los chips de la referencia (`nuevo`, `semilla`). |
 | Dos pruebas antiguas esperan al estado final en vez de a ticks fijos (cola de derivados, compositor) y la de estilo de las respuestas sobre el corpus tiene 30 s | Fallaban solo con la máquina saturada (carga 24); lo que comprueban no cambia. |
 
 ## Pruebas
 
 `ediciones.test.ts` (ediciones y estados), `papelera.test.ts` (ZIP, borrar solo tras entregarlo, nombre), `repositorio.test.ts` (lista, archivos y vaciado selectivo con adjuntos), `EnSitio.test.tsx`, `formatos.test.ts` (`diasDesde`), `Elemento.test.tsx` (cabecera, título, estados con teclado, fijar dos veces, «Detalles» con colecciones, etiquetas, original y cambiar tipo con su alias, notas, estados de una idea, papelera con deshacer, solo lectura de verdad con el cerrojo ocupado, ref que no existe) y `Papelera.test.tsx` (desde Datos, lista y restaurar, vaciar con ZIP y sin borrar si falla).
+
+## Verificación
+
+**`pnpm verificar`**: en verde, 64 archivos y 1030 pruebas; carga inicial 216,0 KB de 300. Las pruebas de la carcasa y de la pantalla precargan las pantallas a las que llevan y esperan al desmontar: la carga en diferido de una ruta terminaba después de la prueba («window is not defined»).
+
+**Criterios y tareas, con su evidencia:**
+
+| Tarea o criterio | Evidencia |
+|---|---|
+| Cabecera común: chips, estado, título en el sitio y meta | `Elemento.test.tsx` «cabecera…»: chips, «Pegado hoy a las…», `e` + Enter guarda y renombra el archivo, Esc y vacío no guardan |
+| Cuerpo: la `Vista` del lector | `Elemento.test.tsx` (vistas de Texto e Idea en la pantalla), `vistas-lectores.test.tsx` |
+| Detalles comunes plegados | `Elemento.test.tsx` «Detalles…» (colecciones con sugerencia, etiquetas, secretos, referencia y alias, «Ver original»); `Lectores.test.tsx` (un solo «Detalles», también mientras deriva) |
+| Corregir el tipo en un clic con la corrección contada | `Elemento.test.tsx` «Detalles…»: «Cambiar tipo» → Idea, `/e/IDE-0001`, alias y `correccionesDeTipo` = 1; la ref vieja lleva a la nueva |
+| Notas con editor simple | `Elemento.test.tsx` «notas…»: Ctrl+Intro, Esc, salir del campo |
+| Estados comunes y propios | `Elemento.test.tsx` «estados propios…» (idea sin «convertida»; un estado común en una idea se nombra), `ediciones.test.ts` |
+| Fijar, papelera, restaurar y vaciar con ZIP previo | `Elemento.test.tsx` «papelera…» y `f` dos veces; `Papelera.test.tsx` (dos pasos, sin descarga no se vacía); `repositorio.test.ts` y `papelera.test.ts` |
+| Todo sin formularios: en el sitio, un clic o teclado | Atajos `e s t f n Supr #`; chip de estado y listas de botones; `EnSitio.test.tsx` |
+| Solo lectura | `Elemento.test.tsx` con el cerrojo ocupado de verdad; en la papelera, las vistas de idea, error y prompt no editan (`Elemento.test.tsx`, `vistas-lectores.test.tsx`) |
+
+**Revisión independiente** (subagente con contexto limpio, corrección y aceptación). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | Restaurar mientras se vaciaba rompía el índice y borraba el adjunto | `vaciarPapelera` borra cada elemento en su turno y solo si sigue en la papelera; los adjuntos, solo los copiados y sin uso; «Restaurar» desactivado durante el vaciado. `repositorio.test.ts` «restaurar mientras se vacía» (en los dos órdenes) |
+| 2 | Un elemento en la papelera se editaba desde las vistas de idea, error y prompt | `PropsVista.editable`; pruebas en `Elemento.test.tsx` y `vistas-lectores.test.tsx` |
+| 3 | Se borraba sin saber si el ZIP llegó a descargarse | Dos pasos (descargar con el clic del usuario, después vaciar); `Papelera.test.tsx` |
+| 4 | Una idea con estado común enseñaba la clave cruda | `nombreDeEstado` (ahora en `lectores/nombreEstado.ts`) y segmentado sin marcar; `Elemento.test.tsx` |
+| 5 | Elegir una sugerencia borraba lo escrito antes de una coma | `completarUltima` separa también por comas; `EnSitio.test.tsx` |
+| 6 | Guardar colecciones o etiquetas pisaba lo añadido mientras tanto | `aplicarCambios` (solo lo añadido y quitado respecto a lo que había al empezar); `ediciones.test.ts` |
+| 7 | Sin «Detalles» mientras el lector analiza | Se pinta con «Analizando» a la vista; `Lectores.test.tsx` |
+| 8 | Esc durante una composición de IME cancelaba la edición | Esc (y Ctrl+Intro en notas) no actúan durante la composición; `EnSitio.test.tsx` |
+| 9 | Si el borrado fallaba a medias, el índice y el aviso mentían | Cada elemento sale del índice al borrarlo; aviso propio («No se pudo vaciar del todo…») |
+| 10 | «Fijar/Soltar» con `aria-pressed` se leía «Soltar, pulsado»; faltaba `#` | Nombre fijo «Fijar» con `aria-pressed` y ayuda emergente; `#` además de `Supr` |
 

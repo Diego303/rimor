@@ -48,7 +48,7 @@ export function listaDeFechas(fechas: string[], idioma: Idioma, t: T, ahora = ne
   });
 }
 
-export default function VistaError({ el, datos }: PropsVista<DatosError>) {
+export default function VistaError({ el, datos, editable = true }: PropsVista<DatosError>) {
   const { idioma } = useT();
   const t = textos.t.bind(textos, idioma) as unknown as T;
   const espacio = useEspacioOpcional();
@@ -144,7 +144,8 @@ export default function VistaError({ el, datos }: PropsVista<DatosError>) {
             explicacionAtenuada={false}
           />
           {notaPropia && <p className="sm">{t('loResolviste', { nota: notaPropia })}</p>}
-          {!soloLectura &&
+          {editable &&
+            !soloLectura &&
             !notaPropia &&
             (escribiendo ? (
               <div className="nota-resolucion">

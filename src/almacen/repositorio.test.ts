@@ -111,20 +111,46 @@ describe('Repositorio', () => {
         .sort(),
     ).toEqual(['LOG-0042', 'LOG-0044']);
 
-    // El ZIP lleva los dos .md de la papelera y solo el adjunto que no usa nadie más.
-    const ids = repo.enPapelera().map((fm) => fm.id);
-    const archivos = await repo.archivosDePapelera(ids);
-    expect(archivos.map((a) => a.ruta).sort()).toEqual(
+    // La copia lleva los dos .md de la papelera y solo el adjunto que no usa nadie más.
+    const copia = await repo.copiaDePapelera();
+    expect(copia.archivos.map((a) => a.ruta).sort()).toEqual(
       [propio.ruta, repo.buscar('LOG-0042')?.ruta, repo.buscar('LOG-0044')?.ruta].sort(),
     );
+    expect(copia.adjuntos).toEqual([propio.ruta]);
 
     // Mientras se hacía el ZIP, otro fue a la papelera: no se borra (no está en la copia).
     await repo.moverAPapelera('LOG-0045');
-    expect(await repo.vaciarPapelera(ids)).toBe(2);
+    expect(await repo.vaciarPapelera(copia)).toBe(2);
     expect(repo.enPapelera().map((fm) => fm.ref)).toEqual(['LOG-0045']);
     expect(await almacen.existe(propio.ruta)).toBe(false);
     expect(await almacen.existe(compartido.ruta)).toBe(true);
     expect(repo.buscar('LOG-0042')).toBeUndefined();
+  });
+
+  it('restaurar mientras se vacía: gana restaurar, el elemento queda entero con su adjunto', async () => {
+    const almacen = new AlmacenMemoria();
+    const repo = new Repositorio(almacen);
+    const propio = await repo.guardarAdjunto(new Uint8Array([7, 8]), 'bin');
+    await repo.guardarElemento(elemento({ adjunto: { hash: propio.hash, ruta: propio.ruta, tam: 2 } }));
+    await repo.moverAPapelera('LOG-0042');
+    const copia = await repo.copiaDePapelera();
+    // Las dos a la vez, como al pulsar «Restaurar» con el vaciado en marcha.
+    const [restaurado, borrados] = await Promise.all([repo.restaurar('LOG-0042'), repo.vaciarPapelera(copia)]);
+    expect(restaurado.ok).toBe(true);
+    expect(borrados).toBe(0);
+    expect(repo.buscar('LOG-0042')?.enPapelera).toBe(false);
+    expect(repo.elementos().map((fm) => fm.ref)).toEqual(['LOG-0042']);
+    expect((await repo.leerElemento('LOG-0042')).ok).toBe(true);
+    expect(await almacen.existe(propio.ruta)).toBe(true);
+
+    // Al revés (el vaciado ya tenía el turno): se borra entero y restaurar dice que ya no está; el índice cuadra.
+    await repo.moverAPapelera('LOG-0042');
+    const otra = await repo.copiaDePapelera();
+    const [vaciados, tarde] = await Promise.all([repo.vaciarPapelera(otra), repo.restaurar('LOG-0042')]);
+    expect(vaciados).toBe(1);
+    expect(tarde.ok).toBe(false);
+    expect(repo.buscar('LOG-0042')).toBeUndefined();
+    expect(await listarTodo(almacen)).toEqual([]);
   });
 
   it('cargar reconstruye el índice desde los archivos, también la papelera', async () => {

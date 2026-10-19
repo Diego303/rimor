@@ -9,6 +9,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { cambiarTipo, sePuedeCambiar } from '../../captura/reprocesar';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import {
+  aplicarCambios,
   conColecciones,
   conEstado,
   conEtiquetas,
@@ -117,15 +118,18 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
     else fallo();
   }, [fm.id, fm.ref, editarFrontmatter, avisos, t, fallo]);
 
-  /** Guarda una lista escrita a mano si cambió. */
+  /**
+   * Guarda una lista escrita a mano si cambió: solo lo añadido y lo quitado respecto a lo que había al empezar,
+   * sobre la lista de ahora (lo que otro añadió mientras tanto se queda).
+   */
   const guardarLista = useCallback(
-    async (texto: string, cual: 'colecciones' | 'etiquetas') => {
+    async (texto: string, inicial: readonly string[], cual: 'colecciones' | 'etiquetas') => {
       const lista = listaDeTexto(texto, cual === 'colecciones' ? limpiarColeccion : limpiarEtiqueta);
-      if (lista.join('\n') === (fm[cual] ?? []).join('\n')) return;
+      if (lista.join('\n') === inicial.join('\n')) return;
       const con = cual === 'colecciones' ? conColecciones : conEtiquetas;
-      if (!(await editarFrontmatter(fm.id, (f) => con(f, lista)))) fallo();
+      if (!(await editarFrontmatter(fm.id, (f) => con(f, aplicarCambios(f[cual] ?? [], inicial, lista))))) fallo();
     },
-    [fm, editarFrontmatter, fallo],
+    [fm.id, editarFrontmatter, fallo],
   );
 
   const guardarNota = useCallback(
@@ -199,6 +203,8 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
             { teclas: 'f', descripcion: 'atajos.elementoFijar', accion: () => void actual.current.fijar() },
             { teclas: 'n', descripcion: 'atajos.elementoNota', accion: () => setEditandoNota(true) },
             { teclas: 'delete', descripcion: 'atajos.elementoPapelera', accion: () => void actual.current.aPapelera() },
+            // `#` también (en un teclado sin Supr).
+            { teclas: '#', descripcion: 'atajos.elementoPapelera', accion: () => void actual.current.aPapelera() },
           ]
         : [],
     [editable],
@@ -217,8 +223,8 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       fm={fm}
       editable={editable}
       existentes={existentes}
-      alGuardarColecciones={(texto) => void guardarLista(texto, 'colecciones')}
-      alGuardarEtiquetas={(texto) => void guardarLista(texto, 'etiquetas')}
+      alGuardarColecciones={(texto, inicial) => void guardarLista(texto, inicial, 'colecciones')}
+      alGuardarEtiquetas={(texto, inicial) => void guardarLista(texto, inicial, 'etiquetas')}
       alCambiarTipo={() => setDialogo('tipo')}
       alVerOriginal={() => setDialogo('original')}
     />
@@ -251,7 +257,7 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
     >
       {enPapelera && <Banner>{t('pantallas.elemento.enPapelera')}</Banner>}
       <ContextoDetalles.Provider value={comunes}>
-        <VistaElemento el={el} />
+        <VistaElemento el={el} editable={!enPapelera} />
       </ContextoDetalles.Provider>
       <Notas
         notas={el.notas}

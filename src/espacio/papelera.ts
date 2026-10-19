@@ -1,11 +1,11 @@
 /**
  * Vaciar la papelera con una copia antes (ORG-07): un ZIP con lo que hay en ella (los `.md` y los adjuntos que
- * solo usan ellos, con sus rutas en el espacio) y, solo cuando se ha entregado, el borrado de lo copiado. IN-035
- * cambiará la copia por su ZIP completo en un Worker.
+ * solo usan ellos, con sus rutas en el espacio), que se descarga antes de borrar nada; al vaciar se borra solo lo
+ * copiado. IN-035 cambiará la copia por su ZIP completo en un Worker.
  */
 import { isoConZona, slug } from '@rimor/formato';
 import { type Zippable, zipSync } from 'fflate';
-import type { Repositorio } from '../almacen/repositorio';
+import type { CopiaPapelera, Repositorio } from '../almacen/repositorio';
 
 /** Los adjuntos (binarios, a menudo ya comprimidos) van tal cual; el texto, comprimido. */
 const NIVEL_TEXTO = 6;
@@ -21,14 +21,18 @@ export function zipDeArchivos(archivos: readonly { ruta: string; datos: Uint8Arr
 export const nombreZipPapelera = (espacio: string, fecha: Date): string =>
   `rimor-${/[\p{L}\p{N}]/u.test(espacio) ? slug(espacio) : 'espacio'}-papelera-${isoConZona(fecha).slice(0, 10)}.zip`;
 
+/** El ZIP de la papelera y lo que entró en él (lo único que se borrará al vaciarla). */
+export interface CopiaZip extends Pick<CopiaPapelera, 'ids' | 'adjuntos'> {
+  zip: Uint8Array;
+}
+
 /**
- * Copia en un ZIP lo que hay ahora en la papelera, lo entrega a `guardar` (la descarga) y borra solo lo copiado.
- * Si el ZIP no se puede hacer o entregar, no se borra nada. Devuelve cuántos elementos se borraron.
+ * Prepara el ZIP con lo que hay ahora en la papelera, o `null` si está vacía. Vaciar es otro paso: el navegador no
+ * dice si una descarga llegó a guardarse, así que se descarga con un clic y después se vacía con otro, borrando
+ * solo lo que entró en el ZIP (`repositorio.vaciarPapelera(copia)`).
  */
-export async function vaciarConCopia(repositorio: Repositorio, guardar: (zip: Uint8Array) => void): Promise<number> {
-  const ids = repositorio.enPapelera().map((fm) => fm.id);
-  if (!ids.length) return 0;
-  const zip = zipDeArchivos(await repositorio.archivosDePapelera(ids));
-  guardar(zip);
-  return repositorio.vaciarPapelera(ids);
+export async function prepararCopia(repositorio: Repositorio): Promise<CopiaZip | null> {
+  const copia = await repositorio.copiaDePapelera();
+  if (!copia.ids.length) return null;
+  return { ids: copia.ids, adjuntos: copia.adjuntos, zip: zipDeArchivos(copia.archivos) };
 }

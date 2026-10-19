@@ -1,8 +1,8 @@
 /** Nombre de un estado en el idioma de la interfaz: los comunes, de la app; los propios, de los textos del lector. */
-import { ESTADO_NUEVO, esEstadoComun } from '../../espacio/estados';
-import type { Idioma } from '../../i18n/formatos';
-import { traducir } from '../../i18n/i18n';
-import type { Lector } from '../../lectores/contrato';
+import { ESTADO_NUEVO, esEstadoComun } from '../espacio/estados';
+import type { Idioma } from '../i18n/formatos';
+import { traducir } from '../i18n/i18n';
+import type { Lector } from './contrato';
 
 export function nombreDeEstado(estado: string, lector: Lector | null | undefined, idioma: Idioma): string {
   if (estado === ESTADO_NUEVO || esEstadoComun(estado)) return traducir(idioma, `estados.${estado}`);

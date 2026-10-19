@@ -239,16 +239,21 @@
       "vaciar": "Empty the bin",
       "vaciarTitulo": "Empty the bin?",
       "vaciarTexto": {
-        "one": "{n} item will be deleted for good. A ZIP with it is downloaded first.",
-        "other": "{n} items will be deleted for good. A ZIP with all of them is downloaded first."
+        "one": "{n} item will be deleted for good. First download the ZIP with it; then you can empty the bin.",
+        "other": "{n} items will be deleted for good. First download the ZIP with all of them; then you can empty the bin."
       },
-      "confirmar": "Download the ZIP and empty",
+      "confirmar": "Empty the bin",
       "cancelar": "Cancel",
       "vaciada": {
-        "one": "Deleted {n} item; the ZIP is in your downloads.",
-        "other": "Deleted {n} items; the ZIP is in your downloads."
+        "one": "Deleted {n} item from the bin.",
+        "other": "Deleted {n} items from the bin."
       },
-      "noVaciada": "The ZIP could not be made: nothing was deleted."
+      "noVaciada": "The ZIP could not be made: nothing was deleted.",
+      "preparando": "Preparing the ZIP…",
+      "descargarZip": "Download the ZIP",
+      "descargada": "Check that the ZIP is in your downloads before emptying.",
+      "noDescargada": "The ZIP could not be downloaded: nothing was deleted.",
+      "noBorrada": "The bin could not be fully emptied: what was not deleted is still in it."
     },
     "hilo": {
       "titulo": "Thread",

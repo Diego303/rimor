@@ -375,14 +375,14 @@ describe('vista de Prompt', () => {
       enMemoria: false,
     });
     const abierto: { e: ReturnType<typeof useEspacioAbierto> | null } = { e: null };
-    function Montaje({ elemento }: { elemento: typeof el }) {
+    function Montaje({ elemento, editable }: { elemento: typeof el; editable: boolean }) {
       abierto.e = useEspacioAbierto();
-      return <VistaPrompt el={elemento} datos={datos} />;
+      return <VistaPrompt el={elemento} datos={datos} editable={editable} />;
     }
-    const montar = (elemento: typeof el) => (
+    const montar = (elemento: typeof el, editable = true) => (
       <ProveedorEspacio dependencias={dependencias}>
         <ProveedorAvisos>
-          <Montaje elemento={elemento} />
+          <Montaje elemento={elemento} editable={editable} />
         </ProveedorAvisos>
       </ProveedorEspacio>
     );
@@ -456,6 +456,11 @@ describe('vista de Prompt', () => {
     expect(otra.getByLabelText('Respuesta que obtuviste')).toBeTruthy();
     expect(otra.getByText('Resultados (1)')).toBeTruthy();
     fallo.mockRestore();
+
+    // En la papelera (la pantalla dice que no se edita), los resultados se ven pero no se añaden.
+    otra.rerender(montar(leido.valor as typeof el, false));
+    expect(await otra.findByText('Resultados (1)')).toBeTruthy();
+    expect(otra.queryByRole('button', { name: 'Añadir resultado' })).toBeNull();
   });
 });
 
@@ -506,15 +511,15 @@ describe('vista de Error', () => {
     };
     const actual = conHuella(3, 17);
     const abierto: { repo: ReturnType<typeof useEspacioAbierto>['repositorio'] | null } = { repo: null };
-    function Montaje({ el }: { el: typeof actual }) {
+    function Montaje({ el, editable }: { el: typeof actual; editable: boolean }) {
       const { repositorio } = useEspacioAbierto();
       abierto.repo = repositorio;
-      return <VistaError el={el} datos={datos} />;
+      return <VistaError el={el} datos={datos} editable={editable} />;
     }
-    const montar = (el: typeof actual) => (
+    const montar = (el: typeof actual, editable = true) => (
       <ProveedorEspacio dependencias={dependencias}>
         <ProveedorAvisos>
-          <Montaje el={el} />
+          <Montaje el={el} editable={editable} />
         </ProveedorAvisos>
       </ProveedorEspacio>
     );
@@ -530,6 +535,11 @@ describe('vista de Error', () => {
       await abierto.repo?.guardarElemento(actual);
     });
     expect(await screen.findByText('3.ª vez')).toBeTruthy();
+    // En la papelera no se ofrece escribir cómo se resolvió.
+    rerender(montar(actual, false));
+    expect(await screen.findByText('3.ª vez')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Añadir cómo lo resolví' })).toBeNull();
+    rerender(montar(actual));
     // Como la pantalla de referencia: «el 2 y el 15 de octubre».
     expect(screen.getByText('Ya te pasó el 2 y el 15 de octubre.')).toBeTruthy();
     expect(screen.getByText('El 15 oct escribiste: «Pasa cuando la respuesta no trae content-length»')).toBeTruthy();

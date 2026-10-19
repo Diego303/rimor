@@ -215,8 +215,11 @@ function textoAnalizando(lector: Lector, idioma: Idioma, d: EstadoDerivado<unkno
     : traducir(idioma, 'lectores.progreso', { texto: lector.textos.t(idioma, 'analizando'), ...vars });
 }
 
-/** Vista completa de un elemento: la del lector con sus derivados, o lo que se sepa mientras tanto. */
-export function VistaElemento({ el }: { el: Elemento }) {
+/**
+ * Vista completa de un elemento: la del lector con sus derivados, o lo que se sepa mientras tanto. `editable`
+ * llega a la vista (no, en la papelera).
+ */
+export function VistaElemento({ el, editable = true }: { el: Elemento; editable?: boolean }) {
   const { t, idioma } = useT();
   const { registro } = useLectores();
   const derivado = useDerivado(el);
@@ -234,17 +237,22 @@ export function VistaElemento({ el }: { el: Elemento }) {
   if (derivado.estado === 'error') return fallo;
   if (derivado.estado === 'calculando' || analizando)
     return (
-      <div className="vista-elemento">
-        <ResumenFrontmatter el={el} lector={lector} />
-        {analizando && <Senal estado="analizando" etiqueta={textoAnalizando(lector, idioma, derivado)} />}
-      </div>
+      <>
+        <div className="vista-elemento">
+          <ResumenFrontmatter el={el} lector={lector} />
+          {analizando && <Senal estado="analizando" etiqueta={textoAnalizando(lector, idioma, derivado)} />}
+        </div>
+        {/* Si el análisis tarda (un log enorme), lo común de «Detalles» ya se puede usar. Solo entonces: en los
+            rápidos, aparecería y se volvería a montar con la vista un instante después. */}
+        {analizando && <DetallesElemento refe={el.frontmatter.ref} />}
+      </>
     );
   const Vista = vistaDe(lector.nombre);
   if (!Vista) return <Original el={el} />;
   return (
     <LimiteLector key={`${lector.nombre}|${el.frontmatter.id}`} nombre={lector.nombre} alternativa={fallo}>
       <Suspense fallback={<ResumenFrontmatter el={el} lector={lector} />}>
-        <Vista el={el} datos={derivado.datos} />
+        <Vista el={el} datos={derivado.datos} editable={editable} />
       </Suspense>
     </LimiteLector>
   );

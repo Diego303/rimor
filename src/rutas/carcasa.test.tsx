@@ -1,5 +1,5 @@
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { useEspacio } from '../estado/espacio';
 import { crearRouter } from './rutas';
@@ -22,11 +22,16 @@ describe('Carcasa', () => {
   beforeAll(async () => {
     await import('./inicio/Inicio');
     await import('./elemento/Elemento');
+    await import('./datos/Datos');
   }, 120_000);
 
-  afterEach(() =>
-    useEspacio.setState({ nombre: '', sinClasificar: 0, colecciones: [], ultimaCopia: null, copiaAlDia: false }),
-  );
+  afterEach(async () => {
+    // Desmontar y dar tiempo a la carga en diferido de una pantalla que siga en marcha: que no termine después de
+    // desmontar el entorno de pruebas.
+    cleanup();
+    await act(async () => new Promise((r) => setTimeout(r, 300)));
+    useEspacio.setState({ nombre: '', sinClasificar: 0, colecciones: [], ultimaCopia: null, copiaAlDia: false });
+  });
 
   it('pinta el raíl con la sección activa, el recuento, las colecciones y el pie del espacio', async () => {
     useEspacio.setState({

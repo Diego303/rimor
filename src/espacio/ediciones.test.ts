@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { elementoFalso } from '../lectores/pruebas/falsos';
 import {
   anadirColeccion,
+  aplicarCambios,
   conColecciones,
   conEstado,
   conEtiquetas,
@@ -42,6 +43,15 @@ describe('ediciones del frontmatter', () => {
     expect(listaDeTexto('#ureq #staging,#ureq', limpiarEtiqueta)).toEqual(['ureq', 'staging']);
     expect(listaDeTexto('   ', limpiarEtiqueta)).toEqual([]);
     expect(listaDeTexto('# @', limpiarColeccion)).toEqual(['#']);
+  });
+
+  it('aplicar cambios de una lista sobre la de ahora: no pierde lo que otro añadió mientras se editaba', () => {
+    // Se empezó con [a, b]; mientras se escribía, otro añadió c; se guardó «a d».
+    expect(aplicarCambios(['a', 'b', 'c'], ['a', 'b'], ['a', 'd'])).toEqual(['a', 'c', 'd']);
+    // Sin cambios de otro, queda lo escrito.
+    expect(aplicarCambios(['a', 'b'], ['a', 'b'], ['b', 'e'])).toEqual(['b', 'e']);
+    // Lo que otro quitó mientras tanto no vuelve si no se escribió de nuevo.
+    expect(aplicarCambios(['a'], ['a', 'b'], ['a', 'b'])).toEqual(['a']);
   });
 
   it('título: en una línea y sin espacios de más; vacío o igual no cambia', () => {
