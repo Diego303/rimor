@@ -11,6 +11,11 @@ export interface Edicion {
   editar(refOId: string, cambio: (el: Elemento) => Elemento | null): Promise<boolean>;
   /** Cambia solo el frontmatter. */
   editarFrontmatter(refOId: string, cambio: (fm: FrontmatterComun) => FrontmatterComun): Promise<boolean>;
+  /**
+   * Una edición del usuario (título, notas): deja antes una copia del elemento en su historial (IN-029). Si
+   * `cambio` devuelve el mismo elemento, no hay nada que cambiar (y cuenta como hecho).
+   */
+  editarConHistorial(refOId: string, cambio: (el: Elemento) => Elemento): Promise<boolean>;
 }
 
 export function useEdicion(): Edicion {
@@ -32,5 +37,28 @@ export function useEdicion(): Edicion {
     (refOId, cambio) => editar(refOId, (el) => ({ ...el, frontmatter: cambio(el.frontmatter) })),
     [editar],
   );
-  return useMemo(() => ({ editar, editarFrontmatter }), [editar, editarFrontmatter]);
+  const editarConHistorial = useCallback<Edicion['editarConHistorial']>(
+    async (refOId, cambio) => {
+      if (!espacio) return false;
+      const r = await espacio.repositorio
+        .guardarConHistorial(
+          refOId,
+          (el) => {
+            const nuevo = cambio(el);
+            // El mismo objeto es que no hay nada que cambiar.
+            return nuevo === el
+              ? null
+              : { ...nuevo, frontmatter: { ...nuevo.frontmatter, modificado: isoConZona(new Date()) } };
+          },
+          'edicion',
+        )
+        .catch(() => null);
+      return Boolean(r?.ok);
+    },
+    [espacio],
+  );
+  return useMemo(
+    () => ({ editar, editarFrontmatter, editarConHistorial }),
+    [editar, editarFrontmatter, editarConHistorial],
+  );
 }

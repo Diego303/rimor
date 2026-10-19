@@ -153,7 +153,10 @@
       "tipoTitulo": "Change the type of {ref}",
       "tipoCambiado": "It is now {tipo}: {ref}",
       "noCambiado": "The type could not be changed.",
-      "sinOtroTipo": "This item cannot be read with another reader."
+      "sinOtroTipo": "This item cannot be read with another reader.",
+      "version": "I saved it as its version {n}.",
+      "verCambios": "See changes",
+      "guardarAparte": "Save separately"
     },
     "elemento": {
       "titulo": "Item",
@@ -225,7 +228,33 @@
       "anadirNota": "Add a note",
       "editarNota": "Edit the note",
       "campoNota": "Your notes",
-      "guiaNota": "Ctrl+Enter or leaving the field saves · Esc leaves the note as it was"
+      "guiaNota": "Ctrl+Enter or leaving the field saves · Esc leaves the note as it was",
+      "versiones": {
+        "titulo": "Versions",
+        "version": "v{n}",
+        "edicion": "v{n} · edit",
+        "actual": "current",
+        "verCambios": "See changes",
+        "restaurar": "Restore this version",
+        "restaurarTitulo": "Restore {version}?",
+        "restaurarTexto": "Its text, title and notes become the item’s again; what is there now stays in the history and can be recovered.",
+        "restaurada": "Restored as version {n}",
+        "noRestaurada": "It could not be restored.",
+        "cambios": "Changes from version {de} to {a}",
+        "cambiosDesde": "Changes from {version} until now",
+        "sinCambios": "It is the same as the current one.",
+        "iguales": {
+          "one": "… {n} unchanged line",
+          "other": "… {n} unchanged lines"
+        }
+      },
+      "origenVersion": {
+        "pegado": "Version {n}, pasted {cuando}",
+        "soltado": "Version {n}, dropped {cuando}",
+        "compartido": "Version {n}, shared {cuando}",
+        "terminal": "Version {n}, sent from the terminal {cuando}",
+        "importado": "Version {n}, imported {cuando}"
+      }
     },
     "papelera": {
       "titulo": "Bin",
@@ -446,7 +475,8 @@
     "fallo": "Could not save “{nombre}”.",
     "soltar": "Drop to save",
     "ver": "Open",
-    "noDeshecho": "Something was not undone: it had already been edited or moved."
+    "noDeshecho": "Something was not undone: it had already been edited or moved.",
+    "version": "Saved as version {n} of {ref}"
   },
   "compositor": {
     "placeholder": "Paste, type or drop something…",

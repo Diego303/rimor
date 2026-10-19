@@ -153,7 +153,10 @@
       "tipoTitulo": "Cambiar tipo de {ref}",
       "tipoCambiado": "Ahora es {tipo}: {ref}",
       "noCambiado": "No se pudo cambiar el tipo.",
-      "sinOtroTipo": "Este elemento no se puede leer con otro lector."
+      "sinOtroTipo": "Este elemento no se puede leer con otro lector.",
+      "version": "Lo he guardado como su versión {n}.",
+      "verCambios": "Ver cambios",
+      "guardarAparte": "Guardar aparte"
     },
     "elemento": {
       "titulo": "Elemento",
@@ -225,7 +228,33 @@
       "anadirNota": "Añadir una nota",
       "editarNota": "Editar la nota",
       "campoNota": "Tus notas",
-      "guiaNota": "Ctrl+Intro o salir del campo guarda · Esc deja la nota como estaba"
+      "guiaNota": "Ctrl+Intro o salir del campo guarda · Esc deja la nota como estaba",
+      "versiones": {
+        "titulo": "Versiones",
+        "version": "v{n}",
+        "edicion": "v{n} · edición",
+        "actual": "actual",
+        "verCambios": "Ver cambios",
+        "restaurar": "Restaurar esta versión",
+        "restaurarTitulo": "¿Restaurar {version}?",
+        "restaurarTexto": "Su texto, su título y sus notas vuelven a ser los del elemento; lo de ahora queda en el historial y se puede recuperar.",
+        "restaurada": "Restaurada como versión {n}",
+        "noRestaurada": "No se pudo restaurar.",
+        "cambios": "Cambios de la versión {de} a la {a}",
+        "cambiosDesde": "Cambios desde {version} hasta ahora",
+        "sinCambios": "Es igual que la actual.",
+        "iguales": {
+          "one": "… {n} línea igual",
+          "other": "… {n} líneas iguales"
+        }
+      },
+      "origenVersion": {
+        "pegado": "Versión {n}, pegada {cuando}",
+        "soltado": "Versión {n}, soltada {cuando}",
+        "compartido": "Versión {n}, compartida {cuando}",
+        "terminal": "Versión {n}, enviada desde la terminal {cuando}",
+        "importado": "Versión {n}, importada {cuando}"
+      }
     },
     "papelera": {
       "titulo": "Papelera",
@@ -446,7 +475,8 @@
     "fallo": "No se pudo guardar «{nombre}».",
     "soltar": "Suelta para guardar",
     "ver": "Ver",
-    "noDeshecho": "Algo no se deshizo: ya se había editado o movido."
+    "noDeshecho": "Algo no se deshizo: ya se había editado o movido.",
+    "version": "Guardado como versión {n} de {ref}"
   },
   "compositor": {
     "placeholder": "Pega, escribe o suelta algo…",

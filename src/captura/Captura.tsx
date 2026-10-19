@@ -3,7 +3,7 @@
  * compositor; soltar archivos sobre cualquier pantalla los guarda uno a uno, con «Guardado. Deshacer».
  */
 
-import type { Resultado } from '@rimor/formato';
+import { isoConZona, type Resultado } from '@rimor/formato';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useEspacioOpcional } from '../espacio/Espacio';
 import { useEspacio } from '../estado/espacio';
@@ -101,7 +101,26 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
         if (!r) otros.push(() => avisar(t('captura.fallo', { nombre })));
         else if (r.ok) {
           if (r.valor.tipo === 'creado') creados.push(r.valor.capturado);
-          else {
+          else if (r.valor.tipo === 'version') {
+            const v = r.valor;
+            const fm = v.capturado.elemento.frontmatter;
+            // El feed la pinta en su momento (el elemento es de otro día); el aviso, con deshacer.
+            useCompositor.getState().anotarVersion({ ...v, en: isoConZona(new Date()) });
+            otros.push(() =>
+              avisar(t('captura.version', { n: v.version, ref: fm.ref }), {
+                accion: {
+                  etiqueta: t('captura.deshacer'),
+                  alPulsar: () =>
+                    void (capturador?.deshacerVersion(v) ?? Promise.resolve(false))
+                      .catch(() => false)
+                      .then((hecho) => {
+                        if (hecho) useCompositor.getState().quitarVersion(v.copia);
+                        else avisar(t('captura.noDeshecho'));
+                      }),
+                },
+              }),
+            );
+          } else {
             const ref = r.valor.ref;
             // Lo que Rimor ha ahorrado (MET-06): un duplicado que no se creó.
             void espacio?.contadores.contar('duplicadosEvitados');

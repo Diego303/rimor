@@ -4,7 +4,7 @@
  * intercaladas en «Hoy». Puro: la vista solo pinta lo que sale de aquí.
  */
 import type { FrontmatterComun } from '@rimor/formato';
-import type { BusquedaPendiente } from '../../captura/compositor';
+import type { BusquedaPendiente, VersionEnFeed } from '../../captura/compositor';
 import { sinClasificar } from '../../espacio/resumen';
 import { fmtDia, type Idioma } from '../../i18n/formatos';
 
@@ -14,6 +14,7 @@ export type FilaFeed =
   | { t: 'dia'; clave: string; etiqueta: string }
   | { t: 'mensaje'; clave: string; fm: FrontmatterComun }
   | { t: 'busqueda'; clave: string; busqueda: BusquedaPendiente }
+  | { t: 'version'; clave: string; version: VersionEnFeed }
   | { t: 'ideas'; clave: string };
 
 /** El día civil (`AAAA-MM-DD`) de un instante, en la zona del equipo. */
@@ -76,6 +77,8 @@ export interface OpcionesFeed {
   idioma: Idioma;
   textos: { hoy: string; ayer: string };
   busquedas?: readonly BusquedaPendiente[];
+  /** Capturas de esta sesión que se guardaron como versión nueva de otro elemento (IN-029). */
+  versiones?: readonly VersionEnFeed[];
   /** Si hay ideas que vuelven: van al principio de «Hoy». */
   conIdeas?: boolean;
 }
@@ -101,6 +104,11 @@ export function filasDelFeed(elementos: readonly FrontmatterComun[], o: Opciones
   for (const [i, b] of (o.busquedas ?? []).entries()) {
     const dia = claveDia(b.en);
     if (dia) anotar(dia, Date.parse(b.en), { t: 'busqueda', clave: `busqueda:${i}`, busqueda: b });
+  }
+  // Las versiones capturadas, como las búsquedas: en su momento (el elemento es de otro día).
+  for (const v of o.versiones ?? []) {
+    const dia = claveDia(v.en);
+    if (dia) anotar(dia, Date.parse(v.en), { t: 'version', clave: `version:${v.copia}`, version: v });
   }
   if (o.conIdeas && o.filtro === 'todo') anotar(hoy, Number.NEGATIVE_INFINITY, { t: 'ideas', clave: 'ideas' });
 

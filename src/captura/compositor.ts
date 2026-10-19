@@ -4,6 +4,7 @@
  * una recarga en `sessionStorage`.
  */
 import { create } from 'zustand';
+import type { VersionCapturada } from './flujo';
 
 export const CLAVE_BORRADOR = 'rimor:borrador';
 
@@ -13,12 +14,18 @@ export interface BusquedaPendiente {
   en: string;
 }
 
+/** Una captura que se guardó como versión nueva (IN-029), que el feed pinta como mensaje en su momento. */
+export interface VersionEnFeed extends VersionCapturada {
+  en: string;
+}
+
 export interface Borrador {
   texto: string;
   archivos: File[];
   /** Ref del elemento al que se responde (modo respuesta, IN-030). */
   respondiendoA: string | null;
   busquedas: BusquedaPendiente[];
+  versiones: VersionEnFeed[];
   /** Sube cada vez que algo llega de fuera o se pide el foco: el compositor se enfoca. */
   llegadas: number;
   /** Las llegadas que el compositor ya atendió (al montarse, solo enfoca si hay alguna nueva). */
@@ -31,6 +38,9 @@ export interface Borrador {
   quitarArchivo(i: number): void;
   responderA(ref: string | null): void;
   anotarBusqueda(texto: string, en: string): void;
+  anotarVersion(v: VersionEnFeed): void;
+  /** Quita del feed la versión de esa copia (se deshizo o se guardó aparte). */
+  quitarVersion(copia: string): void;
   enfocar(): void;
   /** Tras guardar: sin texto, sin archivos y sin respuesta. */
   vaciar(): void;
@@ -68,6 +78,7 @@ export const useCompositor = create<Borrador>((set) => ({
   archivos: [],
   respondiendoA: null,
   busquedas: [],
+  versiones: [],
   llegadas: 0,
   atendidas: 0,
   atender: () => set((s) => ({ atendidas: s.llegadas })),
@@ -82,6 +93,8 @@ export const useCompositor = create<Borrador>((set) => ({
   quitarArchivo: (i) => set((s) => ({ archivos: s.archivos.filter((_, j) => j !== i) })),
   responderA: (ref) => set((s) => ({ respondiendoA: ref, llegadas: ref ? s.llegadas + 1 : s.llegadas })),
   anotarBusqueda: (texto, en) => set((s) => ({ busquedas: [...s.busquedas, { texto, en }] })),
+  anotarVersion: (v) => set((s) => ({ versiones: [...s.versiones, v] })),
+  quitarVersion: (copia) => set((s) => ({ versiones: s.versiones.filter((v) => v.copia !== copia) })),
   enfocar: () => set((s) => ({ llegadas: s.llegadas + 1 })),
   vaciar: () => set({ texto: '', archivos: [], respondiendoA: null }),
   quitarGuardado: (g) =>

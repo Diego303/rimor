@@ -40,6 +40,7 @@ import {
 } from './filas';
 import { Mensaje } from './Mensaje';
 import { MensajeBusqueda } from './MensajeBusqueda';
+import { MensajeVersion } from './MensajeVersion';
 import { PrimerUso } from './PrimerUso';
 
 /** Los elementos del repositorio, al día con cada cambio (también los de otra pestaña). */
@@ -70,6 +71,7 @@ export function Inicio() {
   const sinClasificarN = useEspacio((s) => s.sinClasificar);
   const soloLectura = useEspacio((s) => s.soloLectura);
   const busquedas = useCompositor((s) => s.busquedas);
+  const versiones = useCompositor((s) => s.versiones);
   const responderA = useCompositor((s) => s.responderA);
   const capturados = useFrescos((s) => s.capturados);
   const elementos = useElementos();
@@ -101,9 +103,10 @@ export function Inicio() {
         idioma,
         textos: { hoy: t('pantallas.inicio.hoy'), ayer: t('pantallas.inicio.ayer') },
         busquedas,
+        versiones,
         conIdeas,
       }),
-    [elementos, filtro, diasCargados, ahora, idioma, t, busquedas, conIdeas],
+    [elementos, filtro, diasCargados, ahora, idioma, t, busquedas, versiones, conIdeas],
   );
   /** El resumen legible del lector de un elemento («Go · 15 líneas»). */
   const legible = useCallback(
@@ -321,6 +324,8 @@ export function Inicio() {
           return <div className="day">{fila.etiqueta}</div>;
         case 'ideas':
           return <IdeasQueVuelven />;
+        case 'version':
+          return <MensajeVersion version={fila.version} soloLectura={soloLectura} alAbrir={abrir} />;
         case 'busqueda':
           return (
             <MensajeBusqueda

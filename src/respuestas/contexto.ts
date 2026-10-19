@@ -68,9 +68,14 @@ export async function construirContexto(
   const todos = repositorio.elementos();
   const huella = huellaDe(resumen ? { ...fm, lector: { ...fm.lector, resumen } } : fm);
   const mismaHuella = huella ? todos.filter((o) => o.id !== fm.id && huellaDe(o) === huella).sort(porFechaDesc) : [];
-  // Las versiones viven en `historial/` y en `version` (IN-029); `alias` son refs antiguas de importaciones, que
-  // hoy pueden ser de otro elemento: no se usan aquí.
-  const versiones: FrontmatterComun[] = [];
+  // Las versiones anteriores, de `historial/` (IN-029): solo si las tiene (`version` > 1), de la más reciente a la
+  // más antigua. Una que no se puede leer no invalida el resto del contexto.
+  const versiones: FrontmatterComun[] =
+    (fm.version ?? 1) > 1
+      ? (await repositorio.versiones(fm.id).catch(() => []))
+          .filter((v) => v.motivo !== 'edicion')
+          .map((v) => v.elemento.frontmatter)
+      : [];
 
   const notas: Nota[] = [];
   for (const o of mismaHuella.filter((x) => x.estado === 'resuelto').slice(0, MAX_NOTAS)) {

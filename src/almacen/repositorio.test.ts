@@ -153,6 +153,52 @@ describe('Repositorio', () => {
     expect(await listarTodo(almacen)).toEqual([]);
   });
 
+  it('guardar con historial: copia entera, versión nueva si cambia el original y no si es una edición', async () => {
+    const almacen = new AlmacenMemoria();
+    const repo = new Repositorio(almacen);
+    await repo.guardarElemento(elemento({ tipo: 'prompt', ref: 'PRM-0012' as never, titulo: 'Revisor' }));
+    const reloj = () => new Date('2026-10-17T18:05:12+02:00');
+    const v2 = await repo.guardarConHistorial(
+      'PRM-0012',
+      (el) => ({ ...el, original: 'b', frontmatter: { ...el.frontmatter, hash: hashOriginal('b') } }),
+      'version',
+      reloj,
+    );
+    expect(v2.ok && v2.valor).toEqual({ copia: 'historial/PRM-0012/2026-10-17T18-05-12.md', version: 2 });
+    expect(repo.frontmatter('PRM-0012')?.version).toBe(2);
+    // Una edición (las notas): deja copia, la misma versión.
+    const edicion = await repo.guardarConHistorial('PRM-0012', (el) => ({ ...el, notas: 'nota' }), 'edicion', reloj);
+    expect(edicion.ok && edicion.valor).toEqual({ copia: 'historial/PRM-0012/2026-10-17T18-05-12-2.md', version: 2 });
+    // Sin cambios, ni copia ni escritura.
+    const igual = await repo.guardarConHistorial('PRM-0012', (el) => ({ ...el }), 'edicion', reloj);
+    expect(igual.ok && igual.valor).toEqual({ copia: null, version: 2 });
+    // Un resultado del prompt en la misma carpeta no es una versión.
+    await repo.guardarEnHistorial('historial/PRM-0012/resultado-2026-10-17', 'resultado');
+    const versiones = await repo.versiones('PRM-0012');
+    expect(versiones.map((v) => [v.version, v.motivo, v.elemento.original, v.elemento.notas])).toEqual([
+      [2, 'edicion', 'b', ''],
+      [1, 'version', 'a', ''],
+    ]);
+    expect('historial' in (versiones[0]?.elemento.frontmatter ?? {})).toBe(false);
+    // Deshacer la edición: la copia vuelve y se borra; deshacer con otra versión no toca nada.
+    expect(
+      await repo.deshacerHistorial('PRM-0012', 'historial/PRM-0012/2026-10-17T18-05-12-2.md', {
+        hash: hashOriginal('b'),
+        version: 3,
+      }),
+    ).toBe(false);
+    expect(
+      await repo.deshacerHistorial('PRM-0012', 'historial/PRM-0012/2026-10-17T18-05-12-2.md', {
+        hash: hashOriginal('b'),
+        version: 2,
+      }),
+    ).toBe(true);
+    expect((await repo.leerElemento('PRM-0012')).ok).toBe(true);
+    const leido = await repo.leerElemento('PRM-0012');
+    expect(leido.ok && leido.valor.notas).toBe('');
+    expect(await repo.versiones('PRM-0012')).toHaveLength(1);
+  });
+
   it('cargar reconstruye el índice desde los archivos, también la papelera', async () => {
     const almacen = new AlmacenMemoria();
     const repo = new Repositorio(almacen);

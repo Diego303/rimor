@@ -26,10 +26,16 @@ export function cuandoDe(fecha: Date, ahora: Date, idioma: Idioma, t: T): string
 
 /** La línea de meta: de dónde vino y cuándo, y el resumen del lector. */
 export function metaDe(fm: FrontmatterComun, legible: string, ahora: Date, idioma: Idioma, t: T): string {
-  const cuando = cuandoDe(new Date(fm.creado), ahora, idioma, t);
-  const origen = cuando
-    ? t(`pantallas.elemento.origen.${fm.origen}`, { cuando })
-    : t(`pantallas.elemento.origenes.${fm.origen}`);
+  const version = fm.version ?? 1;
+  // De una versión posterior a la primera, cuándo llegó esa versión (su última modificación), como la referencia:
+  // «Versión 3, pegada ayer a las 16:30».
+  const cuando = cuandoDe(new Date(version > 1 ? fm.modificado : fm.creado), ahora, idioma, t);
+  const origen =
+    version > 1 && cuando
+      ? t(`pantallas.elemento.origenVersion.${fm.origen}`, { n: version, cuando })
+      : cuando
+        ? t(`pantallas.elemento.origen.${fm.origen}`, { cuando })
+        : t(`pantallas.elemento.origenes.${fm.origen}`);
   return legible ? `${origen} · ${legible}` : origen;
 }
 

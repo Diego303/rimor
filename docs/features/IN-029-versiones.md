@@ -41,11 +41,11 @@ Que pegar otra vez un prompt, un documento Markdown o un código que ya estaba n
 
 ## Tareas
 
-- [ ] Al capturar un prompt, Markdown o código muy parecido a uno existente (mismo título o similitud > 0,6 por *shingles*), se propone «guardar como versión nueva» (la respuesta lo dice: «Lo he guardado como su versión 2») con deshacer.
-- [ ] La versión anterior va a `historial/REF/fecha.md`; el elemento sube `version`.
-- [ ] Diff por líneas (LCS o Myers) y, en Markdown, diff por secciones: añadidas, quitadas, modificadas y tareas marcadas.
-- [ ] Lista de versiones y «Restaurar esta versión», con `<Senal estado="guardado" veces={1}>` al confirmar.
-- [ ] Cualquier edición del usuario sobre un elemento también deja versión (lo usa la importación al fusionar).
+- [x] Al capturar un prompt, Markdown o código muy parecido a uno existente (mismo título o similitud > 0,6 por *shingles*), se propone «guardar como versión nueva» (la respuesta lo dice: «Lo he guardado como su versión 2») con deshacer.
+- [x] La versión anterior va a `historial/REF/fecha.md`; el elemento sube `version`.
+- [x] Diff por líneas (LCS o Myers) y, en Markdown, diff por secciones: añadidas, quitadas, modificadas y tareas marcadas.
+- [x] Lista de versiones y «Restaurar esta versión», con `<Senal estado="guardado" veces={1}>` al confirmar.
+- [x] Cualquier edición del usuario sobre un elemento también deja versión (lo usa la importación al fusionar).
 
 ## Pruebas previstas
 
@@ -74,3 +74,24 @@ Que pegar otra vez un prompt, un documento Markdown o un código que ya estaba n
 ## Autorrevisión
 
 Cubre las cinco tareas y la prueba de propiedad. Lo aprendido que aplica: las escrituras van en turno y deshacer no actúa si el elemento cambió después; un solo «Detalles» por pantalla y los plegados como la referencia; lo de otras pestañas llega por `alCambiar`; las pruebas de pantalla precargan sus módulos.
+
+## Implementación
+
+- **Diff** (`src/versiones/`): `diff.ts` (Myers con el rastro en ventanas, O(D²) en memoria y con un tope de 2.000 cambios, por encima del cual el tramo central va como quitado y añadido; `aplicar`, `recuentoDiff`, `plegar` con tres líneas de contexto), `secciones.ts` (`seccionesDe`, `diffSecciones`, `claveSeccion`: marcar una tarea no cuenta como modificar la sección) y `parecido.ts` (*shingles* de tres palabras sin acentos, Jaccard).
+- **Repositorio**: `guardarConHistorial` (copia entera con `historial: { motivo, reemplazado }`, versión nueva solo si cambia el original), `versiones` (también bajo los alias; solo los nombres con fecha) y `deshacerHistorial` (si el elemento sigue con ese hash, versión y ref).
+- **Captura**: `captura/versiones.ts` (`anteriorDe`: mismo título no genérico con un parecido mínimo de 0,2, o parecido > 0,6 entre los 200 más recientes de su tipo) y el paso 6b de `flujo.ts`, que devuelve `{ tipo: 'version', capturado, version, copia }`; `EntradaCaptura.aparte`; `deshacerVersion`. `Captura.tsx` la anota para el feed y avisa con «Deshacer»; `MensajeVersion.tsx` en Inicio («Ver cambios», «Guardar aparte»).
+- **Pantalla**: `Versiones.tsx` (`useVersiones`, `DiffLineas`, `CambiosDeVersion`, `ListaVersiones` con «Ver cambios» y «Restaurar esta versión», la señal «guardado» al restaurar); `ContextoVersion` para la vista de Markdown, que marca su índice y escribe «Desde la versión N: …»; la meta «Versión N, pegada…»; título y notas con `editarConHistorial`.
+- **Respuestas**: `Contexto.versiones` se rellena con las versiones anteriores (pendiente anotado desde IN-016).
+- **Pruebas**: `versiones.test.ts` (propiedad con fast-check, 500 casos; secciones como la referencia; parecido), `repositorio.test.ts`, `captura/versiones.test.ts` (versión 2, duplicado, deshacer, aparte, otro tipo, mismo título) y `rutas/elemento/Versiones.test.tsx` (pantalla del prompt con restaurar y edición, índice de Markdown, el mensaje de Inicio con «Guardar aparte»).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| Con el mismo título, también un parecido mínimo (0,2) | Los títulos de código y de prompt salen del contenido: dos distintos pueden llevar el mismo y no ser el mismo. |
+| El título genérico del lector («Prompt», «Código») no cuenta como mismo título | Lo pone el lector cuando no encuentra otro. |
+| «Versión N, pegada…» con la fecha de la última modificación | Es cuando llegó la versión actual; una edición posterior la mueve, como mueve `modificado`. |
+| Restaurar trae el texto, el título y las notas de la copia; el estado, las colecciones y lo demás se quedan | Es lo que se versiona; lo demás es de organización y es de ahora. |
+| Dos documentos distintos hechos con la misma plantilla (actas, informes) pueden pasar de 0,6 y tomarse por versiones | Es el umbral del plan; por eso la versión se dice en el feed con «Guardar aparte» y «Deshacer». La prueba del corpus de detección los captura aparte. |
+| Myers con tope de cambios | El rastro crece como D²; por encima del tope el diff sigue siendo correcto (la propiedad se cumple), aunque no mínimo. |
+

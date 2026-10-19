@@ -3,9 +3,10 @@
  * de su lector con lo común en su «Detalles»; las notas del usuario; fijar, cambiar tipo y papelera. Todo se edita
  * en el sitio, con un clic o con el teclado (`e s t f n Supr`).
  */
-import { analizarRef, type Elemento as ElementoFormato, PREFIJOS } from '@rimor/formato';
+import { analizarRef, type Elemento as ElementoFormato, isoConZona, PREFIJOS } from '@rimor/formato';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type { VersionGuardada } from '../../almacen/repositorio';
 import { cambiarTipo, sePuedeCambiar } from '../../captura/reprocesar';
 import { claseDe } from '../../comparaciones/clases';
 import { useEspacioOpcional } from '../../espacio/Espacio';
@@ -25,6 +26,7 @@ import { useEspacio } from '../../estado/espacio';
 import { useFrescos } from '../../estado/frescos';
 import { useT } from '../../i18n/useT';
 import { ContextoComparar } from '../../lectores/ContextoComparar';
+import { ContextoVersion } from '../../lectores/ContextoVersion';
 import type { Lector } from '../../lectores/contrato';
 import { ContextoDetalles } from '../../lectores/DetallesElemento';
 import { useLectoresOpcional, VistaElemento } from '../../lectores/Lectores';
@@ -42,6 +44,7 @@ import { FilasComunes } from './Comunes';
 import { DialogoEstado, DialogoOriginal } from './Dialogos';
 import { Notas } from './Notas';
 import { useElementoVivo } from './useElementoVivo';
+import { anteriorDe, CambiosDeVersion, ListaVersiones, useVersiones } from './Versiones';
 
 export function Elemento() {
   const { ref } = useParams({ from: '/e/$ref' });
@@ -92,7 +95,7 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
   const lectores = useLectoresOpcional();
   const avisos = useAvisosOpcional();
   const soloLectura = useEspacio((s) => s.soloLectura);
-  const { editar, editarFrontmatter } = useEdicion();
+  const { editarFrontmatter, editarConHistorial } = useEdicion();
   const fm = el.frontmatter;
   const lector: Lector | null = lectores?.registro.paraElemento(el) ?? null;
   const editable = Boolean(espacio) && !soloLectura && !enPapelera;
@@ -109,9 +112,11 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
   const guardarTitulo = useCallback(
     async (escrito: string) => {
       const titulo = tituloNuevo(fm.titulo, escrito);
-      if (titulo && !(await editarFrontmatter(fm.id, (f) => ({ ...f, titulo })))) fallo();
+      // Una edición del usuario deja copia en el historial (IN-029).
+      if (titulo && !(await editarConHistorial(fm.id, (e) => ({ ...e, frontmatter: { ...e.frontmatter, titulo } }))))
+        fallo();
     },
-    [fm.id, fm.titulo, editarFrontmatter, fallo],
+    [fm.id, fm.titulo, editarConHistorial, fallo],
   );
 
   const elegirEstado = useCallback(
@@ -151,9 +156,10 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
     async (texto: string) => {
       const notas = texto.trimEnd();
       if (notas === el.notas.trimEnd()) return;
-      if (!(await editar(fm.id, (actual) => ({ ...actual, notas })))) fallo();
+      if (!(await editarConHistorial(fm.id, (actual) => (actual.notas === notas ? actual : { ...actual, notas }))))
+        fallo();
     },
-    [fm.id, el.notas, editar, fallo],
+    [fm.id, el.notas, editarConHistorial, fallo],
   );
 
   const restaurar = useCallback(
@@ -215,6 +221,46 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       }
     },
     [lectores, idioma],
+  );
+
+  // Versiones (IN-029): las copias del historial, la versión de contenido anterior y restaurar.
+  const versiones = useVersiones(el);
+  const anterior = anteriorDe(el, versiones);
+  const versionAnterior = useMemo(
+    () =>
+      anterior?.elemento.original != null ? { version: anterior.version, original: anterior.elemento.original } : null,
+    [anterior],
+  );
+  const restaurarVersion = useCallback(
+    async (v: VersionGuardada) => {
+      if (!espacio) return null;
+      const copia = v.elemento;
+      const r = await espacio.repositorio
+        .guardarConHistorial(
+          fm.id,
+          (actual) => ({
+            ...actual,
+            original: copia.original,
+            notas: copia.notas,
+            frontmatter: {
+              ...actual.frontmatter,
+              titulo: copia.frontmatter.titulo,
+              hash: copia.frontmatter.hash,
+              lector: copia.frontmatter.lector,
+              modificado: isoConZona(new Date()),
+            },
+          }),
+          'restaurar',
+        )
+        .catch(() => null);
+      if (!r?.ok) {
+        avisos?.avisar(t('pantallas.elemento.versiones.noRestaurada'));
+        return null;
+      }
+      avisos?.avisar(t('pantallas.elemento.versiones.restaurada', { n: r.valor.version }));
+      return r.valor.version;
+    },
+    [espacio, fm.id, avisos, t],
   );
 
   /** Colecciones y etiquetas del espacio, para sugerirlas al editar. */
@@ -297,9 +343,13 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       {enPapelera && <Banner>{t('pantallas.elemento.enPapelera')}</Banner>}
       <ContextoDetalles.Provider value={comunes}>
         <ContextoComparar.Provider value={sePuedeComparar ? abrirComparar : null}>
-          <VistaElemento el={el} editable={!enPapelera} />
+          <ContextoVersion.Provider value={versionAnterior}>
+            <VistaElemento el={el} editable={!enPapelera} />
+          </ContextoVersion.Provider>
         </ContextoComparar.Provider>
       </ContextoDetalles.Provider>
+      {anterior && <CambiosDeVersion el={el} anterior={anterior} />}
+      {versiones && <ListaVersiones el={el} versiones={versiones} editable={editable} alRestaurar={restaurarVersion} />}
       <Notas
         notas={el.notas}
         editable={editable}

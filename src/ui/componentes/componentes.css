@@ -1540,3 +1540,14 @@ pre.code.codigo .ln {
   max-height: 50vh;
   overflow: auto;
 }
+/* Versiones (IN-029). */
+.col-versiones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 60vh;
+  overflow: auto;
+}
+.seccion-eliminada {
+  text-decoration: line-through;
+}

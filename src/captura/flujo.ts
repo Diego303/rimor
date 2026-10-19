@@ -25,6 +25,7 @@ import type { ColaDerivados } from '../lectores/derivados';
 import type { Registro } from '../lectores/registro';
 import { type OpcionesOcultar, ocultar } from '../seguridad/secretos/ocultar';
 import { type Candidato, detectar, entradaDeArchivo } from './detector';
+import { anteriorDe } from './versiones';
 
 /** Por encima de este tamaño, un archivo se rechaza (ficha IN-014). */
 export const LIMITE_ARCHIVO = 50 * 1024 * 1024;
@@ -45,6 +46,8 @@ export interface EntradaCaptura {
   etiquetas?: readonly string[];
   /** Hilo al que pertenece (respuesta en un hilo, IN-030). */
   hilo?: string;
+  /** Guardarlo como elemento propio aunque se parezca a uno que ya estaba (no como su versión nueva). */
+  aparte?: boolean;
 }
 
 export interface EfectosCaptura {
@@ -67,7 +70,19 @@ export interface Capturado {
   derivados?: Promise<unknown>;
 }
 
-export type ResultadoCaptura = { tipo: 'creado'; capturado: Capturado } | { tipo: 'duplicado'; ref: string };
+/** Una captura que se guardó como versión nueva de un elemento que ya estaba (CMP-02). */
+export interface VersionCapturada {
+  /** El elemento con su versión nueva. */
+  capturado: Capturado;
+  version: number;
+  /** La copia de la versión anterior en el historial (para deshacer). */
+  copia: string;
+}
+
+export type ResultadoCaptura =
+  | { tipo: 'creado'; capturado: Capturado }
+  | { tipo: 'duplicado'; ref: string }
+  | ({ tipo: 'version' } & VersionCapturada);
 
 /** Primera línea con contenido, recortada. */
 function primeraLinea(texto: string): string {
@@ -179,6 +194,56 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
   }));
   const ahora = isoConZona(reloj());
   const tipo = entrada.tipo ?? lector.tipo;
+
+  // 6b. ¿Es la versión nueva de un prompt, un documento o un código que ya estaba? Entonces se guarda en él (la
+  // anterior, al historial) en vez de crear otro. Lo grande (que va como adjunto) y lo pedido aparte, no.
+  const textoVersion = borrador.original === undefined ? texto : borrador.original;
+  if (
+    !entrada.aparte &&
+    !bytes &&
+    !borrador.archivo &&
+    textoVersion &&
+    utf8(textoVersion).length <= LIMITE_ORIGINAL_EN_MD
+  ) {
+    const generico = (lector.textos.t as (i: 'es', c: string) => string)('es', 'titulo');
+    const anterior = await anteriorDe(textoVersion, borrador.titulo, tipo, repositorio, generico);
+    if (anterior) {
+      const colecciones = unicos([...(anterior.colecciones ?? []), ...(entrada.colecciones ?? [])]);
+      const etiquetas = unicos([...(anterior.etiquetas ?? []), ...(entrada.etiquetas ?? [])]);
+      const r = await repositorio.guardarConHistorial(
+        anterior.id,
+        (el) => ({
+          ...el,
+          original: textoVersion,
+          frontmatter: {
+            ...el.frontmatter,
+            modificado: ahora,
+            hash,
+            ocultados,
+            lector: { nombre: lector.nombre, version: lector.version, resumen: borrador.resumen ?? {} },
+            ...(colecciones.length ? { colecciones } : {}),
+            ...(etiquetas.length ? { etiquetas } : {}),
+          },
+        }),
+        'version',
+        reloj,
+      );
+      if (!r.ok) return r;
+      const leido = await repositorio.leerElemento(anterior.id);
+      if (!leido.ok) return leido;
+      if (r.valor.copia) {
+        const derivados = cola?.pedir(leido.valor, { prioridad: 'fondo' });
+        derivados?.catch(() => undefined);
+        return ok({
+          tipo: 'version',
+          capturado: { elemento: leido.valor, ...(derivados ? { derivados } : {}) },
+          version: r.valor.version,
+          copia: r.valor.copia,
+        });
+      }
+    }
+  }
+
   const ref = asignarRef(tipo, repositorio.refs());
   // `original: null` en el borrador es que el lector lo quiere como adjunto (su `archivo` o el texto).
   let original: string | null = borrador.original === undefined ? (texto ?? null) : borrador.original;
@@ -267,6 +332,15 @@ export async function deshacerCaptura(c: Capturado, repositorio: Repositorio): P
 }
 
 /**
+ * Deshace una captura que se guardó como versión nueva: la anterior vuelve a ser el elemento (y su copia sale del
+ * historial). No toca nada si el elemento se cambió después. Devuelve si deshizo.
+ */
+export function deshacerVersion(v: VersionCapturada, repositorio: Repositorio): Promise<boolean> {
+  const fm = v.capturado.elemento.frontmatter;
+  return repositorio.deshacerHistorial(fm.id, v.copia, { hash: fm.hash, version: v.version });
+}
+
+/**
  * Capturador: las capturas van de una en una (la ref se asigna y se guarda en el mismo turno), así 20 pegados
  * seguidos dan 20 elementos con refs distintas. Un fallo no detiene las siguientes.
  */
@@ -279,6 +353,7 @@ export function crearCapturador(efectos: EfectosCaptura) {
       return r;
     },
     deshacer: (c: Capturado): Promise<boolean> => deshacerCaptura(c, efectos.repositorio),
+    deshacerVersion: (v: VersionCapturada): Promise<boolean> => deshacerVersion(v, efectos.repositorio),
   };
 }
 

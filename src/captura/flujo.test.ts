@@ -351,7 +351,8 @@ describe('capturar el corpus de detección', () => {
     const capturador = crearCapturador({ repositorio, registro: REGISTRO });
     for (const f of readdirSync(join(raiz, tipo)).filter((x) => x.endsWith('.txt'))) {
       const texto = readFileSync(join(raiz, tipo, f), 'utf8');
-      const c = creado(await capturador.capturar({ texto, origen: 'pegado' }));
+      // Aparte: los ejemplos de una carpeta salen de plantillas parecidas y se tomarían por versiones (IN-029).
+      const c = creado(await capturador.capturar({ texto, origen: 'pegado', aparte: true }));
       expect(c.elemento.frontmatter.tipo, `${tipo}/${f}`).toBe(tipo);
       const leido = await repositorio.leerElemento(c.elemento.frontmatter.ref);
       expect(leido.ok && normalizarOriginal(leido.valor.original ?? '')).toBe(normalizarOriginal(texto));

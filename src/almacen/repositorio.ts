@@ -7,11 +7,13 @@ import {
   escribirElemento,
   type FrontmatterComun,
   fallo,
+  isoConZona,
   leerElemento,
   ok,
   type Resultado,
   rutaAdjunto,
   rutaElemento,
+  rutaHistorial,
   sha256Hex,
 } from '@rimor/formato';
 import type { EntradaFrontmatter } from './cache/cache';
@@ -56,6 +58,26 @@ export class ErrorSoloLectura extends Error {
   constructor() {
     super('almacen.soloLectura');
   }
+}
+
+/** Por qué se guardó una copia en el historial. */
+export type MotivoHistorial = 'version' | 'edicion' | 'restaurar' | 'importacion';
+const MOTIVOS_HISTORIAL: readonly MotivoHistorial[] = ['version', 'edicion', 'restaurar', 'importacion'];
+const esMotivo = (x: unknown): x is MotivoHistorial => MOTIVOS_HISTORIAL.includes(x as MotivoHistorial);
+
+/** El nombre de una copia del historial: su fecha (y `-2`… si hubo dos en el mismo segundo). */
+const COPIA_HISTORIAL = /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(?:-\d+)?\.md$/;
+
+/** Una copia del historial de un elemento. */
+export interface VersionGuardada {
+  ruta: string;
+  /** La versión que era (sin `version`, la 1). */
+  version: number;
+  /** Cuándo dejó de ser la actual. */
+  reemplazado: string;
+  motivo: MotivoHistorial | null;
+  /** El elemento tal como era (sin la anotación del historial). */
+  elemento: Elemento;
 }
 
 /** Lo que el repositorio necesita de la caché del espacio. */
@@ -454,6 +476,98 @@ export class Repositorio {
     if (!this.cache) return;
     const r = leerElemento((await leerTexto(this.almacen, ruta)) ?? '');
     if (r.ok && r.valor.frontmatter.id === id) await this.refrescarCache(r.valor, ruta);
+  }
+
+  /**
+   * Cambia un elemento dejando antes una copia entera del actual en `historial/REF/fecha.md` (DAT-08), en el turno
+   * del elemento. Si cambia el original, el nuevo sube `version`; si solo cambian las notas o el título (una
+   * edición), la copia queda con la misma versión. Si `cambio` devuelve `null` o no cambia nada, no se escribe ni
+   * se copia. Devuelve la ruta de la copia (o `null`) y la versión que queda.
+   */
+  async guardarConHistorial(
+    refOId: string,
+    cambio: (el: Elemento) => Elemento | null,
+    motivo: MotivoHistorial,
+    ahora: () => Date = () => new Date(),
+  ): Promise<Resultado<{ copia: string | null; version: number }>> {
+    this.comprobarEscritura();
+    const e = this.buscar(refOId);
+    if (!e) return fallo('almacen.noEncontrado', { ref: refOId });
+    return this.enTurno(e.id, async () => {
+      const leido = await this.leerElemento(e.id);
+      if (!leido.ok) return leido;
+      const actual = leido.valor;
+      const version = actual.frontmatter.version ?? 1;
+      const nuevo = cambio(actual);
+      if (!nuevo || escribirElemento(nuevo) === escribirElemento(actual)) return ok({ copia: null, version });
+      const cuando = isoConZona(ahora());
+      const copia: Elemento = {
+        ...actual,
+        frontmatter: { ...actual.frontmatter, historial: { motivo, reemplazado: cuando } } as FrontmatterComun,
+      };
+      const base = rutaHistorial(actual.frontmatter.ref, cuando).replace(/\.md$/, '');
+      const ruta = await this.guardarEnHistorial(base, escribirElemento(copia));
+      const otroOriginal = nuevo.original !== actual.original || nuevo.frontmatter.hash !== actual.frontmatter.hash;
+      const siguiente = otroOriginal ? version + 1 : version;
+      const { version: _, ...sinVersion } = nuevo.frontmatter;
+      await this.guardarAhora({
+        ...nuevo,
+        frontmatter: (siguiente > 1 ? { ...sinVersion, version: siguiente } : sinVersion) as FrontmatterComun,
+      });
+      return ok({ copia: ruta, version: siguiente });
+    });
+  }
+
+  /**
+   * Las copias del historial de un elemento (también las de sus refs anteriores), de la más reciente a la más
+   * antigua: solo las de versiones y ediciones (no los resultados de un prompt, que viven en la misma carpeta).
+   */
+  async versiones(refOId: string): Promise<VersionGuardada[]> {
+    const e = this.buscar(refOId);
+    const fm = e ? this.fms.get(e.id) : undefined;
+    if (!e || !fm) return [];
+    const lista: VersionGuardada[] = [];
+    for (const ref of new Set([fm.ref, ...(fm.alias ?? [])])) {
+      for (const { ruta } of await listarTodo(this.almacen, `${CARPETA_HISTORIAL}/${ref}/`)) {
+        if (!COPIA_HISTORIAL.test(ruta.slice(ruta.lastIndexOf('/') + 1))) continue;
+        const r = leerElemento((await leerTexto(this.almacen, ruta)) ?? '');
+        if (!r.ok || r.valor.frontmatter.id !== e.id) continue;
+        const { historial, ...frontmatter } = r.valor.frontmatter as FrontmatterComun & { historial?: unknown };
+        const h = (historial ?? {}) as { motivo?: unknown; reemplazado?: unknown };
+        lista.push({
+          ruta,
+          version: frontmatter.version ?? 1,
+          reemplazado: typeof h.reemplazado === 'string' ? h.reemplazado : frontmatter.modificado,
+          motivo: esMotivo(h.motivo) ? h.motivo : null,
+          elemento: { ...r.valor, frontmatter: frontmatter as FrontmatterComun },
+        });
+      }
+    }
+    // En el mismo segundo, la que lleva `-2`, `-3`… es posterior.
+    const orden = (ruta: string) => Number(/T\d{2}-\d{2}-\d{2}-(\d+)\.md$/.exec(ruta)?.[1] ?? 1);
+    return lista.sort((a, b) => Date.parse(b.reemplazado) - Date.parse(a.reemplazado) || orden(b.ruta) - orden(a.ruta));
+  }
+
+  /**
+   * Deshace un `guardarConHistorial` recién hecho: la copia vuelve a ser el elemento y se borra del historial.
+   * Solo si el elemento sigue como quedó (`hash` y `version`); si alguien lo cambió después, no toca nada.
+   */
+  async deshacerHistorial(refOId: string, copia: string, como: { hash: string; version: number }): Promise<boolean> {
+    this.comprobarEscritura();
+    const e = this.buscar(refOId);
+    if (!e) return false;
+    return this.enTurno(e.id, async () => {
+      const actual = this.fms.get(e.id);
+      if (!actual || actual.hash !== como.hash || (actual.version ?? 1) !== como.version) return false;
+      const r = leerElemento((await leerTexto(this.almacen, copia)) ?? '');
+      if (!r.ok || r.valor.frontmatter.id !== e.id) return false;
+      const { historial: _, ...frontmatter } = r.valor.frontmatter as FrontmatterComun & { historial?: unknown };
+      // Si cambió de tipo después (otra ref), la copia ya no es lo que había justo antes.
+      if (frontmatter.ref !== actual.ref) return false;
+      await this.guardarAhora({ ...r.valor, frontmatter: frontmatter as FrontmatterComun });
+      await this.almacen.borrar(validarRuta(copia));
+      return true;
+    });
   }
 
   /**

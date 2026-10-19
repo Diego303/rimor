@@ -3,11 +3,14 @@
  * medidor, el índice con `hechas/total` por sección (cada entrada lleva a su encabezado; las marcas de cambio
  * llegan con IN-029), el documento pintado y saneado, y los detalles con enlaces, bloques de código y cifras.
  */
-import { fmtNumero } from '../../i18n/formatos';
+import { useContext, useMemo } from 'react';
+import { fmtNumero, type Idioma } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { idDeAncla } from '../../ui/anclas';
 import { Medidor, Tarjeta } from '../../ui/componentes';
 import MarkdownSeguro from '../../ui/componentes/MarkdownSeguro';
+import { claveSeccion, type DiffSecciones, diffSecciones } from '../../versiones/secciones';
+import { ContextoVersion } from '../ContextoVersion';
 import type { PropsVista } from '../contrato';
 import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { cuerpoDe } from './deteccion';
@@ -25,6 +28,19 @@ function irA(ancla: string) {
   document.getElementById(idDeAncla(ancla))?.scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 
+/** «Desde la versión 2: 1 sección añadida, 1 modificada, 1 eliminada y 2 tareas marcadas.» */
+function textoCambios(version: number, c: DiffSecciones, idioma: Idioma, t: T): string {
+  const partes = [
+    c.anadidas.length && t('cambios.anadidas', { n: c.anadidas.length }),
+    c.modificadas.length && t('cambios.modificadas', { n: c.modificadas.length }),
+    c.eliminadas.length && t('cambios.eliminadas', { n: c.eliminadas.length }),
+    c.tareasMarcadas.length && t('cambios.tareas', { n: c.tareasMarcadas.length }),
+  ].filter((x): x is string => Boolean(x));
+  if (!partes.length) return t('desdeSinCambios', { version });
+  const lista = new Intl.ListFormat(idioma, { type: 'conjunction' }).format(partes);
+  return t('desde', { version, cambios: lista });
+}
+
 export default function VistaMarkdown({ el, datos }: PropsVista<DatosMarkdown>) {
   const { idioma } = useT();
   const t = textos.t.bind(textos, idioma) as unknown as T;
@@ -35,22 +51,52 @@ export default function VistaMarkdown({ el, datos }: PropsVista<DatosMarkdown>) 
   const cifras = cifrasDe(lectorMarkdown, datos);
   const lenguajes = Object.entries(datos.bloques.lenguajes).sort((a, b) => b[1] - a[1]);
 
-  const lista = indice.length > 0 && (
+  // Lo que cambió desde la versión anterior (IN-029), si la pantalla la da: marcado en el propio índice.
+  const anterior = useContext(ContextoVersion);
+  const original = el.original ?? '';
+  const cambios = useMemo(() => (anterior ? diffSecciones(anterior.original, original) : null), [anterior, original]);
+  const marca = (titulo: string) => {
+    const clave = claveSeccion(titulo);
+    if (cambios?.anadidas.some((x) => claveSeccion(x) === clave)) return 'anadida' as const;
+    if (cambios?.modificadas.some((x) => claveSeccion(x) === clave)) return 'modificada' as const;
+    return null;
+  };
+  const resumenCambios = anterior && cambios ? textoCambios(anterior.version, cambios, idioma, t) : null;
+
+  const lista = (indice.length > 0 || (cambios?.eliminadas.length ?? 0) > 0) && (
     <div className="list lista-secciones">
-      {indice.map((s) => (
-        <button
-          key={s.ancla}
-          type="button"
-          className="row seccion-indice"
-          onClick={() => irA(s.ancla)}
-          title={t('irA', { titulo: s.titulo || t('sinTitulo') })}
-        >
-          <span className="sm">{s.titulo || t('sinTitulo')}</span>
-          <span className="mono xs muted">{s.tareas.total ? `${s.tareas.hechas}/${s.tareas.total}` : ''}</span>
-        </button>
+      {indice.map((s) => {
+        const m = marca(s.titulo);
+        return (
+          <button
+            key={s.ancla}
+            type="button"
+            className="row seccion-indice"
+            onClick={() => irA(s.ancla)}
+            title={t('irA', { titulo: s.titulo || t('sinTitulo') })}
+          >
+            <span className="sm">
+              {s.titulo || t('sinTitulo')}
+              {m && (
+                <>
+                  {' '}
+                  <span className={m === 'anadida' ? 'st ok' : 'st warn'}>{t(`cambio.${m}`)}</span>
+                </>
+              )}
+            </span>
+            <span className="mono xs muted">{s.tareas.total ? `${s.tareas.hechas}/${s.tareas.total}` : ''}</span>
+          </button>
+        );
+      })}
+      {cambios?.eliminadas.map((titulo) => (
+        <div key={`eliminada:${titulo}`} className="row seccion-indice">
+          <span className="sm muted seccion-eliminada">{titulo || t('sinTitulo')}</span>
+          <span className="st bad">{t('cambio.eliminada')}</span>
+        </div>
       ))}
     </div>
   );
+  const resumen = resumenCambios && <p className="xs muted">{resumenCambios}</p>;
 
   return (
     <>
@@ -62,9 +108,15 @@ export default function VistaMarkdown({ el, datos }: PropsVista<DatosMarkdown>) 
           </div>
           <Medidor fraccion={hechas / total} etiqueta={t('progreso')} />
           {lista}
+          {resumen}
         </Tarjeta>
       ) : (
-        lista && <Tarjeta titulo={t('indice')}>{lista}</Tarjeta>
+        (lista || resumen) && (
+          <Tarjeta titulo={t('indice')}>
+            {lista}
+            {resumen}
+          </Tarjeta>
+        )
       )}
 
       <Tarjeta>
