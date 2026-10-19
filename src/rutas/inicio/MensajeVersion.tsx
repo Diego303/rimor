@@ -28,7 +28,7 @@ export function MensajeVersion({ version: v, soloLectura, alAbrir }: Props) {
   const fecha = new Date(v.en);
 
   async function aparte() {
-    if (!capturador || el.original === null) return;
+    if (!capturador) return;
     setOcupado(true);
     const deshecho = await capturador.deshacerVersion(v).catch(() => false);
     if (!deshecho) {
@@ -36,7 +36,8 @@ export function MensajeVersion({ version: v, soloLectura, alAbrir }: Props) {
       return void avisos?.avisar(t('captura.noDeshecho'));
     }
     useCompositor.getState().quitarVersion(v.copia);
-    const r = await capturador.capturar({ texto: el.original, origen: 'pegado', aparte: true }).catch(() => null);
+    // Lo mismo que se capturó (su tipo, colecciones, etiquetas, origen y archivo), esta vez como elemento propio.
+    const r = await capturador.capturar({ ...v.entrada, aparte: true }).catch(() => null);
     informar([{ nombre: fm.titulo, r }]);
   }
 

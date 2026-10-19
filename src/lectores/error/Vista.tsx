@@ -93,12 +93,17 @@ export default function VistaError({ el, datos, editable = true }: PropsVista<Da
   async function guardarNota() {
     const texto = nota.trim();
     if (!espacio || !texto) return;
+    // Escribir en las notas es una edición del usuario: deja copia en el historial (IN-029).
     const r = await espacio.repositorio
-      .actualizarElemento(el.frontmatter.id, (actual) => ({
-        ...actual,
-        notas: actual.notas.trim() ? `${texto}\n\n${actual.notas}` : texto,
-        frontmatter: { ...actual.frontmatter, estado: 'resuelto', modificado: isoConZona(new Date()) },
-      }))
+      .guardarConHistorial(
+        el.frontmatter.id,
+        (actual) => ({
+          ...actual,
+          notas: actual.notas.trim() ? `${texto}\n\n${actual.notas}` : texto,
+          frontmatter: { ...actual.frontmatter, estado: 'resuelto', modificado: isoConZona(new Date()) },
+        }),
+        'edicion',
+      )
       .catch(() => null);
     if (r?.ok) {
       setEscribiendo(false);

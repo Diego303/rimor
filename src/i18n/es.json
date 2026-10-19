@@ -246,7 +246,9 @@
         "iguales": {
           "one": "… {n} línea igual",
           "other": "… {n} líneas iguales"
-        }
+        },
+        "verCambiosDe": "Ver los cambios desde {version}",
+        "restaurarDe": "Restaurar {version}"
       },
       "origenVersion": {
         "pegado": "Versión {n}, pegada {cuando}",

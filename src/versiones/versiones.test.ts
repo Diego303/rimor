@@ -44,6 +44,16 @@ describe('diff por líneas', () => {
     expect(aplicar(a.slice(0, 6000), diffSecuencias(a.slice(0, 6000), otra))).toEqual(otra);
   });
 
+  it('un tramo central enorme no desborda la pila (sin push con spread)', () => {
+    const a = Array.from({ length: 70_000 }, (_, i) => `l${i}`);
+    const b = [...a];
+    b[1] = 'cambio al principio';
+    b[69_998] = 'cambio al final';
+    const d = diffSecuencias(a, b);
+    expect(recuentoDiff(d)).toEqual({ anadidas: 2, quitadas: 2 });
+    expect(aplicar(a, d)).toEqual(b);
+  });
+
   it('plegar deja tres líneas de contexto y dice cuántas iguales se pliegan', () => {
     const a = Array.from({ length: 20 }, (_, i) => `l${i}`).join('\n');
     const b = a.replace('l10', 'cambio');
@@ -121,6 +131,18 @@ Reenviar los fragmentos.
       { titulo: '', nivel: 0, texto: 'solo texto\n- [x] hecha', tareas: [{ texto: 'hecha', hecha: true }] },
     ]);
     expect(diffSecciones('', '')).toEqual({ anadidas: [], eliminadas: [], modificadas: [], tareasMarcadas: [] });
+  });
+
+  it('frontmatter, «#» en el título, vallas con lenguaje dentro y enlaces en el título', () => {
+    expect(seccionesDe('---\ntitle: Plan\n---\n# Plan\n## A\nuno\n## B\ndos').map((s) => s.titulo)).toEqual(['A', 'B']);
+    expect(seccionesDe('## Uso de C#\ntexto\n## Otra ##\nmás').map((s) => s.titulo)).toEqual(['Uso de C#', 'Otra']);
+    const vallas = '## A\n```\n```js\n## falso\n```\n## B\nfin';
+    expect(seccionesDe(vallas).map((s) => s.titulo)).toEqual(['A', 'B']);
+    expect(
+      diffSecciones('## [API](https://x.test)\nuno\n## B\ndos', '## [API](https://y.test)\nuno\n## B\ndos'),
+    ).toMatchObject({ anadidas: [], eliminadas: [] });
+    // Con un solo encabezado, no es el título del documento (como el lector): es una sección.
+    expect(seccionesDe('# Único\ntexto').map((s) => s.titulo)).toEqual(['Único']);
   });
 });
 

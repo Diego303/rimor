@@ -4,6 +4,7 @@
  * Worker): un divisor por líneas que reconoce encabezados ATX y Setext fuera de los bloques de código y las tareas
  * `- [ ]` / `- [x]`. TS puro.
  */
+import { cuerpoDe } from '../lectores/markdown/deteccion';
 import { lineasDe } from './diff';
 
 export interface SeccionTexto {
@@ -15,8 +16,9 @@ export interface SeccionTexto {
   tareas: { texto: string; hecha: boolean }[];
 }
 
-const ATX = /^ {0,3}(#{1,6})(?:[ \t]+(.*?))?[ \t]*#*[ \t]*$/;
-const CERCA = /^ {0,3}(`{3,}|~{3,})/;
+// La secuencia de cierre (`## Título ##`) solo cuenta tras un espacio: `## Uso de C#` se queda con su `#`.
+const ATX = /^ {0,3}(#{1,6})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$/;
+const CERCA = /^ {0,3}(`{3,}|~{3,})(.*)$/;
 const SETEXT = /^ {0,3}(=+|-+)[ \t]*$/;
 const TAREA = /^\s*(?:[-*+]|\d+[.)])\s+\[([ xX])\]\s+(.+?)\s*$/;
 
@@ -30,7 +32,8 @@ function encabezados(lineas: readonly string[]): { linea: number; nivel: number;
     if (c?.[1]) {
       const marca = c[1];
       if (cerca === null) cerca = marca;
-      else if (marca[0] === cerca[0] && marca.length >= cerca.length) cerca = null;
+      // Cierra la misma marca, al menos igual de larga y sin nada detrás (un «```js» dentro no cierra).
+      else if (marca[0] === cerca[0] && marca.length >= cerca.length && !(c[2] ?? '').trim()) cerca = null;
       continue;
     }
     if (cerca !== null) continue;
@@ -56,10 +59,12 @@ function encabezados(lineas: readonly string[]): { linea: number; nivel: number;
  * algo, es una sección sin título.
  */
 export function seccionesDe(texto: string): SeccionTexto[] {
-  const lineas = lineasDe(texto).map((l) => l.replace(/[ \t]+$/, ''));
+  // Sin el frontmatter YAML, como la vista (`title: …` seguido de `---` no es un encabezado).
+  const lineas = lineasDe(cuerpoDe(texto).cuerpo).map((l) => l.replace(/[ \t]+$/, ''));
   const todos = encabezados(lineas);
   const primero = todos[0];
-  const conTitulo = Boolean(primero && todos.filter((e) => e.nivel === primero.nivel).length === 1);
+  // Como el lector: el primero es el título si hay más y todos los demás son más profundos.
+  const conTitulo = Boolean(primero && todos.length > 1 && todos.every((e, i) => i === 0 || e.nivel > primero.nivel));
   const resto = conTitulo ? todos.slice(1) : todos;
   const nivel = Math.min(...resto.map((e) => e.nivel));
   const delIndice = resto.filter((e) => e.nivel === nivel);
@@ -99,6 +104,8 @@ export interface DiffSecciones {
  */
 export const claveSeccion = (titulo: string) =>
   titulo
+    // Un enlace cuenta por su texto, como en el índice del lector: `[API](url)` es «API».
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/[*_`]/g, '')
     .toLocaleLowerCase()
     .replace(/^\s*\d+(?:\.\d+)*[.)]?\s+/, '')

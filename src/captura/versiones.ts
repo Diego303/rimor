@@ -16,6 +16,11 @@ export const CANDIDATOS = 200;
  * y llevar el mismo título sin ser el mismo.
  */
 export const PARECIDO_CON_TITULO = 0.2;
+/**
+ * Con títulos propios y distintos hace falta parecerse más: dos documentos de la misma plantilla («API de pagos» y
+ * «Servicio de colas») pasan de 0,6 sin ser versiones el uno del otro.
+ */
+export const PARECIDO_TITULO_DISTINTO = 0.8;
 
 const masReciente = (a: FrontmatterComun, b: FrontmatterComun) => Date.parse(b.modificado) - Date.parse(a.modificado);
 
@@ -47,10 +52,13 @@ export async function anteriorDe(
     for (const fm of mismos.filter((o) => tituloComparable(o.titulo) === t))
       if ((await parecidoA(fm)) >= PARECIDO_CON_TITULO) return fm;
   }
+  const esPropio = (x: string) =>
+    Boolean(tituloComparable(x)) && tituloComparable(x) !== tituloComparable(generico ?? '');
   let mejor: FrontmatterComun | null = null;
   let maximo = UMBRAL_PARECIDO;
   for (const fm of mismos.slice(0, CANDIDATOS)) {
     const p = await parecidoA(fm);
+    if (esPropio(titulo) && esPropio(fm.titulo) && p <= PARECIDO_TITULO_DISTINTO) continue;
     if (p > maximo) {
       maximo = p;
       mejor = fm;

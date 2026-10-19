@@ -88,8 +88,9 @@ export default function VistaMarkdown({ el, datos }: PropsVista<DatosMarkdown>) 
           </button>
         );
       })}
-      {cambios?.eliminadas.map((titulo) => (
-        <div key={`eliminada:${titulo}`} className="row seccion-indice">
+      {cambios?.eliminadas.map((titulo, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: dos eliminadas pueden llamarse igual; el orden es fijo.
+        <div key={`eliminada:${i}`} className="row seccion-indice">
           <span className="sm muted seccion-eliminada">{titulo || t('sinTitulo')}</span>
           <span className="st bad">{t('cambio.eliminada')}</span>
         </div>

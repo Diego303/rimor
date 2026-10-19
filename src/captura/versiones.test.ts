@@ -70,6 +70,40 @@ describe('versión nueva al capturar', () => {
     expect(repositorio.elementos()).toHaveLength(4);
   });
 
+  it('la papelera no; dos de la misma plantilla con títulos propios distintos tampoco', async () => {
+    const { repositorio, capturador } = montar();
+    await capturador.capturar({ texto: V1, origen: 'pegado', tipo: 'prompt' });
+    await repositorio.moverAPapelera('PRM-0001');
+    expect(valor(await capturador.capturar({ texto: V2, origen: 'pegado', tipo: 'prompt' })).tipo).toBe('creado');
+    const plantilla = (nombre: string, cosa: string) =>
+      `# ${nombre}\n\n## Contexto\n\nNecesitamos ordenar el trabajo de ${cosa} antes de fin de mes.\n\n## Tareas\n\n- [x] Escribir el borrador\n- [ ] Revisarlo con el equipo\n- [ ] Publicarlo\n`;
+    await capturador.capturar({ texto: plantilla('API de pagos', 'la API de pagos'), origen: 'pegado' });
+    const otra = valor(
+      await capturador.capturar({ texto: plantilla('Servicio de colas', 'el servicio de colas'), origen: 'pegado' }),
+    );
+    expect(otra.tipo).toBe('creado');
+  });
+
+  it('la versión conserva lo del elemento, suma colecciones y guarda la entrada para «aparte»', async () => {
+    const { repositorio, capturador } = montar();
+    await capturador.capturar({ texto: V1, origen: 'pegado', tipo: 'prompt', colecciones: ['revision'] });
+    const r = valor(await capturador.capturar({ texto: V2, origen: 'soltado', tipo: 'prompt', etiquetas: ['adr'] }));
+    if (r.tipo !== 'version') throw new Error('esperaba una versión');
+    expect(r.entrada).toMatchObject({ texto: V2, origen: 'soltado', tipo: 'prompt', etiquetas: ['adr'] });
+    expect(repositorio.frontmatter('PRM-0001')).toMatchObject({
+      colecciones: ['revision'],
+      etiquetas: ['adr'],
+      origen: 'soltado',
+    });
+    // Si se edita después, deshacer ya no la devuelve (no pisa la edición).
+    await repositorio.actualizarElemento('PRM-0001', (el) => ({
+      ...el,
+      frontmatter: { ...el.frontmatter, titulo: 'Mi título', modificado: '2030-01-01T00:00:00+01:00' },
+    }));
+    expect(await capturador.deshacerVersion(r)).toBe(false);
+    expect(repositorio.frontmatter('PRM-0001')?.titulo).toBe('Mi título');
+  });
+
   it('un documento con el mismo título y relacionado es su versión aunque cambie mucho', async () => {
     const { capturador } = montar();
     const v1 = '# Plan del gateway\n\n## Objetivo\nReenviar los fragmentos según llegan.\n';

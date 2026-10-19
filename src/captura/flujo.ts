@@ -77,6 +77,8 @@ export interface VersionCapturada {
   version: number;
   /** La copia de la versión anterior en el historial (para deshacer). */
   copia: string;
+  /** Lo que se capturó, para guardarlo aparte si no era una versión. */
+  entrada: EntradaCaptura;
 }
 
 export type ResultadoCaptura =
@@ -208,23 +210,34 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     const generico = (lector.textos.t as (i: 'es', c: string) => string)('es', 'titulo');
     const anterior = await anteriorDe(textoVersion, borrador.titulo, tipo, repositorio, generico);
     if (anterior) {
-      const colecciones = unicos([...(anterior.colecciones ?? []), ...(entrada.colecciones ?? [])]);
-      const etiquetas = unicos([...(anterior.etiquetas ?? []), ...(entrada.etiquetas ?? [])]);
+      const hilo =
+        entrada.hilo && analizarRef(entrada.hilo)?.prefijo === PREFIJOS.hilo
+          ? { hilo: entrada.hilo as FrontmatterComun['ref'] }
+          : {};
       const r = await repositorio.guardarConHistorial(
         anterior.id,
-        (el) => ({
-          ...el,
-          original: textoVersion,
-          frontmatter: {
-            ...el.frontmatter,
-            modificado: ahora,
-            hash,
-            ocultados,
-            lector: { nombre: lector.nombre, version: lector.version, resumen: borrador.resumen ?? {} },
-            ...(colecciones.length ? { colecciones } : {}),
-            ...(etiquetas.length ? { etiquetas } : {}),
-          },
-        }),
+        (el) => {
+          // Sobre lo que hay al escribir (en el turno del elemento), no sobre lo leído antes.
+          const colecciones = unicos([...(el.frontmatter.colecciones ?? []), ...(entrada.colecciones ?? [])]);
+          const etiquetas = unicos([...(el.frontmatter.etiquetas ?? []), ...(entrada.etiquetas ?? [])]);
+          return {
+            ...el,
+            original: textoVersion,
+            frontmatter: {
+              // Lo propio del lector de esta versión (el nombre de un archivo de agente) y lo común encima.
+              ...(borrador.metadatos ?? {}),
+              ...el.frontmatter,
+              modificado: ahora,
+              origen: entrada.origen,
+              hash,
+              ocultados,
+              lector: { nombre: lector.nombre, version: lector.version, resumen: borrador.resumen ?? {} },
+              ...(colecciones.length ? { colecciones } : {}),
+              ...(etiquetas.length ? { etiquetas } : {}),
+              ...hilo,
+            },
+          };
+        },
         'version',
         reloj,
       );
@@ -239,6 +252,7 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
           capturado: { elemento: leido.valor, ...(derivados ? { derivados } : {}) },
           version: r.valor.version,
           copia: r.valor.copia,
+          entrada,
         });
       }
     }
@@ -337,7 +351,11 @@ export async function deshacerCaptura(c: Capturado, repositorio: Repositorio): P
  */
 export function deshacerVersion(v: VersionCapturada, repositorio: Repositorio): Promise<boolean> {
   const fm = v.capturado.elemento.frontmatter;
-  return repositorio.deshacerHistorial(fm.id, v.copia, { hash: fm.hash, version: v.version });
+  return repositorio.deshacerHistorial(fm.id, v.copia, {
+    hash: fm.hash,
+    version: v.version,
+    modificado: fm.modificado,
+  });
 }
 
 /**

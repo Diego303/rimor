@@ -31,7 +31,8 @@ export function diffSecuencias(a: readonly string[], b: readonly string[]): OpDi
   }
   const ops: OpDiff[] = [];
   for (let i = 0; i < inicio; i++) ops.push({ t: '=', texto: a[i] ?? '' });
-  ops.push(...medio(a.slice(inicio, finA), b.slice(inicio, finB)));
+  // Sin `push(...)`: con decenas de miles de operaciones desbordaría la pila de argumentos.
+  for (const op of medio(a.slice(inicio, finA), b.slice(inicio, finB))) ops.push(op);
   for (let i = finA; i < a.length; i++) ops.push({ t: '=', texto: a[i] ?? '' });
   return ops;
 }

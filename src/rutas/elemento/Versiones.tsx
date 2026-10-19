@@ -13,11 +13,16 @@ import { Boton, Detalles, Dialogo } from '../../ui/componentes';
 import { Senal } from '../../ui/marca/Senal';
 import { diffLineas, plegar } from '../../versiones/diff';
 
-/** Las copias del historial del elemento, releídas cuando el elemento cambia; `null` mientras se leen. */
+/**
+ * Las copias del historial del elemento, releídas cuando el elemento cambia; mientras se releen, las de antes (la
+ * lista no se desmonta ni se cierra al restaurar). `null` solo hasta la primera lectura.
+ */
 export function useVersiones(el: Elemento): VersionGuardada[] | null {
   const espacio = useEspacioOpcional();
   const fm = el.frontmatter;
   const [lista, setLista] = useState<{ clave: string; versiones: VersionGuardada[] } | null>(null);
+  // Otro elemento (navegar de uno a otro): sus versiones, no las del anterior.
+  if (lista && !lista.clave.startsWith(`${fm.id}|`)) setLista(null);
   const clave = `${fm.id}|${fm.modificado}|${fm.version ?? 1}`;
   useEffect(() => {
     if (!espacio) return undefined;
@@ -30,7 +35,7 @@ export function useVersiones(el: Elemento): VersionGuardada[] | null {
       vigente = false;
     };
   }, [espacio, fm.id, clave]);
-  return lista?.clave === clave ? lista.versiones : null;
+  return lista?.versiones ?? null;
 }
 
 /** La versión de contenido anterior a la actual (la copia más reciente con la versión de antes), si la hay. */
@@ -116,7 +121,7 @@ export function ListaVersiones({ el, versiones, editable, alRestaurar }: PropsLi
   }
 
   return (
-    <Detalles resumen={t('pantallas.elemento.versiones.titulo')} recuento={versiones.length + 1}>
+    <Detalles resumen={t('pantallas.elemento.versiones.titulo')}>
       {hecha !== null && (
         <Senal estado="guardado" veces={1} etiqueta={t('pantallas.elemento.versiones.restaurada', { n: hecha })} />
       )}
@@ -130,11 +135,21 @@ export function ListaVersiones({ el, versiones, editable, alRestaurar }: PropsLi
             <dt>{nombre(v)}</dt>
             <dd>
               {fmtFecha(new Date(v.elemento.frontmatter.modificado), idioma)}{' '}
-              <Boton variante="fantasma" pequeno onClick={() => setViendo(v)}>
+              <Boton
+                variante="fantasma"
+                pequeno
+                aria-label={t('pantallas.elemento.versiones.verCambiosDe', { version: nombre(v) })}
+                onClick={() => setViendo(v)}
+              >
                 {t('pantallas.elemento.versiones.verCambios')}
               </Boton>
               {editable && (
-                <Boton variante="fantasma" pequeno onClick={() => setRestaurando(v)}>
+                <Boton
+                  variante="fantasma"
+                  pequeno
+                  aria-label={t('pantallas.elemento.versiones.restaurarDe', { version: nombre(v) })}
+                  onClick={() => setRestaurando(v)}
+                >
                   {t('pantallas.elemento.versiones.restaurar')}
                 </Boton>
               )}

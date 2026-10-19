@@ -180,23 +180,47 @@ describe('Repositorio', () => {
       [1, 'version', 'a', ''],
     ]);
     expect('historial' in (versiones[0]?.elemento.frontmatter ?? {})).toBe(false);
-    // Deshacer la edición: la copia vuelve y se borra; deshacer con otra versión no toca nada.
+    // Deshacer la edición: la copia vuelve y se borra; deshacer con otra versión, o si se modificó después, no.
+    const modificado = repo.frontmatter('PRM-0012')?.modificado ?? '';
+    expect(
+      await repo.deshacerHistorial('PRM-0012', 'historial/PRM-0012/2026-10-17T18-05-12-2.md', {
+        hash: hashOriginal('b'),
+        version: 2,
+        modificado: '2000-01-01T00:00:00+01:00',
+      }),
+    ).toBe(false);
     expect(
       await repo.deshacerHistorial('PRM-0012', 'historial/PRM-0012/2026-10-17T18-05-12-2.md', {
         hash: hashOriginal('b'),
         version: 3,
+        modificado,
       }),
     ).toBe(false);
     expect(
       await repo.deshacerHistorial('PRM-0012', 'historial/PRM-0012/2026-10-17T18-05-12-2.md', {
         hash: hashOriginal('b'),
         version: 2,
+        modificado,
       }),
     ).toBe(true);
     expect((await repo.leerElemento('PRM-0012')).ok).toBe(true);
     const leido = await repo.leerElemento('PRM-0012');
     expect(leido.ok && leido.valor.notas).toBe('');
     expect(await repo.versiones('PRM-0012')).toHaveLength(1);
+
+    // Tras cambiar el tipo (otra ref, la vieja en alias), las copias siguen encontrándose bajo el alias.
+    const actual = await repo.leerElemento('PRM-0012');
+    if (!actual.ok) throw new Error('sin leer');
+    await repo.guardarElemento({
+      ...actual.valor,
+      frontmatter: {
+        ...actual.valor.frontmatter,
+        ref: 'DOC-MD-0001' as never,
+        tipo: 'markdown',
+        alias: ['PRM-0012' as never],
+      },
+    });
+    expect((await repo.versiones('DOC-MD-0001')).map((v) => v.version)).toEqual([1]);
   });
 
   it('cargar reconstruye el índice desde los archivos, también la papelera', async () => {

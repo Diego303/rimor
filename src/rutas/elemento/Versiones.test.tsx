@@ -75,16 +75,18 @@ describe('Versiones en la pantalla', () => {
     expect([...cambios.querySelectorAll('.diff .r')].map((d) => d.textContent)).toEqual([
       '− Señala riesgos y alternativas.',
     ]);
-    expect(await screen.findByText('Versiones (2)', {}, ESCRITURA)).toBeTruthy();
+    expect(await screen.findByText('Versiones', { selector: 'summary' }, ESCRITURA)).toBeTruthy();
 
     // Ver cambios de la v1 hasta ahora.
-    fireEvent.click(screen.getByRole('button', { name: 'Ver cambios' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver los cambios desde v1' }));
     expect(dialogoDe(/Cambios desde v1 hasta ahora/).getAllByText(/Señala riesgos/).length).toBe(2);
     fireEvent.click(dialogoDe(/Cambios desde v1 hasta ahora/).getByRole('button', { name: 'Cerrar' }));
 
     // Restaurar la v1: con confirmación; vuelve su texto como versión 3 y lo de ahora queda en el historial.
-    fireEvent.click(screen.getByRole('button', { name: 'Restaurar esta versión' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Restaurar v1' }));
     fireEvent.click(dialogoDe(/¿Restaurar v1\?/).getByRole('button', { name: 'Restaurar esta versión' }));
+    // La señal «guardado» se ve en la lista (que no se desmonta al releer).
+    await waitFor(() => expect(document.querySelector('.senal-guardado')).toBeTruthy(), ESCRITURA);
     await waitFor(() => expect(espacio.repositorio.frontmatter('PRM-0012')?.version).toBe(3), ESCRITURA);
     const restaurado = await espacio.repositorio.leerElemento('PRM-0012');
     expect(restaurado.ok && restaurado.valor.original).toBe(V1);

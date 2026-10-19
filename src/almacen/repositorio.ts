@@ -550,15 +550,26 @@ export class Repositorio {
 
   /**
    * Deshace un `guardarConHistorial` recién hecho: la copia vuelve a ser el elemento y se borra del historial.
-   * Solo si el elemento sigue como quedó (`hash` y `version`); si alguien lo cambió después, no toca nada.
+   * Solo si el elemento sigue como quedó (`hash`, `version` y `modificado`): si alguien lo cambió después (una
+   * edición, un estado, una colección), no toca nada.
    */
-  async deshacerHistorial(refOId: string, copia: string, como: { hash: string; version: number }): Promise<boolean> {
+  async deshacerHistorial(
+    refOId: string,
+    copia: string,
+    como: { hash: string; version: number; modificado: string },
+  ): Promise<boolean> {
     this.comprobarEscritura();
     const e = this.buscar(refOId);
     if (!e) return false;
     return this.enTurno(e.id, async () => {
       const actual = this.fms.get(e.id);
-      if (!actual || actual.hash !== como.hash || (actual.version ?? 1) !== como.version) return false;
+      if (
+        !actual ||
+        actual.hash !== como.hash ||
+        (actual.version ?? 1) !== como.version ||
+        actual.modificado !== como.modificado
+      )
+        return false;
       const r = leerElemento((await leerTexto(this.almacen, copia)) ?? '');
       if (!r.ok || r.valor.frontmatter.id !== e.id) return false;
       const { historial: _, ...frontmatter } = r.valor.frontmatter as FrontmatterComun & { historial?: unknown };

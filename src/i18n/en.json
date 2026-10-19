@@ -246,7 +246,9 @@
         "iguales": {
           "one": "… {n} unchanged line",
           "other": "… {n} unchanged lines"
-        }
+        },
+        "verCambiosDe": "See the changes since {version}",
+        "restaurarDe": "Restore {version}"
       },
       "origenVersion": {
         "pegado": "Version {n}, pasted {cuando}",

@@ -238,23 +238,40 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       const r = await espacio.repositorio
         .guardarConHistorial(
           fm.id,
-          (actual) => ({
-            ...actual,
-            original: copia.original,
-            notas: copia.notas,
-            frontmatter: {
-              ...actual.frontmatter,
-              titulo: copia.frontmatter.titulo,
-              hash: copia.frontmatter.hash,
-              lector: copia.frontmatter.lector,
-              modificado: isoConZona(new Date()),
-            },
-          }),
+          (actual) => {
+            // Igual que la actual: nada que restaurar (ni copia nueva en el historial).
+            if (
+              actual.original === copia.original &&
+              actual.notas === copia.notas &&
+              actual.frontmatter.titulo === copia.frontmatter.titulo
+            )
+              return null;
+            // El lector es el de ahora (tras cambiar el tipo, la copia lleva el de antes); su resumen, el de la
+            // copia si es del mismo lector, y si no, vacío hasta que se derive.
+            const mismoLector = copia.frontmatter.lector.nombre === actual.frontmatter.lector.nombre;
+            return {
+              ...actual,
+              original: copia.original,
+              notas: copia.notas,
+              frontmatter: {
+                ...actual.frontmatter,
+                titulo: copia.frontmatter.titulo,
+                hash: copia.frontmatter.hash,
+                ocultados: copia.frontmatter.ocultados,
+                lector: { ...actual.frontmatter.lector, resumen: mismoLector ? copia.frontmatter.lector.resumen : {} },
+                modificado: isoConZona(new Date()),
+              },
+            };
+          },
           'restaurar',
         )
         .catch(() => null);
       if (!r?.ok) {
         avisos?.avisar(t('pantallas.elemento.versiones.noRestaurada'));
+        return null;
+      }
+      if (!r.valor.copia) {
+        avisos?.avisar(t('pantallas.elemento.versiones.sinCambios'));
         return null;
       }
       avisos?.avisar(t('pantallas.elemento.versiones.restaurada', { n: r.valor.version }));

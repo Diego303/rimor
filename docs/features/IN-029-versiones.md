@@ -95,3 +95,36 @@ Cubre las cinco tareas y la prueba de propiedad. Lo aprendido que aplica: las es
 | Dos documentos distintos hechos con la misma plantilla (actas, informes) pueden pasar de 0,6 y tomarse por versiones | Es el umbral del plan; por eso la versión se dice en el feed con «Guardar aparte» y «Deshacer». La prueba del corpus de detección los captura aparte. |
 | Myers con tope de cambios | El rastro crece como D²; por encima del tope el diff sigue siendo correcto (la propiedad se cumple), aunque no mínimo. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 72 archivos y 1076 pruebas; carga inicial 222,1 KB de 300.
+
+**Tareas y prueba del plan, con su evidencia:**
+
+| Tarea o criterio | Evidencia |
+|---|---|
+| Aplicar el diff a la versión antigua da la nueva | `versiones.test.ts`: propiedad con fast-check (500 casos), textos de 20.000 y 70.000 líneas, el tope de cambios |
+| Versión nueva al capturar con deshacer | `captura/versiones.test.ts` (versión 2, duplicado, deshacer, aparte, otro tipo, papelera, plantillas distintas, mismo título) y el mensaje de Inicio con «Guardar aparte» en `Versiones.test.tsx` |
+| La anterior a `historial/REF/fecha.md` y `version` sube | `repositorio.test.ts` (copia entera, edición sin subir la versión, orden, alias, deshacer solo si nada cambió) |
+| Diff por líneas y por secciones | `versiones.test.ts` (como la referencia; Setext, vallas, frontmatter, «C#», enlaces, documento de un solo encabezado) y el índice marcado en `Versiones.test.tsx` |
+| Lista de versiones y restaurar con la señal | `Versiones.test.tsx`: «Ver los cambios desde v1», restaurar con confirmación, `.senal-guardado` visible, versión 3 |
+| Las ediciones del usuario dejan versión | Título y notas de la pantalla y la nota de resolución del lector Error pasan por `guardarConHistorial`; `Versiones.test.tsx` (nota → copia «edición») |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | `push(...)` desbordaba la pila con diffs de ~65.000 líneas | Bucle; prueba de 70.000 líneas |
+| 2 | La señal «guardado» no llegaba a verse al restaurar (la lista se desmontaba al releer) | `useVersiones` conserva la lista mientras relee; la prueba mira `.senal-guardado` |
+| 3 | Deshacer una versión revertía ediciones posteriores | `deshacerHistorial` compara también `modificado`; prueba en `captura/versiones.test.ts` y `repositorio.test.ts` |
+| 4 | El frontmatter YAML se tomaba por un encabezado Setext | `seccionesDe` quita el frontmatter como la vista (`cuerpoDe`); prueba |
+| 5 | Restaurar tras cambiar el tipo dejaba el lector antiguo | Se conserva el lector de ahora (el resumen de la copia solo si es del mismo lector) |
+| 6 | «Guardar aparte» perdía tipo, colecciones, etiquetas, origen y archivo; la versión ignoraba metadatos del lector e hilo | `VersionCapturada.entrada` y se repite la captura con `aparte`; la versión suma colecciones y etiquetas dentro del turno, con su origen, metadatos e hilo; prueba |
+| 7 | Plantillas parecidas con títulos distintos se tomaban por versiones | Con títulos propios distintos hace falta un parecido > 0,8; prueba con dos documentos de plantilla |
+| 8 | Secciones: cierre ATX, vallas con lenguaje, enlaces, documento de un solo `#`, claves repetidas | Corregidos como el lector; pruebas |
+| 9 | Sin el segmentado «v1 · v2» de la cabecera del prompt; «Versiones (N)» con recuento | Decisión: la lista de versiones (escala con muchas) sustituye al segmentado, que la guía limita a 2–4 opciones; el plegado se llama «Versiones», sin recuento, como la referencia |
+| 10 | Restaurar una copia idéntica escribía; no restauraba `ocultados`; la meta usaba el origen de la v1 | Sin cambios no se escribe («Es igual que la actual»); restaura `ocultados`; la versión capturada guarda su `origen` |
+| 11 | La nota de resolución del lector Error no dejaba copia | Pasa por `guardarConHistorial` |
+| 12 | «Ver cambios» y «Restaurar» repetidos con el mismo nombre accesible | `aria-label` con la versión («Restaurar v1») |
+| 13 | Pruebas que faltaban (señal, alias, papelera, plantillas) | Añadidas |
+
