@@ -71,7 +71,17 @@
       "enter": "Intro",
       "escape": "Esc"
     },
-    "enfocarCompositor": "Escribir en el compositor"
+    "enfocarCompositor": "Escribir en el compositor",
+    "feedSiguiente": "Siguiente en el feed",
+    "feedAnterior": "Anterior en el feed",
+    "feedAbrir": "Abrir el seleccionado",
+    "feedResponder": "Responder (lleva a su hilo)",
+    "feedColeccion": "Añadir a colección",
+    "feedArchivar": "Archivar",
+    "feedFijar": "Fijar o soltar",
+    "feedTipo": "Cambiar tipo",
+    "feedSeleccionar": "Seleccionar para comparar o agrupar",
+    "feedVaciarSeleccion": "Vaciar la selección"
   },
   "errores": {
     "pantalla": {
@@ -84,7 +94,53 @@
     "inicio": {
       "titulo": "Inicio",
       "vacioTitulo": "Aquí aparecerá lo que captures",
-      "vacio": "Lo que pegues aparecerá aquí con lo que Rimor haya entendido."
+      "vacio": "Lo que pegues aparecerá aquí con lo que Rimor haya entendido.",
+      "filtro": "Qué enseñar",
+      "todo": "Todo",
+      "sinClasificar": "Sin clasificar · {n}",
+      "feed": "Lo capturado",
+      "hoy": "Hoy",
+      "ayer": "Ayer",
+      "responder": "Responder",
+      "archivar": "Archivar",
+      "archivado": "Archivado {ref}",
+      "noArchivado": "No se pudo archivar.",
+      "deshacer": "Deshacer",
+      "fijado": "Fijado {ref}",
+      "soltado": "Soltado {ref}",
+      "busqueda": {
+        "one": "{n} resultado:",
+        "other": "{n} resultados:"
+      },
+      "sinResultados": "No encuentro nada con eso.",
+      "abrirEnBuscar": "Abrir en Buscar",
+      "nadaSinClasificar": "Nada sin clasificar",
+      "nadaSinClasificarTexto": "Lo que pegues aparecerá aquí con lo que Rimor haya entendido.",
+      "primerUsoTitulo": "Pega lo primero que tengas a mano",
+      "primerUsoTexto": "Rimor entiende lo que pegues y te contesta con lo que ha visto. Prueba con uno de estos:",
+      "ejemplos": {
+        "log": "Un log",
+        "error": "Una traza de error",
+        "enlace": "Un enlace",
+        "mediciones": "Unas mediciones",
+        "idea": "Una idea"
+      },
+      "cargando": "Cargando días anteriores…",
+      "seleccionados": {
+        "one": "{n} seleccionado",
+        "other": "{n} seleccionados"
+      },
+      "vaciarSeleccion": "Vaciar",
+      "coleccionTitulo": "Añadir a colección",
+      "coleccionCampo": "Colección",
+      "coleccionAnadir": "Añadir",
+      "cancelar": "Cancelar",
+      "anadidoA": "{ref} añadido a {coleccion}",
+      "noAnadido": "No se pudo añadir a la colección.",
+      "tipoTitulo": "Cambiar tipo de {ref}",
+      "tipoCambiado": "Ahora es {tipo}: {ref}",
+      "noCambiado": "No se pudo cambiar el tipo.",
+      "sinOtroTipo": "Este elemento no se puede leer con otro lector."
     },
     "elemento": {
       "titulo": "Elemento",

@@ -1,6 +1,6 @@
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { useEspacio } from '../estado/espacio';
 import { crearRouter } from './rutas';
 
@@ -17,6 +17,12 @@ function montar(ruta = '/') {
 }
 
 describe('Carcasa', () => {
+  // Inicio arrastra casi toda la app (lectores, respuestas, compositor): se carga una vez antes, para que cada
+  // prueba mida lo que pinta y no la primera transformación de sus módulos.
+  beforeAll(async () => {
+    await import('./inicio/Inicio');
+  }, 120_000);
+
   afterEach(() =>
     useEspacio.setState({ nombre: '', sinClasificar: 0, colecciones: [], ultimaCopia: null, copiaAlDia: false }),
   );

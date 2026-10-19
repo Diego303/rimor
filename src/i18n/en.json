@@ -71,7 +71,17 @@
       "enter": "Enter",
       "escape": "Esc"
     },
-    "enfocarCompositor": "Write in the composer"
+    "enfocarCompositor": "Write in the composer",
+    "feedSiguiente": "Next in the feed",
+    "feedAnterior": "Previous in the feed",
+    "feedAbrir": "Open the selected one",
+    "feedResponder": "Reply (goes to its thread)",
+    "feedColeccion": "Add to collection",
+    "feedArchivar": "Archive",
+    "feedFijar": "Pin or unpin",
+    "feedTipo": "Change type",
+    "feedSeleccionar": "Select to compare or group",
+    "feedVaciarSeleccion": "Clear the selection"
   },
   "errores": {
     "pantalla": {
@@ -84,7 +94,53 @@
     "inicio": {
       "titulo": "Home",
       "vacioTitulo": "What you capture will show up here",
-      "vacio": "Whatever you paste will appear here with what Rimor understood."
+      "vacio": "Whatever you paste will appear here with what Rimor understood.",
+      "filtro": "What to show",
+      "todo": "All",
+      "sinClasificar": "Unsorted · {n}",
+      "feed": "What you captured",
+      "hoy": "Today",
+      "ayer": "Yesterday",
+      "responder": "Reply",
+      "archivar": "Archive",
+      "archivado": "Archived {ref}",
+      "noArchivado": "It could not be archived.",
+      "deshacer": "Undo",
+      "fijado": "Pinned {ref}",
+      "soltado": "Unpinned {ref}",
+      "busqueda": {
+        "one": "{n} result:",
+        "other": "{n} results:"
+      },
+      "sinResultados": "I find nothing with that.",
+      "abrirEnBuscar": "Open in Search",
+      "nadaSinClasificar": "Nothing unsorted",
+      "nadaSinClasificarTexto": "What you paste will show here with what Rimor understood.",
+      "primerUsoTitulo": "Paste the first thing you have at hand",
+      "primerUsoTexto": "Rimor understands what you paste and answers with what it saw. Try one of these:",
+      "ejemplos": {
+        "log": "A log",
+        "error": "An error trace",
+        "enlace": "A link",
+        "mediciones": "Some measurements",
+        "idea": "An idea"
+      },
+      "cargando": "Loading earlier days…",
+      "seleccionados": {
+        "one": "{n} selected",
+        "other": "{n} selected"
+      },
+      "vaciarSeleccion": "Clear",
+      "coleccionTitulo": "Add to collection",
+      "coleccionCampo": "Collection",
+      "coleccionAnadir": "Add",
+      "cancelar": "Cancel",
+      "anadidoA": "{ref} added to {coleccion}",
+      "noAnadido": "It could not be added to the collection.",
+      "tipoTitulo": "Change the type of {ref}",
+      "tipoCambiado": "It is now {tipo}: {ref}",
+      "noCambiado": "The type could not be changed.",
+      "sinOtroTipo": "This item cannot be read with another reader."
     },
     "elemento": {
       "titulo": "Item",

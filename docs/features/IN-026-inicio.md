@@ -64,14 +64,14 @@ Fijo abajo (ya lo está) y, en el móvil, encima de la barra inferior.
 
 ## Tareas
 
-- [ ] Feed por días («Hoy», «Ayer», fecha), lista virtual, carga incremental hacia atrás.
-- [ ] `Mensaje`: icono, título, hora, vista previa de una línea, respuesta, acciones del lector y «Responder» y «Archivar». Borde naranja mientras está fresco.
-- [ ] Segmentado «Todo / Sin clasificar · N».
-- [ ] Mensajes de búsqueda (`?texto`) con hasta 5 resultados y «Abrir en Buscar».
-- [ ] Mensajes de resurgimiento de ideas (IN-018).
-- [ ] Triaje con teclado: `j`, `k`, `Enter`, `r`, `c`, `i` (oculto hasta v0.3), `e`, `f`, `t` y `x`.
-- [ ] Estado vacío de primer uso con ejemplos de qué pegar.
-- [ ] Compositor fijo abajo y encima de la barra inferior en el móvil.
+- [x] Feed por días («Hoy», «Ayer», fecha), lista virtual, carga incremental hacia atrás.
+- [x] `Mensaje`: icono, título, hora, vista previa de una línea, respuesta, acciones del lector y «Responder» y «Archivar». Borde naranja mientras está fresco.
+- [x] Segmentado «Todo / Sin clasificar · N».
+- [x] Mensajes de búsqueda (`?texto`) con hasta 5 resultados y «Abrir en Buscar».
+- [x] Mensajes de resurgimiento de ideas (IN-018).
+- [x] Triaje con teclado: `j`, `k`, `Enter`, `r`, `c`, `i` (oculto hasta v0.3), `e`, `f`, `t` y `x`.
+- [x] Estado vacío de primer uso con ejemplos de qué pegar.
+- [x] Compositor fijo abajo y encima de la barra inferior en el móvil.
 
 ## Pruebas previstas
 
@@ -97,4 +97,17 @@ Fijo abajo (ya lo está) y, en el móvil, encima de la barra inferior.
 ## Autorrevisión
 
 Cubre las ocho tareas, la prueba de triaje y la de 5.000 elementos (adaptadas: sin Playwright, como pide el autor). Lo que depende de otras IN (hilos IN-030, colecciones IN-033, corregir el tipo IN-027, comparar IN-028, buscador IN-032) se hace aquí con lo mínimo y reutilizable. Lección de las IN anteriores: el feed es una pantalla de lectura y triaje; todo lo que calcula (filas, días, búsqueda) va en módulos puros con pruebas, y la vista solo pinta.
+
+## Cambios durante la implementación
+
+- Dependencia nueva `@tanstack/react-virtual` 3.14.13 (y `@tanstack/virtual-core` 3.17.11), publicadas hace más de dos semanas. Si el contenedor o una fila miden 0 (antes de maquetar), la lista usa el alto de la ventana y el estimado: nunca una lista vacía ni un bucle de medidas.
+- El módulo puro se llama `filas.ts` (en `/mnt/d` los nombres no distinguen mayúsculas: `feed.ts` chocaba con `Feed.tsx`).
+- **Los atajos leen el feed y la selección de ahora** (una referencia que se actualiza en cada pintado), no los del momento en que se registraron: una tecla pulsada justo después de un cambio actúa sobre lo que se ve.
+- Cambiar tipo (`t`) va en `captura/reprocesar.ts` (`cambiarTipo`, `sePuedeCambiar`): solo entre lectores de texto; ref nueva con la vieja en `alias`; suma `correccionesDeTipo`. IN-027 lo reutiliza.
+- `useElemento` lee el elemento completo de cada mensaje montado (y recuerda los últimos 300) para la vista previa y la respuesta.
+- Lo fresco (borde naranja) se guarda en `estado/frescos.ts`: lo capturado en esta sesión, 10 minutos o hasta abrirlo.
+- Las acciones de las respuestas que el feed sabe hacer: `coleccion:X` y `no`; las de hilos llegan con IN-030.
+- `Dialogo` nuevo en los componentes (el `<dialog>` nativo de la ayuda de atajos, reutilizable).
+- La búsqueda del feed busca en memoria (título, ref, tipo, colecciones, etiquetas y resumen legible) hasta que llegue IN-032.
+- Pruebas: Inicio, la carcasa y la app cargan Inicio una vez antes de sus pruebas (con todos los lectores, su primera transformación en `/mnt/d` tarda segundos); el corpus de captura va en una prueba por carpeta.
 

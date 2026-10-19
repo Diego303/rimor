@@ -8,6 +8,10 @@ import { type DependenciasProveedor, ProveedorEspacio, useEspacioAbierto } from 
 import VistaArchivo from './archivo/Vista';
 import { analizarCodigo } from './codigo/analisis';
 import VistaCodigo from './codigo/Vista';
+import { analizarError } from './error/lector';
+import VistaError, { listaDeFechas } from './error/Vista';
+import { analizar } from './log/analisis';
+import VistaLog from './log/Vista';
 import { analizarMarkdown } from './markdown/analisis';
 import { indiceDe } from './markdown/indice';
 import VistaMarkdown from './markdown/Vista';
@@ -150,8 +154,6 @@ describe('vista de Enlace', () => {
 
 describe('vista de Log', () => {
   it('cifras, histograma, plantillas que filtran sus líneas y «Ver las N»', async () => {
-    const { default: VistaLog } = await import('./log/Vista');
-    const { analizar } = await import('./log/analisis');
     const { readFileSync } = await import('node:fs');
     const { join } = await import('node:path');
     const texto = readFileSync(join(process.cwd(), 'fixtures/logs/texto-iso.log'), 'utf8');
@@ -459,7 +461,6 @@ describe('vista de Prompt', () => {
 
 describe('vista de Error', () => {
   it('fechas: del mismo mes, «el 2 y el 15 de octubre»; de meses distintos, cada una con su mes', async () => {
-    const { listaDeFechas } = await import('./error/Vista');
     const { textos } = await import('./error/textos');
     const ahora = new Date('2026-10-18T12:00:00+02:00');
     const t = (idioma: 'es' | 'en') =>
@@ -474,8 +475,6 @@ describe('vista de Error', () => {
   });
 
   it('mensaje, «3.ª vez» con la nota, tus marcos, plegados y «Añadir cómo lo resolví»', async () => {
-    const { default: VistaError } = await import('./error/Vista');
-    const { analizarError } = await import('./error/lector');
     const { readFileSync } = await import('node:fs');
     const { join } = await import('node:path');
     const { ProveedorAvisos } = await import('../ui/componentes');

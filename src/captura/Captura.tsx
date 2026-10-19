@@ -2,10 +2,12 @@
  * Captura en la interfaz (IN-014, CAP-01, CAP-02): pegar fuera de un campo de texto lleva lo pegado al
  * compositor; soltar archivos sobre cualquier pantalla los guarda uno a uno, con «Guardado. Deshacer».
  */
+
 import type { Resultado } from '@rimor/formato';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useEspacioOpcional } from '../espacio/Espacio';
 import { useEspacio } from '../estado/espacio';
+import { useFrescos } from '../estado/frescos';
 import { fmtBytes } from '../i18n/formatos';
 import { useT } from '../i18n/useT';
 import { useLectoresOpcional } from '../lectores/Lectores';
@@ -142,6 +144,8 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
       for (const avisarOtro of otros) avisarOtro();
       // Lo que Rimor ha ahorrado (MET-06): un error que ya había pasado, reconocido por su huella.
       for (const c of creados) void contarSiReconocido(c);
+      // El feed los marca como frescos (borde naranja) durante unos minutos.
+      if (creados.length) useFrescos.getState().anadir(creados.map((c) => c.elemento.frontmatter.ref));
     },
     [avisar, t, idioma, alAbrir, capturador, espacio, contarSiReconocido],
   );

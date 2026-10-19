@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { hashOriginal, LIMITE_ORIGINAL_EN_MD, normalizarOriginal, sha256Hex } from '@rimor/formato';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { leerTexto } from '../almacen/contrato';
 import { AlmacenMemoria } from '../almacen/memoria';
 import { Repositorio } from '../almacen/repositorio';
@@ -339,20 +339,22 @@ describe('capturar', () => {
 });
 
 describe('capturar el corpus de detección', () => {
-  it('cada ejemplo se guarda con su tipo y se relee igual', async () => {
-    const raiz = join(process.cwd(), 'fixtures/deteccion');
-    // Con los lectores de la app: cada carpeta del corpus es el tipo que debe salir.
-    const { REGISTRO } = await import('../lectores/registro');
+  const raiz = join(process.cwd(), 'fixtures/deteccion');
+  // Con los lectores de la app (cargados una vez: su primera transformación es lenta).
+  let REGISTRO: Awaited<typeof import('../lectores/registro')>['REGISTRO'];
+  beforeAll(async () => {
+    ({ REGISTRO } = await import('../lectores/registro'));
+  }, 120_000);
+  // Una prueba por carpeta: el corpus crece con cada lector. Cada carpeta es el tipo que debe salir.
+  it.each(readdirSync(raiz))('%s: cada ejemplo se guarda con su tipo y se relee igual', async (tipo) => {
     const repositorio = new Repositorio(new AlmacenMemoria());
     const capturador = crearCapturador({ repositorio, registro: REGISTRO });
-    for (const tipo of readdirSync(raiz)) {
-      for (const f of readdirSync(join(raiz, tipo)).filter((x) => x.endsWith('.txt'))) {
-        const texto = readFileSync(join(raiz, tipo, f), 'utf8');
-        const c = creado(await capturador.capturar({ texto, origen: 'pegado' }));
-        expect(c.elemento.frontmatter.tipo, `${tipo}/${f}`).toBe(tipo);
-        const leido = await repositorio.leerElemento(c.elemento.frontmatter.ref);
-        expect(leido.ok && normalizarOriginal(leido.valor.original ?? '')).toBe(normalizarOriginal(texto));
-      }
+    for (const f of readdirSync(join(raiz, tipo)).filter((x) => x.endsWith('.txt'))) {
+      const texto = readFileSync(join(raiz, tipo, f), 'utf8');
+      const c = creado(await capturador.capturar({ texto, origen: 'pegado' }));
+      expect(c.elemento.frontmatter.tipo, `${tipo}/${f}`).toBe(tipo);
+      const leido = await repositorio.leerElemento(c.elemento.frontmatter.ref);
+      expect(leido.ok && normalizarOriginal(leido.valor.original ?? '')).toBe(normalizarOriginal(texto));
     }
   });
 });

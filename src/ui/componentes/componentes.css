@@ -1194,6 +1194,60 @@ pre.code.codigo .ln {
 .codigo .tok-invalid {
   color: var(--bad);
 }
+/* Inicio (IN-026): la lista virtual del feed, el seleccionado con el teclado y la barra de selección. */
+.feed-virtual {
+  position: relative;
+  width: 100%;
+}
+.fila-feed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding-bottom: 12px;
+}
+.msg.sel {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.msg.marcado {
+  background: var(--key-soft);
+}
+.msg .fijado {
+  color: var(--muted);
+  display: inline-grid;
+}
+.acciones-lector {
+  padding-left: 40px;
+}
+.cuerpo-busqueda {
+  min-width: 0;
+  flex: 1;
+}
+.cuerpo-busqueda .list {
+  margin-top: 4px;
+}
+.primer-uso .ejemplos {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.barra-seleccion {
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.formulario-dialogo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.formulario-dialogo label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .tabla-plantillas {
   min-width: 480px;
 }

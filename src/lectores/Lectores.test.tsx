@@ -109,10 +109,13 @@ describe('lector de punta a punta', () => {
     // La tarjeta del lector (diferida) con las primeras líneas, el título y la ref.
     expect(screen.getByText('Primera línea del ejemplo')).toBeTruthy();
     expect(screen.getByText('TXT-0099')).toBeTruthy();
-    await waitFor(() =>
-      expect(document.querySelector('.tarjeta-elemento pre')?.textContent).toBe(
-        'Primera línea del ejemplo\nsegunda línea con más palabras\ntercera',
-      ),
+    await waitFor(
+      () =>
+        expect(document.querySelector('.tarjeta-elemento pre')?.textContent).toBe(
+          'Primera línea del ejemplo\nsegunda línea con más palabras\ntercera',
+        ),
+      // La tarjeta se carga en diferido: con la máquina cargada, su primera transformación tarda.
+      { timeout: 4000 },
     );
 
     retenido.soltar();
