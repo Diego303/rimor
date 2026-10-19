@@ -78,10 +78,48 @@ describe('Hilo', () => {
       useCompositor.getState().setTexto('Lo he vuelto a ver con otro cliente.');
     });
     fireEvent.keyDown(screen.getByPlaceholderText(/Responder en este hilo/), { key: 'Enter' });
-    await waitFor(() => expect(espacio.repositorio.elementos()).toHaveLength(2), ESCRITURA);
-    const hilos = espacio.repositorio.elementos().map((fm) => fm.hilo);
-    expect(hilos).toEqual(['HIL-0001', 'HIL-0001']);
+    // El hilo se crea después de guardar (solo si la captura creó algo).
+    await waitFor(
+      () => expect(espacio.repositorio.elementos().map((fm) => fm.hilo)).toEqual(['HIL-0001', 'HIL-0001']),
+      ESCRITURA,
+    );
     expect(hiloDe('HIL-0001', espacio.entidades)?.titulo).toBe('Primer timeout');
+  }, 60_000);
+
+  it('pegar dos veces la misma traza desde el compositor forma el hilo (la captura real, con sus derivados)', async () => {
+    await import('../inicio/Inicio');
+    await import('../../lectores/error/Vista');
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const traza = readFileSync(join(process.cwd(), 'fixtures/trazas/rust/01.txt'), 'utf8');
+    const { espacio } = await montarApp('/');
+    const caja = await screen.findByRole('textbox', { name: /Capturar|Pega/ }, PRIMERA_CARGA);
+    for (const texto of [traza, traza.replace('30s', '45s')]) {
+      act(() => useCompositor.getState().setTexto(texto));
+      fireEvent.keyDown(caja, { key: 'Enter' });
+      await waitFor(() => expect(useCompositor.getState().texto).toBe(''), ESCRITURA);
+    }
+    await waitFor(() => {
+      const errores = espacio.repositorio.elementos().filter((fm) => fm.tipo === 'error');
+      expect(errores).toHaveLength(2);
+      expect(new Set(errores.map((fm) => fm.hilo))).toEqual(new Set(['HIL-0001']));
+    }, ESCRITURA);
+  }, 60_000);
+
+  it('en el elemento: mover a otro hilo con confirmación', async () => {
+    const { espacio, router } = await montarApp('/ajustes', [nota(1, 'Primer timeout'), nota(2, 'Otro')]);
+    const d = { repositorio: espacio.repositorio, entidades: espacio.entidades };
+    await act(async () => {
+      await crearHilo('read timeout', ['TXT-0001'], d);
+      await crearHilo('conexiones', ['TXT-0002'], d);
+    });
+    await act(() => router.navigate({ to: '/e/$ref', params: { ref: 'TXT-0001' } }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Mover a otro hilo' }, PRIMERA_CARGA));
+    const dialogo = dialogoDe(/Mover TXT-0001 a otro hilo/);
+    fireEvent.click(dialogo.getByRole('button', { name: /conexiones/ }));
+    expect(dialogo.getByText('¿Mover TXT-0001 a conexiones?')).toBeTruthy();
+    fireEvent.click(dialogo.getByRole('button', { name: 'Mover' }));
+    await waitFor(() => expect(espacio.repositorio.frontmatter('TXT-0001')?.hilo).toBe('HIL-0002'), ESCRITURA);
   }, 60_000);
 
   it('en el elemento: la fila Hilo y sacarlo con confirmación', async () => {

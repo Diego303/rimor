@@ -78,6 +78,35 @@ describe('hilos', () => {
     expect(await reabrir(h, d)).toBe(false);
   });
 
+  it('la nota va al último error (no a una respuesta en el hilo); meter en un hilo no es editar', async () => {
+    const { repositorio, d } = montar();
+    for (const n of [1, 2]) await repositorio.guardarElemento(error(n, 'h'));
+    const antes = repositorio.frontmatter('ERR-0002')?.modificado;
+    const h = await crearHilo('read timeout', ['ERR-0001', 'ERR-0002'], d);
+    expect(repositorio.frontmatter('ERR-0002')?.modificado).toBe(antes);
+    // Una nota respondida en el hilo, después del último error.
+    const respuesta = elementoFalso(5, 'Lo probé con otro cliente', 'texto');
+    await repositorio.guardarElemento({
+      ...respuesta,
+      frontmatter: { ...respuesta.frontmatter, creado: '2026-10-09T10:00:00+02:00', estado: 'en-uso' },
+    });
+    await anadirAHilo(h, 'TXT-0005', d);
+    await resolver(h, 'Con keep-alive', d);
+    expect(repositorio.frontmatter('ERR-0002')?.estado).toBe('resuelto');
+    expect(repositorio.frontmatter('TXT-0005')?.estado).toBe('en-uso');
+  });
+
+  it('un error que entra respondiendo en un hilo resuelto lo reabre', async () => {
+    const { repositorio, entidades, d } = montar();
+    await repositorio.guardarElemento(error(1, 'h'));
+    const h = await crearHilo('read timeout', ['ERR-0001'], d);
+    await resolver(h, 'Hecho', d);
+    const tercero = error(3, 'h');
+    await repositorio.guardarElemento({ ...tercero, frontmatter: { ...tercero.frontmatter, hilo: h as never } });
+    expect(await formarPorHuella(tercero.frontmatter.id, 'h', d)).toBe(h);
+    expect(hiloDe(h, entidades)?.estado).toBe('abierto');
+  });
+
   it('formar por huella: el primero solo; el segundo crea el hilo con los dos; el tercero entra', async () => {
     const { repositorio, d } = montar();
     await repositorio.guardarElemento(error(1, 'h'));

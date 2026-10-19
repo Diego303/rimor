@@ -82,7 +82,8 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
       const lector = lectores.registro.paraElemento(c.elemento);
       if (lector?.tipo !== 'error') return;
       const datos = await c.derivados.catch(() => null);
-      const huella = datos ? lector.resumen(datos).huella : undefined;
+      // Si los derivados no llegan (un plazo agotado), la huella que dejó el lector al leer.
+      const huella = datos ? lector.resumen(datos).huella : c.elemento.frontmatter.lector.resumen.huella;
       if (typeof huella !== 'string' || !huella) return;
       const id = c.elemento.frontmatter.id;
       if (espacio.repositorio.elementos().some((o) => o.id < id && o.lector.resumen.huella === huella))

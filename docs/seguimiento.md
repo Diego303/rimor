@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-20 00:01
-**Ahora:** IN-030 · Hilos · fase implementación
-**Siguiente:** IN-031 · Colecciones y etiquetas
-**Progreso:** F0 9/9 · v0.1 31/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 40/99
+**Última actualización:** 2026-10-20 00:23
+**Ahora:** IN-031 · Colecciones y etiquetas · fase análisis y diseño
+**Siguiente:** IN-032 · Búsqueda
+**Progreso:** F0 9/9 · v0.1 32/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 41/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -49,7 +49,7 @@
 | IN-027 | Vista de elemento, estados, fijar y papelera | v0.1 | 5 | hecha | 8e26cc6 e004ba0 52abc20 | docs/features/IN-027-elemento.md |
 | IN-028 | Comparaciones de logs y mediciones | v0.1 | 5 | hecha | 6f0e9f7 cd731a1 a9fce8f | docs/features/IN-028-comparaciones.md |
 | IN-029 | Versiones e historial | v0.1 | 5 | hecha | 2a73dd9 701dbe2 7eac401 | docs/features/IN-029-versiones.md |
-| IN-030 | Hilos | v0.1 | 5 | en implementación | f79375a | docs/features/IN-030-hilos.md |
+| IN-030 | Hilos | v0.1 | 5 | hecha | f79375a 2fd00eb | docs/features/IN-030-hilos.md |
 | IN-031 | Colecciones y etiquetas | v0.1 | 5 | pendiente | — | — |
 | IN-032 | Búsqueda | v0.1 | 5 | pendiente | — | — |
 | IN-033 | Paleta de comandos | v0.1 | 6 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-20 | IN-030 | implementación | hilos con el hilo en cada elemento, formación por huella en cola, responder y «a su hilo», pantalla con resolver y reabrir, mover desde el elemento | … |
+| 2026-10-20 | IN-030 | verificación | pnpm verificar OK (1087 pruebas, 224,3 KB); revisión independiente con 12 hallazgos atendidos con pruebas | … |
+| 2026-10-20 | IN-030 | implementación | hilos con el hilo en cada elemento, formación por huella en cola, responder y «a su hilo», pantalla con resolver y reabrir, mover desde el elemento | 2fd00eb |
 | 2026-10-19 | IN-030 | análisis y diseño | el hilo en cada elemento (D13), formación por huella y al responder, pantalla como la referencia, resolver con la nota en el último elemento | f79375a |
 | 2026-10-19 | IN-029 | verificación | pnpm verificar OK (1076 pruebas, 222,1 KB); revisión independiente con 13 hallazgos atendidos con pruebas | … |
 | 2026-10-19 | IN-029 | implementación | diff Myers y por secciones, historial en turno, versión nueva al capturar con deshacer y guardar aparte, versiones y restaurar en la pantalla, índice de Markdown marcado | 7eac401 |

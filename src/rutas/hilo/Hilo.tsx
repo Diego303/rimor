@@ -9,14 +9,12 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useCompositor } from '../../captura/compositor';
 import { useEspacioOpcional } from '../../espacio/Espacio';
-import { conEstado, tituloNuevo } from '../../espacio/ediciones';
-import { useEdicion } from '../../espacio/useEdicion';
+import { tituloNuevo } from '../../espacio/ediciones';
 import { useEspacio } from '../../estado/espacio';
 import { elementosDe, hiloDe, reabrir, renombrarHilo, resolver } from '../../hilos/hilos';
 import { fmtDia } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { useLectoresOpcional } from '../../lectores/Lectores';
-import type { Accion } from '../../respuestas/tipos';
 import { clases } from '../../ui/clases';
 import { Boton, Dialogo, Estado, Hueco, Vacio } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
@@ -62,7 +60,6 @@ export function Hilo() {
   const { hilo, elementos, listo } = useHilo(ref);
   const [editandoTitulo, setEditandoTitulo] = useState(false);
   const [resolviendo, setResolviendo] = useState(false);
-  const [sinAcciones, setSinAcciones] = useState<ReadonlySet<string>>(new Set());
   const [notas, setNotas] = useState<ReadonlyMap<string, string>>(new Map());
   const editable = Boolean(espacio) && !soloLectura;
   const d = useMemo(
@@ -97,16 +94,6 @@ export function Hilo() {
     },
     [lectores, idioma],
   );
-  const { editarFrontmatter } = useEdicion();
-  const archivar = useCallback(
-    async (fm: FrontmatterComun) => {
-      const hecho = await editarFrontmatter(fm.id, (f) => conEstado(f, 'archivado'));
-      avisos?.avisar(t(hecho ? 'pantallas.inicio.archivado' : 'pantallas.inicio.noArchivado', { ref: fm.ref }));
-    },
-    [editarFrontmatter, avisos, t],
-  );
-  // En el hilo, las acciones de la respuesta ya están hechas o no aplican: se dan por resueltas.
-  const alAccion = useCallback((fm: FrontmatterComun, _a: Accion) => setSinAcciones((s) => new Set(s).add(fm.id)), []);
 
   if (!listo || !hilo)
     return (
@@ -197,15 +184,18 @@ export function Hilo() {
                   seleccionado={false}
                   marcado={false}
                   fresco={false}
-                  sinAcciones={sinAcciones.has(fm.id)}
+                  // Las acciones de la respuesta (añadir a una colección, a su hilo) son de Inicio: aquí, ninguna.
+                  sinAcciones
                   soloLectura={soloLectura}
                   resumen={legible(fm)}
                   posicion={i + 1}
                   total={elementos.length}
                   alAbrir={abrir}
                   alResponder={responderA}
-                  alArchivar={(f) => void archivar(f)}
-                  alAccion={alAccion}
+                  alArchivar={() => undefined}
+                  alAccion={() => undefined}
+                  conDia
+                  sinArchivar
                 />
                 {nota && (
                   <div className="nota-hilo">

@@ -86,3 +86,36 @@ Cubre las siete tareas y la aceptación. Aplica lo aprendido: las escrituras en 
 | Las pruebas de pantalla fechan sus elementos con `pruebas/fechas.ts` (`haceMinutos`) | Pasada la medianoche, «hace 30 minutos» era ayer y las que esperan «Hoy» fallaban según la hora. |
 | «Archivar» en un mensaje del hilo archiva el elemento (sigue en el hilo) | Es el mismo mensaje que en Inicio; archivar no lo saca de su hilo. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 74 archivos y 1087 pruebas; carga inicial 224,3 KB de 300.
+
+**Tareas y aceptación, con su evidencia:**
+
+| Tarea o criterio | Evidencia |
+|---|---|
+| Tres veces la misma traza con números distintos: un hilo con tres y la tercera cita la nota del segundo | `hilos.test.ts` «aceptación» (lector Error real); la formación por la captura real de la app en `Hilo.test.tsx` (pegar dos veces desde el compositor) |
+| Entidad `Hilo` | `hilos.test.ts`, `entidades` al abrir (`abrir.ts`) |
+| Formación automática | `hilos.test.ts` (primero solo, segundo crea, tercero entra, a la vez sin dos hilos, reabre uno resuelto) |
+| Responder | `Hilo.test.tsx` (crea el hilo con los dos; en la pantalla del hilo entra en él) |
+| Pantalla Hilo, resolver y reabrir | `Hilo.test.tsx` |
+| «Convertir en investigación» oculto | `Hilo.tsx` (no se pinta hasta IN-070) |
+| D13 y mover con confirmación | `hilos.test.ts` (mover y sacar) y `Hilo.test.tsx` (mover a otro y sacar, con su confirmación) |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | La nota de «Marcar resuelto» iba al último elemento aunque fuera una respuesta (sin huella): no se citaba y le cambiaba el estado | Va a la última ocurrencia del error del hilo (o al último si no hay errores). `hilos.test.ts` |
+| 2 | Meter en un hilo cambiaba `modificado`: rompía «Deshacer» y fechaba mal la nota citada | Poner o quitar el hilo es organización: no toca `modificado`. `hilos.test.ts` |
+| 3 | Un error que entraba respondiendo en un hilo resuelto no lo reabría | `formarPorHuella` lo reabre. `hilos.test.ts` |
+| 4 | En la pantalla del hilo, las acciones de la respuesta no hacían nada | No se ofrecen en el hilo (son de Inicio) |
+| 5 | Cada mensaje del hilo solo decía la hora | Con su día («15 oct, 19:12»; «hoy, 17:49»), como `SC.hilo` |
+| 6 | Responder creaba el hilo antes de capturar (también ante un duplicado) y una versión movía su elemento de hilo | El hilo se crea solo si la captura creó un elemento; una versión no cambia el hilo de su elemento. `Hilo.test.tsx` |
+| 7 | Sin hilo si los derivados no llegaban o al corregir el tipo a Error | La huella del frontmatter como respaldo; `formarSiEsError` al cambiar el tipo (pantalla e Inicio) |
+| 8 | «Archivar» en el hilo podía quitar la solución | No se ofrece en el hilo |
+| 9 | «Ninguna» (femenino) en la fila Hilo | «Ninguno» |
+| 10 | Añadir o mover avisaba de éxito aunque no se escribiera | Devuelven si se escribió y se avisa del fallo |
+| 11 | Hilos vacíos como destino al mover | Solo los abiertos con algo dentro |
+| 12 | Pruebas que no pasaban por la captura real ni probaban mover a otro hilo | Añadidas |
+

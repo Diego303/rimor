@@ -13,7 +13,7 @@ import { analizarIndicaciones } from '../../captura/indicaciones';
 import { PREVIA_EN_WORKER, type Previa, previsualizar } from '../../captura/previa';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
-import { hiloPara } from '../../hilos/hilos';
+import { anadirAHilo, hiloDe, hiloPara } from '../../hilos/hilos';
 import { fmtNumero } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { useLectoresOpcional } from '../../lectores/Lectores';
@@ -190,14 +190,13 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
     const textoGuardado = texto;
     const archivosGuardados = [...archivos];
     const respuesta = respondiendoA;
-    // Responder a un elemento: la captura va a su hilo; si aún no tenía, se crea uno con él (IN-030). En un hilo
-    // (`hiloFijo`), a ese.
+    // Responder a un elemento: la captura va a su hilo (IN-030); en la pantalla de un hilo (`hiloFijo`), a ese. Si
+    // el respondido aún no tenía hilo, se crea después, y solo si la captura creó algo (no por un duplicado).
+    const deHilos = espacio ? { repositorio: espacio.repositorio, entidades: espacio.entidades } : null;
     const hilo =
       hiloFijo ??
-      (respuesta && espacio
-        ? ((await hiloPara(respuesta, { repositorio: espacio.repositorio, entidades: espacio.entidades }).catch(
-            () => null,
-          )) ?? undefined)
+      (respuesta && deHilos
+        ? hiloDe(deHilos.repositorio.frontmatter(respuesta)?.hilo, deHilos.entidades)?.ref
         : undefined);
     const comunes: Omit<EntradaCaptura, 'origen'> = {
       ...(ind.tipo ? { tipo: ind.tipo } : {}),
@@ -217,6 +216,13 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
       const r = await capturador.capturar({ archivo, origen: 'soltado', ...comunes }).catch(() => null);
       resultados.push({ nombre: archivo.name, tam: archivo.size, r });
       if (terminado(r)) hechos.push(archivo);
+    }
+    if (respuesta && !hilo && deHilos) {
+      const nuevos = resultados.flatMap(({ r }) => (r?.ok && r.valor.tipo === 'creado' ? [r.valor.capturado] : []));
+      if (nuevos.length) {
+        const h = await hiloPara(respuesta, deHilos).catch(() => null);
+        if (h) for (const c of nuevos) await anadirAHilo(h, c.elemento.frontmatter.id, deHilos).catch(() => false);
+      }
     }
     setGuardando(false);
     informar(resultados);

@@ -24,7 +24,8 @@ import {
 import { useEdicion } from '../../espacio/useEdicion';
 import { useEspacio } from '../../estado/espacio';
 import { useFrescos } from '../../estado/frescos';
-import { hiloDe, moverAHilo } from '../../hilos/hilos';
+import { formarSiEsError } from '../../hilos/formar';
+import { elementosDe, hiloDe, moverAHilo } from '../../hilos/hilos';
 import { useT } from '../../i18n/useT';
 import { ContextoComparar } from '../../lectores/ContextoComparar';
 import { ContextoVersion } from '../../lectores/ContextoVersion';
@@ -194,6 +195,8 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       const ref = await cambiarTipo(fm.id, nuevo, espacio.repositorio, opciones).catch(() => null);
       if (!ref) return avisos?.avisar(t('pantallas.inicio.noCambiado'));
       void espacio.contadores.contar('correccionesDeTipo').catch(() => undefined);
+      // Ahora es un error: entra en el hilo de su huella, si lo hay (IN-030).
+      void formarSiEsError(ref, { repositorio: espacio.repositorio, entidades: espacio.entidades }).catch(() => null);
       void navegar({ to: '/e/$ref', params: { ref }, replace: true });
       avisos?.avisar(t('pantallas.inicio.tipoCambiado', { tipo: t(`tipos.${nuevo.tipo}`), ref }));
     },
@@ -288,7 +291,10 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       dialogo === 'hilo' && espacio
         ? espacio.entidades
             .lista('hilo')
-            .filter((h) => h.estado === 'abierto' && h.ref !== fm.hilo)
+            // Abiertos, con algo dentro (uno que se quedó vacío no es un destino) y que no sea el suyo.
+            .filter(
+              (h) => h.estado === 'abierto' && h.ref !== fm.hilo && elementosDe(h.ref, espacio.repositorio).length > 0,
+            )
             .sort((a, b) => Date.parse(b.modificado ?? b.creado) - Date.parse(a.modificado ?? a.creado))
         : [],
     [dialogo, espacio, fm.hilo],

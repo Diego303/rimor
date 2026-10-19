@@ -234,7 +234,8 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
               lector: { nombre: lector.nombre, version: lector.version, resumen: borrador.resumen ?? {} },
               ...(colecciones.length ? { colecciones } : {}),
               ...(etiquetas.length ? { etiquetas } : {}),
-              ...hilo,
+              // Ya en un hilo, se queda en el suyo (D13: moverlo pide confirmación).
+              ...(el.frontmatter.hilo ? {} : hilo),
             },
           };
         },

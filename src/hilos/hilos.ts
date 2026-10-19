@@ -29,14 +29,17 @@ export const elementosDe = (hilo: string, repositorio: Pick<Repositorio, 'elemen
     .filter((fm) => fm.hilo === hilo)
     .sort((a, b) => Date.parse(a.creado) - Date.parse(b.creado));
 
-/** Pone (o quita, con `undefined`) el hilo de un elemento, en su turno. */
+/**
+ * Pone (o quita, con `undefined`) el hilo de un elemento, en su turno. Es organización, no una edición: no cambia
+ * `modificado` (con él se fechan las notas citadas y se comprueba si una captura se puede deshacer).
+ */
 async function ponerHilo(ref: string, hilo: string | undefined, d: DependenciasHilos): Promise<boolean> {
   const r = await d.repositorio.actualizarElemento(ref, (el) => {
     if (el.frontmatter.hilo === hilo) return null;
     const { hilo: _, ...resto } = el.frontmatter;
     return {
       ...el,
-      frontmatter: { ...(hilo ? { ...resto, hilo: hilo as FrontmatterComun['ref'] } : resto), modificado: ahora(d) },
+      frontmatter: hilo ? { ...resto, hilo: hilo as FrontmatterComun['ref'] } : resto,
     } as typeof el;
   });
   return r.ok;
@@ -71,17 +74,16 @@ export async function crearHilo(titulo: string, refs: readonly string[], d: Depe
   return ref;
 }
 
-/** Añade un elemento a un hilo; si estaba resuelto, se reabre (ha vuelto a pasar). */
-export async function anadirAHilo(hilo: string, ref: string, d: DependenciasHilos): Promise<void> {
-  await ponerHilo(ref, hilo, d);
+/** Añade un elemento a un hilo; si estaba resuelto, se reabre (ha vuelto a pasar). Devuelve si se escribió. */
+export async function anadirAHilo(hilo: string, ref: string, d: DependenciasHilos): Promise<boolean> {
+  if (!(await ponerHilo(ref, hilo, d))) return false;
   if (hiloDe(hilo, d.entidades)?.estado === 'resuelto') await reabrir(hilo, d);
+  return true;
 }
 
 /** Mueve un elemento a otro hilo, o lo saca del suyo con `null`. */
-export async function moverAHilo(ref: string, hilo: string | null, d: DependenciasHilos): Promise<boolean> {
-  if (hilo === null) return ponerHilo(ref, undefined, d);
-  await anadirAHilo(hilo, ref, d);
-  return true;
+export function moverAHilo(ref: string, hilo: string | null, d: DependenciasHilos): Promise<boolean> {
+  return hilo === null ? ponerHilo(ref, undefined, d) : anadirAHilo(hilo, ref, d);
 }
 
 /** El hilo del elemento, o uno nuevo con él (para responder a algo que aún no tenía). */
@@ -93,8 +95,9 @@ export async function hiloPara(ref: string, d: DependenciasHilos): Promise<strin
 }
 
 /**
- * Marca resuelto un hilo con su nota. La nota pasa también al último elemento del hilo (resuelto, con la nota al
- * principio de sus notas y copia en el historial): así la siguiente vez que pase, la respuesta la cita.
+ * Marca resuelto un hilo con su nota. La nota pasa también a la última ocurrencia del error del hilo (resuelta,
+ * con la nota al principio de sus notas y copia en el historial): así la siguiente vez que pase, la respuesta la
+ * cita. Si en el hilo no hay errores, a su último elemento.
  */
 export async function resolver(hilo: string, nota: string, d: DependenciasHilos): Promise<boolean> {
   const texto = nota.trim();
@@ -104,7 +107,9 @@ export async function resolver(hilo: string, nota: string, d: DependenciasHilos)
     d,
   );
   if (!hecho) return false;
-  const ultimo = elementosDe(hilo, d.repositorio).at(-1);
+  const elementos = elementosDe(hilo, d.repositorio);
+  // Las respuestas en el hilo (una nota, un log) no tienen huella: la nota va al último error.
+  const ultimo = elementos.filter((fm) => fm.tipo === 'error').at(-1) ?? elementos.at(-1);
   if (ultimo && texto)
     await d.repositorio.guardarConHistorial(
       ultimo.id,

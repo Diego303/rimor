@@ -14,6 +14,7 @@ import { anadirColeccion as conColeccion, conEstado, conFijado } from '../../esp
 import { useEdicion } from '../../espacio/useEdicion';
 import { useEspacio } from '../../estado/espacio';
 import { esFresco, useFrescos } from '../../estado/frescos';
+import { formarSiEsError } from '../../hilos/formar';
 import { anadirAHilo, hiloPara } from '../../hilos/hilos';
 import { useT } from '../../i18n/useT';
 import { IdeasQueVuelven } from '../../lectores/idea/IdeasQueVuelven';
@@ -182,9 +183,9 @@ export function Inicio() {
         avisos?.avisar(t('pantallas.hilo.noAnadido'));
         return false;
       }
-      await anadirAHilo(hilo, fm.id, d).catch(() => undefined);
-      avisos?.avisar(t('pantallas.hilo.anadido', { ref: fm.ref, hilo }));
-      return true;
+      const hecho = await anadirAHilo(hilo, fm.id, d).catch(() => false);
+      avisos?.avisar(hecho ? t('pantallas.hilo.anadido', { ref: fm.ref, hilo }) : t('pantallas.hilo.noAnadido'));
+      return hecho;
     },
     [espacio, avisos, t],
   );
@@ -231,6 +232,7 @@ export function Inicio() {
       const nueva = await cambiarTipo(ref, lector, espacio.repositorio, anterior ? { anterior } : {}).catch(() => null);
       if (!nueva) return avisos?.avisar(t('pantallas.inicio.noCambiado'));
       void espacio.contadores.contar('correccionesDeTipo').catch(() => undefined);
+      void formarSiEsError(nueva, { repositorio: espacio.repositorio, entidades: espacio.entidades }).catch(() => null);
       // La selección y la marca siguen al elemento con su ref nueva.
       setSeleccionado((s) => (s === ref ? nueva : s));
       setMarcados((m) => {

@@ -168,7 +168,7 @@ export function FilasComunes({
             <Ref refe={hilo.ref} alPulsar={alAbrirHilo} /> <span className="sm">{hilo.titulo}</span>
           </>
         ) : (
-          ninguna
+          <span className="muted">{t('pantallas.hilo.ninguno')}</span>
         )}
         {editable && (
           <>

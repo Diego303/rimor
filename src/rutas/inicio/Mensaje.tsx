@@ -5,7 +5,16 @@
  */
 import type { Elemento, FrontmatterComun } from '@rimor/formato';
 import { memo, useEffect, useRef } from 'react';
-import { fmtHora } from '../../i18n/formatos';
+import { diasDesde, fmtDia, fmtFechaRelativa, fmtHora, type Idioma } from '../../i18n/formatos';
+
+/** «hoy, 17:49», «ayer, 18:21» o «15 oct, 19:12». */
+function horaConDia(fecha: Date, idioma: Idioma): string {
+  const ahora = new Date();
+  return diasDesde(fecha, ahora) <= 1
+    ? fmtFechaRelativa(fecha, ahora, idioma)
+    : `${fmtDia(fecha, ahora, idioma)}, ${fmtHora(fecha)}`;
+}
+
 import { useT } from '../../i18n/useT';
 import { RespuestaRimor } from '../../respuestas/RespuestaRimor';
 import type { Accion as AccionRespuesta } from '../../respuestas/tipos';
@@ -49,6 +58,10 @@ export interface PropsMensaje {
   alResponder: (ref: string) => void;
   alArchivar: (fm: FrontmatterComun) => void;
   alAccion: (fm: FrontmatterComun, accion: AccionRespuesta) => void;
+  /** En un hilo, de varios días: la hora con su día («15 oct, 19:12»; «hoy, 17:49»), como `SC.hilo`. */
+  conDia?: boolean;
+  /** Sin «Archivar» (en un hilo, archivar el que guarda la solución haría que no se citara). */
+  sinArchivar?: boolean;
 }
 
 /** La fila de acciones: las del lector, un hueco, «Responder» y «Archivar» (como `msgHTML`). */
@@ -73,10 +86,12 @@ function Acciones({ p, acciones }: { p: PropsMensaje; acciones: readonly AccionR
             <Icono nombre="responder" tamano={14} />
             {t('pantallas.inicio.responder')}
           </button>
-          <button type="button" className="ibtn" onClick={() => p.alArchivar(p.fm)}>
-            <Icono nombre="archivar" tamano={14} />
-            {t('pantallas.inicio.archivar')}
-          </button>
+          {!p.sinArchivar && (
+            <button type="button" className="ibtn" onClick={() => p.alArchivar(p.fm)}>
+              <Icono nombre="archivar" tamano={14} />
+              {t('pantallas.inicio.archivar')}
+            </button>
+          )}
         </>
       )}
     </div>
@@ -99,7 +114,7 @@ function ConRespuesta({ el, p }: { el: Elemento; p: PropsMensaje }) {
 }
 
 export const Mensaje = memo(function Mensaje(p: PropsMensaje) {
-  const { t } = useT();
+  const { t, idioma } = useT();
   const el = useElemento(p.fm);
   const previa = vistaPrevia(el, p.fm.titulo) ?? (el && el.original === null ? p.resumen || null : null);
   const fecha = new Date(p.fm.creado);
@@ -130,7 +145,7 @@ export const Mensaje = memo(function Mensaje(p: PropsMensaje) {
           </span>
         )}
         <time className="time" dateTime={p.fm.creado}>
-          {Number.isNaN(fecha.getTime()) ? '' : fmtHora(fecha)}
+          {Number.isNaN(fecha.getTime()) ? '' : p.conDia ? horaConDia(fecha, idioma) : fmtHora(fecha)}
         </time>
       </div>
       {previa && <div className="mprev">{previa}</div>}
