@@ -77,6 +77,22 @@ describe('abrirEspacio', () => {
     expect(esUlid(manifest?.espacio.id ?? '')).toBe(true);
     expect(fases[0]).toBe('abriendo');
     await r.valor.repositorio.guardarElemento(elemento(1));
+    // Las entidades (comparaciones) también se guardan y cuentan como cambio.
+    const cambiosAntes = r.valor.estado().cambiosDesdeCopia;
+    await r.valor.entidades.guardar({
+      frontmatter: {
+        id: '01JAB4C2Q2X8M5N7P0R4S6T8V9',
+        ref: 'CMP-0001',
+        tipo: 'comparacion',
+        titulo: 'a frente a b',
+        creado: '2026-10-16T18:21:00+02:00',
+        clase: 'logs',
+        fuentes: ['LOG-0001', 'LOG-0002'],
+        resultado: {},
+      },
+      cuerpo: '',
+    });
+    expect(r.valor.estado().cambiosDesdeCopia).toBe(cambiosAntes + 1);
     r.valor.cerrar();
 
     const otra = await abrirEspacio({
@@ -89,6 +105,7 @@ describe('abrirEspacio', () => {
     expect(otra.ok && otra.valor.manifest.espacio.id).toBe(manifest?.espacio.id);
     expect(otra.ok && otra.valor.manifest.creado).toBe(manifest?.creado);
     expect(otra.ok && otra.valor.repositorio.buscar('LOG-0001')).toBeTruthy();
+    expect(otra.ok && otra.valor.entidades.frontmatter('CMP-0001')?.titulo).toBe('a frente a b');
     if (otra.ok) otra.valor.cerrar();
   });
 

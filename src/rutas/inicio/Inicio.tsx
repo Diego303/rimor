@@ -25,6 +25,7 @@ import { useAtajos } from '../../ui/atajos/useAtajos';
 import { Boton, Segmentado } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { Compositor } from '../../ui/componentes/Compositor';
+import { useComparar } from '../comparacion/useComparar';
 import { Pantalla } from '../Pantalla';
 import { DialogoColeccion, DialogoTipo } from './Dialogos';
 import { Feed, mensajeDe, moverSeleccion } from './Feed';
@@ -243,6 +244,14 @@ export function Inicio() {
       return vivos.length === m.size ? m : new Set(vivos);
     });
   }, [filas, seleccionado]);
+  // Comparar los dos seleccionados con `x` (CMP-01): el primero que se marcó es la referencia.
+  const { comparar } = useComparar();
+  const compararMarcados = useCallback(async () => {
+    const [a, b, ...resto] = [...actual.current.marcados];
+    if (!a || !b || resto.length) return void avisos?.avisar(t('pantallas.comparacion.crear.seleccionaDos'));
+    await comparar(a, b);
+  }, [comparar, avisos, t]);
+
   const conSeleccion = useCallback(
     (hacer: (fm: FrontmatterComun) => void) => () => {
       const fm = mensajeDe(actual.current.filas, actual.current.seleccionado);
@@ -281,6 +290,7 @@ export function Inicio() {
             { teclas: 'e', descripcion: 'atajos.feedArchivar', accion: conSeleccion((fm) => void archivar(fm)) },
             { teclas: 'f', descripcion: 'atajos.feedFijar', accion: conSeleccion((fm) => void fijar(fm)) },
             { teclas: 't', descripcion: 'atajos.feedTipo', accion: conSeleccion((fm) => setTipoPara(fm.ref)) },
+            { teclas: 'ctrl+shift+c', descripcion: 'atajos.feedComparar', accion: () => void compararMarcados() },
           ] satisfies Atajo[])),
       { teclas: 'x', descripcion: 'atajos.feedSeleccionar', accion: conSeleccion((fm) => marcar(fm.ref)) },
       {
@@ -290,7 +300,7 @@ export function Inicio() {
         cuando: () => actual.current.marcados.size > 0,
       },
     ],
-    [conSeleccion, abrir, responder, archivar, fijar, marcar, soloLectura],
+    [conSeleccion, abrir, responder, archivar, fijar, marcar, soloLectura, compararMarcados],
   );
   useAtajos('inicio', atajos);
 
@@ -405,6 +415,11 @@ export function Inicio() {
         {marcados.size > 0 && (
           <div className="row barra-seleccion" role="status">
             <span className="sm">{t('pantallas.inicio.seleccionados', { n: marcados.size })}</span>
+            {marcados.size === 2 && !soloLectura && (
+              <Boton variante="primario" pequeno icono="comparacion" onClick={() => void compararMarcados()}>
+                {t('pantallas.comparacion.crear.comparar')}
+              </Boton>
+            )}
             <Boton pequeno onClick={() => setMarcados(new Set())}>
               {t('pantallas.inicio.vaciarSeleccion')}
             </Boton>

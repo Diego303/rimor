@@ -1,0 +1,10 @@
+2026-10-16T16:40:03.114Z INFO  gateway: request id=7f3a9c21-4b0e-4d8a-9a51-1c2f0e6b7d10 model=llama3.1:8b
+2026-10-16T16:40:03.120Z DEBUG http: connect 127.0.0.1:11434 in 4ms
+2026-10-16T16:40:03.121Z DEBUG http: POST /v1/chat/completions stream=true
+2026-10-16T16:40:03.402Z DEBUG stream: chunk 1 bytes=212
+2026-10-16T16:40:03.455Z DEBUG stream: chunk 2 bytes=198
+2026-10-16T16:40:03.507Z DEBUG stream: chunk 3 bytes=205
+2026-10-16T16:40:03.560Z DEBUG stream: chunk 4 bytes=187
+2026-10-16T16:40:03.611Z DEBUG stream: done reason=stop tokens=96
+2026-10-16T16:40:03.612Z INFO  gateway: response id=7f3a9c21-4b0e-4d8a-9a51-1c2f0e6b7d10 status=200 in 498ms
+2026-10-16T16:40:03.613Z INFO  ai-log: appended entry 0x3fa2

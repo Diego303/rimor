@@ -3,6 +3,7 @@
  * TS puro, sin dependencias de navegador: lo usan la app y, en v0.3, la CLI.
  */
 export * from './elemento';
+export * from './entidad';
 export * from './esquemas';
 export * from './fechas';
 export * from './frontmatter';

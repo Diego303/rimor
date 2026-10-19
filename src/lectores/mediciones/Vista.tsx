@@ -3,50 +3,29 @@
  * veredicto, el gráfico de puntos con la banda del IC y la línea de la mediana, la leyenda, la tabla
  * «Mediana · IC 95 % · Variación», los avisos de método plegados con su número y los detalles con las cifras.
  */
-import type { AvisoMetodo } from '@rimor/estadistica';
-import { fmtCifra, type Idioma } from '../../i18n/formatos';
+
+import { useContext } from 'react';
 import { useT } from '../../i18n/useT';
-import { Detalles, Hueco, Huecos, Tabla, Tarjeta, Veredicto } from '../../ui/componentes';
+import { Boton, Detalles, Hueco, Huecos, Tabla, Tarjeta, Veredicto } from '../../ui/componentes';
+import { ContextoComparar } from '../ContextoComparar';
 import type { PropsVista } from '../contrato';
 import { cifrasDe, DetallesElemento } from '../DetallesElemento';
+import { textoAviso } from './avisos';
 import { GraficoPuntos } from './GraficoPuntos';
-import {
-  type DatosMediciones,
-  type Escala,
-  escalaDe,
-  formatosDe,
-  lectorMediciones,
-  type SerieDerivada,
-} from './lector';
+import { type DatosMediciones, escalaDe, formatosDe, lectorMediciones, type SerieDerivada } from './lector';
 import { textos } from './textos';
 
 type T = (c: string, v?: Record<string, string | number>) => string;
-
-/** Atípicos que se nombran en el aviso; el resto, «…». */
-const MAX_ATIPICOS = 5;
 
 interface FilaSerie {
   nombre: string;
   s: SerieDerivada;
 }
 
-function textoAviso(a: AvisoMetodo, s: SerieDerivada, escala: Escala, idioma: Idioma, t: T): string {
-  const f = formatosDe(s, idioma, escala);
-  switch (a.tipo) {
-    case 'pocas':
-      return t('aviso.pocas', { mediciones: t('mediciones', { n: a.n }), minimo: a.minimo });
-    case 'ruido':
-      return t('aviso.ruido', { cv: f.porcentaje(a.cv), maximo: fmtCifra(a.maximo * 100, 0, '%', idioma) });
-    case 'atipicos': {
-      const nombrados = a.valores.slice(0, MAX_ATIPICOS).map(f.conUnidad).join(', ');
-      const valores = a.valores.length > MAX_ATIPICOS ? `${nombrados}…` : nombrados;
-      return t('aviso.atipicos', { n: a.valores.length, valores });
-    }
-  }
-}
-
 export default function VistaMediciones({ el, datos }: PropsVista<DatosMediciones>) {
-  const { idioma } = useT();
+  const { t: tg, idioma } = useT();
+  // «Comparar con otras mediciones», si la pantalla lo ofrece.
+  const comparar = useContext(ContextoComparar);
   const t = textos.t.bind(textos, idioma) as unknown as T;
   const filas: FilaSerie[] = datos.series.map((s, i) => ({
     nombre: s.etiqueta ?? (datos.series.length > 1 ? t('serieSinNombre', { n: i + 1 }) : t('titulo')),
@@ -58,13 +37,11 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
   const escala = escalaDe(datos.series);
   const fmt = (s: SerieDerivada) => formatosDe(s, idioma, escala);
   const avisos = filas.flatMap(({ nombre, s }) =>
-    s.avisos.map(
-      (a) => `${varias ? t('aviso.prefijo', { etiqueta: nombre }) : ''}${textoAviso(a, s, escala, idioma, t)}`,
-    ),
+    s.avisos.map((a) => `${varias ? t('aviso.prefijo', { etiqueta: nombre }) : ''}${textoAviso(a, s, escala, idioma)}`),
   );
   const cifras = cifrasDe(lectorMediciones, datos);
 
-  if (!primera || !primera.s.d.n) {
+  if (!primera?.s.d.n) {
     return (
       <>
         <Tarjeta>
@@ -149,6 +126,14 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
         />
       </Tarjeta>
 
+      {comparar && (
+        <div className="row">
+          <Boton variante="primario" pequeno onClick={comparar}>
+            {tg('pantallas.comparacion.crear.conMediciones')}
+          </Boton>
+        </div>
+      )}
+
       {avisos.length > 0 && (
         <Detalles resumen={t('avisos')} recuento={avisos.length}>
           <Huecos>
@@ -163,37 +148,33 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
       <DetallesElemento
         refe={el.frontmatter.ref}
         cifras={cifras}
-        anexo={
-          <>
-            {filas.map(({ nombre, s }, i) => {
-              const f = fmt(s);
-              return (
-                // biome-ignore lint/suspicious/noArrayIndexKey: dos series pueden llamarse igual; el orden es fijo.
-                <div key={i}>
-                  {varias && (
-                    <p className="sm">
-                      <b>{nombre}</b>
-                    </p>
-                  )}
-                  <dl className="kv">
-                    <dt>{t('estadisticos.media')}</dt>
-                    <dd className="mono">{f.conUnidad(s.d.media)}</dd>
-                    <dt>{t('estadisticos.desviacion')}</dt>
-                    <dd className="mono">{s.d.n > 1 ? f.conUnidad(s.d.desviacion) : '—'}</dd>
-                    <dt>{t('estadisticos.minimo')}</dt>
-                    <dd className="mono">{f.conUnidad(s.d.minimo)}</dd>
-                    <dt>{t('estadisticos.maximo')}</dt>
-                    <dd className="mono">{f.conUnidad(s.d.maximo)}</dd>
-                    <dt>{t('estadisticos.p5')}</dt>
-                    <dd className="mono">{f.conUnidad(s.d.p5)}</dd>
-                    <dt>{t('estadisticos.p95')}</dt>
-                    <dd className="mono">{f.conUnidad(s.d.p95)}</dd>
-                  </dl>
-                </div>
-              );
-            })}
-          </>
-        }
+        anexo={filas.map(({ nombre, s }, i) => {
+          const f = fmt(s);
+          return (
+            // biome-ignore lint/suspicious/noArrayIndexKey: dos series pueden llamarse igual; el orden es fijo.
+            <div key={i}>
+              {varias && (
+                <p className="sm">
+                  <b>{nombre}</b>
+                </p>
+              )}
+              <dl className="kv">
+                <dt>{t('estadisticos.media')}</dt>
+                <dd className="mono">{f.conUnidad(s.d.media)}</dd>
+                <dt>{t('estadisticos.desviacion')}</dt>
+                <dd className="mono">{s.d.n > 1 ? f.conUnidad(s.d.desviacion) : '—'}</dd>
+                <dt>{t('estadisticos.minimo')}</dt>
+                <dd className="mono">{f.conUnidad(s.d.minimo)}</dd>
+                <dt>{t('estadisticos.maximo')}</dt>
+                <dd className="mono">{f.conUnidad(s.d.maximo)}</dd>
+                <dt>{t('estadisticos.p5')}</dt>
+                <dd className="mono">{f.conUnidad(s.d.p5)}</dd>
+                <dt>{t('estadisticos.p95')}</dt>
+                <dd className="mono">{f.conUnidad(s.d.p95)}</dd>
+              </dl>
+            </div>
+          );
+        })}
       >
         <dt>{t('formato')}</dt>
         <dd>{t(`formatos.${datos.formato}`)}</dd>

@@ -3,52 +3,21 @@
  * concentran los errores; «Qué dice» con las plantillas (al pulsar una, sus líneas); y, plegados, las líneas
  * originales y los detalles con las cifras citables.
  */
-import { type ReactNode, useMemo, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { fmtDuracion, fmtNumero } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { Boton, Detalles } from '../../ui/componentes';
+import { ContextoComparar } from '../ContextoComparar';
 import type { PropsVista } from '../contrato';
 import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { useOriginal } from '../useOriginal';
 import type { Barra, DatosLog, Nivel } from './analisis';
 import { lectorLog } from './lector';
+import { PlantillaPintada } from './PlantillaPintada';
 import { textos } from './textos';
 
 const MAX_LINEAS = 200;
 const PLANTILLAS_A_LA_VISTA = 5;
-
-/** Una plantilla con sus marcadores (`<N>`, `<ID>`…) y su nivel resaltados, como en la pantalla de referencia. */
-function PlantillaPintada({ plantilla }: { plantilla: string }) {
-  const piezas: ReactNode[] = [];
-  let resto = plantilla;
-  let k = 0;
-  // Como en la pantalla de referencia: todos los marcadores y solo el primer nivel.
-  let nivelPintado = false;
-  const patron = /<(N|ID|IP|HEX)>|\b(ERROR|WARN)\b/;
-  for (let m = patron.exec(resto); m; m = patron.exec(resto)) {
-    if (m[2] && nivelPintado) {
-      piezas.push(resto.slice(0, m.index + m[0].length));
-      resto = resto.slice(m.index + m[0].length);
-      continue;
-    }
-    if (m[2]) nivelPintado = true;
-    if (m.index) piezas.push(resto.slice(0, m.index));
-    piezas.push(
-      m[1] ? (
-        <span key={k++} className="ph">
-          {m[1]}
-        </span>
-      ) : (
-        <span key={k++} className={`lv-${m[2]}`}>
-          {m[2]}
-        </span>
-      ),
-    );
-    resto = resto.slice(m.index + m[0].length);
-  }
-  if (resto) piezas.push(resto);
-  return <>{piezas}</>;
-}
 
 /** Una línea del log con su número y el nivel coloreado. */
 function Linea({ n, texto }: { n: number; texto: string }) {
@@ -120,7 +89,9 @@ function Histograma({ barras, etiqueta }: { barras: Barra[]; etiqueta: string })
 }
 
 export default function VistaLog({ el, datos }: PropsVista<DatosLog>) {
-  const { idioma } = useT();
+  const { t: tg, idioma } = useT();
+  // «Comparar con otro log», si la pantalla lo ofrece (como la referencia, debajo de «Qué dice»).
+  const comparar = useContext(ContextoComparar);
   const t = textos.t.bind(textos, idioma) as (
     c: Parameters<typeof textos.t>[1],
     v?: Record<string, string | number>,
@@ -234,6 +205,14 @@ export default function VistaLog({ el, datos }: PropsVista<DatosLog>) {
           </pre>
         )}
       </section>
+
+      {comparar && (
+        <div className="row">
+          <Boton variante="primario" pequeno onClick={comparar}>
+            {tg('pantallas.comparacion.crear.conLog')}
+          </Boton>
+        </div>
+      )}
 
       <Detalles resumen={t('originales')}>
         <pre className="code lineas-log">

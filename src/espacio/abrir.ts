@@ -9,12 +9,16 @@ import { ESQUEMA_ACTUAL, fallo, isoConZona, leerManifest, type Manifest, ok, typ
 import { CacheEspacio } from '../almacen/cache/cache';
 import { type Progreso, reconciliar } from '../almacen/cache/reconciliar';
 import { type Almacen, escribirTexto, leerTexto } from '../almacen/contrato';
+import { RepositorioEntidades } from '../almacen/entidades';
 import { type Canal, type Cerrojos, type Coordinacion, coordinarPestanas } from '../almacen/pestanas';
 import { Repositorio } from '../almacen/repositorio';
 import { abrirContadores, type Contadores } from '../respuestas/contadores';
 import { type Ajustes, leerAjustes, RUTA_AJUSTES } from './ajustes';
 import { conCambios, type EstadoCuidado, leerEstado, RUTA_ESTADO } from './estado';
 import { crearManifest, NOMBRE_ESPACIO_INICIAL, RUTA_MANIFEST } from './manifest';
+
+/** Los tipos de entidad que ya tienen funcionalidad (sus carpetas se leen al abrir). */
+const TIPOS_ENTIDAD_LEIDOS = ['comparacion'] as const;
 
 export interface DependenciasEspacio {
   espacioId: string;
@@ -33,6 +37,8 @@ export interface DependenciasEspacio {
 export interface EspacioAbierto {
   manifest: Manifest;
   repositorio: Repositorio;
+  /** Las entidades del espacio: comparaciones (y, más adelante, hilos, investigaciones y documentos). */
+  entidades: RepositorioEntidades;
   cache: CacheEspacio;
   coordinacion: Coordinacion;
   /** Archivos que no se pudieron leer en la última lectura (frontmatter inválido o duplicados). */
@@ -133,16 +139,18 @@ export async function abrirEspacio(
       reconciliar(dep.almacen, abierta, progreso, { soloLectura: !escribe() });
     // Una lectura que falla (p. ej. un archivo que la otra pestaña tiene abierto) se reintenta una vez.
     const r = await leerTodo((p) => alProgreso({ fase: 'indexando', ...p })).catch(() => leerTodo());
-    let fallidos = r.fallidos;
-    const repositorio = new Repositorio(dep.almacen, abierta, {
+    const opcionesRepositorio = {
       puedeEscribir: () => escribe() && alDia && !cerrado,
       alCambiar: () => {
         // Si la escritura falla, el recuento sigue en memoria y se escribe con el siguiente cambio.
         guardarEstado((e) => conCambios(e)).catch(() => undefined);
         coordinacion.avisarCambio([]);
       },
-    });
+    };
+    const repositorio = new Repositorio(dep.almacen, abierta, opcionesRepositorio);
     repositorio.cargarDesde(r.entradas);
+    const entidades = new RepositorioEntidades(dep.almacen, TIPOS_ENTIDAD_LEIDOS, opcionesRepositorio);
+    let fallidos = [...r.fallidos, ...(await entidades.cargar())];
 
     // Relee estado y elementos: al recibir un cambio de la otra pestaña o al pasar a escribir. En orden, y los
     // avisos que llegan mientras ya hay una relectura esperando se juntan en ella.
@@ -158,7 +166,7 @@ export async function abrirEspacio(
         await antes?.();
         const nuevo = await leerTodo();
         repositorio.cargarDesde(nuevo.entradas);
-        fallidos = nuevo.fallidos;
+        fallidos = [...nuevo.fallidos, ...(await entidades.cargar())];
         estado = leerEstado(await leerTexto(dep.almacen, RUTA_ESTADO));
         ajustes = (await leerAjustesSeguro()) ?? ajustes;
         avisar();
@@ -197,6 +205,7 @@ export async function abrirEspacio(
     return ok({
       manifest,
       repositorio,
+      entidades,
       cache: abierta,
       coordinacion,
       fallidos: () => fallidos,

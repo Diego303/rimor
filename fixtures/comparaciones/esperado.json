@@ -1,0 +1,12 @@
+{
+  "origen": "Calculado con el código de «Pantallas de Rimor» (BENCH y CLOG) sobre sus datos: CMP-0004 con fixtures/mediciones/reqwest.txt y ureq.txt; CMP-0005 con buena.log y mala.log.",
+  "CMP-0004": { "cambio": "−4,5 %", "p": "p < 0,001", "significativo": true, "mediana_a": 38.535, "mediana_b": 36.795 },
+  "CMP-0005": {
+    "divergencia": 4,
+    "nuevos": 4,
+    "ausentes": 4,
+    "cambian": 2,
+    "linea_buena": "2026-10-16T16:40:03.402Z DEBUG stream: chunk 1 bytes=212",
+    "linea_mala": "2026-10-16T16:44:51.013Z WARN  http: response has no content-length, reading body to end"
+  }
+}

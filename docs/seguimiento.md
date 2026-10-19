@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-19 20:03
-**Ahora:** IN-028 · Comparaciones de logs y mediciones · fase análisis y diseño
+**Última actualización:** 2026-10-19 20:49
+**Ahora:** IN-028 · Comparaciones de logs y mediciones · fase implementación
 **Siguiente:** IN-029 · Versiones e historial
 **Progreso:** F0 9/9 · v0.1 29/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 38/99
 
@@ -47,7 +47,7 @@
 | IN-025 | Lector Código | v0.1 | 4 | hecha | 7c063ed 976f145 9926e80 | docs/features/IN-025-codigo.md |
 | IN-026 | Inicio: feed y triaje | v0.1 | 5 | hecha | c71fe34 3387a22 3e903c6 | docs/features/IN-026-inicio.md |
 | IN-027 | Vista de elemento, estados, fijar y papelera | v0.1 | 5 | hecha | 8e26cc6 e004ba0 52abc20 | docs/features/IN-027-elemento.md |
-| IN-028 | Comparaciones de logs y mediciones | v0.1 | 5 | en análisis y diseño | — | docs/features/IN-028-comparaciones.md |
+| IN-028 | Comparaciones de logs y mediciones | v0.1 | 5 | en implementación | 6f0e9f7 | docs/features/IN-028-comparaciones.md |
 | IN-029 | Versiones e historial | v0.1 | 5 | pendiente | — | — |
 | IN-030 | Hilos | v0.1 | 5 | pendiente | — | — |
 | IN-031 | Colecciones y etiquetas | v0.1 | 5 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-19 | IN-028 | análisis y diseño | entidades en su carpeta con repositorio genérico, cálculo desde los derivados, pantalla como la referencia y recálculo por huella de las fuentes | … |
+| 2026-10-19 | IN-028 | implementación | entidades en su carpeta, cálculo de logs y mediciones desde los derivados, pantalla como la referencia, crear desde el elemento o Inicio y recálculo con aviso | … |
+| 2026-10-19 | IN-028 | análisis y diseño | entidades en su carpeta con repositorio genérico, cálculo desde los derivados, pantalla como la referencia y recálculo por huella de las fuentes | 6f0e9f7 |
 | 2026-10-19 | IN-027 | verificación | pnpm verificar OK (1030 pruebas, 216,0 KB); revisión independiente con 10 hallazgos corregidos con pruebas | 52abc20 |
 | 2026-10-19 | IN-027 | implementación | cabecera editable, «Detalles» común en las once vistas, estados, notas, cambiar tipo, fijar y papelera con ZIP previo | e004ba0 |
 | 2026-10-19 | IN-027 | análisis y diseño | cabecera editable, un solo «Detalles» con lo común, estados, notas, cambiar tipo, fijar y papelera con ZIP previo | 8e26cc6 |

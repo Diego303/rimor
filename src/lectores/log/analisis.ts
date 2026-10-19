@@ -534,10 +534,13 @@ function crearAjuste(referencia: Date | null) {
 }
 
 /** Analiza un log entero, por bloques de 50.000 líneas que se suman. */
+/** Las líneas de un log como las cuenta el análisis (`lineaPlantilla` va alineado con ellas). */
+export const partirLineas = (texto: string): string[] => texto.replace(/\r\n?/g, '\n').replace(/\n$/, '').split('\n');
+
 export function analizar(texto: string, { alProgreso, referencia, anio }: OpcionesAnalisis = {}): DatosLog {
   const anioBase = referencia?.getFullYear() ?? anio ?? new Date().getFullYear();
   const ajustar = crearAjuste(referencia ?? null);
-  const lineas = texto.replace(/\r\n?/g, '\n').replace(/\n$/, '').split('\n');
+  const lineas = partirLineas(texto);
   const niveles = VACIO_NIVELES();
   const indice = new Map<string, number>();
   const plantillas: Plantilla[] = [];

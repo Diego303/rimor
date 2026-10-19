@@ -1,0 +1,11 @@
+2026-10-16T16:44:51.007Z INFO  gateway: request id=c19e0b77-2a41-4f6c-8d3e-5b9a7e214f08 model=llama3.1:8b
+2026-10-16T16:44:51.011Z DEBUG http: connect 127.0.0.1:11434 in 3ms
+2026-10-16T16:44:51.012Z DEBUG http: POST /v1/chat/completions stream=true
+2026-10-16T16:44:51.013Z WARN  http: response has no content-length, reading body to end
+2026-10-16T16:45:21.014Z ERROR stream: read timeout after 30000ms
+2026-10-16T16:45:21.015Z WARN  gateway: retry 1/2 id=c19e0b77-2a41-4f6c-8d3e-5b9a7e214f08
+2026-10-16T16:45:21.019Z DEBUG http: connect 127.0.0.1:11434 in 4ms
+2026-10-16T16:45:21.020Z DEBUG http: POST /v1/chat/completions stream=true
+2026-10-16T16:45:21.021Z WARN  http: response has no content-length, reading body to end
+2026-10-16T16:45:51.022Z ERROR stream: read timeout after 30000ms
+2026-10-16T16:45:51.023Z ERROR gateway: response id=c19e0b77-2a41-4f6c-8d3e-5b9a7e214f08 failed: timeout

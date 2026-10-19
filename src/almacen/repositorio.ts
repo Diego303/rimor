@@ -16,6 +16,7 @@ import {
 } from '@rimor/formato';
 import type { EntradaFrontmatter } from './cache/cache';
 import { type Almacen, escribirTexto, leerTexto, listarTodo, validarRuta } from './contrato';
+import { conDiario, Turnos, terminarDiario } from './turnos';
 
 export const CARPETA_PAPELERA = 'papelera';
 /** Versiones anteriores y resultados de los elementos (plan §13.2). */
@@ -67,17 +68,8 @@ export interface CacheRepositorio {
  * Termina la operación de varios pasos que quedó a medias según el diario: si el destino ya existe, sobra el
  * origen. Lo llaman `Repositorio.cargar` y `reconciliar` antes de leer nada.
  */
-export async function recuperarOperacion(almacen: Almacen): Promise<void> {
-  const texto = await leerTexto(almacen, RUTA_DIARIO);
-  if (texto === null) return;
-  try {
-    const { de, a } = JSON.parse(texto) as { de?: unknown; a?: unknown };
-    if (typeof de === 'string' && typeof a === 'string' && de !== a && (await almacen.existe(a)))
-      await almacen.borrar(de);
-  } catch {
-    // Diario ilegible: la operación no llegó a empezar.
-  }
-  await almacen.borrar(RUTA_DIARIO);
+export function recuperarOperacion(almacen: Almacen): Promise<void> {
+  return terminarDiario(almacen, RUTA_DIARIO);
 }
 
 export class Repositorio {
@@ -112,10 +104,8 @@ export class Repositorio {
    * Mueve `de` → `a` (o deja `a` escrito y borra `de`) anotándolo antes en el diario: un corte en medio
    * dejaría dos copias, y `cargar` termina la operación.
    */
-  private async conDiario(de: string, a: string, paso: () => Promise<void>): Promise<void> {
-    await this.almacen.escribir(RUTA_DIARIO, codificador.encode(JSON.stringify({ de, a })));
-    await paso();
-    await this.almacen.borrar(RUTA_DIARIO);
+  private conDiario(de: string, a: string, paso: () => Promise<void>): Promise<void> {
+    return conDiario(this.almacen, RUTA_DIARIO, de, a, paso);
   }
 
   /** Termina la operación que quedó a medias (ver `recuperarOperacion`). */
@@ -239,17 +229,10 @@ export class Repositorio {
   }
 
   /** Las escrituras de un mismo elemento van de una en una, en el orden en que se piden. */
-  private readonly turnos = new Map<string, Promise<unknown>>();
+  private readonly turnos = new Turnos();
 
   private enTurno<T>(id: string, fn: () => Promise<T>): Promise<T> {
-    const previo = this.turnos.get(id) ?? Promise.resolve();
-    const actual = previo.catch(() => undefined).then(fn);
-    const fin = actual.catch(() => undefined);
-    this.turnos.set(id, fin);
-    void fin.then(() => {
-      if (this.turnos.get(id) === fin) this.turnos.delete(id);
-    });
-    return actual;
+    return this.turnos.en(id, fn);
   }
 
   /**

@@ -2,7 +2,7 @@
 import { useT } from '../../i18n/useT';
 import { Tarjeta } from '../../ui/componentes';
 import type { PropsVista } from '../contrato';
-import { cifrasDe, DetallesElemento } from '../DetallesElemento';
+import { DetallesElemento } from '../DetallesElemento';
 import type { DatosEnlace } from './lector';
 import { textos } from './textos';
 

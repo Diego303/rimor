@@ -94,7 +94,8 @@
     "elementoTipo": "Cambiar tipo",
     "elementoFijar": "Fijar o soltar",
     "elementoNota": "Escribir una nota",
-    "elementoPapelera": "Mover a la papelera"
+    "elementoPapelera": "Mover a la papelera",
+    "feedComparar": "Comparar los dos seleccionados"
   },
   "errores": {
     "pantalla": {
@@ -254,6 +255,89 @@
       "descargada": "Comprueba que el ZIP está en tus descargas antes de vaciar.",
       "noDescargada": "No se pudo descargar el ZIP: no se ha borrado nada.",
       "noBorrada": "No se pudo vaciar del todo: lo que no se borró sigue en la papelera."
+    },
+    "comparacion": {
+      "titulo": "{a} frente a {b}",
+      "frente": "frente a",
+      "buena": "buena",
+      "mala": "mala",
+      "intercambiar": "Intercambiar",
+      "intercambiada": "Ahora {ref} es la de referencia",
+      "comparando": "Comparando",
+      "noEncontradaTitulo": "No encuentro esta comparación",
+      "cambiada": {
+        "one": "La comparación ha cambiado: {refs} cambió desde que se hizo. Está recalculada.",
+        "other": "La comparación ha cambiado: {refs} cambiaron desde que se hizo. Está recalculada."
+      },
+      "faltan": {
+        "one": "Falta {refs}: se enseña el último resultado guardado.",
+        "other": "Faltan {refs}: se enseña el último resultado guardado."
+      },
+      "yaNoSePuede": "Ya no se puede calcular: {motivo} Se enseña el último resultado guardado.",
+      "motivos": {
+        "mismo": "Es el mismo elemento.",
+        "distintoTipo": "Solo se comparan dos del mismo tipo: {a} y {b} no lo son.",
+        "sinComparacion": "De momento solo se comparan logs con logs y mediciones con mediciones.",
+        "sinValores": "Una de las mediciones no tiene valores."
+      },
+      "mediciones": {
+        "masRapido": "{nombre} es un {cambio} más rápido",
+        "masLento": "{nombre} es un {cambio} más lento",
+        "sinDiferencia": "Sin diferencia clara",
+        "explicacion": "Diferencia {sig} · Mann-Whitney, {p} · {repeticiones}",
+        "significativa": "significativa",
+        "noSignificativa": "no significativa",
+        "cadaUno": {
+          "one": "{n} repetición cada uno",
+          "other": "{n} repeticiones cada uno"
+        },
+        "distintas": "{a} y {b} repeticiones",
+        "grafico": "Distribución de {a} y {b}",
+        "tabla": "Las dos series",
+        "avisos": "Avisos de método",
+        "mismaMaquina": "Si se midieron en la misma máquina, para generalizar repite en otra.",
+        "antesDeMedir": "Decide el número de repeticiones antes de medir; repetir hasta que salga una diferencia aumenta los falsos positivos."
+      },
+      "logs": {
+        "linea": "línea {n}",
+        "separan": "Aquí se separan",
+        "nuevos": {
+          "one": "{n} mensaje nuevo en la mala",
+          "other": "{n} mensajes nuevos en la mala"
+        },
+        "ausentes": {
+          "one": "falta {n} de la buena",
+          "other": "faltan {n} de la buena"
+        },
+        "iguales": "Siguen el mismo camino",
+        "igualesTexto": "Los mismos mensajes en el mismo orden, sin contar fechas, IDs ni números.",
+        "seAcaba": "(se acaba aquí)",
+        "tabla": "Las dos en el punto en que se separan",
+        "soloMala": "Solo en la mala",
+        "faltanMala": "Faltan en la mala",
+        "ninguno": "Ninguno.",
+        "cambian": "Cambian de frecuencia",
+        "veces": "{a} → {b} veces",
+        "mas": {
+          "one": "y {n} más",
+          "other": "y {n} más"
+        }
+      },
+      "fuentes": "Fuentes",
+      "creada": "Creada",
+      "crear": {
+        "titulo": "Comparar {ref} con…",
+        "filtrar": "Filtrar por título o ref",
+        "ninguno": "No hay otro del mismo tipo con el que comparar.",
+        "sinCoincidencias": "Nada coincide con eso.",
+        "conLog": "Comparar con otro log",
+        "conMediciones": "Comparar con otras mediciones",
+        "comparar": "Comparar",
+        "seleccionaDos": "Para comparar, selecciona dos con x.",
+        "noSePuede": "No se pueden comparar. {motivo}",
+        "noCreada": "No se pudo crear la comparación.",
+        "creada": "Comparación {ref} creada"
+      }
     },
     "hilo": {
       "titulo": "Hilo",

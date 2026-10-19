@@ -94,7 +94,8 @@
     "elementoTipo": "Change type",
     "elementoFijar": "Pin or unpin",
     "elementoNota": "Write a note",
-    "elementoPapelera": "Move to the bin"
+    "elementoPapelera": "Move to the bin",
+    "feedComparar": "Compare the two selected"
   },
   "errores": {
     "pantalla": {
@@ -254,6 +255,89 @@
       "descargada": "Check that the ZIP is in your downloads before emptying.",
       "noDescargada": "The ZIP could not be downloaded: nothing was deleted.",
       "noBorrada": "The bin could not be fully emptied: what was not deleted is still in it."
+    },
+    "comparacion": {
+      "titulo": "{a} versus {b}",
+      "frente": "versus",
+      "buena": "good",
+      "mala": "bad",
+      "intercambiar": "Swap",
+      "intercambiada": "{ref} is now the reference",
+      "comparando": "Comparing",
+      "noEncontradaTitulo": "I cannot find this comparison",
+      "cambiada": {
+        "one": "The comparison has changed: {refs} changed since it was made. It has been recalculated.",
+        "other": "The comparison has changed: {refs} changed since it was made. It has been recalculated."
+      },
+      "faltan": {
+        "one": "{refs} is missing: showing the last saved result.",
+        "other": "{refs} are missing: showing the last saved result."
+      },
+      "yaNoSePuede": "It can no longer be calculated: {motivo} Showing the last saved result.",
+      "motivos": {
+        "mismo": "It is the same item.",
+        "distintoTipo": "Only two of the same type can be compared: {a} and {b} are not.",
+        "sinComparacion": "For now only logs with logs and measurements with measurements are compared.",
+        "sinValores": "One of the measurements has no values."
+      },
+      "mediciones": {
+        "masRapido": "{nombre} is {cambio} faster",
+        "masLento": "{nombre} is {cambio} slower",
+        "sinDiferencia": "No clear difference",
+        "explicacion": "{sig} difference · Mann-Whitney, {p} · {repeticiones}",
+        "significativa": "Significant",
+        "noSignificativa": "Not significant",
+        "cadaUno": {
+          "one": "{n} repetition each",
+          "other": "{n} repetitions each"
+        },
+        "distintas": "{a} and {b} repetitions",
+        "grafico": "Distribution of {a} and {b}",
+        "tabla": "The two series",
+        "avisos": "Method warnings",
+        "mismaMaquina": "If they were measured on the same machine, repeat on another one to generalise.",
+        "antesDeMedir": "Decide the number of repetitions before measuring; repeating until a difference shows up increases false positives."
+      },
+      "logs": {
+        "linea": "line {n}",
+        "separan": "This is where they part",
+        "nuevos": {
+          "one": "{n} new message in the bad one",
+          "other": "{n} new messages in the bad one"
+        },
+        "ausentes": {
+          "one": "{n} from the good one is missing",
+          "other": "{n} from the good one are missing"
+        },
+        "iguales": "They follow the same path",
+        "igualesTexto": "The same messages in the same order, ignoring dates, IDs and numbers.",
+        "seAcaba": "(it ends here)",
+        "tabla": "Both at the point where they part",
+        "soloMala": "Only in the bad one",
+        "faltanMala": "Missing in the bad one",
+        "ninguno": "None.",
+        "cambian": "Change in frequency",
+        "veces": "{a} → {b} times",
+        "mas": {
+          "one": "and {n} more",
+          "other": "and {n} more"
+        }
+      },
+      "fuentes": "Sources",
+      "creada": "Created",
+      "crear": {
+        "titulo": "Compare {ref} with…",
+        "filtrar": "Filter by title or ref",
+        "ninguno": "There is no other of the same type to compare with.",
+        "sinCoincidencias": "Nothing matches that.",
+        "conLog": "Compare with another log",
+        "conMediciones": "Compare with other measurements",
+        "comparar": "Compare",
+        "seleccionaDos": "To compare, select two with x.",
+        "noSePuede": "They cannot be compared. {motivo}",
+        "noCreada": "The comparison could not be created.",
+        "creada": "Comparison {ref} created"
+      }
     },
     "hilo": {
       "titulo": "Thread",

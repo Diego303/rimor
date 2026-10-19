@@ -1519,3 +1519,24 @@ pre.code.codigo .ln {
   flex: 1;
   min-width: 0;
 }
+/* Comparaciones (IN-028), como `SC.clogs` de la referencia. */
+.plantilla-comparada {
+  padding: 5px 9px;
+}
+.tabla-divergencia {
+  min-width: 520px;
+}
+.tabla-divergencia .lado {
+  width: 70px;
+}
+.tabla-divergencia .lado.mala {
+  color: var(--bad);
+}
+.oc.mal {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+.lista-comparar {
+  max-height: 50vh;
+  overflow: auto;
+}

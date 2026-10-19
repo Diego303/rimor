@@ -55,13 +55,13 @@ En `/e/CMP-0004` (las refs `[[CMP-0004]]` y los enlaces van a la misma ruta que 
 
 ## Tareas
 
-- [ ] Elemento `Comparacion` (`comparaciones/CMP-NNNN--….md`) con las refs de las fuentes y el resultado en el resumen.
-- [ ] Logs: primera divergencia (por plantilla), mensajes solo en una, ausentes y con frecuencia distinta (×2 o ÷2).
-- [ ] Mediciones: veredicto, gráfico de las dos series, tabla de dos filas y avisos plegados.
-- [ ] Cómo se crea: seleccionar dos (`x`) y `Ctrl+Shift+C`; desde un elemento, «Comparar con…» y elegir; si los tipos no coinciden, se explica por qué no se puede.
-- [ ] Recalcular si cambia una fuente, con aviso «la comparación ha cambiado».
-- [ ] Si el cálculo pasa de 400 ms, `<Senal estado="comparando" veces={1}>` mientras se calcula (opcional).
-- [ ] Cifras: `cambio`, `p`, `divergencia`, `nuevos`, `ausentes`.
+- [x] Elemento `Comparacion` (`comparaciones/CMP-NNNN--….md`) con las refs de las fuentes y el resultado en el resumen.
+- [x] Logs: primera divergencia (por plantilla), mensajes solo en una, ausentes y con frecuencia distinta (×2 o ÷2).
+- [x] Mediciones: veredicto, gráfico de las dos series, tabla de dos filas y avisos plegados.
+- [x] Cómo se crea: seleccionar dos (`x`) y `Ctrl+Shift+C`; desde un elemento, «Comparar con…» y elegir; si los tipos no coinciden, se explica por qué no se puede.
+- [x] Recalcular si cambia una fuente, con aviso «la comparación ha cambiado».
+- [x] Si el cálculo pasa de 400 ms, `<Senal estado="comparando" veces={1}>` mientras se calcula (opcional).
+- [x] Cifras: `cambio`, `p`, `divergencia`, `nuevos`, `ausentes`.
 
 ## Pruebas previstas
 
@@ -91,3 +91,24 @@ En `/e/CMP-0004` (las refs `[[CMP-0004]]` y los enlaces van a la misma ruta que 
 ## Autorrevisión
 
 Cubre las siete tareas y la aceptación con datos de la propia referencia. Lo aprendido que aplica: las escrituras van en turno; los atajos leen el estado del momento; los diálogos son listas de botones sin formularios largos; las pruebas de pantalla precargan los módulos y las pantallas a las que llevan; un solo «Detalles» por pantalla; la descarga o el guardado no se dan por hechos sin comprobarlos.
+
+## Implementación
+
+- **Formato**: `paquetes/formato/src/entidad.ts` (`leerEntidad`, `escribirEntidad`, `FrontmatterEntidades`), con el esquema de cada tipo y el YAML previo conservado.
+- **Repositorio de entidades**: `src/almacen/entidades.ts` (`RepositorioEntidades`), con su propio diario (`.rimor/operacion-entidades.json`); los turnos por clave y el diario pasan a `src/almacen/turnos.ts`, que comparte con el de elementos. `abrirEspacio` lo crea, lo carga (también al releer lo de otra pestaña) y lo expone como `entidades`; sus fallos de lectura se suman a `fallidos()`.
+- **Cálculo** (`src/comparaciones/`): `clases.ts`, `logs.ts` (`compararLogs` sobre `lineaPlantilla` y los recuentos; las líneas vacías del final no cuentan), `mediciones.ts` (`compararMediciones`, pasando a ms si las unidades no coinciden), `resultado.ts` (lo guardado con `fuentes_hash` y `nombres`, `leerResultado`, `fuentesCambiadas`, las cifras y `textoCambio`) y `crear.ts` (`calcular`, `resultadoDe`, `crearComparacion`). `partirLineas` del análisis de logs alinea las líneas con `lineaPlantilla`.
+- **Pantalla** (`src/rutas/comparacion/`): `Comparacion.tsx` (en `/e/CMP-…`, desde `Elemento.tsx` por el prefijo), `useComparacion.ts` (relee entidad y fuentes, calcula, guarda el resultado nuevo si cambió y recuerda qué fuente cambió), `VistaMediciones.tsx` (con `VeredictoMediciones`, que sirve también para lo guardado), `VistaLogs.tsx`, `DialogoComparar.tsx` y `useComparar.ts` (crear con su motivo si no se puede, y abrirla).
+- **Desde las vistas**: `ContextoComparar` (como `ContextoDetalles`): la de Log pone «Comparar con otro log» debajo de «Qué dice» (como la referencia) y la de Mediciones «Comparar con otras mediciones». `PlantillaPintada` (log) y `textoAviso` (mediciones) pasan a sus propios módulos para reutilizarlos.
+- **Inicio**: `Ctrl+Mayús+C` y «Comparar» en la barra de selección con dos marcados; el primero que se marcó es la referencia.
+- **Pruebas**: `paquetes/formato/src/entidad.test.ts`, `src/almacen/entidades.test.ts`, `src/comparaciones/comparaciones.test.ts` (CMP-0004 y CMP-0005 con los datos de la referencia en `fixtures/comparaciones/` y `fixtures/mediciones/`), `src/rutas/comparacion/Comparacion.test.tsx` (desde el elemento con el diálogo filtrado, desde Inicio con el teclado, tipos distintos, recalcular con aviso, fuente que falta, intercambiar) y `src/espacio/espacio.test.ts` (las entidades al reabrir). `src/pruebas/app.tsx` monta la app entera para las pruebas de pantalla.
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| Mientras se calcula se ve lo guardado (con los nombres guardados en el resultado) | La cifra no salta a «—» ni el nombre de la ref al de la serie. |
+| Al intercambiar, el resultado se vacía y se recalcula sin avisar | El aviso «ha cambiado» es para cuando cambió una fuente, no para lo que acaba de hacer el usuario. |
+| El título se da la vuelta al intercambiar solo si es el automático | Uno escrito a mano es del usuario. |
+| Los avisos de método de la comparación incluyen siempre los dos generales de la referencia | Como `SC.medic`; el de la máquina, en condicional («si se midieron en la misma máquina»), porque Rimor no lo sabe. |
+| `Ctrl+Mayús+C` como pide el plan, y también el botón «Comparar» | Algunos navegadores se reservan ese atajo (inspeccionar en Chrome): el botón no depende de él. |
+
