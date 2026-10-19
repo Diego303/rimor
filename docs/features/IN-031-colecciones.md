@@ -39,11 +39,11 @@ La composición de la respuesta (`componer`) la añade a la de cualquier lector 
 
 ## Tareas
 
-- [ ] `colecciones.json`: crear, renombrar (reescribe el frontmatter de sus elementos en segundo plano), borrar (los elementos quedan) y ordenar.
-- [ ] Crear al vuelo con `@nueva` desde el compositor.
-- [ ] Etiquetas inferidas: hashtags, paquetes, dominios, lenguajes y niveles de log; manuales con `#`.
-- [ ] Raíl con las colecciones y su recuento; lista simple de cada colección (el panel visual llega en IN-052).
-- [ ] Sugerencia de colección en la respuesta («¿Lo añado a la colección gateway?»), por coincidencia de etiquetas y palabras.
+- [x] `colecciones.json`: crear, renombrar (reescribe el frontmatter de sus elementos en segundo plano), borrar (los elementos quedan) y ordenar.
+- [x] Crear al vuelo con `@nueva` desde el compositor.
+- [x] Etiquetas inferidas: hashtags, paquetes, dominios, lenguajes y niveles de log; manuales con `#`.
+- [x] Raíl con las colecciones y su recuento; lista simple de cada colección (el panel visual llega en IN-052).
+- [x] Sugerencia de colección en la respuesta («¿Lo añado a la colección gateway?»), por coincidencia de etiquetas y palabras.
 
 ## Pruebas previstas
 
@@ -69,3 +69,22 @@ La composición de la respuesta (`componer`) la añade a la de cualquier lector 
 ## Autorrevisión
 
 Cubre las cinco tareas. Aplica lo aprendido: organización sin tocar `modificado`, escrituras en turno, lo de otra pestaña por la relectura, textos por i18n y pruebas de pantalla con `pruebas/app.tsx` y `pruebas/fechas.ts`.
+
+## Implementación
+
+- `src/espacio/colecciones.ts`: operaciones puras (`sincronizar`, `crear`, `renombrar` (junta si ya existe), `borrar`, `mover`, `ordenadas`) y `GestorColecciones` (lee y escribe `colecciones.json` en orden; no pisa uno ilegible; solo escribe la pestaña que escribe; renombrar y borrar reescriben los elementos en su turno sin tocar `modificado`, y lo que se está renombrando no vuelve al registro por una sincronización a mitad). `leerColecciones` en `@rimor/formato`.
+- `abrir.ts`: `EspacioAbierto.colecciones`; sincroniza al abrir y tras cada tanda de cambios de elementos (`@nueva` del compositor, `c` en Inicio, el elemento, la importación); se relee con lo de otra pestaña.
+- Raíl: `resumenParaCarcasa` con el registro (orden y vacías, con su recuento).
+- `src/rutas/coleccion/Coleccion.tsx`: lista, renombrar en el sitio, «Subir»/«Bajar», «Borrar la colección» con confirmación.
+- `src/captura/etiquetas.ts` (`etiquetasInferidas`) y su uso en la captura (también en una versión nueva).
+- `componer`: la sugerencia de colección para cualquier lector que no proponga nada.
+- Las sugerencias de colecciones de Inicio y del elemento incluyen las del registro.
+- Pruebas: `colecciones.test.ts`, `etiquetas.test.ts` (también la captura), `componer.test.ts` y `rutas/coleccion/Coleccion.test.tsx` (raíl, lista, renombrar, bajar, borrar).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| «Subir» y «Bajar» con texto en vez de iconos | No hay iconos de flecha en el juego de la referencia; un texto dice lo que hace. |
+| Renombrar a una colección que ya existe las junta | Es lo que pasaría al escribir el mismo nombre en los elementos; no hay dos con el mismo nombre. |
+

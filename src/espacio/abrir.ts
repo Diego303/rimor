@@ -14,6 +14,7 @@ import { type Canal, type Cerrojos, type Coordinacion, coordinarPestanas } from 
 import { Repositorio } from '../almacen/repositorio';
 import { abrirContadores, type Contadores } from '../respuestas/contadores';
 import { type Ajustes, leerAjustes, RUTA_AJUSTES } from './ajustes';
+import { GestorColecciones } from './colecciones';
 import { conCambios, type EstadoCuidado, leerEstado, RUTA_ESTADO } from './estado';
 import { crearManifest, NOMBRE_ESPACIO_INICIAL, RUTA_MANIFEST } from './manifest';
 
@@ -37,8 +38,10 @@ export interface DependenciasEspacio {
 export interface EspacioAbierto {
   manifest: Manifest;
   repositorio: Repositorio;
-  /** Las entidades del espacio: comparaciones (y, más adelante, hilos, investigaciones y documentos). */
+  /** Las entidades del espacio: comparaciones e hilos (y, más adelante, investigaciones y documentos). */
   entidades: RepositorioEntidades;
+  /** El registro de colecciones (`colecciones.json`), con su orden. */
+  colecciones: GestorColecciones;
   cache: CacheEspacio;
   coordinacion: Coordinacion;
   /** Archivos que no se pudieron leer en la última lectura (frontmatter inválido o duplicados). */
@@ -139,18 +142,42 @@ export async function abrirEspacio(
       reconciliar(dep.almacen, abierta, progreso, { soloLectura: !escribe() });
     // Una lectura que falla (p. ej. un archivo que la otra pestaña tiene abierto) se reintenta una vez.
     const r = await leerTodo((p) => alProgreso({ fase: 'indexando', ...p })).catch(() => leerTodo());
+    // Una colección que aparece en un elemento (creada al vuelo con `@nueva`) entra en el registro; una vez por
+    // tanda de cambios.
+    let colecciones: GestorColecciones | null = null;
+    let sincronizando = false;
+    const sincronizarColecciones = () => {
+      if (sincronizando || !colecciones) return;
+      sincronizando = true;
+      queueMicrotask(() => {
+        sincronizando = false;
+        void colecciones?.sincronizar().catch(() => undefined);
+      });
+    };
     const opcionesRepositorio = {
       puedeEscribir: () => escribe() && alDia && !cerrado,
       alCambiar: () => {
         // Si la escritura falla, el recuento sigue en memoria y se escribe con el siguiente cambio.
         guardarEstado((e) => conCambios(e)).catch(() => undefined);
         coordinacion.avisarCambio([]);
+        sincronizarColecciones();
       },
     };
     const repositorio = new Repositorio(dep.almacen, abierta, opcionesRepositorio);
     repositorio.cargarDesde(r.entradas);
     const entidades = new RepositorioEntidades(dep.almacen, TIPOS_ENTIDAD_LEIDOS, opcionesRepositorio);
     let fallidos = [...r.fallidos, ...(await entidades.cargar({ recuperar: escribe() }))];
+    const gestor = new GestorColecciones(dep.almacen, repositorio, {
+      puedeEscribir: () => escribe() && alDia && !cerrado,
+      alCambiar: () => {
+        avisar();
+        coordinacion.avisarCambio([]);
+      },
+      reloj,
+    });
+    colecciones = gestor;
+    await gestor.cargar().catch(() => undefined);
+    sincronizarColecciones();
 
     // Relee estado y elementos: al recibir un cambio de la otra pestaña o al pasar a escribir. En orden, y los
     // avisos que llegan mientras ya hay una relectura esperando se juntan en ella.
@@ -168,6 +195,7 @@ export async function abrirEspacio(
         repositorio.cargarDesde(nuevo.entradas);
         // Al heredar la escritura, el diario de entidades se termina ya (aún no `escribible`: no está al día).
         fallidos = [...nuevo.fallidos, ...(await entidades.cargar({ recuperar: escribe() }))];
+        await gestor.cargar().catch(() => undefined);
         estado = leerEstado(await leerTexto(dep.almacen, RUTA_ESTADO));
         ajustes = (await leerAjustesSeguro()) ?? ajustes;
         avisar();
@@ -207,6 +235,7 @@ export async function abrirEspacio(
       manifest,
       repositorio,
       entidades,
+      colecciones: gestor,
       cache: abierta,
       coordinacion,
       fallidos: () => fallidos,

@@ -398,9 +398,16 @@ export function Inicio() {
 
   const vacio = elementos.length === 0 && busquedas.length === 0;
   const sinNada = !vacio && !filas.some((f) => f.t !== 'dia');
+  // Las del registro (también las vacías) y las que usan los elementos (IN-031).
   const existentes = useMemo(
-    () => [...new Set(elementos.flatMap((fm) => fm.colecciones ?? []))].sort((a, b) => a.localeCompare(b)),
-    [elementos],
+    () =>
+      [
+        ...new Set([
+          ...(espacio?.colecciones.lista().map((c) => c.id) ?? []),
+          ...elementos.flatMap((fm) => fm.colecciones ?? []),
+        ]),
+      ].sort((a, b) => a.localeCompare(b)),
+    [elementos, espacio],
   );
 
   return (

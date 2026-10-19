@@ -419,8 +419,24 @@
     },
     "coleccion": {
       "titulo": "Colección",
-      "vacioTitulo": "Colección vacía",
-      "vacio": "Añade elementos con @colección al capturar."
+      "vacioTitulo": "Colección",
+      "noEncontrada": "No encuentro esta colección",
+      "vaciaTitulo": "Aún no hay nada en esta colección",
+      "vacio": "Añade elementos con @nombre en el compositor, con c en Inicio o desde su «Detalles».",
+      "meta": {
+        "one": "{n} elemento",
+        "other": "{n} elementos"
+      },
+      "lista": "Elementos de la colección",
+      "subir": "Subir",
+      "bajar": "Bajar",
+      "borrar": "Borrar la colección",
+      "borrarTitulo": "¿Borrar la colección {nombre}?",
+      "borrarTexto": {
+        "one": "Su elemento se queda, sin esta colección.",
+        "other": "Sus {n} elementos se quedan, sin esta colección."
+      },
+      "borrada": "Colección {nombre} borrada"
     },
     "datos": {
       "titulo": "Datos y copias",
@@ -551,6 +567,9 @@
     "reserva": "Guardado como {tipo}.",
     "sinDatos": "Guardado como {tipo}. No pude analizarlo: se ve el original.",
     "leyendo": "Leyendo…",
-    "rimor": "Rimor"
+    "rimor": "Rimor",
+    "coleccion": "¿Lo añado a la colección {nombre}?",
+    "siColeccion": "Sí, a {nombre}",
+    "no": "No"
   }
 }

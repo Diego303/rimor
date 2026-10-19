@@ -26,12 +26,16 @@ export function resumenParaCarcasa(
   elementos: readonly FrontmatterComun[],
   estado: EstadoCuidado,
   ahora: Date = new Date(),
+  /** Las colecciones del registro en su orden (IN-031); sin él, las de los elementos por orden alfabético. */
+  registro?: readonly { id: string; nombre: string }[],
 ): Omit<EstadoEspacio, 'soloLectura'> {
   const recuentos = new Map<string, number>();
   for (const fm of elementos) for (const c of fm.colecciones ?? []) recuentos.set(c, (recuentos.get(c) ?? 0) + 1);
-  const colecciones: ColeccionRail[] = [...recuentos]
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([nombre, recuento]) => ({ id: nombre, nombre, recuento }));
+  const colecciones: ColeccionRail[] = registro
+    ? registro.map((c) => ({ id: c.id, nombre: c.nombre, recuento: recuentos.get(c.id) ?? 0 }))
+    : [...recuentos]
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([nombre, recuento]) => ({ id: nombre, nombre, recuento }));
   return {
     nombre: manifest.espacio.nombre,
     sinClasificar: elementos.filter(sinClasificar).length,

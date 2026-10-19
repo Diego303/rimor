@@ -3,7 +3,6 @@
  * ocurrencia (el de la más reciente que lo tenga) o, si ninguna lo tiene, se crea uno con todas. Las formaciones van
  * de una en una: dos errores iguales capturados a la vez no crean dos hilos.
  */
-import type { FrontmatterComun } from '@rimor/formato';
 import { Turnos } from '../almacen/turnos';
 import { huellaDe } from '../respuestas/contexto';
 import { anadirAHilo, crearHilo, type DependenciasHilos, hiloDe, reabrir } from './hilos';
@@ -14,7 +13,7 @@ const turnos = new Turnos();
 export function formarPorHuella(id: string, huella: string, d: DependenciasHilos): Promise<string | null> {
   return turnos.en('formar', async () => {
     const fm = d.repositorio.frontmatter(id);
-    if (!fm || fm.tipo !== 'error') return null;
+    if (fm?.tipo !== 'error') return null;
     // Ya en un hilo (respondido, movido a mano): se queda donde está; si estaba resuelto, ha vuelto a pasar.
     const suyo = hiloDe(fm.hilo, d.entidades);
     if (suyo) {

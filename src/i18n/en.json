@@ -419,8 +419,24 @@
     },
     "coleccion": {
       "titulo": "Collection",
-      "vacioTitulo": "Empty collection",
-      "vacio": "Add items with @collection when capturing."
+      "vacioTitulo": "Collection",
+      "noEncontrada": "I cannot find this collection",
+      "vaciaTitulo": "There is nothing in this collection yet",
+      "vacio": "Add items with @name in the composer, with c on Home or from their “Details”.",
+      "meta": {
+        "one": "{n} item",
+        "other": "{n} items"
+      },
+      "lista": "Items in the collection",
+      "subir": "Move up",
+      "bajar": "Move down",
+      "borrar": "Delete the collection",
+      "borrarTitulo": "Delete the collection {nombre}?",
+      "borrarTexto": {
+        "one": "Its item stays, without this collection.",
+        "other": "Its {n} items stay, without this collection."
+      },
+      "borrada": "Collection {nombre} deleted"
     },
     "datos": {
       "titulo": "Data and backups",
@@ -551,6 +567,9 @@
     "reserva": "Saved as {tipo}.",
     "sinDatos": "Saved as {tipo}. I could not analyse it: the original is shown.",
     "leyendo": "Reading…",
-    "rimor": "Rimor"
+    "rimor": "Rimor",
+    "coleccion": "Shall I add it to the {nombre} collection?",
+    "siColeccion": "Yes, to {nombre}",
+    "no": "No"
   }
 }

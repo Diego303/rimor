@@ -142,7 +142,7 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
       if (!vivo) return soltar();
       const pintar = () =>
         useEspacio.setState({
-          ...resumenParaCarcasa(e.manifest, e.repositorio.elementos(), e.estado()),
+          ...resumenParaCarcasa(e.manifest, e.repositorio.elementos(), e.estado(), new Date(), e.colecciones.lista()),
           soloLectura: e.coordinacion.modo() === 'lector',
         });
       pintar();

@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-20 00:25
-**Ahora:** IN-031 · Colecciones y etiquetas · fase análisis y diseño
+**Última actualización:** 2026-10-20 00:36
+**Ahora:** IN-031 · Colecciones y etiquetas · fase implementación
 **Siguiente:** IN-032 · Búsqueda
 **Progreso:** F0 9/9 · v0.1 32/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 41/99
 
@@ -50,7 +50,7 @@
 | IN-028 | Comparaciones de logs y mediciones | v0.1 | 5 | hecha | 6f0e9f7 cd731a1 a9fce8f | docs/features/IN-028-comparaciones.md |
 | IN-029 | Versiones e historial | v0.1 | 5 | hecha | 2a73dd9 701dbe2 7eac401 | docs/features/IN-029-versiones.md |
 | IN-030 | Hilos | v0.1 | 5 | hecha | f79375a 2fd00eb 7287d9a | docs/features/IN-030-hilos.md |
-| IN-031 | Colecciones y etiquetas | v0.1 | 5 | en análisis y diseño | — | docs/features/IN-031-colecciones.md |
+| IN-031 | Colecciones y etiquetas | v0.1 | 5 | en implementación | f7526c7 | docs/features/IN-031-colecciones.md |
 | IN-032 | Búsqueda | v0.1 | 5 | pendiente | — | — |
 | IN-033 | Paleta de comandos | v0.1 | 6 | pendiente | — | — |
 | IN-034 | Mosaico y lista densa | v0.1 | 6 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-20 | IN-031 | análisis y diseño | registro colecciones.json sincronizado con los elementos, raíl en su orden, pantalla de lista, etiquetas inferidas al capturar y sugerencia en la respuesta | … |
+| 2026-10-20 | IN-031 | implementación | registro colecciones.json sincronizado, raíl en su orden, pantalla con renombrar, mover y borrar, etiquetas inferidas al capturar, sugerencia en la respuesta | … |
+| 2026-10-20 | IN-031 | análisis y diseño | registro colecciones.json sincronizado con los elementos, raíl en su orden, pantalla de lista, etiquetas inferidas al capturar y sugerencia en la respuesta | f7526c7 |
 | 2026-10-20 | IN-030 | verificación | pnpm verificar OK (1087 pruebas, 224,3 KB); revisión independiente con 12 hallazgos atendidos con pruebas | 7287d9a |
 | 2026-10-20 | IN-030 | implementación | hilos con el hilo en cada elemento, formación por huella en cola, responder y «a su hilo», pantalla con resolver y reabrir, mover desde el elemento | 2fd00eb |
 | 2026-10-19 | IN-030 | análisis y diseño | el hilo en cada elemento (D13), formación por huella y al responder, pantalla como la referencia, resolver con la nota en el último elemento | f79375a |

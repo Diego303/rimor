@@ -25,6 +25,7 @@ import type { ColaDerivados } from '../lectores/derivados';
 import type { Registro } from '../lectores/registro';
 import { type OpcionesOcultar, ocultar } from '../seguridad/secretos/ocultar';
 import { type Candidato, detectar, entradaDeArchivo } from './detector';
+import { etiquetasInferidas } from './etiquetas';
 import { anteriorDe } from './versiones';
 
 /** Por encima de este tamaño, un archivo se rechaza (ficha IN-014). */
@@ -196,6 +197,11 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
   }));
   const ahora = isoConZona(reloj());
   const tipo = entrada.tipo ?? lector.tipo;
+  // Las manuales (`#` del compositor) y las que Rimor infiere (hashtags, dominios, paquetes, lenguaje, niveles).
+  const conInferidas = unicos([
+    ...etiquetas,
+    ...(bytes ? [] : etiquetasInferidas({ texto: texto ?? '', tipo, resumen: borrador.resumen ?? {} })),
+  ]);
 
   // 6b. ¿Es la versión nueva de un prompt, un documento o un código que ya estaba? Entonces se guarda en él (la
   // anterior, al historial) en vez de crear otro. Lo grande (que va como adjunto) y lo pedido aparte, no.
@@ -219,7 +225,7 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
         (el) => {
           // Sobre lo que hay al escribir (en el turno del elemento), no sobre lo leído antes.
           const colecciones = unicos([...(el.frontmatter.colecciones ?? []), ...(entrada.colecciones ?? [])]);
-          const etiquetas = unicos([...(el.frontmatter.etiquetas ?? []), ...(entrada.etiquetas ?? [])]);
+          const etiquetas = unicos([...(el.frontmatter.etiquetas ?? []), ...conInferidas]);
           return {
             ...el,
             original: textoVersion,
@@ -299,7 +305,7 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     ocultados,
     lector: { nombre: lector.nombre, version: lector.version, resumen: borrador.resumen ?? {} },
     ...(colecciones.length ? { colecciones } : {}),
-    ...(etiquetas.length ? { etiquetas } : {}),
+    ...(conInferidas.length ? { etiquetas: conInferidas } : {}),
     // Solo una ref de hilo válida: otra cosa dejaría el archivo ilegible al releerlo.
     ...(entrada.hilo && analizarRef(entrada.hilo)?.prefijo === PREFIJOS.hilo
       ? { hilo: entrada.hilo as FrontmatterComun['ref'] }

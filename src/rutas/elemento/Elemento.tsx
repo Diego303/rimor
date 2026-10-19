@@ -322,7 +322,10 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
     const todos = espacio?.repositorio.elementos() ?? [];
     const ordenados = (lista: string[]) => [...new Set(lista)].sort((a, b) => a.localeCompare(b));
     return {
-      colecciones: ordenados(todos.flatMap((f) => f.colecciones ?? [])),
+      colecciones: ordenados([
+        ...(espacio?.colecciones.lista().map((c) => c.id) ?? []),
+        ...todos.flatMap((f) => f.colecciones ?? []),
+      ]),
       etiquetas: ordenados(todos.flatMap((f) => f.etiquetas ?? [])),
     };
   }, [espacio]);
