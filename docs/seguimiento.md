@@ -1,7 +1,7 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-20 00:58
+**Última actualización:** 2026-10-20 01:01
 **Ahora:** IN-032 · Búsqueda · fase análisis y diseño
 **Siguiente:** IN-033 · Paleta de comandos
 **Progreso:** F0 9/9 · v0.1 33/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 42/99
@@ -50,8 +50,8 @@
 | IN-028 | Comparaciones de logs y mediciones | v0.1 | 5 | hecha | 6f0e9f7 cd731a1 a9fce8f | docs/features/IN-028-comparaciones.md |
 | IN-029 | Versiones e historial | v0.1 | 5 | hecha | 2a73dd9 701dbe2 7eac401 | docs/features/IN-029-versiones.md |
 | IN-030 | Hilos | v0.1 | 5 | hecha | f79375a 2fd00eb 7287d9a | docs/features/IN-030-hilos.md |
-| IN-031 | Colecciones y etiquetas | v0.1 | 5 | hecha | f7526c7 7134d64 | docs/features/IN-031-colecciones.md |
-| IN-032 | Búsqueda | v0.1 | 5 | pendiente | — | — |
+| IN-031 | Colecciones y etiquetas | v0.1 | 5 | hecha | f7526c7 7134d64 0d00edd | docs/features/IN-031-colecciones.md |
+| IN-032 | Búsqueda | v0.1 | 5 | en análisis y diseño | — | docs/features/IN-032-busqueda.md |
 | IN-033 | Paleta de comandos | v0.1 | 6 | pendiente | — | — |
 | IN-034 | Mosaico y lista densa | v0.1 | 6 | pendiente | — | — |
 | IN-035 | Exportar ZIP y JSON | v0.1 | 6 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-20 | IN-031 | verificación | pnpm verificar OK (1103 pruebas, 227,1 KB); revisión independiente con 12 hallazgos atendidos con pruebas | … |
+| 2026-10-20 | IN-032 | análisis y diseño | MiniSearch en Worker con claves por elemento y gzip en la caché, analizador del Anexo G sobre el frontmatter, motor con ranking, pantalla como la referencia y el ? del compositor | … |
+| 2026-10-20 | IN-031 | verificación | pnpm verificar OK (1103 pruebas, 227,1 KB); revisión independiente con 12 hallazgos atendidos con pruebas | 0d00edd |
 | 2026-10-20 | IN-031 | implementación | registro colecciones.json sincronizado, raíl en su orden, pantalla con renombrar, mover y borrar, etiquetas inferidas al capturar, sugerencia en la respuesta | 7134d64 |
 | 2026-10-20 | IN-031 | análisis y diseño | registro colecciones.json sincronizado con los elementos, raíl en su orden, pantalla de lista, etiquetas inferidas al capturar y sugerencia en la respuesta | f7526c7 |
 | 2026-10-20 | IN-030 | verificación | pnpm verificar OK (1087 pruebas, 224,3 KB); revisión independiente con 12 hallazgos atendidos con pruebas | 7287d9a |
