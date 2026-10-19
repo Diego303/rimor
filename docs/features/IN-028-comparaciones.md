@@ -112,3 +112,37 @@ Cubre las siete tareas y la aceptación con datos de la propia referencia. Lo ap
 | Los avisos de método de la comparación incluyen siempre los dos generales de la referencia | Como `SC.medic`; el de la máquina, en condicional («si se midieron en la misma máquina»), porque Rimor no lo sabe. |
 | `Ctrl+Mayús+C` como pide el plan, y también el botón «Comparar» | Algunos navegadores se reservan ese atajo (inspeccionar en Chrome): el botón no depende de él. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 69 archivos y 1058 pruebas; carga inicial 219,7 KB de 300.
+
+**Criterios y tareas, con su evidencia:**
+
+| Tarea o criterio | Evidencia |
+|---|---|
+| CMP-0004 y CMP-0005 dan lo de la referencia | `comparaciones.test.ts` y `Comparacion.test.tsx` con los datos de la referencia (idénticos byte a byte, según la revisión): −4,5 %, p < 0,001, medianas, IC y variación; línea 4, 4 nuevos, 4 ausentes y 2 que cambian, con las líneas de cada una |
+| Entidad `Comparacion` en `comparaciones/` | `entidad.test.ts`, `entidades.test.ts`, `espacio.test.ts` (al reabrir) |
+| Logs: divergencia, solo en una, ausentes, frecuencia | `comparaciones.test.ts` (también iguales, prefijo, vacío); `VistaLogs.test.tsx` (donde una se acaba) |
+| Mediciones: veredicto, gráfico, tabla, avisos | `Comparacion.test.tsx` (frases, tabla de dos filas, «Avisos de método»), unidades distintas en `comparaciones.test.ts` |
+| Cómo se crea | `Comparacion.test.tsx`: «Comparar con…» filtrado desde el elemento; `x`, `x`, `Ctrl+Mayús+C` (dos veces: una sola) y el botón; tipos distintos con su motivo; uno solo |
+| Recalcular con aviso | `Comparacion.test.tsx`: una fuente cambia → aviso y resultado guardado nuevo; fuente borrada → lo guardado; más de dos fuentes → motivo |
+| «Comparando» pasados 400 ms | `useEsperaVisible` (probado en IN-090) sobre `calculando` |
+| Cifras citables | `comparaciones.test.ts` y «Detalles» en `Comparacion.test.tsx` |
+
+**Revisión independiente** (subagente con contexto limpio). Confirmó la aceptación. Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | Dos creaciones a la vez se llevaban la misma ref (y una pisaba a la otra) | `RepositorioEntidades.crear` asigna la ref y guarda en un mismo turno; `guardar` rechaza una ref de otra entidad o una ruta ocupada; `useComparar` ignora la orden mientras crea. `entidades.test.ts`, `comparaciones.test.ts`, `Comparacion.test.tsx` (doble `Ctrl+Mayús+C`) |
+| 2 | `refs()` olvidaba los archivos ilegibles y podía sobrescribirlos | La ref del nombre de cada `.md` cuenta aunque no se lea; no se escribe una nueva sobre una ruta que existe. `entidades.test.ts` |
+| 3 | El diario de entidades no se terminaba al heredar la escritura | `cargar({ recuperar })` con `escribe()` al abrir y al releer; entre duplicados en su sitio, el modificado más tarde. `entidades.test.ts` |
+| 4 | Tras intercambiar se veía un momento el cálculo de las fuentes anteriores; un segundo clic dejaba el título mal | El cálculo anterior solo se conserva si es de las mismas fuentes (ref, hash y versión de lector); «Intercambiar» se oculta mientras se recalcula; el intercambio se hace sobre lo leído en el turno |
+| 5 | Una lectura fallida dejaba la pantalla en «cargando» | La siguiente relectura lo vuelve a intentar |
+| 6 | Con más de dos fuentes se quedaba en «Comparando» | Motivo propio. `Comparacion.test.tsx` |
+| 7 | Celda vacía donde una se acaba (líneas vacías al final) | «(se acaba aquí)» según el largo sin las vacías del final. `VistaLogs.test.tsx` |
+| 8 | El guardado del recálculo no miraba si las fuentes seguían siendo las calculadas | Si cambiaron (un intercambio entró antes), no se guarda |
+| 9 | Motivo engañoso con un log que leyó otro lector | `comparacion.otroLector` con su frase. `comparaciones.test.ts` |
+| 10 | Lo guardado podía quedarse viejo si sube la versión del lector de una fuente | `versiones_lector` en el resultado; si difiere, se recalcula y se guarda sin aviso. `comparaciones.test.ts` |
+| 11 | Una línea vacía de más en medio cuenta como divergencia | Se deja como la referencia (`CLOG` hace lo mismo); solo las del final no cuentan |
+| 12 | (Fuera de IN-028) El aviso de atípicos nombra todos los atípicos; la referencia, el más lento | Es de `avisosDeMetodo` (IN-022): el recuento de avisos coincide con la referencia; se anota para cuando se revise Mediciones |
+

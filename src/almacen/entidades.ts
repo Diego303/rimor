@@ -5,6 +5,7 @@
  * turno, renombrar el archivo al cambiar el título pasa por el diario, y solo escribe la pestaña que puede.
  */
 import {
+  asignarRef,
   CARPETAS,
   type Entidad,
   escribirEntidad,
@@ -58,15 +59,24 @@ export class RepositorioEntidades {
 
   /**
    * Lee las carpetas de sus tipos y rehace el índice. Devuelve los archivos que no se pudieron leer (o que están
-   * en la carpeta de otro tipo, o repiten un id).
+   * en la carpeta de otro tipo, o repiten un id). Con `recuperar` (la pestaña escribe o va a escribir; al heredar
+   * la escritura aún no puede), antes termina la operación que quedó a medias según el diario.
    */
-  async cargar(): Promise<{ ruta: string; codigo: string }[]> {
-    if (this.escribible()) await terminarDiario(this.almacen, RUTA_DIARIO_ENTIDADES);
+  async cargar({
+    recuperar = this.escribible(),
+  }: {
+    recuperar?: boolean;
+  } = {}): Promise<{ ruta: string; codigo: string }[]> {
+    if (recuperar) await terminarDiario(this.almacen, RUTA_DIARIO_ENTIDADES);
     const fallidos: { ruta: string; codigo: string }[] = [];
     const leidas: Entrada[] = [];
+    const refsDeArchivos = new Set<string>();
     for (const tipo of this.tipos) {
       for (const { ruta } of await listarTodo(this.almacen, `${CARPETAS[tipo]}/`)) {
         if (!ruta.endsWith('.md')) continue;
+        // La ref del nombre cuenta aunque el archivo no se pueda leer: no se vuelve a asignar (ni se pisa).
+        const delNombre = /^([A-Z]+(?:-[A-Z]+)*-\d{4,})--/.exec(ruta.slice(ruta.lastIndexOf('/') + 1))?.[1];
+        if (delNombre) refsDeArchivos.add(delNombre);
         const r = leerEntidad((await leerTexto(this.almacen, ruta)) ?? '');
         if (!r.ok) fallidos.push({ ruta, codigo: r.error.codigo });
         else if (r.valor.frontmatter.tipo !== tipo) fallidos.push({ ruta, codigo: 'entidad.carpetaEquivocada' });
@@ -75,12 +85,16 @@ export class RepositorioEntidades {
     }
     this.porId.clear();
     this.idPorRef.clear();
+    this.refsOcupadas = refsDeArchivos;
     for (const e of leidas) {
       const previa = this.porId.get(e.id);
-      // Dos archivos con el mismo id (un corte a mitad de renombrar sin diario): gana el que está en su sitio.
+      // Dos archivos con el mismo id (un corte a mitad de renombrar): gana el que está en su sitio y, si lo están
+      // los dos, el modificado más tarde.
       if (previa) {
         const enSuSitio = (x: Entrada) => x.ruta === rutaEntidad(x.fm.tipo, x.ref, x.fm.titulo);
-        const queda = enSuSitio(previa) || !enSuSitio(e) ? previa : e;
+        const fecha = (x: Entrada) => Date.parse(x.fm.modificado ?? x.fm.creado ?? '') || 0;
+        const queda =
+          enSuSitio(previa) !== enSuSitio(e) ? (enSuSitio(previa) ? previa : e) : fecha(e) > fecha(previa) ? e : previa;
         fallidos.push({ ruta: (queda === previa ? e : previa).ruta, codigo: 'entidad.duplicada' });
         if (queda === previa) continue;
       }
@@ -104,9 +118,28 @@ export class RepositorioEntidades {
     return this.porId.get(this.idPorRef.get(refOId) ?? refOId);
   }
 
-  /** Refs en uso, para asignar la siguiente sin repetir. */
+  /** Refs de los archivos que hay (también de los que no se pudieron leer). */
+  private refsOcupadas = new Set<string>();
+
+  /** Refs en uso (también las de archivos que no se pudieron leer), para asignar la siguiente sin repetir. */
   refs(): IterableIterator<string> {
-    return this.idPorRef.keys();
+    return new Set([...this.idPorRef.keys(), ...this.refsOcupadas]).values();
+  }
+
+  /**
+   * Crea una entidad nueva con la siguiente ref libre de su tipo: la ref se asigna y la entidad se guarda en el
+   * mismo turno (dos creaciones a la vez no se llevan la misma). Devuelve la ref.
+   */
+  crear(tipo: TipoEntidad, hacer: (ref: string) => Entidad): Promise<string> {
+    this.comprobarEscritura();
+    return this.turnos.en(`crear:${tipo}`, async () => {
+      const ref = asignarRef(tipo, this.refs());
+      const entidad = hacer(ref);
+      if (entidad.frontmatter.ref !== ref || entidad.frontmatter.tipo !== tipo)
+        throw new Error(`La entidad nueva debe ser ${tipo} con la ref ${ref}`);
+      await this.turnos.en(entidad.frontmatter.id, () => this.guardarAhora(entidad));
+      return ref;
+    });
   }
 
   async leer(refOId: string): Promise<Resultado<Entidad>> {
@@ -146,6 +179,12 @@ export class RepositorioEntidades {
     const fm = entidad.frontmatter;
     const previa = this.porId.get(fm.id);
     const destino = rutaEntidad(fm.tipo, fm.ref, fm.titulo);
+    // Una ref que ya es de otra entidad (o de un archivo que no se pudo leer) no se pisa.
+    const duena = this.idPorRef.get(fm.ref);
+    if ((duena && duena !== fm.id) || (!previa && this.refsOcupadas.has(fm.ref)))
+      throw new Error(`entidad.refOcupada: ${fm.ref}`);
+    if (previa?.ruta !== destino && (await this.almacen.existe(destino)))
+      throw new Error(`entidad.destinoOcupado: ${destino}`);
     const textoPrevio = previa ? ((await leerTexto(this.almacen, previa.ruta)) ?? undefined) : undefined;
     const datos = codificador.encode(escribirEntidad(entidad, textoPrevio));
     if (previa && previa.ruta !== destino) {

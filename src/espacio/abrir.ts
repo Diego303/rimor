@@ -150,7 +150,7 @@ export async function abrirEspacio(
     const repositorio = new Repositorio(dep.almacen, abierta, opcionesRepositorio);
     repositorio.cargarDesde(r.entradas);
     const entidades = new RepositorioEntidades(dep.almacen, TIPOS_ENTIDAD_LEIDOS, opcionesRepositorio);
-    let fallidos = [...r.fallidos, ...(await entidades.cargar())];
+    let fallidos = [...r.fallidos, ...(await entidades.cargar({ recuperar: escribe() }))];
 
     // Relee estado y elementos: al recibir un cambio de la otra pestaña o al pasar a escribir. En orden, y los
     // avisos que llegan mientras ya hay una relectura esperando se juntan en ella.
@@ -166,7 +166,8 @@ export async function abrirEspacio(
         await antes?.();
         const nuevo = await leerTodo();
         repositorio.cargarDesde(nuevo.entradas);
-        fallidos = [...nuevo.fallidos, ...(await entidades.cargar())];
+        // Al heredar la escritura, el diario de entidades se termina ya (aún no `escribible`: no está al día).
+        fallidos = [...nuevo.fallidos, ...(await entidades.cargar({ recuperar: escribe() }))];
         estado = leerEstado(await leerTexto(dep.almacen, RUTA_ESTADO));
         ajustes = (await leerAjustesSeguro()) ?? ajustes;
         avisar();

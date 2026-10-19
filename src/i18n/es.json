@@ -278,7 +278,9 @@
         "mismo": "Es el mismo elemento.",
         "distintoTipo": "Solo se comparan dos del mismo tipo: {a} y {b} no lo son.",
         "sinComparacion": "De momento solo se comparan logs con logs y mediciones con mediciones.",
-        "sinValores": "Una de las mediciones no tiene valores."
+        "sinValores": "Una de las mediciones no tiene valores.",
+        "otroLector": "Uno de los dos no lo leyó el lector de su tipo (se guardó como archivo) y no trae lo que hace falta para compararlo.",
+        "demasiadas": "De momento se comparan dos fuentes, no más."
       },
       "mediciones": {
         "masRapido": "{nombre} es un {cambio} más rápido",

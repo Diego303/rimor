@@ -13,7 +13,7 @@ import {
 } from '@rimor/formato';
 import { useEffect, useState } from 'react';
 import { type Calculo, calcular, resultadoDe } from '../../comparaciones/crear';
-import { fuentesCambiadas, leerResultado, type ResultadoComparacion } from '../../comparaciones/resultado';
+import { desfasado, fuentesCambiadas, leerResultado, type ResultadoComparacion } from '../../comparaciones/resultado';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { useLectoresOpcional } from '../../lectores/Lectores';
 
@@ -25,8 +25,10 @@ export type EstadoComparacion =
       entidad: Entidad<Comparacion>;
       /** Las fuentes, en su orden; `null` la que ya no está. */
       fuentes: (Elemento | null)[];
-      /** El cálculo de ahora; `null` mientras se calcula o si no se puede. */
+      /** El cálculo de ahora (o el anterior, si es de las mismas fuentes); `null` si no hay o no se puede. */
       calculo: Calculo | null;
+      /** Se está calculando (para las mismas fuentes puede verse el cálculo anterior). */
+      calculando: boolean;
       /** Si no se puede calcular, por qué (`comparacion.distintoTipo`…). */
       motivo: string | null;
       /** El resultado guardado (el que se enseña si no se puede calcular). */
@@ -54,6 +56,11 @@ export function useComparacion(refe: string): EstadoComparacion {
     let visto: Visto | null = null;
     // Lo que se dijo que cambió no se olvida al guardar el resultado nuevo (que ya no difiere).
     const cambiaron = new Set<string>();
+    // El último cálculo y de qué (fuentes, en su orden, con su hash y la versión de su lector): solo ese se
+    // enseña mientras se recalcula; de otras fuentes (intercambiadas, cambiadas) sería engañoso.
+    let ultimo: { clave: string; calculo: Calculo } | null = null;
+    const claveDe = (fs: readonly Elemento[]) =>
+      fs.map((f) => `${f.frontmatter.ref}|${f.frontmatter.hash}|${f.frontmatter.lector.version}`).join('\n');
 
     const leer = async () => {
       const fm = entidades.frontmatter(refe);
@@ -82,34 +89,45 @@ export function useComparacion(refe: string): EstadoComparacion {
       if (parar.signal.aborted || visto !== ahora) return;
       const base = { estado: 'lista' as const, entidad, fuentes, guardado, cambiaron: [...cambiaron] };
       const [a, b] = fuentes;
-      if (!a || !b || fuentes.length !== 2) {
-        setEstado({ refe, valor: { ...base, calculo: null, motivo: null } });
+      if (!a || !b) {
+        setEstado({ refe, valor: { ...base, calculo: null, calculando: false, motivo: null } });
         return;
       }
-      // Lo guardado se enseña mientras se calcula (la cifra no salta a «—»).
-      setEstado((e) =>
-        e.refe === refe && e.valor.estado === 'lista' && e.valor.entidad.frontmatter.id === entidad.frontmatter.id
-          ? { refe, valor: { ...e.valor, ...base, calculo: e.valor.calculo } }
-          : { refe, valor: { ...base, calculo: null, motivo: null } },
-      );
+      // Más de dos (un archivo editado a mano; varias series a la vez es CMP-04, v0.3): no se calcula.
+      if (fuentes.length !== 2) {
+        setEstado({ refe, valor: { ...base, calculo: null, calculando: false, motivo: 'comparacion.demasiadas' } });
+        return;
+      }
+      // Mientras se calcula: el cálculo anterior si es de las mismas fuentes; si no, lo guardado.
+      const clave = claveDe([a, b]);
+      const previo = ultimo?.clave === clave ? ultimo.calculo : null;
+      setEstado({ refe, valor: { ...base, calculo: previo, calculando: true, motivo: null } });
       const calculo = await calcular(a, b, (el) =>
         lectores.cola.pedir(el, { prioridad: 'visible', senal: parar.signal }),
       ).catch(() => null);
       if (parar.signal.aborted || visto !== ahora) return;
       if (!calculo?.ok) {
         const motivo = calculo ? calculo.error.codigo : 'comparacion.error';
-        setEstado({ refe, valor: { ...base, calculo: null, motivo } });
+        setEstado({ refe, valor: { ...base, calculo: null, calculando: false, motivo } });
         return;
       }
+      ultimo = { clave, calculo: calculo.valor };
       const cambiadas = fuentesCambiadas(guardado, [a.frontmatter.hash, b.frontmatter.hash]);
       // Solo se avisa si había un resultado válido que ya no lo es por una fuente (no al rehacer uno de otra versión).
       if (guardado) for (const i of cambiadas) cambiaron.add(entidad.frontmatter.fuentes[i] ?? '');
-      setEstado({ refe, valor: { ...base, calculo: calculo.valor, motivo: null, cambiaron: [...cambiaron] } });
-      if (cambiadas.length && entidades.escribible()) {
+      setEstado({
+        refe,
+        valor: { ...base, calculo: calculo.valor, calculando: false, motivo: null, cambiaron: [...cambiaron] },
+      });
+      // Se guarda si cambió una fuente o si lo guardado es de otra versión (del cálculo o del lector de una fuente).
+      const versiones = [a.frontmatter.lector.version, b.frontmatter.lector.version];
+      if ((cambiadas.length || desfasado(guardado, versiones)) && entidades.escribible()) {
         const nuevo = resultadoDe(calculo.valor, [a, b]) as unknown as Record<string, unknown>;
+        const calculadas = entidad.frontmatter.fuentes.join('\n');
         void entidades
           .actualizar(entidad.frontmatter.id, (e) =>
-            e.frontmatter.tipo === 'comparacion'
+            // Si mientras tanto cambiaron las fuentes (se intercambiaron), este resultado ya no es el suyo.
+            e.frontmatter.tipo === 'comparacion' && e.frontmatter.fuentes.join('\n') === calculadas
               ? {
                   ...e,
                   frontmatter: { ...e.frontmatter, resultado: nuevo, modificado: isoConZona(new Date()) },
@@ -120,7 +138,11 @@ export function useComparacion(refe: string): EstadoComparacion {
       }
     };
 
-    const releer = () => void leer().catch(() => undefined);
+    // Si una lectura falla (un archivo que la otra pestaña tiene abierto), la próxima relectura lo intenta otra vez.
+    const releer = () =>
+      void leer().catch(() => {
+        visto = null;
+      });
     releer();
     const baja = espacio.alCambiar(releer);
     return () => {

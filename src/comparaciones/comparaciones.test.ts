@@ -13,7 +13,7 @@ import { comparables } from './clases';
 import { calcular, crearComparacion } from './crear';
 import { compararLogs } from './logs';
 import { compararMediciones } from './mediciones';
-import { cifrasDeResultado, fuentesCambiadas, leerResultado, textoCambio } from './resultado';
+import { cifrasDeResultado, desfasado, fuentesCambiadas, leerResultado, textoCambio } from './resultado';
 
 const leer = (ruta: string) => readFileSync(join(process.cwd(), ruta), 'utf8');
 const esperado = JSON.parse(leer('fixtures/comparaciones/esperado.json'));
@@ -140,7 +140,7 @@ describe('qué se compara y lo que se guarda', () => {
     const b = { ...elemento(2, 'log', mala) };
     b.frontmatter = { ...b.frontmatter, lector: { nombre: 'archivo', version: 1, resumen: {} } };
     const r = await calcular(a, b, derivar);
-    expect(!r.ok && r.error.codigo).toBe('comparacion.sinComparacion');
+    expect(!r.ok && r.error.codigo).toBe('comparacion.otroLector');
     const distinto = await calcular(a, elemento(3, 'mediciones', reqwest), derivar);
     expect(!distinto.ok && distinto.error.codigo).toBe('comparacion.distintoTipo');
   });
@@ -177,6 +177,17 @@ describe('qué se compara y lo que se guarda', () => {
       titular: (a, b) => `${a} frente a ${b}`,
     });
     expect(otra.ok && otra.valor).toBe('CMP-0002');
+    // Dos a la vez (un doble clic): cada una con su ref.
+    const dep = { repositorio, entidades, derivar, titular: (x: string, y: string) => `${x} frente a ${y}` };
+    const dobles = await Promise.all([
+      crearComparacion('MED-0007', 'MED-0008', dep),
+      crearComparacion('MED-0007', 'MED-0008', dep),
+    ]);
+    expect(dobles.map((d) => d.ok && d.valor)).toEqual(['CMP-0003', 'CMP-0004']);
+    expect(entidades.lista('comparacion')).toHaveLength(4);
+    // Lo guardado lleva la versión del lector de cada fuente: si sube, está desfasado.
+    expect(desfasado(resultado, [1, 1])).toBe(false);
+    expect(desfasado(resultado, [1, 2])).toBe(true);
     // Una que no existe.
     const falta = await crearComparacion('MED-0007', 'MED-0099', { repositorio, entidades, derivar, titular: String });
     expect(!falta.ok && falta.error.codigo).toBe('almacen.noEncontrado');

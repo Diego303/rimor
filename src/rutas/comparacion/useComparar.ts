@@ -3,7 +3,7 @@
  * derivados de la cola (de la caché si están) y lleva a ella.
  */
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { comparables } from '../../comparaciones/clases';
 import { crearComparacion } from '../../comparaciones/crear';
 import { useEspacioOpcional } from '../../espacio/Espacio';
@@ -18,6 +18,8 @@ export function useComparar(): { comparar: (refA: string, refB: string) => Promi
   const lectores = useLectoresOpcional();
   const avisos = useAvisosOpcional();
   const [creando, setCreando] = useState(false);
+  // Una a la vez: un doble clic o un doble Ctrl+Mayús+C mientras se calcula no crea dos.
+  const enCurso = useRef(false);
 
   const comparar = useCallback(
     async (refA: string, refB: string) => {
@@ -33,6 +35,8 @@ export function useComparar(): { comparar: (refA: string, refB: string) => Promi
             : t(`pantallas.comparacion.motivos.${c.motivo}`);
         return void avisos?.avisar(t('pantallas.comparacion.crear.noSePuede', { motivo }));
       }
+      if (enCurso.current) return;
+      enCurso.current = true;
       setCreando(true);
       const r = await crearComparacion(refA, refB, {
         repositorio: espacio.repositorio,
@@ -40,11 +44,14 @@ export function useComparar(): { comparar: (refA: string, refB: string) => Promi
         derivar: (el) => lectores.cola.pedir(el, { prioridad: 'visible' }),
         titular: (x, y) => t('pantallas.comparacion.titulo', { a: x, b: y }),
       }).catch(() => null);
+      enCurso.current = false;
       setCreando(false);
       if (!r?.ok) {
-        const motivo = r?.error.codigo.startsWith('comparacion.')
-          ? t(`pantallas.comparacion.motivos.${r.error.codigo.slice('comparacion.'.length) as 'sinValores'}`)
-          : null;
+        const clave = r?.error.codigo.slice('comparacion.'.length);
+        const motivo =
+          clave === 'sinValores' || clave === 'otroLector' || clave === 'sinComparacion'
+            ? t(`pantallas.comparacion.motivos.${clave}`)
+            : null;
         return void avisos?.avisar(
           motivo ? t('pantallas.comparacion.crear.noSePuede', { motivo }) : t('pantallas.comparacion.crear.noCreada'),
         );

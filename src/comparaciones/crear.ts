@@ -4,7 +4,6 @@
  * segunda, la que se compara. TS puro con lo que necesita inyectado.
  */
 import {
-  asignarRef,
   type Comparacion,
   type Elemento,
   type Entidad,
@@ -40,7 +39,7 @@ export async function calcular(a: Elemento, b: Elemento, derivar: Derivar): Prom
   // Un log que leyó otro lector (un archivo soltado) no trae los datos de un log.
   const lector = LECTOR[c.clase];
   if (a.frontmatter.lector.nombre !== lector || b.frontmatter.lector.nombre !== lector)
-    return fallo('comparacion.sinComparacion');
+    return fallo('comparacion.otroLector');
   const [da, db] = await Promise.all([derivar(a), derivar(b)]);
   if (c.clase === 'logs') {
     const datos: [DatosLog, DatosLog] = [da as DatosLog, db as DatosLog];
@@ -52,16 +51,17 @@ export async function calcular(a: Elemento, b: Elemento, derivar: Derivar): Prom
 
 /** Lo que se guarda de un cálculo, con el hash y el nombre de cada fuente. */
 export function resultadoDe(calculo: Calculo, fuentes: readonly [Elemento, Elemento]): ResultadoComparacion {
-  const hashes = fuentes.map((f) => f.frontmatter.hash);
-  const nombres = [nombreDe(fuentes[0], calculo, 'a'), nombreDe(fuentes[1], calculo, 'b')];
-  return calculo.clase === 'logs'
-    ? resultadoDeLogs(calculo.logs, hashes, nombres)
-    : resultadoDeMediciones(calculo.mediciones, hashes, nombres);
+  const de = {
+    hashes: fuentes.map((f) => f.frontmatter.hash),
+    nombres: [nombreDe(fuentes[0], calculo, 'a'), nombreDe(fuentes[1], calculo, 'b')],
+    versiones: fuentes.map((f) => f.frontmatter.lector.version),
+  };
+  return calculo.clase === 'logs' ? resultadoDeLogs(calculo.logs, de) : resultadoDeMediciones(calculo.mediciones, de);
 }
 
 export interface DependenciasCrear {
   repositorio: Pick<Repositorio, 'leerElemento'>;
-  entidades: Pick<RepositorioEntidades, 'guardar' | 'refs'>;
+  entidades: Pick<RepositorioEntidades, 'crear'>;
   derivar: Derivar;
   /** El título de la comparación con los nombres de las dos fuentes («reqwest frente a ureq»). */
   titular: (a: string, b: string) => string;
@@ -89,21 +89,27 @@ export async function crearComparacion(refA: string, refB: string, dep: Dependen
   const calculo = await calcular(a, b, dep.derivar);
   if (!calculo.ok) return calculo;
   const creado = isoConZona((dep.reloj ?? (() => new Date()))());
-  const ref = asignarRef('comparacion', dep.entidades.refs());
-  const entidad: Entidad<Comparacion> = {
-    frontmatter: {
-      id: (dep.nuevoId ?? ulid)(),
-      ref,
-      tipo: 'comparacion',
-      titulo: dep.titular(nombreDe(a, calculo.valor, 'a'), nombreDe(b, calculo.valor, 'b')),
-      creado,
-      modificado: creado,
-      clase: calculo.valor.clase,
-      fuentes: [a.frontmatter.ref, b.frontmatter.ref],
-      resultado: resultadoDe(calculo.valor, [a, b]) as unknown as Record<string, unknown>,
-    },
-    cuerpo: '',
-  };
-  await dep.entidades.guardar(entidad);
+  const id = (dep.nuevoId ?? ulid)();
+  const fuentes = [a.frontmatter.ref, b.frontmatter.ref];
+  const titulo = dep.titular(nombreDe(a, calculo.valor, 'a'), nombreDe(b, calculo.valor, 'b'));
+  const resultado = resultadoDe(calculo.valor, [a, b]) as unknown as Record<string, unknown>;
+  // La ref se asigna al guardar, en el turno de las creaciones: dos a la vez no se llevan la misma.
+  const ref = await dep.entidades.crear(
+    'comparacion',
+    (r): Entidad<Comparacion> => ({
+      frontmatter: {
+        id,
+        ref: r as Comparacion['ref'],
+        tipo: 'comparacion',
+        titulo,
+        creado,
+        modificado: creado,
+        clase: calculo.valor.clase,
+        fuentes,
+        resultado,
+      },
+      cuerpo: '',
+    }),
+  );
   return ok(ref);
 }

@@ -278,7 +278,9 @@
         "mismo": "It is the same item.",
         "distintoTipo": "Only two of the same type can be compared: {a} and {b} are not.",
         "sinComparacion": "For now only logs with logs and measurements with measurements are compared.",
-        "sinValores": "One of the measurements has no values."
+        "sinValores": "One of the measurements has no values.",
+        "otroLector": "One of them was not read by the reader of its type (it was saved as a file), so it lacks what is needed to compare it.",
+        "demasiadas": "For now two sources are compared, no more."
       },
       "mediciones": {
         "masRapido": "{nombre} is {cambio} faster",

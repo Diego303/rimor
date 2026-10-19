@@ -25,6 +25,10 @@ import { useComparacion } from './useComparacion';
 import { VistaComparacionLogs } from './VistaLogs';
 import { VeredictoMediciones, VistaComparacionMediciones } from './VistaMediciones';
 
+/** Los motivos que se nombran con su frase (el de tipos distintos lleva además los dos tipos). */
+const MOTIVOS = ['mismo', 'sinComparacion', 'sinValores', 'otroLector', 'demasiadas'] as const;
+type Motivo = (typeof MOTIVOS)[number];
+
 /** «Ayer, 18:21»: la fecha relativa con mayúscula, como la cabecera de la referencia. */
 const cuando = (fecha: string, idioma: Parameters<typeof fmtFechaRelativa>[2]) => {
   const texto = fmtFechaRelativa(new Date(fecha), new Date(), idioma);
@@ -33,7 +37,7 @@ const cuando = (fecha: string, idioma: Parameters<typeof fmtFechaRelativa>[2]) =
 
 /** Lo guardado, cuando no se puede calcular ahora: la cifra principal y su frase. */
 function VeredictoGuardado({ r, nombre }: { r: ResultadoComparacion; nombre: string }) {
-  const { t, idioma } = useT();
+  const { t } = useT();
   if (r.clase === 'mediciones')
     return (
       <Tarjeta>
@@ -67,7 +71,7 @@ export function PantallaComparacion({ refe }: { refe: string }) {
   const soloLectura = useEspacio((s) => s.soloLectura);
   const leida = useComparacion(refe);
   const [editandoTitulo, setEditandoTitulo] = useState(false);
-  const calculando = leida.estado === 'lista' && !leida.calculo && !leida.motivo && !leida.fuentes.includes(null);
+  const calculando = leida.estado === 'lista' && leida.calculando;
   // «Comparando» aparece si tarda más de 400 ms (guía §11.1).
   const comparando = useEsperaVisible(calculando);
   const editable = Boolean(espacio) && !soloLectura;
@@ -75,12 +79,15 @@ export function PantallaComparacion({ refe }: { refe: string }) {
 
   /** Cambia la entidad en su turno, con su fecha de modificación. */
   const editar = useCallback(
-    async (cambio: (fm: FrontmatterComparacion) => FrontmatterComparacion) => {
+    async (cambio: (fm: FrontmatterComparacion) => FrontmatterComparacion | null) => {
       if (!espacio || leida.estado !== 'lista') return false;
       const r = await espacio.entidades
         .actualizar(leida.entidad.frontmatter.id, (e) =>
           e.frontmatter.tipo === 'comparacion'
-            ? { ...e, frontmatter: { ...cambio(e.frontmatter), modificado: isoConZona(new Date()) } }
+            ? (() => {
+                const nuevo = cambio(e.frontmatter);
+                return nuevo && { ...e, frontmatter: { ...nuevo, modificado: isoConZona(new Date()) } };
+              })()
             : null,
         )
         .catch(() => null);
@@ -115,13 +122,19 @@ export function PantallaComparacion({ refe }: { refe: string }) {
     if (!calculo || !primera || !segunda) return;
     // El título se da la vuelta si es el que se le puso al crearla; uno escrito a mano se queda.
     const automatico = fm.titulo === titular(nombres[0], nombres[1]);
-    const hecho = await editar((f) => ({
-      ...f,
-      fuentes: [segunda, primera, ...resto],
-      ...(automatico ? { titulo: titular(nombres[1], nombres[0]) } : {}),
-      // Sin resultado de esta versión: se recalcula al releer (sin avisar de que cambió una fuente).
-      resultado: {},
-    }));
+    const pintadas = fm.fuentes.join('\n');
+    // Sobre lo que hay al escribir: si ya no son las fuentes pintadas (otro intercambio entró antes), nada.
+    const hecho = await editar((f) =>
+      f.fuentes.join('\n') !== pintadas
+        ? null
+        : {
+            ...f,
+            fuentes: [segunda, primera, ...resto],
+            ...(automatico && f.titulo === fm.titulo ? { titulo: titular(nombres[1], nombres[0]) } : {}),
+            // Sin resultado de esta versión: se recalcula al releer (sin avisar de que cambió una fuente).
+            resultado: {},
+          },
+    );
     avisos?.avisar(
       hecho ? t('pantallas.comparacion.intercambiada', { ref: refB }) : t('pantallas.elemento.noGuardado'),
     );
@@ -155,10 +168,8 @@ export function PantallaComparacion({ refe }: { refe: string }) {
           a: t(`tipos.${a.frontmatter.tipo}`),
           b: t(`tipos.${b.frontmatter.tipo}`),
         })
-      : m === 'comparacion.mismo' || m === 'comparacion.sinComparacion' || m === 'comparacion.sinValores'
-        ? t(
-            `pantallas.comparacion.motivos.${m.slice('comparacion.'.length) as 'mismo' | 'sinComparacion' | 'sinValores'}`,
-          )
+      : MOTIVOS.includes(m.slice('comparacion.'.length) as Motivo)
+        ? t(`pantallas.comparacion.motivos.${m.slice('comparacion.'.length) as Motivo}`)
         : t('pantallas.comparacion.motivos.sinComparacion');
 
   return (
@@ -175,7 +186,7 @@ export function PantallaComparacion({ refe }: { refe: string }) {
       }
       meta={meta}
       control={
-        editable && calculo ? (
+        editable && calculo && !calculando ? (
           <Boton variante="fantasma" pequeno icono="comparacion" onClick={() => void intercambiar()}>
             {t('pantallas.comparacion.intercambiar')}
           </Boton>

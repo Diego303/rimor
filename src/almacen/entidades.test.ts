@@ -62,7 +62,10 @@ describe('RepositorioEntidades', () => {
     const fallidos = await otra.cargar();
     expect(fallidos.map((f) => f.codigo).sort()).toEqual(['entidad.duplicada', 'formato.sinFrontmatter']);
     expect(fallidos.find((f) => f.codigo === 'entidad.duplicada')?.ruta).toBe('comparaciones/CMP-0099--copia.md');
-    expect([...otra.refs()]).toEqual(['CMP-0004']);
+    expect(otra.frontmatter('CMP-0004')).toBeTruthy();
+    expect(otra.frontmatter('CMP-0099')).toBeUndefined();
+    // El nombre del archivo repetido sigue ocupando su ref: no se asigna a otra.
+    expect([...otra.refs()].sort()).toEqual(['CMP-0004', 'CMP-0099']);
   });
 
   it('termina un renombrado cortado según su diario', async () => {
@@ -78,8 +81,72 @@ describe('RepositorioEntidades', () => {
     expect(otra.frontmatter('CMP-0004')?.titulo).toBe('Otro');
   });
 
+  it('crear asigna la ref y guarda en el mismo turno: dos a la vez no se llevan la misma', async () => {
+    const almacen = new AlmacenMemoria();
+    const repo = new RepositorioEntidades(almacen, ['comparacion']);
+    const nueva = (id: string) => (ref: string) =>
+      comparacion({ id, ref: ref as Comparacion['ref'], titulo: 'reqwest frente a ureq' });
+    const refs = await Promise.all([
+      repo.crear('comparacion', nueva('01JAB4C2Q2X8M5N7P0R4S6T8V1')),
+      repo.crear('comparacion', nueva('01JAB4C2Q2X8M5N7P0R4S6T8V2')),
+    ]);
+    expect(refs).toEqual(['CMP-0001', 'CMP-0002']);
+    expect((await listarTodo(almacen)).map((e) => e.ruta).sort()).toEqual([
+      'comparaciones/CMP-0001--reqwest-frente-a-ureq.md',
+      'comparaciones/CMP-0002--reqwest-frente-a-ureq.md',
+    ]);
+    // Una ref que ya es de otra no se pisa.
+    await expect(repo.guardar(comparacion({ id: '01JAB4C2Q2X8M5N7P0R4S6T8V3', ref: 'CMP-0001' }))).rejects.toThrow(
+      'entidad.refOcupada',
+    );
+  });
+
+  it('un archivo que no se puede leer conserva su ref: no se asigna otra vez ni se sobrescribe', async () => {
+    const almacen = new AlmacenMemoria();
+    await almacen.escribir('comparaciones/CMP-0003--a-mano.md', new TextEncoder().encode('---\nroto: [\n---\n'));
+    const repo = new RepositorioEntidades(almacen, ['comparacion']);
+    await repo.cargar();
+    expect(asignarRef('comparacion', repo.refs())).toBe('CMP-0004');
+    await expect(
+      repo.guardar(comparacion({ id: '01JAB4C2Q2X8M5N7P0R4S6T8V4', ref: 'CMP-0003', titulo: 'A mano' })),
+    ).rejects.toThrow();
+    expect(await leerTexto(almacen, 'comparaciones/CMP-0003--a-mano.md')).toBe('---\nroto: [\n---\n');
+  });
+
+  it('dos copias en su sitio de la misma: gana la modificada más tarde', async () => {
+    const almacen = new AlmacenMemoria();
+    const escribir = (ruta: string, e: Entidad) => almacen.escribir(ruta, new TextEncoder().encode(escribirEntidad(e)));
+    await escribir(
+      'comparaciones/CMP-0004--uno.md',
+      comparacion({ titulo: 'Uno', modificado: '2026-10-16T18:21:00+02:00' }),
+    );
+    await escribir(
+      'comparaciones/CMP-0004--dos.md',
+      comparacion({ titulo: 'Dos', modificado: '2026-10-17T09:00:00+02:00' }),
+    );
+    const repo = new RepositorioEntidades(almacen, ['comparacion']);
+    expect((await repo.cargar()).map((f) => f.codigo)).toEqual(['entidad.duplicada']);
+    expect(repo.frontmatter('CMP-0004')?.titulo).toBe('Dos');
+  });
+
+  it('al heredar la escritura (aún sin poder escribir) termina el diario si se le pide', async () => {
+    const almacen = new AlmacenMemoria();
+    const vieja = await new RepositorioEntidades(almacen, ['comparacion']).guardar(comparacion());
+    const nueva = 'comparaciones/CMP-0004--otro.md';
+    await almacen.escribir(nueva, new TextEncoder().encode(escribirEntidad(comparacion({ titulo: 'Otro' }))));
+    await almacen.escribir(RUTA_DIARIO_ENTIDADES, new TextEncoder().encode(JSON.stringify({ de: vieja, a: nueva })));
+    const heredera = new RepositorioEntidades(almacen, ['comparacion'], { puedeEscribir: () => false });
+    expect(await heredera.cargar({ recuperar: true })).toEqual([]);
+    expect(await leerTexto(almacen, vieja)).toBeNull();
+    // Sin pedirlo, una pestaña que solo lee no toca el diario.
+    await almacen.escribir(RUTA_DIARIO_ENTIDADES, new TextEncoder().encode(JSON.stringify({ de: nueva, a: vieja })));
+    await new RepositorioEntidades(almacen, ['comparacion'], { puedeEscribir: () => false }).cargar();
+    expect(await leerTexto(almacen, RUTA_DIARIO_ENTIDADES)).not.toBeNull();
+  });
+
   it('una pestaña que solo lee no escribe', async () => {
     const repo = new RepositorioEntidades(new AlmacenMemoria(), ['comparacion'], { puedeEscribir: () => false });
     expect(() => repo.guardar(comparacion())).toThrow('almacen.soloLectura');
+    expect(() => repo.crear('comparacion', () => comparacion())).toThrow('almacen.soloLectura');
   });
 });

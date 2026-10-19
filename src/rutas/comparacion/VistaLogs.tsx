@@ -34,10 +34,13 @@ function Plantillas({ lista, detalle }: { lista: readonly string[]; detalle?: (p
   );
 }
 
-/** La línea `i` del original (o `null` si se acaba antes). */
-function useLinea(el: Elemento, i: number | null): string | null {
+/** La línea `i` del original, o `null` si el log (sin sus líneas vacías del final, `largo`) se acaba antes. */
+function useLinea(el: Elemento, i: number | null, largo: number): string | null {
   const original = useOriginal(el);
-  return useMemo(() => (original === null || i === null ? null : (partirLineas(original)[i] ?? null)), [original, i]);
+  return useMemo(
+    () => (original === null || i === null || i >= largo ? null : (partirLineas(original)[i] ?? null)),
+    [original, i, largo],
+  );
 }
 
 interface Props {
@@ -48,8 +51,8 @@ interface Props {
 
 export function VistaComparacionLogs({ c, buena, mala }: Props) {
   const { t } = useT();
-  const enBuena = useLinea(buena, c.divergencia);
-  const enMala = useLinea(mala, c.divergencia);
+  const enBuena = useLinea(buena, c.divergencia, c.lineas.a);
+  const enMala = useLinea(mala, c.divergencia, c.lineas.b);
   const veces = new Map(c.cambian.map((x) => [x.plantilla, x]));
   const resumen = `${t('pantallas.comparacion.logs.nuevos', { n: c.nuevos.length })} · ${t(
     'pantallas.comparacion.logs.ausentes',

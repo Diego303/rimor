@@ -107,7 +107,7 @@ describe('Comparaciones', () => {
   }, 60_000);
 
   it('logs desde Inicio con x, x y Ctrl+Mayús+C: el resultado de CMP-0005', async () => {
-    const { router } = await montarApp('/', [
+    const { router, espacio } = await montarApp('/', [
       capturado(41, 'log', mala, 'Ejecución mala', 20),
       capturado(42, 'log', buena, 'Ejecución buena', 10),
     ]);
@@ -121,8 +121,12 @@ describe('Comparaciones', () => {
     await tecla('k');
     await tecla('x');
     expect(screen.getByRole('button', { name: 'Comparar' })).toBeTruthy();
+    // Dos veces seguidas (mientras se calcula la primera): una sola comparación.
+    await tecla('C', { ctrlKey: true, shiftKey: true });
     await tecla('C', { ctrlKey: true, shiftKey: true });
     await waitFor(() => expect(router.state.location.pathname).toBe('/e/CMP-0001'), ESCRITURA);
+    await act(async () => new Promise((r) => setTimeout(r, 300)));
+    expect(espacio.entidades.lista('comparacion')).toHaveLength(1);
 
     expect(await screen.findByText('Aquí se separan', {}, PRIMERA_CARGA)).toBeTruthy();
     expect(document.querySelector('.verdict .big')?.textContent).toBe('línea 4');
@@ -206,6 +210,36 @@ describe('Comparaciones', () => {
     ).toBeTruthy();
     expect(document.querySelector('.verdict .big')?.textContent).toBe('≈');
   }, 60_000);
+
+  it('con más de dos fuentes (editada a mano) dice por qué no se calcula', async () => {
+    const { espacio, router } = await montarApp('/ajustes', [
+      capturado(7, 'mediciones', reqwest, 'reqwest'),
+      capturado(8, 'mediciones', ureq, 'ureq'),
+    ]);
+    await act(async () => {
+      await espacio.entidades.crear('comparacion', (ref) => ({
+        frontmatter: {
+          id: '01JAB4C2Q2X8M5N7P0R4S6T8Z9',
+          ref: ref as `${string}-${string}`,
+          tipo: 'comparacion',
+          titulo: 'Tres',
+          creado: isoConZona(new Date()),
+          clase: 'mediciones',
+          fuentes: ['MED-0007', 'MED-0008', 'MED-0007'],
+          resultado: {},
+        },
+        cuerpo: '',
+      }));
+    });
+    await act(() => router.navigate({ to: '/e/$ref', params: { ref: 'CMP-0001' } }));
+    expect(
+      await screen.findByText(
+        'Ya no se puede calcular: De momento se comparan dos fuentes, no más. Se enseña el último resultado guardado.',
+        {},
+        PRIMERA_CARGA,
+      ),
+    ).toBeTruthy();
+  }, 30_000);
 
   it('una comparación que no existe', async () => {
     await montarApp('/e/CMP-0099');

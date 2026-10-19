@@ -19,6 +19,8 @@ interface Comun {
   fuentes_hash: string[];
   /** Cómo se llamaba cada fuente (la etiqueta de su serie o su título), para nombrarlas sin abrirlas. */
   nombres?: string[];
+  /** La versión del lector de cada fuente: si sube, cambian sus derivados y se recalcula. */
+  versiones_lector?: number[];
 }
 
 export interface ResultadoMediciones extends Comun {
@@ -48,16 +50,24 @@ export type ResultadoComparacion = ResultadoMediciones | ResultadoLogs;
 
 const finito = (x: number): number | null => (Number.isFinite(x) ? x : null);
 
-export function resultadoDeMediciones(
-  c: ComparacionMediciones,
-  hashes: string[],
-  nombres?: string[],
-): ResultadoMediciones {
+/** Lo que se guarda de cada fuente: su hash, su nombre y la versión de su lector. */
+export interface DeLasFuentes {
+  hashes: string[];
+  nombres?: string[];
+  versiones?: number[];
+}
+
+const comunDe = (f: DeLasFuentes) => ({
+  version: VERSION_CALCULO,
+  fuentes_hash: f.hashes,
+  ...(f.nombres ? { nombres: f.nombres } : {}),
+  ...(f.versiones ? { versiones_lector: f.versiones } : {}),
+});
+
+export function resultadoDeMediciones(c: ComparacionMediciones, f: DeLasFuentes): ResultadoMediciones {
   return {
-    version: VERSION_CALCULO,
+    ...comunDe(f),
     clase: 'mediciones',
-    fuentes_hash: hashes,
-    ...(nombres ? { nombres } : {}),
     cambio: finito(c.resultado.cambio),
     p: finito(c.resultado.p),
     significativo: c.resultado.significativo,
@@ -70,12 +80,10 @@ export function resultadoDeMediciones(
   };
 }
 
-export function resultadoDeLogs(c: ComparacionLogs, hashes: string[], nombres?: string[]): ResultadoLogs {
+export function resultadoDeLogs(c: ComparacionLogs, f: DeLasFuentes): ResultadoLogs {
   return {
-    version: VERSION_CALCULO,
+    ...comunDe(f),
     clase: 'logs',
-    fuentes_hash: hashes,
-    ...(nombres ? { nombres } : {}),
     divergencia: c.divergencia === null ? null : c.divergencia + 1,
     nuevos: c.nuevos.length,
     ausentes: c.ausentes.length,
@@ -101,6 +109,10 @@ export function leerResultado(r: Record<string, unknown>): ResultadoComparacion 
 export function fuentesCambiadas(r: ResultadoComparacion | null, hashes: readonly (string | undefined)[]): number[] {
   return hashes.flatMap((h, i) => (!r || h === undefined || r.fuentes_hash[i] !== h ? [i] : []));
 }
+
+/** Lo guardado es de otra versión del lector de alguna fuente (o no lo dice): hay que recalcular y guardarlo. */
+export const desfasado = (r: ResultadoComparacion | null, versiones: readonly number[]): boolean =>
+  !r || (r.versiones_lector ?? []).join(',') !== versiones.join(',');
 
 /** El cambio con su signo y una cifra decimal: `−4,5 %`, `+3,1 %`. */
 export function textoCambio(cambio: number | null, idioma: Idioma): string {
