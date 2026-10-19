@@ -88,3 +88,34 @@ Cubre las cinco tareas. Aplica lo aprendido: organización sin tocar `modificado
 | «Subir» y «Bajar» con texto en vez de iconos | No hay iconos de flecha en el juego de la referencia; un texto dice lo que hace. |
 | Renombrar a una colección que ya existe las junta | Es lo que pasaría al escribir el mismo nombre en los elementos; no hay dos con el mismo nombre. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 78 archivos y 1103 pruebas; carga inicial 227,1 KB de 300.
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| `colecciones.json`: crear, renombrar, borrar y ordenar | `colecciones.test.ts` (puras y gestor: archivo, elementos sin `modificado`, papelera, operaciones a la vez, lectura fallida, ilegible, solo lectura) y `Coleccion.test.tsx` |
+| Crear al vuelo con `@nueva` | Sincronización al abrir y tras cada cambio (`abrir.ts`); `colecciones.test.ts` («sincroniza») |
+| Etiquetas inferidas y manuales | `etiquetas.test.ts` (fuentes, exclusiones, la captura con mayúsculas) y `captura/versiones.test.ts` (una versión no devuelve las quitadas) |
+| Raíl y lista de cada colección | `Coleccion.test.tsx` (orden, vacía con 0, lista, renombrar, bajar, borrar) |
+| Sugerencia de colección en la respuesta | `componer.test.ts` y las reglas de estilo sobre el corpus (`respuestas.test.ts`) |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | Una lectura fallida al abrir dejaba el registro vacío y la sincronización lo pisaba | Si la lectura falla, no se escribe hasta una buena. `colecciones.test.ts` |
+| 2 | Una colección borrada o renombrada volvía si se hacía otra operación a la vez | La base de cada operación no suma lo que se está renombrando o borrando (salvo la propia). `colecciones.test.ts` |
+| 3 | Los elementos de la papelera no se cambiaban al renombrar o borrar | También se recorren. `colecciones.test.ts` |
+| 4 | La pantalla esperaba a reescribir todos los elementos (y decía «No encuentro esta colección» mientras tanto) | El registro cambia al momento y los elementos siguen en segundo plano (`esperar()` para quien lo necesite); la sincronización se pausa mientras tanto |
+| 5 | Hashtags falsos en código (`#include`, comentarios, código en línea) | En código no se buscan; tampoco en directivas ni en código en línea. `etiquetas.test.ts` |
+| 6 | Las mayúsculas duplicaban etiquetas | Sin repetir sin distinguir mayúsculas, quedándose con la manual. `etiquetas.test.ts` |
+| 7 | Una versión nueva devolvía las inferidas quitadas | En una versión solo se suman las escritas ahora. `captura/versiones.test.ts` |
+| 8 | Niveles de log solo en mayúsculas (y un ERROR dentro del mensaje contaba) | Con la lectura de línea del lector Log (`level=error`, JSON). `etiquetas.test.ts` |
+| 9 | `localhost`, IP, versiones de pkg.go.dev, `#tag-`, `¿#pregunta?` | Corregidos. `etiquetas.test.ts` |
+| 10 | El aviso a la otra pestaña salía antes de escribir el archivo | Después de escribir |
+| 11 | Renombrar o mover fallaban sin decir nada | Avisan |
+| 12 | `crear` sin interfaz | Decisión: una colección vacía se crea al usarla (`@nueva`, `c` en Inicio, el elemento); `crear` queda para la paleta (IN-033) y la importación |
+

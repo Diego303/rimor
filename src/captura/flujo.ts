@@ -99,6 +99,17 @@ const extension = (nombre: string) => /\.([a-z0-9]{1,10})$/i.exec(nombre)?.[1] ?
 /** Sin repetir y sin vacíos, en su orden. */
 const unicos = (xs: readonly string[] | undefined) => [...new Set((xs ?? []).map((x) => x.trim()).filter(Boolean))];
 
+/** Sin repetir aunque cambien las mayúsculas, quedándose con la primera (la manual, que va antes). */
+function unicasSinMayusculas(xs: readonly string[]): string[] {
+  const vistas = new Set<string>();
+  return unicos(xs).filter((x) => {
+    const clave = x.toLocaleLowerCase();
+    if (vistas.has(clave)) return false;
+    vistas.add(clave);
+    return true;
+  });
+}
+
 function lectorPara(
   registro: Registro,
   tipo: TipoElemento | undefined,
@@ -198,7 +209,7 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
   const ahora = isoConZona(reloj());
   const tipo = entrada.tipo ?? lector.tipo;
   // Las manuales (`#` del compositor) y las que Rimor infiere (hashtags, dominios, paquetes, lenguaje, niveles).
-  const conInferidas = unicos([
+  const conInferidas = unicasSinMayusculas([
     ...etiquetas,
     ...(bytes ? [] : etiquetasInferidas({ texto: texto ?? '', tipo, resumen: borrador.resumen ?? {} })),
   ]);
@@ -225,7 +236,8 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
         (el) => {
           // Sobre lo que hay al escribir (en el turno del elemento), no sobre lo leído antes.
           const colecciones = unicos([...(el.frontmatter.colecciones ?? []), ...(entrada.colecciones ?? [])]);
-          const etiquetas = unicos([...(el.frontmatter.etiquetas ?? []), ...conInferidas]);
+          // Solo las que se escribieron ahora: las inferidas que el usuario quitó no vuelven con otra versión.
+          const etiquetas = unicasSinMayusculas([...(el.frontmatter.etiquetas ?? []), ...unicos(entrada.etiquetas)]);
           return {
             ...el,
             original: textoVersion,

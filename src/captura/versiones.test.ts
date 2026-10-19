@@ -104,6 +104,19 @@ describe('versión nueva al capturar', () => {
     expect(repositorio.frontmatter('PRM-0001')?.titulo).toBe('Mi título');
   });
 
+  it('una versión nueva no devuelve las etiquetas inferidas que el usuario quitó', async () => {
+    const { repositorio, capturador } = montar();
+    await capturador.capturar({ texto: `${V1}\n#revision`, origen: 'pegado', tipo: 'prompt' });
+    expect(repositorio.frontmatter('PRM-0001')?.etiquetas).toEqual(['revision']);
+    await repositorio.actualizarElemento('PRM-0001', (el) => {
+      const { etiquetas: _, ...resto } = el.frontmatter;
+      return { ...el, frontmatter: resto as typeof el.frontmatter };
+    });
+    const r = valor(await capturador.capturar({ texto: `${V2}\n#revision`, origen: 'pegado', tipo: 'prompt' }));
+    expect(r.tipo).toBe('version');
+    expect(repositorio.frontmatter('PRM-0001')?.etiquetas).toBeUndefined();
+  });
+
   it('un documento con el mismo título y relacionado es su versión aunque cambie mucho', async () => {
     const { capturador } = montar();
     const v1 = '# Plan del gateway\n\n## Objetivo\nReenviar los fragmentos según llegan.\n';

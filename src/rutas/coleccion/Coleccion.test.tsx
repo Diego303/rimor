@@ -33,6 +33,10 @@ describe('Colección', () => {
       conColecciones(2, 'Probar ureq', ['gateway', 'prompts']),
     ]);
     await waitFor(() => expect(enRail()).toEqual(['gateway2', 'prompts1']), ESCRITURA);
+    // Una vacía también sale, con 0.
+    await act(async () => void (await espacio.colecciones.crear('lecturas')));
+    await waitFor(() => expect(enRail()).toEqual(['gateway2', 'prompts1', 'lecturas0']), ESCRITURA);
+    await act(async () => void (await espacio.colecciones.borrar('lecturas')));
     await act(() => router.navigate({ to: '/c/$coleccion', params: { coleccion: 'gateway' } }));
     expect(await screen.findByRole('button', { name: 'gateway' }, PRIMERA_CARGA)).toBeTruthy();
     expect(document.querySelector('.ah .meta')?.textContent).toBe('2 elementos');
@@ -48,6 +52,7 @@ describe('Colección', () => {
     fireEvent.change(campo, { target: { value: 'Pasarela' } });
     fireEvent.keyDown(campo, { key: 'Enter' });
     await waitFor(() => expect(router.state.location.pathname).toBe('/c/pasarela'), ESCRITURA);
+    await act(() => espacio.colecciones.esperar());
     await waitFor(
       () => expect(espacio.repositorio.frontmatter('TXT-0001')?.colecciones).toEqual(['pasarela']),
       ESCRITURA,

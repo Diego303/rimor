@@ -4,6 +4,7 @@
  * usuario escribe con `#` (y se pueden quitar a mano: solo se infieren al capturar). TS puro.
  */
 import type { TipoElemento } from '@rimor/formato';
+import { analizarLinea } from '../lectores/log/analisis';
 
 /** Como mucho, tantas inferidas por elemento. */
 export const MAX_INFERIDAS = 8;
@@ -11,8 +12,13 @@ export const MAX_INFERIDAS = 8;
 const MUESTRA = 200 * 1024;
 
 const CERCA = /^ {0,3}(`{3,}|~{3,})/;
-/** `#palabra` tras un espacio o al principio, con al menos una letra (no un color hexadecimal ni un número). */
-const HASHTAG = /(?:^|[\s(])#([\p{L}\p{N}_][\p{L}\p{N}_-]*)/gu;
+/** `#palabra` tras un espacio, un paréntesis o «¿¡», con al menos una letra (no un color hexadecimal ni un número). */
+const HASHTAG = /(?:^|[\s(¿¡])#([\p{L}\p{N}_][\p{L}\p{N}_-]*)/gu;
+/** Directivas de preprocesador (`#include`, `#define`…) al principio de una línea: código, no etiquetas. */
+const DIRECTIVA =
+  /^\s*#\s*(?:include|define|undef|if|ifdef|ifndef|elif|else|endif|pragma|import|error|warning|region|endregion|line)\b/;
+/** Código en línea (`` `git log #rama` ``): lo de dentro no son etiquetas. */
+const CODIGO_EN_LINEA = /`[^`\n]*`/g;
 const COLOR = /^(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 const URL = /\bhttps?:\/\/[^\s<>"'`)\]]+/gi;
 
@@ -25,14 +31,18 @@ function hashtags(texto: string): string[] {
       enCodigo = !enCodigo;
       continue;
     }
-    if (enCodigo || /^\s{0,3}#{1,6}\s/.test(linea)) continue;
-    for (const m of linea.matchAll(HASHTAG)) {
-      const t = m[1] ?? '';
+    if (enCodigo || /^\s{0,3}#{1,6}\s/.test(linea) || DIRECTIVA.test(linea)) continue;
+    for (const m of linea.replace(CODIGO_EN_LINEA, ' ').matchAll(HASHTAG)) {
+      // Sin guiones ni subrayados al final (`#tag-` es `tag`).
+      const t = (m[1] ?? '').replace(/[-_]+$/, '');
       if (/\p{L}/u.test(t) && !COLOR.test(t)) salida.push(t);
     }
   }
   return salida;
 }
+
+/** Registros de paquetes: de sus enlaces sale el paquete, no el dominio. */
+const REGISTROS = new Set(['npmjs.com', 'pypi.org', 'crates.io', 'pkg.go.dev']);
 
 /** El paquete de un enlace a un registro de paquetes, si lo es. */
 function paqueteDe(url: URL): string | null {
@@ -42,7 +52,11 @@ function paqueteDe(url: URL): string | null {
     return partes[1]?.startsWith('@') ? `${partes[1]}/${partes[2] ?? ''}` : (partes[1] ?? null);
   if (host === 'pypi.org' && partes[0] === 'project') return partes[1] ?? null;
   if (host === 'crates.io' && partes[0] === 'crates') return partes[1] ?? null;
-  if (host === 'pkg.go.dev') return partes.join('/') || null;
+  // pkg.go.dev/github.com/a/b@v1.2.3: el módulo sin su versión; sus páginas propias (`search`, `std`), nada.
+  if (host === 'pkg.go.dev') {
+    const modulo = partes.join('/').replace(/@[^/]*$/, '');
+    return modulo && !['search', 'std', 'about'].includes(modulo) ? modulo : null;
+  }
   return null;
 }
 
@@ -57,18 +71,41 @@ function deEnlaces(texto: string): string[] {
       continue;
     }
     const paquete = paqueteDe(url);
+    const host = url.hostname.replace(/^www\./, '');
     if (paquete) salida.push(paquete);
-    else salida.push(url.hostname.replace(/^www\./, ''));
+    // Una página del registro de paquetes que no es un paquete (una búsqueda): ni paquete ni dominio.
+    else if (REGISTROS.has(host)) continue;
+    // Una máquina local o una IP no dicen de qué va: no son etiquetas.
+    else if (
+      host !== 'localhost' &&
+      !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host) &&
+      !host.startsWith('[') &&
+      host.includes('.')
+    )
+      salida.push(host);
   }
   return salida;
 }
 
-/** Los niveles de un log: `error` si tiene errores y `warn` si tiene avisos. */
+/** Líneas que se miran para los niveles (los primeros que aparecen bastan). */
+const LINEAS_NIVELES = 5000;
+
+/**
+ * Los niveles de un log, con la misma lectura de cada línea que el lector Log (`level=error`, JSON, `[WARN]`…):
+ * `error` si tiene errores y `warn` si tiene avisos.
+ */
 function niveles(texto: string): string[] {
-  const salida: string[] = [];
-  if (/\b(?:ERROR|FATAL|CRITICAL)\b/.test(texto)) salida.push('error');
-  if (/\bWARN(?:ING)?\b/.test(texto)) salida.push('warn');
-  return salida;
+  let error = false;
+  let aviso = false;
+  const anio = new Date().getFullYear();
+  for (const linea of texto.split('\n', LINEAS_NIVELES)) {
+    if (!linea.trim()) continue;
+    const { nivel } = analizarLinea(linea, anio);
+    if (nivel === 'ERROR' || nivel === 'FATAL') error = true;
+    else if (nivel === 'WARN') aviso = true;
+    if (error && aviso) break;
+  }
+  return [...(error ? ['error'] : []), ...(aviso ? ['warn'] : [])];
 }
 
 export interface EntradaEtiquetas {
@@ -83,7 +120,8 @@ export function etiquetasInferidas({ texto = '', tipo, resumen = {} }: EntradaEt
   const muestra = texto.slice(0, MUESTRA);
   const lenguaje = typeof resumen.lenguaje === 'string' && resumen.lenguaje ? [resumen.lenguaje] : [];
   const todas = [
-    ...hashtags(muestra),
+    // En código, `#` es un comentario o una directiva, no una etiqueta.
+    ...(tipo === 'codigo' ? [] : hashtags(muestra)),
     ...lenguaje,
     ...(tipo === 'log' ? niveles(muestra) : []),
     ...deEnlaces(muestra),

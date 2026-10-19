@@ -71,9 +71,12 @@ export function Coleccion() {
 
   async function renombrar(escrito: string) {
     if (!espacio) return;
+    if (limpiarColeccion(escrito) === coleccion) return;
     const hecho = await espacio.colecciones.renombrar(coleccion, escrito).catch(() => false);
-    // Lleva a la colección con su nombre nuevo (limpio, como lo guarda el registro).
+    // Lleva a la colección con su nombre nuevo (limpio, como lo guarda el registro); sus elementos siguen en
+    // segundo plano.
     if (hecho) void navegar({ to: '/c/$coleccion', params: { coleccion: limpiarColeccion(escrito) }, replace: true });
+    else avisos?.avisar(t('pantallas.elemento.noGuardado'));
   }
 
   async function borrar() {
@@ -84,7 +87,10 @@ export function Coleccion() {
     if (hecho) void navegar({ to: '/' });
   }
 
-  const mover = (paso: -1 | 1) => void espacio?.colecciones.mover(coleccion, paso).catch(() => false);
+  const mover = async (paso: -1 | 1) => {
+    const hecho = await espacio?.colecciones.mover(coleccion, paso).catch(() => false);
+    if (!hecho) avisos?.avisar(t('pantallas.elemento.noGuardado'));
+  };
 
   return (
     <Pantalla
@@ -101,14 +107,14 @@ export function Coleccion() {
       control={
         editable ? (
           <div className="row">
-            <Boton variante="fantasma" pequeno disabled={posicion <= 0} onClick={() => mover(-1)}>
+            <Boton variante="fantasma" pequeno disabled={posicion <= 0} onClick={() => void mover(-1)}>
               {t('pantallas.coleccion.subir')}
             </Boton>
             <Boton
               variante="fantasma"
               pequeno
               disabled={posicion < 0 || posicion >= total - 1}
-              onClick={() => mover(1)}
+              onClick={() => void mover(1)}
             >
               {t('pantallas.coleccion.bajar')}
             </Boton>

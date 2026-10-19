@@ -79,14 +79,53 @@ describe('GestorColecciones', () => {
     const { repositorio, gestor } = await montar();
     const antes = repositorio.frontmatter('TXT-0002')?.modificado;
     expect(await gestor.renombrar('gateway', 'Pasarela')).toBe(true);
+    // El registro, al momento; los elementos, en segundo plano.
+    expect(gestor.lista().map((c) => c.id)).toEqual(['pasarela', 'prompts']);
+    await gestor.esperar();
     expect(repositorio.frontmatter('TXT-0001')?.colecciones).toEqual(['pasarela']);
     expect(repositorio.frontmatter('TXT-0002')?.colecciones).toEqual(['pasarela', 'prompts']);
     expect(repositorio.frontmatter('TXT-0002')?.modificado).toBe(antes);
     expect(await gestor.borrar('pasarela')).toBe(true);
+    await gestor.esperar();
     expect(repositorio.frontmatter('TXT-0001')?.colecciones).toBeUndefined();
     expect(repositorio.frontmatter('TXT-0002')?.colecciones).toEqual(['prompts']);
     expect(repositorio.elementos()).toHaveLength(2);
     expect(gestor.lista().map((c) => c.id)).toEqual(['prompts']);
+  });
+
+  it('también los elementos de la papelera; otra operación a la vez no hace volver la borrada', async () => {
+    const { repositorio, gestor } = await montar();
+    await repositorio.guardarElemento(conColecciones(3, ['x']));
+    await repositorio.guardarElemento(conColecciones(4, ['x', 'gateway']));
+    await repositorio.moverAPapelera('TXT-0003');
+    await gestor.sincronizar();
+    const borrado = gestor.borrar('x');
+    // Mientras se reescriben sus elementos, se mueve otra.
+    await gestor.mover('prompts', -1);
+    await borrado;
+    await gestor.esperar();
+    await gestor.sincronizar();
+    expect(gestor.lista().map((c) => c.id)).toEqual(['prompts', 'gateway']);
+    expect(repositorio.frontmatter('TXT-0003')?.colecciones).toBeUndefined();
+    await repositorio.restaurar('TXT-0003');
+    await gestor.sincronizar();
+    expect(gestor.lista().map((c) => c.id)).not.toContain('x');
+  });
+
+  it('si la lectura falla al abrir, no se escribe encima', async () => {
+    const { almacen, repositorio } = await montar();
+    const registro = { esquema: 1, colecciones: [{ id: 'vacia', nombre: 'vacia', orden: 0, creado: AHORA }] };
+    await almacen.escribir(RUTA_COLECCIONES, new TextEncoder().encode(JSON.stringify(registro)));
+    const roto = Object.create(almacen) as AlmacenMemoria;
+    roto.leer = async () => {
+      throw new Error('E/S');
+    };
+    const gestor = new GestorColecciones(roto, repositorio, { puedeEscribir: () => true });
+    await gestor.cargar();
+    await gestor.sincronizar();
+    expect(await gestor.crear('otra')).toBe(false);
+    const archivo = leerRegistro(await leerTexto(almacen, RUTA_COLECCIONES));
+    expect(archivo?.colecciones.map((c) => c.id)).toEqual(['vacia']);
   });
 
   it('un archivo ilegible no se pisa; una pestaña que solo lee no escribe (pero ve las colecciones)', async () => {
