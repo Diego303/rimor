@@ -1,7 +1,7 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-19 21:09
+**Última actualización:** 2026-10-19 21:16
 **Ahora:** IN-029 · Versiones e historial · fase análisis y diseño
 **Siguiente:** IN-030 · Hilos
 **Progreso:** F0 9/9 · v0.1 30/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 39/99
@@ -47,8 +47,8 @@
 | IN-025 | Lector Código | v0.1 | 4 | hecha | 7c063ed 976f145 9926e80 | docs/features/IN-025-codigo.md |
 | IN-026 | Inicio: feed y triaje | v0.1 | 5 | hecha | c71fe34 3387a22 3e903c6 | docs/features/IN-026-inicio.md |
 | IN-027 | Vista de elemento, estados, fijar y papelera | v0.1 | 5 | hecha | 8e26cc6 e004ba0 52abc20 | docs/features/IN-027-elemento.md |
-| IN-028 | Comparaciones de logs y mediciones | v0.1 | 5 | hecha | 6f0e9f7 cd731a1 | docs/features/IN-028-comparaciones.md |
-| IN-029 | Versiones e historial | v0.1 | 5 | pendiente | — | — |
+| IN-028 | Comparaciones de logs y mediciones | v0.1 | 5 | hecha | 6f0e9f7 cd731a1 a9fce8f | docs/features/IN-028-comparaciones.md |
+| IN-029 | Versiones e historial | v0.1 | 5 | en análisis y diseño | — | docs/features/IN-029-versiones.md |
 | IN-030 | Hilos | v0.1 | 5 | pendiente | — | — |
 | IN-031 | Colecciones y etiquetas | v0.1 | 5 | pendiente | — | — |
 | IN-032 | Búsqueda | v0.1 | 5 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-19 | IN-028 | verificación | pnpm verificar OK (1058 pruebas, 219,7 KB); aceptación confirmada por la revisión independiente y 11 hallazgos atendidos con pruebas | … |
+| 2026-10-19 | IN-029 | análisis y diseño | historial en turno con copia entera, versión nueva al capturar por título o shingles, Myers y diff por secciones, lista y restaurar | … |
+| 2026-10-19 | IN-028 | verificación | pnpm verificar OK (1058 pruebas, 219,7 KB); aceptación confirmada por la revisión independiente y 11 hallazgos atendidos con pruebas | a9fce8f |
 | 2026-10-19 | IN-028 | implementación | entidades en su carpeta, cálculo de logs y mediciones desde los derivados, pantalla como la referencia, crear desde el elemento o Inicio y recálculo con aviso | cd731a1 |
 | 2026-10-19 | IN-028 | análisis y diseño | entidades en su carpeta con repositorio genérico, cálculo desde los derivados, pantalla como la referencia y recálculo por huella de las fuentes | 6f0e9f7 |
 | 2026-10-19 | IN-027 | verificación | pnpm verificar OK (1030 pruebas, 216,0 KB); revisión independiente con 10 hallazgos corregidos con pruebas | 52abc20 |
