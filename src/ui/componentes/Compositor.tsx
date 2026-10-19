@@ -13,6 +13,7 @@ import { analizarIndicaciones } from '../../captura/indicaciones';
 import { PREVIA_EN_WORKER, type Previa, previsualizar } from '../../captura/previa';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
+import { hiloPara } from '../../hilos/hilos';
 import { fmtNumero } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { useLectoresOpcional } from '../../lectores/Lectores';
@@ -66,9 +67,11 @@ const sinAcentos = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toL
 interface Props {
   /** Abrir un elemento (la ref a la que se responde). */
   alAbrir?: (ref: string) => void;
+  /** En la pantalla de un hilo: todo lo que se capture entra en él (IN-030). */
+  hiloFijo?: string;
 }
 
-export function Compositor({ alAbrir }: Props) {
+export function Compositor({ alAbrir, hiloFijo }: Props) {
   const { t } = useT();
   const espacio = useEspacioOpcional();
   const lectores = useLectoresOpcional();
@@ -187,8 +190,15 @@ export function Compositor({ alAbrir }: Props) {
     const textoGuardado = texto;
     const archivosGuardados = [...archivos];
     const respuesta = respondiendoA;
-    // Responder a un elemento con hilo: la captura va a ese hilo (IN-030 crea el hilo si no lo tiene).
-    const hilo = respuesta ? espacio?.repositorio.frontmatter(respuesta)?.hilo : undefined;
+    // Responder a un elemento: la captura va a su hilo; si aún no tenía, se crea uno con él (IN-030). En un hilo
+    // (`hiloFijo`), a ese.
+    const hilo =
+      hiloFijo ??
+      (respuesta && espacio
+        ? ((await hiloPara(respuesta, { repositorio: espacio.repositorio, entidades: espacio.entidades }).catch(
+            () => null,
+          )) ?? undefined)
+        : undefined);
     const comunes: Omit<EntradaCaptura, 'origen'> = {
       ...(ind.tipo ? { tipo: ind.tipo } : {}),
       colecciones: ind.colecciones,
@@ -253,7 +263,7 @@ export function Compositor({ alAbrir }: Props) {
     actualizarSugerencias(e.target.value, e.target.selectionStart ?? e.target.value.length);
   }
 
-  const placeholder = respondiendoA ? t('compositor.placeholderHilo') : t('compositor.placeholder');
+  const placeholder = respondiendoA || hiloFijo ? t('compositor.placeholderHilo') : t('compositor.placeholder');
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: zona de soltar archivos; con teclado se adjunta con el botón.
     <div

@@ -35,13 +35,13 @@ En su «Detalles», la fila **Hilo** con su ref pulsable y «Mover a otro hilo»
 
 ## Tareas
 
-- [ ] Entidad `Hilo` (`hilos/HIL-NNNN--….md`): título, estado (abierto o resuelto), nota de solución, creado y resuelto.
-- [ ] Formación automática: el segundo error con la misma huella crea el hilo con los dos; los siguientes se añaden.
-- [ ] «Responder» en un mensaje: la nueva captura entra en el hilo de ese elemento (o crea uno).
-- [ ] Pantalla Hilo: cabecera, mensajes en orden con su respuesta, la nota «así lo resolviste» destacada y compositor «Responder en este hilo…».
-- [ ] «Marcar resuelto» con una línea de nota; reabrir.
-- [ ] «Convertir en investigación» oculto hasta IN-070.
-- [ ] Un elemento, un solo hilo (D13); moverlo de hilo con confirmación.
+- [x] Entidad `Hilo` (`hilos/HIL-NNNN--….md`): título, estado (abierto o resuelto), nota de solución, creado y resuelto.
+- [x] Formación automática: el segundo error con la misma huella crea el hilo con los dos; los siguientes se añaden.
+- [x] «Responder» en un mensaje: la nueva captura entra en el hilo de ese elemento (o crea uno).
+- [x] Pantalla Hilo: cabecera, mensajes en orden con su respuesta, la nota «así lo resolviste» destacada y compositor «Responder en este hilo…».
+- [x] «Marcar resuelto» con una línea de nota; reabrir.
+- [x] «Convertir en investigación» oculto hasta IN-070.
+- [x] Un elemento, un solo hilo (D13); moverlo de hilo con confirmación.
 
 ## Pruebas previstas
 
@@ -68,3 +68,21 @@ En su «Detalles», la fila **Hilo** con su ref pulsable y «Mover a otro hilo»
 ## Autorrevisión
 
 Cubre las siete tareas y la aceptación. Aplica lo aprendido: las escrituras en turno (la ref del hilo con `crear`), deshacer y mover sin pisar ediciones, la pantalla reutiliza el mensaje de Inicio y el compositor, y las pruebas de pantalla precargan sus módulos.
+
+## Implementación
+
+- `src/hilos/hilos.ts`: `crearHilo` (ref con `entidades.crear`, en turno), `anadirAHilo` (reabre uno resuelto), `moverAHilo` (o sacar con `null`), `hiloPara`, `resolver` (nota en el hilo y en su último elemento, con copia en el historial), `reabrir`, `renombrarHilo`, `elementosDe` y `hiloDe`. El repositorio de entidades lee también `hilos/` al abrir.
+- `src/hilos/formar.ts`: `formarPorHuella`, en una cola (dos errores iguales a la vez no crean dos hilos). La llama `Captura.tsx` con los derivados de un error, junto al recuento de errores reconocidos, solo en la pestaña que escribe.
+- Responder: el compositor usa `hiloPara` (crea el hilo si no lo había) y acepta `hiloFijo` en la pantalla del hilo. «Sí, a su hilo» de la respuesta del lector Log funciona en Inicio (y `accionSoportada` lo admite).
+- `src/rutas/hilo/Hilo.tsx`: la pantalla como `SC.hilo`, con el mensaje de Inicio (`Mensaje`), «Así lo resolviste», «Marcar resuelto» (diálogo con una línea) y «Reabrir», y el compositor del hilo.
+- En el elemento, la fila «Hilo» de «Detalles» y `DialogoMoverHilo` (elegir y confirmar; sacar del hilo).
+- Pruebas: `src/hilos/hilos.test.ts` (operaciones, formación y la aceptación con el lector Error real) y `src/rutas/hilo/Hilo.test.tsx` (pantalla, responder desde Inicio, mover desde el elemento).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| El chip del hilo lleva el color del error si sus elementos son errores | Como la referencia (`kchip k-err` en el hilo de un error); en otro caso, neutro. |
+| Las pruebas de pantalla fechan sus elementos con `pruebas/fechas.ts` (`haceMinutos`) | Pasada la medianoche, «hace 30 minutos» era ayer y las que esperan «Hoy» fallaban según la hora. |
+| «Archivar» en un mensaje del hilo archiva el elemento (sigue en el hilo) | Es el mismo mensaje que en Inicio; archivar no lo saca de su hilo. |
+

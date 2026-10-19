@@ -13,6 +13,7 @@ import { ejecutorEnHilo } from '../../lectores/ejecutor';
 import { ProveedorLectores } from '../../lectores/Lectores';
 import { elementoFalso } from '../../lectores/pruebas/falsos';
 import { REGISTRO } from '../../lectores/registro';
+import { haceMinutos } from '../../pruebas/fechas';
 import { crearRouter } from '../rutas';
 import { olvidarElementos } from './useElemento';
 
@@ -24,7 +25,7 @@ const PRIMERA_CARGA = { timeout: 15_000 };
 function capturado(i: number, titulo: string, minutos: number): Elemento {
   const original = `${titulo}\nSegunda línea del elemento ${i}.`;
   const base = elementoFalso(i, original, 'texto');
-  const creado = isoConZona(new Date(Date.now() - minutos * 60_000));
+  const creado = isoConZona(haceMinutos(minutos));
   return {
     ...base,
     frontmatter: { ...base.frontmatter, titulo, creado, modificado: creado, hash: hashOriginal(original) },

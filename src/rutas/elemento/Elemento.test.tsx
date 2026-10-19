@@ -12,6 +12,7 @@ import { ejecutorEnHilo } from '../../lectores/ejecutor';
 import { ProveedorLectores } from '../../lectores/Lectores';
 import { elementoFalso } from '../../lectores/pruebas/falsos';
 import { REGISTRO } from '../../lectores/registro';
+import { haceMinutos } from '../../pruebas/fechas';
 import { crearRouter } from '../rutas';
 
 const cerrojos: Cerrojos = { request: (_n, _o, fn) => fn({}) };
@@ -23,7 +24,7 @@ const ESCRITURA = { timeout: 5000 };
 /** Un texto o una idea capturados hoy, hace media hora. */
 function capturado(i: number, original: string, tipo: 'texto' | 'idea' = 'texto', titulo = original): Elemento {
   const base = elementoFalso(i, original, tipo);
-  const creado = isoConZona(new Date(Date.now() - 30 * 60_000));
+  const creado = isoConZona(haceMinutos(30));
   const ref = `${PREFIJOS[tipo]}-${String(i).padStart(4, '0')}` as Elemento['frontmatter']['ref'];
   return {
     ...base,

@@ -374,8 +374,43 @@
     },
     "hilo": {
       "titulo": "Hilo",
-      "vacioTitulo": "Hilo",
-      "vacio": "Aquí verás los elementos del hilo en orden, con lo que aprendiste."
+      "noEncontrado": "No encuentro este hilo",
+      "vacio": "Aquí verás los elementos del hilo en orden, con lo que aprendiste.",
+      "elementos": {
+        "one": "{n} elemento",
+        "other": "{n} elementos"
+      },
+      "desde": "desde el {dia}",
+      "coleccion": {
+        "one": "colección {colecciones}",
+        "other": "colecciones {colecciones}"
+      },
+      "abierto": "abierto",
+      "resuelto": "resuelto",
+      "reabrir": "Reabrir",
+      "marcarResuelto": "Marcar resuelto",
+      "mensajes": "Lo que hay en el hilo",
+      "asiLoResolviste": "Así lo resolviste",
+      "nota": "Cómo se resolvió, en una línea",
+      "notaEjemplo": "Subí el timeout de lectura a 60 s",
+      "marcado": "Hilo marcado como resuelto",
+      "reabierto": "Hilo reabierto",
+      "anadido": "{ref} añadido a {hilo}",
+      "noAnadido": "No se pudo añadir al hilo.",
+      "fila": "Hilo",
+      "ninguno": "Ninguno",
+      "mover": "Mover a otro hilo",
+      "moverTitulo": "Mover {ref} a otro hilo",
+      "sinOtros": "No hay otros hilos abiertos.",
+      "sacar": "Sacar del hilo",
+      "confirmar": "¿Mover {ref} a {hilo}?",
+      "confirmarSacar": "¿Sacar {ref} de {hilo}?",
+      "confirmarTexto": "Un elemento solo está en un hilo: sale del que tiene ahora.",
+      "si": "Mover",
+      "siSacar": "Sacar",
+      "movido": "{ref} está ahora en {hilo}",
+      "sacado": "{ref} ya no está en ningún hilo",
+      "noMovido": "No se pudo mover."
     },
     "buscar": {
       "titulo": "Buscar",

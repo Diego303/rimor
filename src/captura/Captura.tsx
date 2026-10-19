@@ -8,6 +8,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 import { useEspacioOpcional } from '../espacio/Espacio';
 import { useEspacio } from '../estado/espacio';
 import { useFrescos } from '../estado/frescos';
+import { formarPorHuella } from '../hilos/formar';
 import { fmtBytes } from '../i18n/formatos';
 import { useT } from '../i18n/useT';
 import { useLectoresOpcional } from '../lectores/Lectores';
@@ -71,8 +72,9 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
   );
 
   /**
-   * Cuenta un error reconocido si, con sus derivados, su huella ya estaba en un elemento anterior (los ULID se
-   * ordenan por su creación: de dos errores iguales soltados a la vez, solo cuenta el segundo).
+   * Con los derivados de un error: cuenta un error reconocido si su huella ya estaba en un elemento anterior (los
+   * ULID se ordenan por su creación: de dos errores iguales soltados a la vez, solo cuenta el segundo) y lo mete en
+   * el hilo de su error, o crea el hilo con todas sus ocurrencias (IN-030).
    */
   const contarSiReconocido = useCallback(
     async (c: Capturado) => {
@@ -81,13 +83,14 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
       if (lector?.tipo !== 'error') return;
       const datos = await c.derivados.catch(() => null);
       const huella = datos ? lector.resumen(datos).huella : undefined;
-      if (
-        huella &&
-        espacio.repositorio
-          .elementos()
-          .some((o) => o.id < c.elemento.frontmatter.id && o.lector.resumen.huella === huella)
-      )
+      if (typeof huella !== 'string' || !huella) return;
+      const id = c.elemento.frontmatter.id;
+      if (espacio.repositorio.elementos().some((o) => o.id < id && o.lector.resumen.huella === huella))
         await espacio.contadores.contar('erroresReconocidos');
+      if (espacio.repositorio.escribible())
+        await formarPorHuella(id, huella, { repositorio: espacio.repositorio, entidades: espacio.entidades }).catch(
+          () => null,
+        );
     },
     [espacio, lectores],
   );

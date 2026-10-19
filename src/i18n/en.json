@@ -374,8 +374,43 @@
     },
     "hilo": {
       "titulo": "Thread",
-      "vacioTitulo": "Thread",
-      "vacio": "Here you will see the thread's items in order, with what you learned."
+      "noEncontrado": "I cannot find this thread",
+      "vacio": "Here you will see the thread’s items in order, with what you learned.",
+      "elementos": {
+        "one": "{n} item",
+        "other": "{n} items"
+      },
+      "desde": "since {dia}",
+      "coleccion": {
+        "one": "collection {colecciones}",
+        "other": "collections {colecciones}"
+      },
+      "abierto": "open",
+      "resuelto": "solved",
+      "reabrir": "Reopen",
+      "marcarResuelto": "Mark as solved",
+      "mensajes": "What is in the thread",
+      "asiLoResolviste": "How you solved it",
+      "nota": "How it was solved, in one line",
+      "notaEjemplo": "Raised the read timeout to 60 s",
+      "marcado": "Thread marked as solved",
+      "reabierto": "Thread reopened",
+      "anadido": "{ref} added to {hilo}",
+      "noAnadido": "It could not be added to the thread.",
+      "fila": "Thread",
+      "ninguno": "None",
+      "mover": "Move to another thread",
+      "moverTitulo": "Move {ref} to another thread",
+      "sinOtros": "There are no other open threads.",
+      "sacar": "Take out of the thread",
+      "confirmar": "Move {ref} to {hilo}?",
+      "confirmarSacar": "Take {ref} out of {hilo}?",
+      "confirmarTexto": "An item is only in one thread: it leaves the one it is in now.",
+      "si": "Move",
+      "siSacar": "Take out",
+      "movido": "{ref} is now in {hilo}",
+      "sacado": "{ref} is no longer in any thread",
+      "noMovido": "It could not be moved."
     },
     "buscar": {
       "titulo": "Search",

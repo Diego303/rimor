@@ -28,8 +28,8 @@ export function vistaPrevia(el: Pick<Elemento, 'original'> | null, titulo: strin
   return linea ? linea.slice(0, LARGO_PREVIA) : null;
 }
 
-/** Las acciones de una respuesta que el feed sabe hacer (las de hilos llegan con IN-030). */
-export const accionSoportada = (id: string) => id === 'no' || id.startsWith('coleccion:');
+/** Las acciones de una respuesta que el feed sabe hacer: «No», añadir a una colección y llevar a un hilo. */
+export const accionSoportada = (id: string) => id === 'no' || id.startsWith('coleccion:') || id.startsWith('hilo:');
 
 export interface PropsMensaje {
   fm: FrontmatterComun;

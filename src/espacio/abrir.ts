@@ -18,7 +18,7 @@ import { conCambios, type EstadoCuidado, leerEstado, RUTA_ESTADO } from './estad
 import { crearManifest, NOMBRE_ESPACIO_INICIAL, RUTA_MANIFEST } from './manifest';
 
 /** Los tipos de entidad que ya tienen funcionalidad (sus carpetas se leen al abrir). */
-const TIPOS_ENTIDAD_LEIDOS = ['comparacion'] as const;
+const TIPOS_ENTIDAD_LEIDOS = ['comparacion', 'hilo'] as const;
 
 export interface DependenciasEspacio {
   espacioId: string;

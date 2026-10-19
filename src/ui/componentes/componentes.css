@@ -1551,3 +1551,17 @@ pre.code.codigo .ln {
 .seccion-eliminada {
   text-decoration: line-through;
 }
+/* Hilos (IN-030), como `SC.hilo` de la referencia. */
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mensaje-hilo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.nota-hilo {
+  margin-left: 40px;
+}

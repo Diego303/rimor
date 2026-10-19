@@ -24,6 +24,7 @@ import {
 import { useEdicion } from '../../espacio/useEdicion';
 import { useEspacio } from '../../estado/espacio';
 import { useFrescos } from '../../estado/frescos';
+import { hiloDe, moverAHilo } from '../../hilos/hilos';
 import { useT } from '../../i18n/useT';
 import { ContextoComparar } from '../../lectores/ContextoComparar';
 import { ContextoVersion } from '../../lectores/ContextoVersion';
@@ -41,7 +42,7 @@ import { DialogoTipo } from '../inicio/Dialogos';
 import { Pantalla } from '../Pantalla';
 import { AccionesElemento, MarcasElemento, metaDe, TituloElemento } from './Cabecera';
 import { FilasComunes } from './Comunes';
-import { DialogoEstado, DialogoOriginal } from './Dialogos';
+import { DialogoEstado, DialogoMoverHilo, DialogoOriginal } from './Dialogos';
 import { Notas } from './Notas';
 import { useElementoVivo } from './useElementoVivo';
 import { anteriorDe, CambiosDeVersion, ListaVersiones, useVersiones } from './Versiones';
@@ -86,7 +87,7 @@ function ElementoNormal({ refe: ref }: { refe: string }) {
   );
 }
 
-type Dialogo = 'estado' | 'tipo' | 'original' | 'comparar' | null;
+type Dialogo = 'estado' | 'tipo' | 'original' | 'comparar' | 'hilo' | null;
 
 function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera: boolean }) {
   const { t, idioma } = useT();
@@ -280,6 +281,36 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
     [espacio, fm.id, avisos, t],
   );
 
+  // El hilo del elemento (D13: uno solo) y moverlo a otro, con confirmación.
+  const hiloActual = espacio ? hiloDe(fm.hilo, espacio.entidades) : null;
+  const otrosHilos = useMemo(
+    () =>
+      dialogo === 'hilo' && espacio
+        ? espacio.entidades
+            .lista('hilo')
+            .filter((h) => h.estado === 'abierto' && h.ref !== fm.hilo)
+            .sort((a, b) => Date.parse(b.modificado ?? b.creado) - Date.parse(a.modificado ?? a.creado))
+        : [],
+    [dialogo, espacio, fm.hilo],
+  );
+  const moverHilo = useCallback(
+    async (destino: string | null) => {
+      setDialogo(null);
+      if (!espacio) return;
+      const hecho = await moverAHilo(fm.id, destino, {
+        repositorio: espacio.repositorio,
+        entidades: espacio.entidades,
+      }).catch(() => false);
+      if (!hecho) return avisos?.avisar(t('pantallas.hilo.noMovido'));
+      avisos?.avisar(
+        destino
+          ? t('pantallas.hilo.movido', { ref: fm.ref, hilo: destino })
+          : t('pantallas.hilo.sacado', { ref: fm.ref }),
+      );
+    },
+    [espacio, fm.id, fm.ref, avisos, t],
+  );
+
   /** Colecciones y etiquetas del espacio, para sugerirlas al editar. */
   const existentes = useCallback(() => {
     const todos = espacio?.repositorio.elementos() ?? [];
@@ -329,6 +360,9 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       alGuardarEtiquetas={(texto, inicial) => void guardarLista(texto, inicial, 'etiquetas')}
       alCambiarTipo={() => setDialogo('tipo')}
       alVerOriginal={() => setDialogo('original')}
+      hilo={hiloActual ? { ref: hiloActual.ref, titulo: hiloActual.titulo } : null}
+      alAbrirHilo={(r) => void navegar({ to: '/hilo/$ref', params: { ref: r } })}
+      alMoverHilo={() => setDialogo('hilo')}
     />
   );
 
@@ -392,6 +426,14 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
         alElegir={(l) => void elegirTipo(l)}
       />
       <DialogoOriginal abierto={dialogo === 'original'} el={el} alCerrar={() => setDialogo(null)} />
+      <DialogoMoverHilo
+        abierto={dialogo === 'hilo'}
+        refe={fm.ref}
+        actual={hiloActual}
+        otros={otrosHilos}
+        alMover={(destino) => void moverHilo(destino)}
+        alCerrar={() => setDialogo(null)}
+      />
       <DialogoComparar
         abierto={dialogo === 'comparar'}
         refe={fm.ref}

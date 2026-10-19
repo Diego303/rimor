@@ -8,7 +8,7 @@ import { useMemo, useRef, useState } from 'react';
 import { limpiarColeccion, limpiarEtiqueta } from '../../espacio/ediciones';
 import { fmtBytes, fmtFecha } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
-import { Boton } from '../../ui/componentes';
+import { Boton, Ref } from '../../ui/componentes';
 import { EnSitio } from '../../ui/componentes/EnSitio';
 
 /** Sugerencias que se enseñan como mucho a la vez. */
@@ -49,6 +49,10 @@ interface Props {
   alGuardarEtiquetas: (texto: string, inicial: readonly string[]) => void;
   alCambiarTipo: () => void;
   alVerOriginal: () => void;
+  /** El hilo en que está (D13: uno solo), y abrirlo o moverlo a otro. */
+  hilo: { ref: string; titulo: string } | null;
+  alAbrirHilo: (ref: string) => void;
+  alMoverHilo: () => void;
 }
 
 export function FilasComunes({
@@ -59,6 +63,9 @@ export function FilasComunes({
   alGuardarEtiquetas,
   alCambiarTipo,
   alVerOriginal,
+  hilo,
+  alAbrirHilo,
+  alMoverHilo,
 }: Props) {
   const { t, idioma } = useT();
   const [editando, setEditando] = useState<'colecciones' | 'etiquetas' | null>(null);
@@ -153,6 +160,24 @@ export function FilasComunes({
         <Boton variante="fantasma" pequeno onClick={alVerOriginal}>
           {t('pantallas.elemento.verOriginal')}
         </Boton>
+      </dd>
+      <dt>{t('pantallas.hilo.fila')}</dt>
+      <dd>
+        {hilo ? (
+          <>
+            <Ref refe={hilo.ref} alPulsar={alAbrirHilo} /> <span className="sm">{hilo.titulo}</span>
+          </>
+        ) : (
+          ninguna
+        )}
+        {editable && (
+          <>
+            {' '}
+            <Boton variante="fantasma" pequeno onClick={alMoverHilo}>
+              {t('pantallas.hilo.mover')}
+            </Boton>
+          </>
+        )}
       </dd>
       <dt>{t('pantallas.elemento.referencia')}</dt>
       <dd>

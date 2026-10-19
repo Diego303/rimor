@@ -6,12 +6,13 @@ import { crearCapturador } from '../../captura/flujo';
 import { tituloDePrompt } from '../../lectores/prompt/lector';
 import { REGISTRO } from '../../lectores/registro';
 import { ESCRITURA, montarApp, PRIMERA_CARGA } from '../../pruebas/app';
+import { haceMinutos } from '../../pruebas/fechas';
 import { construirContexto } from '../../respuestas/contexto';
 
 const PREFIJO = { prompt: 'PRM', markdown: 'DOC-MD' } as const;
 
 function capturado(n: number, tipo: 'prompt' | 'markdown', original: string, titulo: string): Elemento {
-  const creado = isoConZona(new Date(Date.now() - 60 * 60_000));
+  const creado = isoConZona(haceMinutos(60));
   return {
     frontmatter: {
       id: `01JAB4C2Q2X8M5N7P0R4S6T8${String(n).padStart(2, '0')}`,

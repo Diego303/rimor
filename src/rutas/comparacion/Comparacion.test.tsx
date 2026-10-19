@@ -6,6 +6,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { useCompositor } from '../../captura/compositor';
 import { leerResultado } from '../../comparaciones/resultado';
 import { ESCRITURA, montarApp, PRIMERA_CARGA } from '../../pruebas/app';
+import { haceMinutos } from '../../pruebas/fechas';
 
 const leer = (ruta: string) => readFileSync(join(process.cwd(), ruta), 'utf8');
 const reqwest = leer('fixtures/mediciones/reqwest.txt');
@@ -17,7 +18,7 @@ const PREFIJO = { log: 'LOG', mediciones: 'MED' } as const;
 
 /** Un log o unas mediciones capturados hoy, `minutos` antes de ahora. */
 function capturado(n: number, tipo: 'log' | 'mediciones', original: string, titulo: string, minutos = 30): Elemento {
-  const creado = isoConZona(new Date(Date.now() - minutos * 60_000));
+  const creado = isoConZona(haceMinutos(minutos));
   return {
     frontmatter: {
       id: `01JAB4C2Q2X8M5N7P0R4S6T8${String(n).padStart(2, '0')}`,

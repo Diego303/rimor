@@ -14,6 +14,7 @@ import { anadirColeccion as conColeccion, conEstado, conFijado } from '../../esp
 import { useEdicion } from '../../espacio/useEdicion';
 import { useEspacio } from '../../estado/espacio';
 import { esFresco, useFrescos } from '../../estado/frescos';
+import { anadirAHilo, hiloPara } from '../../hilos/hilos';
 import { useT } from '../../i18n/useT';
 import { IdeasQueVuelven } from '../../lectores/idea/IdeasQueVuelven';
 import { vuelven } from '../../lectores/idea/resurgir';
@@ -171,15 +172,34 @@ export function Inicio() {
     [editarFrontmatter, avisos, t],
   );
 
+  /** «Sí, a su hilo»: el elemento entra en el hilo de `ref` (que se crea si aún no tenía). */
+  const alHiloDe = useCallback(
+    async (fm: FrontmatterComun, ref: string) => {
+      if (!espacio) return false;
+      const d = { repositorio: espacio.repositorio, entidades: espacio.entidades };
+      const hilo = await hiloPara(ref, d).catch(() => null);
+      if (!hilo) {
+        avisos?.avisar(t('pantallas.hilo.noAnadido'));
+        return false;
+      }
+      await anadirAHilo(hilo, fm.id, d).catch(() => undefined);
+      avisos?.avisar(t('pantallas.hilo.anadido', { ref: fm.ref, hilo }));
+      return true;
+    },
+    [espacio, avisos, t],
+  );
+
   const alAccion = useCallback(
     async (fm: FrontmatterComun, accion: Accion) => {
       const resuelta = accion.id.startsWith('coleccion:')
         ? await anadirColeccion(fm, accion.id.slice('coleccion:'.length))
-        : true;
+        : accion.id.startsWith('hilo:')
+          ? await alHiloDe(fm, accion.id.slice('hilo:'.length))
+          : true;
       // Resuelta (también con «No»): no se vuelve a ofrecer en esta sesión. Si falló, sigue ahí para reintentarlo.
       if (resuelta) setSinAcciones((s) => new Set(s).add(fm.id));
     },
-    [anadirColeccion],
+    [anadirColeccion, alHiloDe],
   );
   const alArchivar = useCallback((fm: FrontmatterComun) => void archivar(fm), [archivar]);
 
