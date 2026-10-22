@@ -10,6 +10,7 @@ import { useBuscar } from '../../busqueda/Busqueda';
 import { Resaltado } from '../../busqueda/Resaltado';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { useT } from '../../i18n/useT';
+import type { Vista } from '../../rutas/vistas/orden';
 import { Teclas } from '../atajos/AyudaAtajos';
 import { useGestorAtajos } from '../atajos/useAtajos';
 import { IconoTipo } from '../componentes';
@@ -101,7 +102,12 @@ function Contenido({ alCerrar }: { alCerrar: () => void }) {
       titulo: t('paleta.buscarEn', { texto: consulta }),
       reciente: false,
       puntuacion: 0,
-      ejecutar: () => void navegar({ to: '/buscar', search: { q: consulta } }),
+      // Desde Buscar, con la vista que tenga.
+      ejecutar: () =>
+        void navegar({
+          to: '/buscar',
+          search: (antes: { vista?: Vista }) => ({ q: consulta, ...(antes.vista ? { vista: antes.vista } : {}) }),
+        }),
     };
     // Lo que casa por poco (las letras en orden) va después de los elementos: «rec» abre «Receta…», no «Escribir…».
     const fuertes = lista.filter((e) => e.puntuacion >= COINCIDE_BIEN);

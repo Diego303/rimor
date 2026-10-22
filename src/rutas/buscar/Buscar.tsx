@@ -215,13 +215,14 @@ export function Buscar() {
           }
         />
       )}
-      <div className="resultados-busqueda" aria-live="polite">
+      <div className="resultados-busqueda">
         {!consulta ? (
           <Vacio titulo={t('pantallas.buscar.vacioTitulo')}>{t('pantallas.buscar.vacio')}</Vacio>
         ) : busqueda ? (
           <>
             <div className="row cabeza-resultados">
-              <p className="sm muted">
+              {/* Solo el recuento se anuncia: las vistas montan y desmontan filas y tarjetas sin que se busque otra vez. */}
+              <p className="sm muted" aria-live="polite">
                 {busqueda.aproximado
                   ? t('pantallas.buscar.alMenos', { n: busqueda.total })
                   : busqueda.total > busqueda.resultados.length

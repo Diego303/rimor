@@ -77,3 +77,27 @@ Cubre las tres tareas de IN-034. Reutiliza `TarjetaElemento`, `useElemento`, `Se
 | La prueba de 1.000 elementos monta la lista densa sola | Guardar 1.000 archivos por la app entera tardaba y ralentizaba el resto de la suite. |
 | `Inicio.test.tsx` precarga sus pantallas en `beforeAll` | Como las demás pruebas de pantalla: en la suite completa su primera prueba se pasaba del plazo de la carga en frío. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 88 archivos y 1227 pruebas; carga inicial 236,6 KB de 300.
+
+**Criterios de aceptación:** la lista densa con 1.000 elementos solo monta las filas que se ven y un margen (`Vistas.test.tsx`, «lista densa con muchos elementos»).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| Mosaico con la tarjeta de cada lector, agrupado con cabeceras y recuentos | `orden.test.ts` (`agruparMosaico`) y `Vistas.test.tsx` (grupos por tipo y fecha, tarjeta del lector, «Ver más», abrir) |
+| Lista densa ordenable con lista virtual | `orden.test.ts` (`ordenarDensa`, `siguienteOrden`) y `Vistas.test.tsx` (columnas, `aria-sort`, teclado, 1.000 elementos) |
+| En colecciones y en los resultados de búsqueda | `Vistas.test.tsx` (colección y Buscar, la vista en la dirección, Atrás) y `Paleta.test.tsx` |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | Fin (o una flecha hacia una fila sin montar) perdía el foco: se buscaba la fila antes del desplazamiento | Se sigue intentando hasta que la fila está montada. `Vistas.test.tsx` |
+| 2 | Podía no quedar ninguna fila a la que llegar con Tab (lista que encoge, fila del foco desmontada) | La tabulable es la del foco si está montada y existe; si no, la primera visible; una lista nueva empieza arriba. `Vistas.test.tsx` |
+| 3 | Las vistas estaban dentro de `aria-live`: el lector de pantalla leía las filas al desplazarse | Solo el recuento se anuncia |
+| 4 | «Buscar…» de la paleta perdía la vista de Buscar | La conserva. `Paleta.test.tsx` |
+| 5 | Una fecha ilegible salía la primera en orden ascendente | Va al final en los dos sentidos. `orden.test.ts` |
+

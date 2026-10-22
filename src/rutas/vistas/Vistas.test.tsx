@@ -143,4 +143,25 @@ describe('lista densa con muchos elementos', () => {
     // Los espaciadores ocupan el alto de las que no están montadas.
     expect(document.querySelectorAll('.lista-densa tr.espaciador')).toHaveLength(1);
   });
+
+  it('Fin lleva el foco a la última aunque no esté montada; siempre queda una fila a la que llegar con Tab', async () => {
+    const muchos = Array.from({ length: 1000 }, (_, i) => el(i + 1, 'texto', `Nota ${i + 1}`, 'nota').frontmatter);
+    const { rerender } = render(<ListaDensa elementos={muchos} alAbrir={() => undefined} />);
+    const contenedor = document.querySelector('.lista-densa') as HTMLElement;
+    const primera = document.querySelector('.lista-densa tbody tr.click') as HTMLElement;
+    primera.focus();
+    fireEvent.keyDown(primera, { key: 'End' });
+    // El navegador avisa del desplazamiento después: entonces se monta la última y recibe el foco.
+    expect(document.activeElement?.getAttribute('data-indice')).toBe('0');
+    // happy-dom no desplaza (`scrollTo` no hace nada): se hace lo que haría el navegador y se avisa del desplazamiento.
+    await act(async () => {
+      contenedor.scrollTop = 1000 * 38;
+      fireEvent.scroll(contenedor);
+    });
+    await waitFor(() => expect(document.activeElement?.getAttribute('data-indice')).toBe('999'));
+
+    // La lista encoge (otra búsqueda): la fila tabulable sigue existiendo.
+    rerender(<ListaDensa elementos={muchos.slice(0, 3)} alAbrir={() => undefined} />);
+    await waitFor(() => expect(document.querySelectorAll('.lista-densa tbody tr.click[tabindex="0"]')).toHaveLength(1));
+  });
 });

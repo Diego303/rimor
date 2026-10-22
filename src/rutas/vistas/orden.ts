@@ -36,14 +36,19 @@ export interface NombresDensa {
   idioma: string;
 }
 
-const instante = (fm: FrontmatterComun) => {
-  const ms = Date.parse(fm.creado);
+/** El instante de creación; `NaN` si la fecha no se entiende (va al final, como lo vacío). */
+const instante = (fm: FrontmatterComun) => Date.parse(fm.creado);
+
+/** Para ordenar de lo reciente a lo antiguo, una fecha que no se entiende cuenta como la más antigua. */
+const instanteOCero = (fm: FrontmatterComun) => {
+  const ms = instante(fm);
   return Number.isFinite(ms) ? ms : 0;
 };
 
 /**
  * Los elementos en el orden de una columna. Se compara lo que se lee, sin acentos ni mayúsculas y con los números
- * como números («v2» antes que «v10»); lo vacío (sin colecciones) va siempre al final. A igualdad, lo más reciente.
+ * como números («v2» antes que «v10»); lo vacío (sin colecciones, una fecha que no se entiende) va siempre al
+ * final. A igualdad, lo más reciente.
  */
 export function ordenarDensa(
   elementos: readonly FrontmatterComun[],
@@ -67,10 +72,16 @@ export function ordenarDensa(
   };
   const signo = orden.sentido === 'asc' ? 1 : -1;
   const conClave = elementos.map((fm) => ({ fm, t: texto(fm), ms: instante(fm) }));
+  const reciente = (a: { ms: number }, b: { ms: number }) =>
+    (Number.isFinite(b.ms) ? b.ms : 0) - (Number.isFinite(a.ms) ? a.ms : 0);
   conClave.sort((a, b) => {
-    if (orden.columna === 'fecha') return signo * (a.ms - b.ms) || cotejo.compare(a.fm.ref, b.fm.ref);
+    if (orden.columna === 'fecha') {
+      const [va, vb] = [Number.isFinite(a.ms), Number.isFinite(b.ms)];
+      if (va !== vb) return va ? -1 : 1;
+      return (va ? signo * (a.ms - b.ms) : 0) || cotejo.compare(a.fm.ref, b.fm.ref);
+    }
     if (!a.t !== !b.t) return a.t ? -1 : 1;
-    return signo * cotejo.compare(a.t, b.t) || b.ms - a.ms;
+    return signo * cotejo.compare(a.t, b.t) || reciente(a, b);
   });
   return conClave.map((x) => x.fm);
 }
@@ -86,7 +97,7 @@ export function agruparMosaico(
   por: AgruparPor,
   dia: (fm: FrontmatterComun) => string,
 ): [string, FrontmatterComun[]][] {
-  const ordenados = [...elementos].sort((a, b) => instante(b) - instante(a));
+  const ordenados = [...elementos].sort((a, b) => instanteOCero(b) - instanteOCero(a));
   const grupos = new Map<string, FrontmatterComun[]>();
   for (const fm of ordenados) {
     const clave = por === 'tipo' ? fm.tipo : dia(fm);

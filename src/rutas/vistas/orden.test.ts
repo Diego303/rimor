@@ -91,6 +91,18 @@ describe('ordenarDensa', () => {
   });
 });
 
+describe('ordenarDensa con fechas que no se entienden', () => {
+  it('van al final en los dos sentidos', () => {
+    const lista = [fm(1), fm(2, { creado: 'nunca' }), fm(3)];
+    expect(refs(ordenarDensa(lista, { columna: 'fecha', sentido: 'asc' }, NOMBRES))).toEqual([
+      'TXT-0001',
+      'TXT-0003',
+      'TXT-0002',
+    ]);
+    expect(refs(ordenarDensa(lista, ORDEN_INICIAL, NOMBRES))).toEqual(['TXT-0003', 'TXT-0001', 'TXT-0002']);
+  });
+});
+
 describe('agruparMosaico', () => {
   const lista = [
     fm(1, { tipo: 'log' as TipoElemento }),

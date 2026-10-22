@@ -181,6 +181,17 @@ describe('Paleta de comandos', () => {
     expect(within(within(paleta()).getByRole('group', { name: 'Colecciones' })).getAllByRole('option')).toHaveLength(1);
   }, 30_000);
 
+  it('«Buscar…» desde Buscar conserva la vista elegida', async () => {
+    const { router } = await montarApp('/ajustes', ELEMENTOS);
+    await act(() => router.navigate({ to: '/buscar', search: { q: 'pan', vista: 'densa' } }));
+    await screen.findByRole('textbox', { name: 'Buscar' }, PRIMERA_CARGA);
+    ctrlK();
+    fireEvent.change(caja(), { target: { value: 'timeout' } });
+    pulsar('ArrowUp');
+    pulsar('Enter');
+    await waitFor(() => expect(router.state.location.search).toEqual({ q: 'timeout', vista: 'densa' }));
+  }, 30_000);
+
   it('Ctrl+K también desde un campo de texto', async () => {
     await montarApp('/ajustes', ELEMENTOS);
     await screen.findByRole('heading', { name: 'Ajustes' }, PRIMERA_CARGA);

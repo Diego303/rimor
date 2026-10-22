@@ -166,12 +166,19 @@ export function ListaDensa({ elementos, alAbrir }: PropsVista) {
     },
   });
 
-  // Tras mover el foco con las flechas, la fila ya está montada: se enfoca.
+  // Tras mover el foco con las flechas, se enfoca la fila en cuanto esté montada: si estaba lejos (Fin con 1.000),
+  // aparece en el render que sigue al desplazamiento, y hasta entonces se sigue intentando.
   useEffect(() => {
     if (!enfocar.current) return;
+    const fila = contenedor.current?.querySelector<HTMLElement>(`tr[data-indice="${foco}"]`);
+    if (!fila) return;
     enfocar.current = false;
-    contenedor.current?.querySelector<HTMLElement>(`tr[data-indice="${foco}"]`)?.focus();
+    fila.focus();
   });
+
+  // Una lista nueva (otra búsqueda, otro orden) empieza por arriba.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: el foco se reinicia cuando cambian las filas.
+  useEffect(() => setFoco(0), [filas]);
 
   const mover = (i: number) => {
     const j = Math.min(Math.max(i, 0), filas.length - 1);
@@ -181,6 +188,10 @@ export function ListaDensa({ elementos, alAbrir }: PropsVista) {
   };
 
   const items = virtual.getVirtualItems();
+  // La única fila a la que se llega con Tab: la del foco si está montada (y existe: la lista pudo encoger); si
+  // no, la primera que se ve. Así siempre hay una.
+  const focoValido = Math.min(foco, filas.length - 1);
+  const tabulable = items.some((i) => i.index === focoValido) ? focoValido : (items[0]?.index ?? -1);
   const arriba = items[0]?.start ?? 0;
   const abajo = virtual.getTotalSize() - (items.at(-1)?.end ?? 0);
   const ahora = new Date();
@@ -220,7 +231,7 @@ export function ListaDensa({ elementos, alAbrir }: PropsVista) {
                 key={fm.id}
                 data-indice={item.index}
                 className="click"
-                tabIndex={item.index === foco ? 0 : -1}
+                tabIndex={item.index === tabulable ? 0 : -1}
                 onClick={() => alAbrir(fm.ref)}
                 onFocus={() => setFoco(item.index)}
                 onKeyDown={(e) => {
