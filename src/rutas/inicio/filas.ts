@@ -135,7 +135,7 @@ export const RESULTADOS_EN_FEED = 5;
 /**
  * Búsqueda en lo que el repositorio tiene en memoria (título, ref, colecciones, etiquetas y lo que diga `legible`:
  * el nombre del tipo en el idioma de la interfaz y el resumen del lector), con todas las palabras, sin acentos. No
- * busca por el nombre interno del tipo (`texto` casaría con «text»). La sustituye el buscador completo (IN-032).
+ * busca por el nombre interno del tipo (`texto` casaría con «text»). Es el respaldo del motor de búsqueda (IN-032).
  * Primero lo que lo tiene en el título; después, lo más reciente.
  */
 export function buscarEnMemoria(

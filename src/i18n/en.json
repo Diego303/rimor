@@ -414,8 +414,24 @@
     },
     "buscar": {
       "titulo": "Search",
+      "placeholder": "Words or filters: tipo:log, en:collection, #tag, -exclude",
       "vacioTitulo": "Search everything you saved",
-      "vacio": "Type words or filters such as tipo:log or #tag."
+      "vacio": "Type words or filters such as tipo:log or #tag.",
+      "limpiar": "Clear",
+      "resultados": {
+        "one": "{n} result",
+        "other": "{n} results"
+      },
+      "algunos": "The {n} most relevant of {total} results",
+      "dentro": "matches inside",
+      "sinResultados": "No results",
+      "sinResultadosTexto": "Remove a filter or try another word.",
+      "afinar": "Refine",
+      "facetaTipo": "Type",
+      "facetaColeccion": "Collection",
+      "facetaEtiqueta": "Tag",
+      "preparando": "Preparing search…",
+      "indexando": "Preparing search: {hechos} of {total}"
     },
     "coleccion": {
       "titulo": "Collection",

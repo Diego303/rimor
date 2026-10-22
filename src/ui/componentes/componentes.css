@@ -1224,6 +1224,43 @@ pre.code.codigo .ln {
 .cuerpo-busqueda .list {
   margin-top: 4px;
 }
+/* Buscar (SC.buscar): la caja en una fila, con el campo en mono y sin borde propio. */
+.cbox.caja-buscar {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+}
+.caja-buscar input[type="text"] {
+  border: 0;
+  background: transparent;
+  padding: 6px 0;
+  font-family: var(--f-m);
+  font-size: 0.84375rem;
+}
+.caja-buscar input[type="text"]:focus {
+  box-shadow: none;
+}
+.resultados-busqueda {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.card.grupo-busqueda {
+  padding: 10px 12px;
+  gap: 4px;
+}
+.grupo-busqueda > .lbl {
+  padding: 0 10px;
+}
+.facetas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.faceta {
+  margin-top: 6px;
+}
 .primer-uso .ejemplos {
   flex-wrap: wrap;
   justify-content: center;

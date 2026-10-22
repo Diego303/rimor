@@ -39,12 +39,12 @@ El mensaje de una búsqueda `?texto` en Inicio usa el motor (y la búsqueda en m
 
 ## Tareas
 
-- [ ] MiniSearch en un Worker: título, cuerpo, notas, etiquetas, ref y `textoIndexable` de cada lector; tolerancia a erratas y prefijos.
-- [ ] Analizador de la sintaxis del Anexo G del plan: texto, frase exacta, `tipo:`, `en:`, `#`, `desde:` y `hasta:` (con `hoy` y `semana`), `estado:`, `nivel:`, `huella:`, `dominio:` y `-excluir`. Sin acentos ni mayúsculas en la comparación.
-- [ ] Pantalla Buscar: caja, sugerencias de filtros, resultados agrupados por tipo con resaltado y «coincide dentro del contenido».
-- [ ] Ranking: relevancia, más un empujón a lo fijado y a lo reciente.
-- [ ] Búsqueda desde el compositor con `?` (IN-015).
-- [ ] Contador de búsquedas con resultado abierto (IN-016).
+- [x] MiniSearch en un Worker: título, cuerpo, notas, etiquetas, ref y `textoIndexable` de cada lector; tolerancia a erratas y prefijos.
+- [x] Analizador de la sintaxis del Anexo G del plan: texto, frase exacta, `tipo:`, `en:`, `#`, `desde:` y `hasta:` (con `hoy` y `semana`), `estado:`, `nivel:`, `huella:`, `dominio:` y `-excluir`. Sin acentos ni mayúsculas en la comparación.
+- [x] Pantalla Buscar: caja, sugerencias de filtros, resultados agrupados por tipo con resaltado y «coincide dentro del contenido».
+- [x] Ranking: relevancia, más un empujón a lo fijado y a lo reciente.
+- [x] Búsqueda desde el compositor con `?` (IN-015).
+- [x] Contador de búsquedas con resultado abierto (IN-016).
 
 ## Pruebas previstas
 
@@ -70,3 +70,25 @@ El mensaje de una búsqueda `?texto` en Inicio usa el motor (y la búsqueda en m
 ## Autorrevisión
 
 Cubre las seis tareas y las dos pruebas del plan. Aplica F0-8 tal cual (campos, opciones, Worker, gzip, no esperar al índice) y lo aprendido: la organización no toca `modificado` (la clave del índice usa `modificado` y `hash`, así que tampoco hace falta reindexar por mover una colección: el filtro va sobre el frontmatter de ahora).
+
+## Implementación
+
+- `src/busqueda/consulta.ts`: `analizarConsulta` (Anexo G: palabras, frases, `tipo:` con nombres, alias, plurales y los nombres en cada idioma, `en:`, `#`, `desde:`/`hasta:` con `hoy`, `ayer` y `semana`, `estado:`, `nivel:`, `huella:`, `dominio:` y `-excluir`; también las claves en inglés) y `coincideFiltros` sobre el frontmatter.
+- `src/busqueda/contrato.ts`: lo común sin MiniSearch (documentos, aciertos, `ApiIndice`, `claveIndice`, `normalizarBusqueda`), para que la carga inicial no lleve el índice.
+- `src/busqueda/indice.ts`: `IndiceBusqueda` sobre MiniSearch con los campos y opciones de F0-8; `buscar(palabras, sin)` excluye las palabras sueltas en la misma pasada (`AND_NOT`); `conPalabras` sin difuso ni prefijo; `exportar` y `cargar` (por partes, con versión). `src/workers/busqueda.worker.ts` y `src/busqueda/cliente.ts` (Worker con respaldo en el hilo, cargado en diferido).
+- `src/busqueda/motor.ts`: `MotorBusqueda` (carga del guardado, sincronización por tandas con progreso y lo más reciente primero, quitar lo borrado o en la papelera, guardado comprimido agrupado y solo en la pestaña que escribe, búsqueda con filtros, palabras, frases comprobadas en los 200 mejores, exclusiones, ranking y facetas sobre todos los que cumplen).
+- `src/busqueda/Busqueda.tsx`: `ProveedorBusqueda` (en `App` y en `pruebas/app.tsx`), `useBuscar` (gana la última consulta; se repite tras cada cambio y al acabar de indexar), `useEstadoBusqueda` y `useContarAbierto`. `resaltar.ts` y `Resaltado.tsx`.
+- `src/rutas/buscar/Buscar.tsx`: la pantalla; `FilaElemento` acepta título y resumen pintados. `MensajeBusqueda` usa el motor (la búsqueda en memoria queda de respaldo).
+- Pruebas: `consulta.test.ts` (50 consultas y los filtros), `indice.test.ts`, `motor.test.ts` (también el rendimiento con 10.000 elementos), `resaltar.test.ts` y `rutas/buscar/Buscar.test.tsx` (pantalla e Inicio con el contador).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| El rendimiento se mide en el caso realista de F0-8 (vocabulario de 20.000 palabras con frecuencias de Zipf), en caliente y con la mediana de 5 | Es el criterio que fijó F0-8; en el caso pesimista (todo casa con todo) MiniSearch pasa de 50 ms, como ya midió F0-8. |
+| La clave del índice suma título, ref y etiquetas a `modificado`, `hash` y el lector | Un cambio de título o etiquetas que no tocara `modificado` dejaría el índice desfasado; mover de colección sigue sin reindexar. |
+| Las palabras excluidas van en la misma pasada del índice (`AND_NOT`); las frases excluidas se comprueban leyendo | Una sola pasada: «error -staging» cabía justo en los 50 ms con dos. |
+| Las facetas cuentan todos los que cumplen la consulta, no solo los 50 devueltos | Una faceta debe decir cuántos quedarían al añadirla. |
+| Cada visita a Buscar es otra búsqueda para el contador; en Inicio, cada mensaje cuenta una vez | Es lo más cercano a «una búsqueda con resultado abierto». |
+| Filtros rápidos: tipo más frecuente, colección y etiqueta más usadas, segundo tipo y excluir la segunda etiqueta | Las cinco píldoras de la referencia, sacadas de lo que hay. |
+

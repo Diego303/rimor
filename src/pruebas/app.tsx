@@ -10,6 +10,7 @@ import { IDBFactory } from 'fake-indexeddb';
 import { expect } from 'vitest';
 import { AlmacenMemoria } from '../almacen/memoria';
 import type { Cerrojos } from '../almacen/pestanas';
+import { ProveedorBusqueda } from '../busqueda/Busqueda';
 import { type DependenciasProveedor, ProveedorEspacio, useEspacioOpcional } from '../espacio/Espacio';
 import { ejecutorEnHilo } from '../lectores/ejecutor';
 import { ProveedorLectores } from '../lectores/Lectores';
@@ -42,8 +43,10 @@ export async function montarApp(ruta: string, elementos: readonly Elemento[] = [
   render(
     <ProveedorEspacio dependencias={dependencias}>
       <ProveedorLectores registro={REGISTRO} ejecutar={ejecutorEnHilo(REGISTRO)}>
-        <Espia />
-        <RouterProvider router={router} />
+        <ProveedorBusqueda enHilo>
+          <Espia />
+          <RouterProvider router={router} />
+        </ProveedorBusqueda>
       </ProveedorLectores>
     </ProveedorEspacio>,
   );

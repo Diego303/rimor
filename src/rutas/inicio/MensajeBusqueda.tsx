@@ -1,17 +1,22 @@
 /**
  * Mensaje de una búsqueda `?texto` del compositor (como `searchMsg` de la referencia): hasta 5 resultados y
- * «Abrir en Buscar». Busca en lo que el repositorio tiene en memoria hasta que llegue el buscador (IN-032).
+ * «Abrir en Buscar». Busca con el motor (IN-032); sin él, con lo que el repositorio tiene en memoria. Abrir un
+ * resultado cuenta una búsqueda con resultado abierto, una vez por mensaje.
  */
 import type { FrontmatterComun } from '@rimor/formato';
+import { useBuscar, useBusquedaOpcional, useContarAbierto } from '../../busqueda/Busqueda';
+import { Resaltado } from '../../busqueda/Resaltado';
 import type { BusquedaPendiente } from '../../captura/compositor';
 import { fmtHora } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { Boton, FilaElemento } from '../../ui/componentes';
 import { Icono } from '../../ui/iconos/Icono';
 import { SimboloRimor } from '../../ui/marca/SimboloRimor';
+import { RESULTADOS_EN_FEED } from './filas';
 
 interface Props {
   busqueda: BusquedaPendiente;
+  /** Lo que se encuentra en memoria: sin motor, o mientras responde. */
   resultado: { total: number; resultados: FrontmatterComun[] };
   alAbrir: (ref: string) => void;
   alBuscar: (texto: string) => void;
@@ -19,9 +24,24 @@ interface Props {
   resumen: (fm: FrontmatterComun) => string;
 }
 
-export function MensajeBusqueda({ busqueda, resultado, alAbrir, alBuscar, resumen }: Props) {
+export function MensajeBusqueda({ busqueda, resultado: enMemoria, alAbrir, alBuscar, resumen }: Props) {
   const { t } = useT();
   const fecha = new Date(busqueda.en);
+  const motor = useBusquedaOpcional();
+  const { busqueda: delMotor } = useBuscar(busqueda.texto);
+  const contar = useContarAbierto();
+  const resultado =
+    motor && delMotor
+      ? { total: delMotor.total, resultados: delMotor.resultados.slice(0, RESULTADOS_EN_FEED).map((r) => r.fm) }
+      : enMemoria;
+  const terminos = (fm: FrontmatterComun) => [
+    ...(delMotor?.resultados.find((r) => r.fm.id === fm.id)?.terminos ?? []),
+    ...(delMotor?.consulta.palabras ?? []),
+  ];
+  const abrir = (ref: string) => {
+    contar(`inicio:${busqueda.en}|${busqueda.texto}`);
+    alAbrir(ref);
+  };
   return (
     <article className="msg fresh">
       <div className="mhead">
@@ -46,7 +66,13 @@ export function MensajeBusqueda({ busqueda, resultado, alAbrir, alBuscar, resume
           {resultado.resultados.length > 0 && (
             <div className="list">
               {resultado.resultados.map((fm) => (
-                <FilaElemento key={fm.id} fm={fm} resumen={resumen(fm)} alAbrir={alAbrir} />
+                <FilaElemento
+                  key={fm.id}
+                  fm={fm}
+                  titulo={<Resaltado texto={fm.titulo} terminos={terminos(fm)} />}
+                  resumen={resumen(fm)}
+                  alAbrir={abrir}
+                />
               ))}
             </div>
           )}
