@@ -52,12 +52,18 @@ const ORDEN_GRUPO: Record<GrupoEntrada, number> = { accion: 0, coleccion: 1, ele
 export interface EntradaOrdenada extends Entrada {
   /** Sale en «Recientes» (sin texto, las últimas usadas van arriba). */
   reciente: boolean;
+  /** Lo bien que casa con lo escrito (`puntuar`); sin texto, 1. */
+  puntuacion: number;
 }
+
+/** Desde aquí, casa de verdad (lo contiene); por debajo, solo tiene sus letras en orden. */
+export const COINCIDE_BIEN = 2;
 
 /**
  * Las entradas en el orden de la paleta. Sin texto: las recientes (en el orden en que se usaron) y después el
  * resto en su orden (lo de la pantalla antes que lo global). Con texto: las que casan, por grupo y, dentro, por lo
- * bien que casan (a igualdad, la más reciente).
+ * bien que casan por el título (a igualdad, la más reciente). El detalle no cuenta: «En esta pantalla» haría que
+ * «pan» casara con todas las acciones.
  */
 export function ordenar(
   consulta: string,
@@ -69,15 +75,18 @@ export function ordenar(
   if (!consulta.trim()) {
     const arriba = entradas.filter((e) => puesto.has(e.id)).sort((a, b) => rango(a) - rango(b));
     const resto = entradas.filter((e) => !puesto.has(e.id));
-    return [...arriba.map((e) => ({ ...e, reciente: true })), ...resto.map((e) => ({ ...e, reciente: false }))];
+    return [
+      ...arriba.map((e) => ({ ...e, reciente: true, puntuacion: 1 })),
+      ...resto.map((e) => ({ ...e, reciente: false, puntuacion: 1 })),
+    ];
   }
   return entradas
-    .map((e, i) => ({ e, i, p: Math.max(puntuar(consulta, e.titulo), puntuar(consulta, e.detalle ?? '') - 2) }))
+    .map((e, i) => ({ e, i, p: puntuar(consulta, e.titulo) }))
     .filter((x) => x.p > 0)
     .sort(
       (a, b) => ORDEN_GRUPO[a.e.grupo] - ORDEN_GRUPO[b.e.grupo] || b.p - a.p || rango(a.e) - rango(b.e) || a.i - b.i,
     )
-    .map(({ e }) => ({ ...e, reciente: false }));
+    .map(({ e, p }) => ({ ...e, reciente: false, puntuacion: p }));
 }
 
 /** Las recientes que se recuerdan. */

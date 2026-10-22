@@ -41,3 +41,4 @@ Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepacha
 - Paleta de comandos: `Ctrl+K` (también escribiendo en un campo) abre una paleta con las acciones de la pantalla y las de toda la app, con su atajo al lado, las colecciones y, al escribir, lo guardado que encuentra el buscador o «Buscar …» en Buscar. Se maneja con las flechas, Enter y Esc, y las últimas acciones usadas salen primero (IN-033).
 ### Cambiado
 ### Corregido
+- Los diálogos cerrados (la ayuda de atajos, los de estado, tipo y colección) ya no quedan a la vista como una tarjeta vacía (IN-033).

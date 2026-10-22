@@ -127,6 +127,60 @@ describe('Paleta de comandos', () => {
     expect(within(paleta()).getAllByText('Recientes')).toHaveLength(1);
   }, 30_000);
 
+  it('con otro diálogo abierto, Ctrl+K lo cierra y abre la paleta; con la paleta, la cierra; nunca llega al navegador', async () => {
+    await montarApp('/ajustes', ELEMENTOS);
+    await screen.findByRole('heading', { name: 'Ajustes' }, PRIMERA_CARGA);
+    act(() => void window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' })));
+    expect(screen.getByRole('dialog', { name: 'Atajos de teclado' })).toBeTruthy();
+    const tecla = new KeyboardEvent('keydown', { key: 'k', metaKey: true, cancelable: true });
+    act(() => void window.dispatchEvent(tecla));
+    expect(tecla.defaultPrevented).toBe(true);
+    expect(abierta()).toBe(true);
+    expect(screen.queryByRole('dialog', { name: 'Atajos de teclado' })).toBeNull();
+    // Con el foco fuera de la caja (en el relleno del diálogo), también la cierra.
+    (document.activeElement as HTMLElement | null)?.blur();
+    ctrlK();
+    await waitFor(() => expect(abierta()).toBe(false));
+  }, 30_000);
+
+  it('lo que casa por poco va después de los elementos; el detalle no cuenta; la activa sigue siendo la misma', async () => {
+    const { router } = await montarApp('/ajustes', ELEMENTOS);
+    await act(() => router.navigate({ to: '/e/$ref', params: { ref: 'TXT-0001' } }));
+    await screen.findByRole('button', { name: 'Timeout en streaming' }, PRIMERA_CARGA);
+    ctrlK();
+    // «pan» no casa con «En esta pantalla» de cada acción.
+    fireEvent.change(caja(), { target: { value: 'pan' } });
+    // Antes de que responda el buscador, se elige «Buscar…» (la última, con la flecha arriba).
+    pulsar('ArrowUp');
+    expect(activa()?.textContent).toContain('Buscar «pan»');
+    await waitFor(() => expect(opciones()).toEqual(['Receta de pan', 'Buscar «pan» en Buscar']), ESCRITURA);
+    expect(activa()?.textContent).toContain('Buscar «pan»');
+
+    fireEvent.change(caja(), { target: { value: 'rec' } });
+    await waitFor(() => expect(opciones()[0]).toBe('Receta de pan'), ESCRITURA);
+    expect(opciones()).toContain('Escribir en el compositor');
+    expect(opciones().at(-1)).toBe('Buscar «rec» en Buscar');
+    // Cmd+↓ y Cmd+↑ van a los extremos.
+    pulsar('ArrowDown', { metaKey: true });
+    expect(activa()?.textContent).toContain('Buscar «rec»');
+    pulsar('ArrowUp', { metaKey: true });
+    expect(activa()?.textContent).toContain('Receta de pan');
+    // El Enter que confirma un IME no ejecuta nada.
+    pulsar('Enter', { isComposing: true });
+    pulsar('Enter', { keyCode: 229 });
+    expect(abierta()).toBe(true);
+    expect(router.state.location.pathname).toBe('/e/TXT-0001');
+  }, 30_000);
+
+  it('los grupos tienen nombre para el lector de pantalla', async () => {
+    await montarApp('/ajustes', ELEMENTOS);
+    await screen.findByRole('heading', { name: 'Ajustes' }, PRIMERA_CARGA);
+    ctrlK();
+    const acciones = within(paleta()).getByRole('group', { name: 'Acciones' });
+    expect(within(acciones).getAllByRole('option').length).toBe(7);
+    expect(within(within(paleta()).getByRole('group', { name: 'Colecciones' })).getAllByRole('option')).toHaveLength(1);
+  }, 30_000);
+
   it('Ctrl+K también desde un campo de texto', async () => {
     await montarApp('/ajustes', ELEMENTOS);
     await screen.findByRole('heading', { name: 'Ajustes' }, PRIMERA_CARGA);

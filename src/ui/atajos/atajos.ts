@@ -22,6 +22,11 @@ export interface Atajo {
   cuando?: () => boolean;
   /** `false`: no sale en la paleta (mover la selección, confirmar: solo tienen sentido con su tecla). */
   enPaleta?: boolean;
+  /**
+   * Solo para la paleta: si devuelve `false`, ahora no se ofrece, aunque la tecla siga atendiéndose (para explicar
+   * con un aviso por qué no se puede).
+   */
+  ofrecer?: () => boolean;
 }
 
 /** Un atajo con teclas (los que atiende el teclado y lista la ayuda). */
@@ -134,7 +139,8 @@ export class GestorAtajos {
     const ordenados = [...this.ambitos].sort(([a], [b]) => Number(a === 'global') - Number(b === 'global'));
     for (const [ambito, atajos] of ordenados)
       for (const atajo of atajos) {
-        if (atajo.enPaleta === false || vistas.has(atajo.descripcion) || (atajo.cuando && !atajo.cuando())) continue;
+        const ahoraNo = (atajo.cuando && !atajo.cuando()) || (atajo.ofrecer && !atajo.ofrecer());
+        if (atajo.enPaleta === false || vistas.has(atajo.descripcion) || ahoraNo) continue;
         vistas.add(atajo.descripcion);
         lista.push({ ambito, atajo });
       }

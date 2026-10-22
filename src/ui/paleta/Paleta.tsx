@@ -14,7 +14,7 @@ import { Teclas } from '../atajos/AyudaAtajos';
 import { useGestorAtajos } from '../atajos/useAtajos';
 import { IconoTipo } from '../componentes';
 import { Icono, type NombreIcono } from '../iconos/Icono';
-import { apuntarReciente, type Entrada, type EntradaOrdenada, leerRecientes, ordenar } from './entradas';
+import { apuntarReciente, COINCIDE_BIEN, type Entrada, type EntradaOrdenada, leerRecientes, ordenar } from './entradas';
 
 /** Los elementos del buscador que salen en la paleta. */
 export const MAX_ELEMENTOS_PALETA = 6;
@@ -54,7 +54,8 @@ function Contenido({ alCerrar }: { alCerrar: () => void }) {
   const espacio = useEspacioOpcional();
   const navegar = useNavigate();
   const [texto, setTexto] = useState('');
-  const [activa, setActiva] = useState(0);
+  // La activa se recuerda por su id: si llegan los elementos del buscador, sigue siendo la misma.
+  const [activaId, setActivaId] = useState<string | null>(null);
   const [recientes] = useState(() => leerRecientes());
   const consulta = texto.trim();
   const { busqueda, buscando } = useBuscar(consulta);
@@ -91,6 +92,7 @@ function Contenido({ alCerrar }: { alCerrar: () => void }) {
       detalle: `${t(`tipos.${r.fm.tipo}`)} · ${r.fm.ref}`,
       tipo: r.fm.tipo,
       reciente: false,
+      puntuacion: 0,
       ejecutar: () => void navegar({ to: '/e/$ref', params: { ref: r.fm.ref } }),
     }));
     const buscar: EntradaOrdenada = {
@@ -98,13 +100,19 @@ function Contenido({ alCerrar }: { alCerrar: () => void }) {
       grupo: 'buscar',
       titulo: t('paleta.buscarEn', { texto: consulta }),
       reciente: false,
+      puntuacion: 0,
       ejecutar: () => void navegar({ to: '/buscar', search: { q: consulta } }),
     };
-    return [...lista, ...elementos, buscar];
+    // Lo que casa por poco (las letras en orden) va después de los elementos: «rec» abre «Receta…», no «Escribir…».
+    const fuertes = lista.filter((e) => e.puntuacion >= COINCIDE_BIEN);
+    const debiles = lista.filter((e) => e.puntuacion < COINCIDE_BIEN);
+    return [...fuertes, ...elementos, ...debiles, buscar];
   }, [consulta, fijas, recientes, busqueda, buscando, navegar, t]);
 
-  // Lo activo no se sale de la lista cuando esta cambia (llegan los elementos, se escribe).
-  const actual = Math.min(activa, Math.max(entradas.length - 1, 0));
+  const actual = Math.max(
+    0,
+    entradas.findIndex((e) => e.id === activaId),
+  );
   const lista = useRef<HTMLDivElement>(null);
   useEffect(() => {
     lista.current?.querySelector('[aria-selected="true"]')?.scrollIntoView?.({ block: 'nearest' });
@@ -119,20 +127,24 @@ function Contenido({ alCerrar }: { alCerrar: () => void }) {
   }
 
   function alPulsar(ev: KeyboardEvent<HTMLInputElement>) {
+    // Mientras un IME compone (japonés, chino), Enter y las flechas son suyos.
+    if (ev.nativeEvent.isComposing || ev.keyCode === 229) return;
     const n = entradas.length;
+    const mod = ev.ctrlKey || ev.metaKey;
     const mover = (i: number) => {
       ev.preventDefault();
-      setActiva(n ? (i + n) % n : 0);
+      setActivaId(n ? (entradas[(i + n) % n]?.id ?? null) : null);
     };
-    if (ev.key === 'ArrowDown') mover(actual + 1);
+    // Ctrl (o Cmd) con Inicio o Fin, y Cmd con las flechas (lo de macOS), van a los extremos.
+    if ((ev.key === 'Home' && mod) || (ev.key === 'ArrowUp' && ev.metaKey)) mover(0);
+    else if ((ev.key === 'End' && mod) || (ev.key === 'ArrowDown' && ev.metaKey)) mover(n - 1);
+    else if (ev.key === 'ArrowDown') mover(actual + 1);
     else if (ev.key === 'ArrowUp') mover(actual - 1);
-    else if (ev.key === 'Home' && ev.ctrlKey) mover(0);
-    else if (ev.key === 'End' && ev.ctrlKey) mover(n - 1);
     else if (ev.key === 'Enter') {
       ev.preventDefault();
       const e = entradas[actual];
       if (e) ejecutar(e);
-    } else if (ev.key.toLowerCase() === 'k' && (ev.ctrlKey || ev.metaKey)) {
+    } else if (ev.key.toLowerCase() === 'k' && mod) {
       ev.preventDefault();
       alCerrar();
     }
@@ -141,6 +153,48 @@ function Contenido({ alCerrar }: { alCerrar: () => void }) {
   const etiquetaGrupo = (e: EntradaOrdenada) =>
     e.reciente ? t('paleta.recientes') : e.grupo === 'buscar' ? null : t(`paleta.grupos.${e.grupo}`);
   const idOpcion = (i: number) => `${id}-${i}`;
+
+  // Los grupos, seguidos: cada uno con su etiqueta, también para el lector de pantalla (`role="group"`).
+  const grupos: { etiqueta: string | null; entradas: { e: EntradaOrdenada; i: number }[] }[] = [];
+  entradas.forEach((e, i) => {
+    const etiqueta = etiquetaGrupo(e);
+    const ultimo = grupos.at(-1);
+    if (ultimo && ultimo.etiqueta === etiqueta) ultimo.entradas.push({ e, i });
+    else grupos.push({ etiqueta, entradas: [{ e, i }] });
+  });
+
+  const opcion = (e: EntradaOrdenada, i: number) => (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: el teclado va por la caja (combobox con aria-activedescendant).
+    <div
+      key={e.id}
+      id={idOpcion(i)}
+      role="option"
+      tabIndex={-1}
+      aria-selected={i === actual}
+      className="it"
+      onClick={() => ejecutar(e)}
+      onMouseMove={() => i !== actual && setActivaId(e.id)}
+    >
+      <span className="ic">
+        {e.tipo ? (
+          <IconoTipo tipo={e.tipo} />
+        ) : (
+          <span className="ti">
+            <Icono nombre={ICONO[e.grupo as Exclude<Entrada['grupo'], 'elemento'>]} />
+          </span>
+        )}
+      </span>
+      <span className="tt">
+        <Resaltado texto={e.titulo} terminos={consulta ? consulta.split(/\s+/) : []} />
+      </span>
+      {e.detalle && <span className="mm">{e.detalle}</span>}
+      {e.teclas && (
+        <span className="rt">
+          <Teclas teclas={e.teclas} />
+        </span>
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -158,7 +212,7 @@ function Contenido({ alCerrar }: { alCerrar: () => void }) {
           value={texto}
           onChange={(e) => {
             setTexto(e.target.value);
-            setActiva(0);
+            setActivaId(null);
           }}
           onKeyDown={alPulsar}
           spellCheck={false}
@@ -169,48 +223,19 @@ function Contenido({ alCerrar }: { alCerrar: () => void }) {
       </div>
       <div ref={lista} id={`${id}-lista`} role="listbox" aria-label={t('paleta.titulo')} className="list paleta-lista">
         {entradas.length === 0 && <p className="sm muted paleta-vacia">{t('paleta.nada')}</p>}
-        {entradas.map((e, i) => {
-          const grupo = etiquetaGrupo(e);
-          const anterior = i > 0 ? etiquetaGrupo(entradas[i - 1] as EntradaOrdenada) : undefined;
-          return (
-            <div key={e.id} className="contents">
-              {grupo && grupo !== anterior && (
-                <span className="lbl paleta-grupo" aria-hidden="true">
-                  {grupo}
-                </span>
-              )}
-              {/* biome-ignore lint/a11y/useKeyWithClickEvents: el teclado va por la caja (combobox con aria-activedescendant). */}
-              <div
-                id={idOpcion(i)}
-                role="option"
-                tabIndex={-1}
-                aria-selected={i === actual}
-                className="it"
-                onClick={() => ejecutar(e)}
-                onMouseMove={() => i !== actual && setActiva(i)}
-              >
-                <span className="ic">
-                  {e.tipo ? (
-                    <IconoTipo tipo={e.tipo} />
-                  ) : (
-                    <span className="ti">
-                      <Icono nombre={ICONO[e.grupo as Exclude<Entrada['grupo'], 'elemento'>]} />
-                    </span>
-                  )}
-                </span>
-                <span className="tt">
-                  <Resaltado texto={e.titulo} terminos={consulta ? consulta.split(/\s+/) : []} />
-                </span>
-                {e.detalle && <span className="mm">{e.detalle}</span>}
-                {e.teclas && (
-                  <span className="rt">
-                    <Teclas teclas={e.teclas} />
-                  </span>
-                )}
-              </div>
+        {grupos.map((g) =>
+          g.etiqueta ? (
+            // biome-ignore lint/a11y/useSemanticElements: un grupo de opciones dentro de un listbox, no un formulario.
+            <div key={g.entradas[0]?.e.id} role="group" aria-label={g.etiqueta} className="contents">
+              <span className="lbl paleta-grupo" aria-hidden="true">
+                {g.etiqueta}
+              </span>
+              {g.entradas.map(({ e, i }) => opcion(e, i))}
             </div>
-          );
-        })}
+          ) : (
+            g.entradas.map(({ e, i }) => opcion(e, i))
+          ),
+        )}
       </div>
     </>
   );

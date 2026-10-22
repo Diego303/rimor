@@ -68,9 +68,14 @@ describe('ordenar', () => {
     expect(ordenar('zzz', entradas, [])).toEqual([]);
   });
 
-  it('el detalle también casa, por debajo del título', () => {
-    const lista = [entrada('a', 'Fijar o soltar', 'accion', 'Elemento'), entrada('b', 'Elemento nuevo')];
-    expect(ids(ordenar('elemento', lista, []))).toEqual(['b', 'a']);
+  it('el detalle no cuenta («En esta pantalla» no casa con «pan»); la puntuación va con cada una', () => {
+    const lista = [
+      entrada('a', 'Fijar o soltar', 'accion', 'En esta pantalla'),
+      entrada('b', 'Escribir en el compositor'),
+    ];
+    expect(ordenar('pan', lista, [])).toEqual([]);
+    expect(ordenar('fij', lista, []).map((e) => e.puntuacion)).toEqual([4]);
+    expect(ordenar('ecc', lista, []).map((e) => e.puntuacion)).toEqual([1]);
   });
 });
 

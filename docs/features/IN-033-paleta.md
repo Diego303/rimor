@@ -81,3 +81,31 @@ Cubre las cuatro tareas de IN-033. Reutiliza el gestor de atajos, el motor de IN
 | Los elementos salen solo cuando el buscador ha respondido a lo escrito ahora | Si no, Enter podría abrir uno de la tecla anterior. |
 | La lógica va en `entradas.ts` (no `paleta.ts`) | `paleta.ts` y `Paleta.tsx` solo se distinguen por mayúsculas, y en algunos sistemas de archivos eso no basta. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 86 archivos y 1212 pruebas; carga inicial 235,3 KB de 300.
+
+**Criterios de aceptación:** todo lo de la paleta se hace sin ratón (abrir y cerrar con `Ctrl+K` o `Cmd+K`, también desde un campo o con otro diálogo abierto; flechas con vuelta, extremos, Enter, Esc), probado en `Paleta.test.tsx`.
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| `Ctrl+K` con acciones registradas por pantalla | `atajos.test.ts` («acciones de la paleta») y `Paleta.test.tsx` (globales en Ajustes, las de la pantalla del elemento, «Fijar o soltar» ejecutada) |
+| Elementos (vía búsqueda) y colecciones | `Paleta.test.tsx` («al escribir…», «lo que casa por poco…») |
+| Navegación con teclado | `Paleta.test.tsx` (flechas, Ctrl+Inicio y Ctrl+Fin, Cmd+↑ y Cmd+↓, Enter, IME) |
+| Últimas acciones primero | `entradas.test.ts` («recientes», «ordenar») y `Paleta.test.tsx` |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | `.card` (`display: flex`) ganaba al `display: none` del navegador: los diálogos cerrados (la paleta, la ayuda y los demás) se veían | `.dialogo:not([open]) { display: none }`. `dialogo-css.test.ts` |
+| 2 | Con otro diálogo abierto, `Ctrl+K` no abría la paleta y llegaba al navegador | La carcasa la atiende siempre (cierra el otro diálogo, o la paleta si es ella) y no la deja pasar. `Paleta.test.tsx` |
+| 3 | El detalle «En esta pantalla» hacía casar «pan» con todas las acciones; lo que casa por poco tapaba al elemento | El detalle no cuenta, y lo que solo tiene las letras en orden va después de los elementos. `entradas.test.ts`, `Paleta.test.tsx` |
+| 4 | La activa se guardaba por posición y cambiaba al llegar los elementos | Se guarda por id. `Paleta.test.tsx` |
+| 5 | El Enter que confirma un IME ejecutaba una entrada | Se ignoran las teclas mientras se compone. `Paleta.test.tsx` |
+| 6 | En macOS no había forma de ir a los extremos | `Cmd` con Inicio o Fin, y `Cmd+↑` y `Cmd+↓`. `Paleta.test.tsx` |
+| 7 | «Comparar los dos seleccionados» se ofrecía sin dos marcados | `ofrecer` (solo para la paleta; la tecla sigue avisando). `atajos.test.ts` |
+| 8 | Los grupos no tenían nombre para el lector de pantalla | `role="group"` con su etiqueta. `Paleta.test.tsx` |
+

@@ -128,6 +128,7 @@ describe('acciones de la paleta', () => {
 
   it('la pantalla antes que lo global, sin `enPaleta: false` ni lo que ahora no se puede, una por descripción', () => {
     const g = new GestorAtajos();
+    const comparar = vi.fn();
     let seleccion = false;
     g.registrar('global', [{ teclas: '?', descripcion: 'atajos.ayuda', accion: vi.fn() }]);
     g.registrar('inicio', [
@@ -135,13 +136,18 @@ describe('acciones de la paleta', () => {
       { teclas: 'e', descripcion: 'atajos.feedArchivar', cuando: () => seleccion, accion: vi.fn() },
       { teclas: 'delete', descripcion: 'atajos.elementoPapelera', accion: vi.fn() },
       { teclas: '#', descripcion: 'atajos.elementoPapelera', accion: vi.fn() },
+      { teclas: 'ctrl+shift+c', descripcion: 'atajos.feedComparar', ofrecer: () => seleccion, accion: comparar },
     ]);
+    // `ofrecer` solo cuenta para la paleta: la tecla sigue atendiéndose.
+    expect(g.pulsar({ key: 'C', ctrlKey: true, shiftKey: true })).toBe(true);
+    expect(comparar).toHaveBeenCalledOnce();
     const ver = () => g.acciones().map(({ ambito, atajo }) => `${ambito}:${atajo.descripcion}:${atajo.teclas}`);
     expect(ver()).toEqual(['inicio:atajos.elementoPapelera:delete', 'global:atajos.ayuda:?']);
     seleccion = true;
     expect(ver()).toEqual([
       'inicio:atajos.feedArchivar:e',
       'inicio:atajos.elementoPapelera:delete',
+      'inicio:atajos.feedComparar:ctrl+shift+c',
       'global:atajos.ayuda:?',
     ]);
   });

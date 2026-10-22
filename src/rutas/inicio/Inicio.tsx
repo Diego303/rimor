@@ -341,7 +341,13 @@ export function Inicio() {
               cuando: haySeleccion,
               accion: conSeleccion((fm) => setTipoPara(fm.ref)),
             },
-            { teclas: 'ctrl+shift+c', descripcion: 'atajos.feedComparar', accion: () => void compararMarcados() },
+            {
+              teclas: 'ctrl+shift+c',
+              descripcion: 'atajos.feedComparar',
+              // La tecla explica con un aviso que hacen falta dos; la paleta solo la ofrece con dos marcados.
+              ofrecer: () => actual.current.marcados.size === 2,
+              accion: () => void compararMarcados(),
+            },
           ] satisfies Atajo[])),
       {
         teclas: 'x',

@@ -998,6 +998,10 @@ details.more > div {
   color: var(--ink);
   box-shadow: var(--sombra-flotante);
 }
+/* `.card` le da `display: flex`, que ganaría al `display: none` del navegador: cerrado, no se ve. */
+.dialogo:not([open]) {
+  display: none;
+}
 .dialogo::backdrop {
   background: var(--grille);
 }
