@@ -36,6 +36,12 @@ export interface DependenciasEspacio {
 }
 
 export interface EspacioAbierto {
+  /** El id del espacio (su carpeta en OPFS). */
+  id: string;
+  /** Los archivos del espacio (para exportarlos tal cual; lo demás va por el repositorio). */
+  almacen: Almacen;
+  /** Espera a que se escriba lo pendiente (antes de exportar). */
+  esperarEscrituras(): Promise<void>;
   manifest: Manifest;
   repositorio: Repositorio;
   /** Las entidades del espacio: comparaciones e hilos (y, más adelante, investigaciones y documentos). */
@@ -232,6 +238,12 @@ export async function abrirEspacio(
     });
 
     return ok({
+      id: dep.espacioId,
+      almacen: dep.almacen,
+      esperarEscrituras: async () => {
+        await pendiente.catch(() => undefined);
+        await dep.almacen.esperar?.().catch(() => undefined);
+      },
       manifest,
       repositorio,
       entidades,

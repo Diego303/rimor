@@ -54,6 +54,7 @@ describe('Paleta de comandos', () => {
       'Ir a Ajustes',
       'Ir a la papelera',
       'Ir a Datos y copias',
+      'Exportar el espacio en ZIP',
       'gateway',
     ]);
     // Las teclas del atajo, a la derecha.
@@ -91,7 +92,11 @@ describe('Paleta de comandos', () => {
 
     ctrlK();
     fireEvent.change(caja(), { target: { value: 'pan' } });
-    await waitFor(() => expect(opciones()).toEqual(['Receta de pan', 'Buscar «pan» en Buscar']), ESCRITURA);
+    // «Exportar el espacio en ZIP» tiene las letras en orden: va después del elemento.
+    await waitFor(
+      () => expect(opciones()).toEqual(['Receta de pan', 'Exportar el espacio en ZIP', 'Buscar «pan» en Buscar']),
+      ESCRITURA,
+    );
     expect(within(paleta()).getByText('Texto · TXT-0002')).toBeTruthy();
     expect(within(paleta()).getAllByRole('option')[0]?.querySelector('mark')?.textContent).toBe('pan');
     pulsar('Enter');
@@ -153,7 +158,10 @@ describe('Paleta de comandos', () => {
     // Antes de que responda el buscador, se elige «Buscar…» (la última, con la flecha arriba).
     pulsar('ArrowUp');
     expect(activa()?.textContent).toContain('Buscar «pan»');
-    await waitFor(() => expect(opciones()).toEqual(['Receta de pan', 'Buscar «pan» en Buscar']), ESCRITURA);
+    await waitFor(
+      () => expect(opciones()).toEqual(['Receta de pan', 'Exportar el espacio en ZIP', 'Buscar «pan» en Buscar']),
+      ESCRITURA,
+    );
     expect(activa()?.textContent).toContain('Buscar «pan»');
 
     fireEvent.change(caja(), { target: { value: 'rec' } });
@@ -177,7 +185,7 @@ describe('Paleta de comandos', () => {
     await screen.findByRole('heading', { name: 'Ajustes' }, PRIMERA_CARGA);
     ctrlK();
     const acciones = within(paleta()).getByRole('group', { name: 'Acciones' });
-    expect(within(acciones).getAllByRole('option').length).toBe(7);
+    expect(within(acciones).getAllByRole('option').length).toBe(8);
     expect(within(within(paleta()).getByRole('group', { name: 'Colecciones' })).getAllByRole('option')).toHaveLength(1);
   }, 30_000);
 

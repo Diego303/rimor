@@ -99,7 +99,8 @@
     "paleta": "Abrir la paleta de comandos",
     "irAjustes": "Ir a Ajustes",
     "irPapelera": "Ir a la papelera",
-    "irDatos": "Ir a Datos y copias"
+    "irDatos": "Ir a Datos y copias",
+    "exportar": "Exportar el espacio en ZIP"
   },
   "errores": {
     "pantalla": {
@@ -472,7 +473,17 @@
         "other": "{n} elementos, se pueden restaurar"
       },
       "papeleraVacia": "Vacía",
-      "verPapelera": "Ver la papelera"
+      "verPapelera": "Ver la papelera",
+      "exportarZip": "Exportar ZIP",
+      "exportar": "Exportar",
+      "importar": "Importar…",
+      "importarPronto": "Llega con la importación",
+      "exportandoZip": "Exportando el ZIP · {p} %",
+      "exportandoJson": "Exportando el JSON · {p} %",
+      "otras": "Otras exportaciones",
+      "json": "JSON único. Los adjuntos de más de 1 MB se excluyen y el archivo lo indica.",
+      "queContiene": "Qué contiene el ZIP",
+      "arbol": "manifest.json        ← recuentos y hashes\nelementos/2026/10/…\ncomparaciones/  hilos/  investigaciones/  documentos/\nadjuntos/            ← por hash\nhistorial/           ← versiones\ncolecciones.json  papelera/  .rimor/"
     },
     "ajustes": {
       "titulo": "Ajustes",
@@ -624,5 +635,13 @@
       "colecciones": "Colecciones",
       "estado": "Estado"
     }
+  },
+  "exportar": {
+    "hecho": "Exportado {nombre} ({tam})",
+    "hechoConExcluidos": {
+      "one": "Exportado {nombre} · {n} adjunto excluido",
+      "other": "Exportado {nombre} · {n} adjuntos excluidos"
+    },
+    "fallo": "No se pudo exportar. No se ha tocado nada."
   }
 }

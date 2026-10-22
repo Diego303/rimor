@@ -99,7 +99,8 @@
     "paleta": "Open the command palette",
     "irAjustes": "Go to Settings",
     "irPapelera": "Go to the bin",
-    "irDatos": "Go to Data and backups"
+    "irDatos": "Go to Data and backups",
+    "exportar": "Export the space as ZIP"
   },
   "errores": {
     "pantalla": {
@@ -472,7 +473,17 @@
         "other": "{n} items, they can be restored"
       },
       "papeleraVacia": "Empty",
-      "verPapelera": "Open the bin"
+      "verPapelera": "Open the bin",
+      "exportarZip": "Export ZIP",
+      "exportar": "Export",
+      "importar": "Import…",
+      "importarPronto": "Comes with importing",
+      "exportandoZip": "Exporting the ZIP · {p} %",
+      "exportandoJson": "Exporting the JSON · {p} %",
+      "otras": "Other exports",
+      "json": "Single JSON. Attachments over 1 MB are left out and the file says so.",
+      "queContiene": "What the ZIP contains",
+      "arbol": "manifest.json        ← counts and hashes\nelementos/2026/10/…\ncomparaciones/  hilos/  investigaciones/  documentos/\nadjuntos/            ← by hash\nhistorial/           ← versions\ncolecciones.json  papelera/  .rimor/"
     },
     "ajustes": {
       "titulo": "Settings",
@@ -624,5 +635,13 @@
       "colecciones": "Collections",
       "estado": "Status"
     }
+  },
+  "exportar": {
+    "hecho": "Exported {nombre} ({tam})",
+    "hechoConExcluidos": {
+      "one": "Exported {nombre} · {n} attachment left out",
+      "other": "Exported {nombre} · {n} attachments left out"
+    },
+    "fallo": "Could not export. Nothing was changed."
   }
 }

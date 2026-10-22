@@ -8,9 +8,12 @@ export const ESPERA_REVOCAR_MS = 60_000;
 
 /** Descarga unos bytes con su nombre (un Blob y un enlace temporal que se revoca después). */
 export function descargar(bytes: Uint8Array, nombre: string, mime: string): void {
-  const url = URL.createObjectURL(
-    new Blob([bytes as Uint8Array<ArrayBuffer>], { type: mime || 'application/octet-stream' }),
-  );
+  descargarBlob(new Blob([bytes as Uint8Array<ArrayBuffer>], { type: mime || 'application/octet-stream' }), nombre);
+}
+
+/** Descarga un Blob con su nombre (una exportación). */
+export function descargarBlob(blob: Blob, nombre: string): void {
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = nombre;

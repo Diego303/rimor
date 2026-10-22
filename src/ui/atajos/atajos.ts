@@ -67,6 +67,12 @@ const normalizar = (teclas: string) =>
     })
     .join(' ');
 
+/** Un ámbito global: `global` o `global-…` (los que registra otro componente de la carcasa). */
+export const esGlobal = (ambito: string): boolean => ambito === 'global' || ambito.startsWith('global-');
+
+/** El orden de los ámbitos: los de pantalla, `global` y después los `global-…`. */
+const rango = (ambito: string) => (ambito === 'global' ? 1 : esGlobal(ambito) ? 2 : 0);
+
 export class GestorAtajos {
   private readonly ambitos = new Map<string, Atajo[]>();
   private prefijo: string | null = null;
@@ -85,8 +91,7 @@ export class GestorAtajos {
 
   /** Atajos activos, los de pantalla antes que los globales. */
   private activos(): Atajo[] {
-    const pantallas = [...this.ambitos].filter(([k]) => k !== 'global').flatMap(([, v]) => v);
-    return [...pantallas, ...(this.ambitos.get('global') ?? [])];
+    return [...this.ambitos].sort(([a], [b]) => rango(a) - rango(b)).flatMap(([, v]) => v);
   }
 
   /** Atiende una tecla. Devuelve true si la consumió un atajo (o empezó una secuencia). */
@@ -136,7 +141,7 @@ export class GestorAtajos {
   acciones(): { ambito: string; atajo: Atajo }[] {
     const vistas = new Set<string>();
     const lista: { ambito: string; atajo: Atajo }[] = [];
-    const ordenados = [...this.ambitos].sort(([a], [b]) => Number(a === 'global') - Number(b === 'global'));
+    const ordenados = [...this.ambitos].sort(([a], [b]) => rango(a) - rango(b));
     for (const [ambito, atajos] of ordenados)
       for (const atajo of atajos) {
         const ahoraNo = (atajo.cuando && !atajo.cuando()) || (atajo.ofrecer && !atajo.ofrecer());

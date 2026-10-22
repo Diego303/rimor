@@ -1,5 +1,5 @@
 /** Avisos del almacenamiento (IN-007): sin guardar, ventana privada, solo lectura y protección de los datos. */
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useEspacio } from '../estado/espacio';
 import { fmtBytes, fmtFechaRelativa } from '../i18n/formatos';
 import { useT } from '../i18n/useT';
@@ -75,7 +75,8 @@ const PERSISTENCIA = {
  * Tarjeta de cabecera de Datos y copias (DAT-06, DAT-07), como en la pantalla de referencia: espacio usado,
  * persistencia y última copia. IN-037 le añade exportar e importar.
  */
-export function TarjetaCuidado() {
+/** Cuánto ocupa, si está protegido y la última copia; `children`, debajo (los botones de Datos y copias). */
+export function TarjetaCuidado({ children }: { children?: ReactNode }) {
   const { t, idioma } = useT();
   const espacio = useEspacioOpcional();
   const [usado, setUsado] = useState<number | null>(null);
@@ -116,6 +117,7 @@ export function TarjetaCuidado() {
           <span className="xs muted">{t('espacio.cuidado.copia', { n: estado.cambiosDesdeCopia })}</span>
         </div>
       </div>
+      {children}
     </section>
   );
 }

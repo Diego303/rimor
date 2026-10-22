@@ -12,6 +12,7 @@ import { useEspacioOpcional } from '../../espacio/Espacio';
 import { useT } from '../../i18n/useT';
 import type { Vista } from '../../rutas/vistas/orden';
 import { Teclas } from '../atajos/AyudaAtajos';
+import { esGlobal } from '../atajos/atajos';
 import { useGestorAtajos } from '../atajos/useAtajos';
 import { IconoTipo } from '../componentes';
 import { Icono, type NombreIcono } from '../iconos/Icono';
@@ -67,7 +68,7 @@ function Contenido({ alCerrar }: { alCerrar: () => void }) {
       id: `accion:${atajo.descripcion}`,
       grupo: 'accion',
       titulo: t(atajo.descripcion),
-      detalle: ambito === 'global' ? t('paleta.global') : t('paleta.pantalla'),
+      detalle: esGlobal(ambito) ? t('paleta.global') : t('paleta.pantalla'),
       ...(atajo.teclas ? { teclas: atajo.teclas } : {}),
       ejecutar: atajo.accion,
     }));

@@ -51,12 +51,12 @@ Abre el mismo directorio de OPFS del espacio solo para leer y genera el ZIP o el
 
 ## Tareas
 
-- [ ] ZIP completo en streaming con fflate en un Worker, con progreso (`<Senal estado="exportando">` y el porcentaje); sin `.rimor/cache/`; nombre `rimor-<espacio>-<fecha>.zip`.
-- [ ] Al terminar una exportación completa, `<Senal estado="copia-al-dia" veces={1}>` en el aviso y el piloto del raíl pasa a verde.
-- [ ] `manifest.json` con recuentos y hashes SHA-256 de cada archivo.
-- [ ] JSON único `{manifest, elementos, adjuntos}`: adjuntos ≤ 1 MB en base64; los demás, excluidos y listados en `manifest.adjuntos_excluidos`.
-- [ ] `Ctrl+E` y botón en Datos y copias; actualiza «última copia».
-- [ ] ZIP automático antes de operaciones destructivas (lo llaman IN-027, IN-036 e IN-060).
+- [x] ZIP completo en streaming con fflate en un Worker, con progreso (`<Senal estado="exportando">` y el porcentaje); sin `.rimor/cache/`; nombre `rimor-<espacio>-<fecha>.zip`.
+- [x] Al terminar una exportación completa, `<Senal estado="copia-al-dia" veces={1}>` en el aviso y el piloto del raíl pasa a verde.
+- [x] `manifest.json` con recuentos y hashes SHA-256 de cada archivo.
+- [x] JSON único `{manifest, elementos, adjuntos}`: adjuntos ≤ 1 MB en base64; los demás, excluidos y listados en `manifest.adjuntos_excluidos`.
+- [x] `Ctrl+E` y botón en Datos y copias; actualiza «última copia».
+- [x] ZIP automático antes de operaciones destructivas (lo llaman IN-027, IN-036 e IN-060).
 
 ## Pruebas previstas
 
@@ -83,3 +83,23 @@ Abre el mismo directorio de OPFS del espacio solo para leer y genera el ZIP o el
 ## Autorrevisión
 
 Cubre las seis tareas y la prueba de propiedad del plan. Aplica F0-2 (Worker, streaming, métodos por tipo, lectura por el directorio central) y lo ya hecho (estado de cuidado, piloto, avisos, `Senal`, descarga). La copia previa la usarán quienes la necesiten; vaciar la papelera mantiene la suya (decisión registrada).
+
+## Implementación
+
+- `src/datos/exportar.ts`: `exportarZip` (fflate `Zip` con `ZipDeflate` y `ZipPassThrough`, trozos de 256 KB cediendo el hilo, progreso por bytes, cancelación), `exportarJson`, `manifestExportado` (en orden canónico), `recuentosDe`, `sha256`, `aBase64`, `nombreExportacion` y `fueraDeLaExportacion`.
+- `src/datos/leerZip.ts`: `entradasZip` (directorio central), `leerEntrada` (infla con el tamaño declarado como tope y comprueba el CRC-32), `crc32` y `trozosDe` (bytes o `Blob`).
+- `src/workers/exportar.worker.ts`: abre la carpeta del espacio en OPFS y exporta; `src/datos/exportacion.ts`: `exportarEspacio` (Worker o, sin él o si falla, el hilo; descarga; apunta la copia si es completa) y `useExportacion` (tipo y porcentaje); `src/datos/useExportar.tsx`: el gancho con los avisos (con la señal de copia al día) y el motivo para la copia previa.
+- `EspacioAbierto` expone `id`, `almacen` y `esperarEscrituras`. `descargarBlob` en `lectores/descargar.ts`.
+- Datos y copias: «Exportar ZIP» (botón señal) e «Importar…» (deshabilitado hasta IN-036) en la tarjeta de cuidado, la señal «exportando» con el porcentaje mientras tanto, «Otras exportaciones» (JSON único) y «Qué contiene el ZIP».
+- `Ctrl+E` (también en la paleta) desde la carcasa, en un ámbito `global-exportar`; el gestor de atajos trata `global-…` como global.
+- Pruebas: `datos/exportar.test.ts` (ZIP, manifest, progreso, cancelar, JSON, lector de ZIP y la **propiedad de ida y vuelta** con fast-check) y `rutas/datos/Datos.test.tsx` (botón, `Ctrl+E`, aviso, copia y piloto, JSON con excluidos, fallo, una a la vez, copia previa).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| El `manifest.json` exportado va en un orden de claves fijo | Leer un manifest con su esquema reordena las claves: sin orden fijo, la segunda exportación no daba el mismo archivo. |
+| Un `.md` de `elementos/` que no se reconstruye exacto (sin frontmatter, saltos `\r\n`) va en `archivos` con su texto | El JSON nunca pierde un byte. |
+| El módulo exportador se carga al exportar | `Ctrl+E` está en la carcasa: si no, fflate iría en la carga inicial. |
+| La copia previa es `useExportar()('zip', motivo)`; vaciar la papelera sigue con su copia propia | Quien la necesite (IN-036, IN-060) la llama; la papelera ya descargaba su ZIP antes de borrar. |
+

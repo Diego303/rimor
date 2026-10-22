@@ -6,15 +6,30 @@ import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { ProveedorCaptura } from '../captura/Captura';
 import { useCompositor } from '../captura/compositor';
+import { useExportar } from '../datos/useExportar';
 import { AvisoAlmacenamiento } from '../espacio/Avisos';
 import { useT } from '../i18n/useT';
 import { AyudaAtajos } from '../ui/atajos/AyudaAtajos';
-import { describir, esCampoDeTexto, GestorAtajos } from '../ui/atajos/atajos';
-import { ContextoAtajos } from '../ui/atajos/useAtajos';
+import { type Atajo, describir, esCampoDeTexto, GestorAtajos } from '../ui/atajos/atajos';
+import { ContextoAtajos, useAtajos } from '../ui/atajos/useAtajos';
 import { Espera, ProveedorAvisos, ProveedorEsperas } from '../ui/componentes';
 import { Paleta } from '../ui/paleta/Paleta';
 import { LimiteErrores } from './LimiteErrores';
 import { Rail } from './Rail';
+
+/**
+ * Los atajos globales que necesitan los avisos (que viven dentro de la carcasa): `Ctrl+E` exporta el ZIP desde
+ * cualquier pantalla (también en campos: lleva modificador).
+ */
+function AtajosConAvisos() {
+  const exportar = useExportar();
+  const atajos = useMemo<Atajo[]>(
+    () => [{ teclas: 'ctrl+e', descripcion: 'atajos.exportar', enCampos: true, accion: () => void exportar('zip') }],
+    [exportar],
+  );
+  useAtajos('global-exportar', atajos);
+  return null;
+}
 
 export function Carcasa() {
   const { t } = useT();
@@ -90,6 +105,7 @@ export function Carcasa() {
   return (
     <ContextoAtajos.Provider value={gestor}>
       <ProveedorAvisos>
+        <AtajosConAvisos />
         <ProveedorCaptura alRecibir={irAInicio} alAbrir={abrirElemento}>
           <div className="marco">
             <div className="shell">
