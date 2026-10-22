@@ -30,7 +30,9 @@ const hilo = createRoute({
 const buscar = createRoute({
   getParentRoute: () => raiz,
   path: '/buscar',
-  validateSearch: (s: Record<string, unknown>): { q?: string } => (typeof s.q === 'string' ? { q: s.q } : {}),
+  // La dirección se lee como JSON: `?q=404` llega como número.
+  validateSearch: (s: Record<string, unknown>): { q?: string } =>
+    ['string', 'number', 'boolean'].includes(typeof s.q) ? { q: String(s.q) } : {},
   component: lazyRouteComponent(() => import('./buscar/Buscar'), 'Buscar'),
 });
 const coleccion = createRoute({

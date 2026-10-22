@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { useCompositor } from '../../captura/compositor';
 import { elementoFalso } from '../../lectores/pruebas/falsos';
 import { ESCRITURA, montarApp, PRIMERA_CARGA } from '../../pruebas/app';
+import { juntar } from '../inicio/MensajeBusqueda';
 import { alternarPieza } from './Buscar';
 
 function el(
@@ -100,6 +101,14 @@ describe('Buscar', () => {
     expect(screen.getByText('Busca en todo lo que has guardado')).toBeTruthy();
   }, 30_000);
 
+  it('una consulta numérica en la dirección también llega a la caja', async () => {
+    const { router } = await montarApp('/ajustes', ELEMENTOS);
+    act(() => router.history.push('/buscar?q=30'));
+    const caja = (await screen.findByRole('textbox', { name: 'Buscar' }, PRIMERA_CARGA)) as HTMLInputElement;
+    expect(caja.value).toBe('30');
+    await waitFor(() => expect(titulos()).toEqual(['Timeout en streaming']), ESCRITURA);
+  }, 30_000);
+
   it('abrir un resultado lo abre y cuenta una búsqueda con resultado abierto; cada visita es otra búsqueda', async () => {
     const { router, espacio } = await montarApp('/ajustes', ELEMENTOS);
     await act(() => router.navigate({ to: '/buscar', search: { q: 'pan' } }));
@@ -146,6 +155,19 @@ describe('búsqueda desde el compositor', () => {
     // El mismo mensaje no vuelve a contar.
     expect(espacio.contadores.total('busquedasConResultado')).toBe(1);
   }, 30_000);
+});
+
+describe('el mensaje de Inicio mientras se prepara el índice', () => {
+  it('junta lo del motor con lo de memoria, sin repetir', () => {
+    const [a, b, c] = ELEMENTOS.map((e) => e.frontmatter) as [
+      Elemento['frontmatter'],
+      Elemento['frontmatter'],
+      Elemento['frontmatter'],
+    ];
+    const delMotor = { total: 1, resultados: [{ fm: a }] };
+    expect(juntar(delMotor, null)).toEqual({ total: 1, resultados: [a] });
+    expect(juntar(delMotor, { total: 3, resultados: [b, a, c] })).toEqual({ total: 3, resultados: [a, b, c] });
+  });
 });
 
 describe('alternar una pieza de la consulta', () => {

@@ -4,7 +4,7 @@
  * resultado cuenta una búsqueda con resultado abierto, una vez por mensaje.
  */
 import type { FrontmatterComun } from '@rimor/formato';
-import { useBuscar, useBusquedaOpcional, useContarAbierto } from '../../busqueda/Busqueda';
+import { useBuscar, useBusquedaOpcional, useContarAbierto, useEstadoBusqueda } from '../../busqueda/Busqueda';
 import { Resaltado } from '../../busqueda/Resaltado';
 import type { BusquedaPendiente } from '../../captura/compositor';
 import { fmtHora } from '../../i18n/formatos';
@@ -24,16 +24,32 @@ interface Props {
   resumen: (fm: FrontmatterComun) => string;
 }
 
+/**
+ * Lo que enseña el mensaje: lo del motor y, mientras el índice se prepara (aún no tiene todo), también lo que se
+ * encuentra en memoria, sin repetir.
+ */
+export function juntar(
+  delMotor: { total: number; resultados: { fm: FrontmatterComun }[] },
+  enMemoria: { total: number; resultados: FrontmatterComun[] } | null,
+): { total: number; resultados: FrontmatterComun[] } {
+  const lista = delMotor.resultados.map((r) => r.fm);
+  if (!enMemoria) return { total: delMotor.total, resultados: lista.slice(0, RESULTADOS_EN_FEED) };
+  const ya = new Set(lista.map((fm) => fm.id));
+  const nuevos = enMemoria.resultados.filter((fm) => !ya.has(fm.id));
+  return {
+    total: Math.max(delMotor.total + nuevos.length, enMemoria.total),
+    resultados: [...lista, ...nuevos].slice(0, RESULTADOS_EN_FEED),
+  };
+}
+
 export function MensajeBusqueda({ busqueda, resultado: enMemoria, alAbrir, alBuscar, resumen }: Props) {
   const { t } = useT();
   const fecha = new Date(busqueda.en);
   const motor = useBusquedaOpcional();
   const { busqueda: delMotor } = useBuscar(busqueda.texto);
   const contar = useContarAbierto();
-  const resultado =
-    motor && delMotor
-      ? { total: delMotor.total, resultados: delMotor.resultados.slice(0, RESULTADOS_EN_FEED).map((r) => r.fm) }
-      : enMemoria;
+  const indexando = useEstadoBusqueda().fase !== 'listo';
+  const resultado = !motor || !delMotor ? enMemoria : juntar(delMotor, indexando ? enMemoria : null);
   const terminos = (fm: FrontmatterComun) => [
     ...(delMotor?.resultados.find((r) => r.fm.id === fm.id)?.terminos ?? []),
     ...(delMotor?.consulta.palabras ?? []),

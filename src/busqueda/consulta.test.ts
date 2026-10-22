@@ -6,6 +6,7 @@ import { analizarConsulta, type Consulta, coincideFiltros, hayConsulta } from '.
 const AHORA = new Date(2026, 9, 17, 18, 0, 0);
 const dia = (a: number, m: number, d: number) => new Date(a, m - 1, d).getTime();
 const FIN = 86_400_000 - 1;
+const VACIA = analizarConsulta('');
 
 /** Lo que interesa de una consulta (sin los campos vacíos). */
 function resumen(c: Consulta): Partial<Consulta> {
@@ -21,7 +22,7 @@ const CASOS: [string, Partial<Consulta>][] = [
   ['canción', { palabras: ['cancion'] }],
   ['"read timeout"', { frases: ['read timeout'] }],
   ['"Read   Timeout" ureq', { frases: ['read   timeout'], palabras: ['ureq'] }],
-  ['"una"', { palabras: ['una'] }],
+  ['"una"', { frases: ['una'] }],
   ['"sin cerrar', { frases: ['sin cerrar'] }],
   ['tipo:log', { tipos: ['log'] }],
   ['tipo:error,mediciones', { tipos: ['error', 'mediciones'] }],
@@ -34,12 +35,12 @@ const CASOS: [string, Partial<Consulta>][] = [
   ['tipo:documentomd', { tipos: ['markdown'] }],
   ['tipo:measurements', { tipos: ['mediciones'] }],
   ['tipo:url', { tipos: ['enlace'] }],
-  ['tipo:log,log', { tipos: ['log'] }],
+  ['“read timeout” «sin cerrar»', { frases: ['read timeout', 'sin cerrar'] }],
   ['tipo:nada', { imposible: true }],
-  ['en:gateway', { en: ['gateway'] }],
-  ['en:@gateway', { en: ['gateway'] }],
-  ['en:INV-0003', { en: ['inv-0003'] }],
-  ['en:gateway,prompts', { en: ['gateway', 'prompts'] }],
+  ['en:gateway', { en: [['gateway']] }],
+  ['en:@gateway en:prompts', { en: [['gateway'], ['prompts']] }],
+  ['en:INV-0003', { en: [['inv-0003']] }],
+  ['en:gateway,prompts', { en: [['gateway', 'prompts']] }],
   ['#ureq', { etiquetas: ['ureq'] }],
   ['#UREQ #staging', { etiquetas: ['ureq', 'staging'] }],
   ['#', { palabras: ['#'] }],
@@ -64,7 +65,15 @@ const CASOS: [string, Partial<Consulta>][] = [
   ['dominio:www.GitHub.com', { dominios: ['github.com'] }],
   ['-staging', { excluir: ['staging'] }],
   ['timeout -"read body"', { palabras: ['timeout'], excluir: ['read body'] }],
-  ['-', { palabras: ['-'] }],
+  [
+    '-#staging -tipo:log',
+    {
+      sinFiltros: [
+        { ...VACIA, etiquetas: ['staging'] },
+        { ...VACIA, tipos: ['log'] },
+      ],
+    },
+  ],
   ['C:\\ruta foo:bar 10:30', { palabras: ['c:\\ruta', 'foo:bar', '10:30'] }],
 ];
 
@@ -72,6 +81,12 @@ describe('analizar la consulta', () => {
   it('son 50 consultas', () => expect(CASOS).toHaveLength(50));
   it.each(CASOS)('%s', (texto, esperado) => {
     expect(resumen(analizarConsulta(texto, { ahora: AHORA }))).toEqual(esperado);
+  });
+
+  it('un guion solo, un tipo repetido y un negado que no es filtro', () => {
+    expect(resumen(analizarConsulta('-'))).toEqual({ palabras: ['-'] });
+    expect(resumen(analizarConsulta('tipo:log,log'))).toEqual({ tipos: ['log'] });
+    expect(resumen(analizarConsulta('-foo:bar'))).toEqual({ excluir: ['foo:bar'] });
   });
 
   it('vacía: no hay nada que buscar', () => {
@@ -92,6 +107,14 @@ describe('filtros sobre el frontmatter', () => {
     expect(pasa('tipo:log', fm())).toBe(false);
     expect(pasa('en:gateway', fm({ colecciones: ['gateway'] }))).toBe(true);
     expect(pasa('en:inv-0003', fm({ investigaciones: ['INV-0003'] as never }))).toBe(true);
+    // Cada `en:` se cumple (Y); las comas son O.
+    expect(pasa('en:gateway en:api', fm({ colecciones: ['gateway'] }))).toBe(false);
+    expect(pasa('en:gateway,api', fm({ colecciones: ['gateway'] }))).toBe(true);
+    expect(pasa('en:gateway en:api', fm({ colecciones: ['api', 'gateway'] }))).toBe(true);
+    expect(pasa('-#staging', fm({ etiquetas: ['staging'] }))).toBe(false);
+    expect(pasa('-#staging', fm({ etiquetas: ['ureq'] }))).toBe(true);
+    expect(pasa('-tipo:texto', fm())).toBe(false);
+    expect(pasa('-tipo:nada', fm())).toBe(true);
     expect(pasa('#ureq #staging', fm({ etiquetas: ['ureq'] }))).toBe(false);
     expect(pasa('#ureq', fm({ etiquetas: ['UReq'] }))).toBe(true);
     expect(pasa('desde:2026-10-12 hasta:2026-10-12', fm())).toBe(true);

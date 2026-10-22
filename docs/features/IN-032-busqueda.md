@@ -92,3 +92,37 @@ Cubre las seis tareas y las dos pruebas del plan. Aplica F0-8 tal cual (campos, 
 | Cada visita a Buscar es otra búsqueda para el contador; en Inicio, cada mensaje cuenta una vez | Es lo más cercano a «una búsqueda con resultado abierto». |
 | Filtros rápidos: tipo más frecuente, colección y etiqueta más usadas, segundo tipo y excluir la segunda etiqueta | Las cinco píldoras de la referencia, sacadas de lo que hay. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 83 archivos y 1194 pruebas; carga inicial 232,5 KB de 300 (MiniSearch va solo en el Worker y en el trozo diferido del respaldo).
+
+**Criterios de aceptación:** el analizador pasa las 50 consultas (`consulta.test.ts`) y la búsqueda tarda menos de 50 ms con 10.000 elementos en el caso realista de F0-8 (`motor.test.ts`, «rendimiento», mediana de 5 en caliente, estable en tres ejecuciones).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| MiniSearch en un Worker con todos los campos, erratas y prefijos | `indice.test.ts` (campos, difuso y prefijo de F0-8, pesos, «coincide dentro», 4 KB, exportar y cargar) y `motor.test.ts` |
+| Analizador del Anexo G | `consulta.test.ts` (50 consultas, filtros sobre el frontmatter, negados, grupos de `en:`) |
+| Pantalla Buscar | `rutas/buscar/Buscar.test.tsx` (caja y dirección, grupos, resaltado, «coincide dentro», píldoras, facetas, sin resultados, «Limpiar», `?q=` numérico) |
+| Ranking | `motor.test.ts` («ranking», `empujon`) |
+| Búsqueda `?` del compositor | `Buscar.test.tsx` («búsqueda desde el compositor», `juntar`) e `inicio/Inicio.test.tsx` (sin motor) |
+| Contador de búsquedas con resultado abierto | `Buscar.test.tsx` (Buscar e Inicio, una vez por búsqueda) |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | Los adjuntos de texto (más de 2 MB) no se indexaban ni se comprobaban sus frases | El motor carga su texto (`cargarOriginal`) al indexar y al comprobar frases. `motor.test.ts` |
+| 2 | La clave usaba la versión del lector del frontmatter: un lector nuevo no reindexaba | La clave usa el lector vigente del registro (`lectorVigente`). `motor.test.ts` |
+| 3 | Un fallo al leer o derivar quedaba como indexado para siempre | Queda incompleto (clave con `~`): no se reintenta en la sesión y sí al abrir otra vez. `motor.test.ts` |
+| 4 | En Inicio, durante la primera indexación, «Sin resultados» aunque en memoria hubiera | Mientras el índice se prepara, se junta con la búsqueda en memoria. `Buscar.test.tsx` (`juntar`) |
+| 5 | Escribir entre comillas lanzaba una búsqueda con lecturas por pulsación | Espera corta entre pulsaciones, la búsqueda anterior se corta (`AbortSignal`) y los textos leídos se guardan en memoria por versión. `motor.test.ts` |
+| 6 | Si el Worker no cargaba, el motor no rehacía el índice y se quedaba en «indexando» | `alAveriarse` llama a `rehacer`; un fallo del índice deja el estado en «listo». `motor.test.ts` |
+| 7 | Con frases, el tope de 200 leídos se callaba; las frases excluidas solo miraban 200 | El total se marca «al menos» (`aproximado`); excluir una frase comprueba todos los posibles. `motor.test.ts` |
+| 8 | `"time"` casaba con «timeout» | Entre comillas va tal cual, y las frases casan por palabras completas. `motor.test.ts`, `consulta.test.ts` |
+| 9 | `-#staging` y `-tipo:log` no excluían | Un `-` delante de un filtro lo niega (`sinFiltros`). `consulta.test.ts` |
+| 10 | Las comillas tipográficas no hacían frase | «», “” y „ cuentan como comillas. `consulta.test.ts` |
+| 11 | Dos `en:` sumaban en vez de afinar (la faceta prometía una cifra que no salía) | Cada `en:` se cumple (Y); las comas siguen siendo O. `consulta.test.ts` |
+| 12 | `?q=404` en la dirección dejaba la caja vacía | Se acepta el número como texto. `Buscar.test.tsx` |
+

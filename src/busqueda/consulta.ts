@@ -22,8 +22,11 @@ export interface Consulta {
   /** Palabras o frases que no deben estar. */
   excluir: string[];
   tipos: TipoElemento[];
-  /** Colecciones o investigaciones (`en:`). */
-  en: string[];
+  /**
+   * Colecciones o investigaciones (`en:`): cada `en:` es un grupo que debe cumplirse (Y); dentro, las comas son O
+   * (`en:a,b`).
+   */
+  en: string[][];
   etiquetas: string[];
   /** Desde el principio de ese día (ms). */
   desde?: number;
@@ -33,6 +36,8 @@ export interface Consulta {
   niveles: Nivel[];
   huellas: string[];
   dominios: string[];
+  /** Filtros negados (`-#staging`, `-tipo:log`): un elemento que cumple alguno queda fuera. */
+  sinFiltros: Consulta[];
   /** Algún filtro no puede cumplirse (`tipo:` que no existe, `nivel:` desconocido): no hay resultados. */
   imposible: boolean;
 }
@@ -40,9 +45,19 @@ export interface Consulta {
 /** Hay algo que buscar (texto o algún filtro). */
 export const hayConsulta = (c: Consulta): boolean =>
   c.imposible ||
-  [c.palabras, c.frases, c.excluir, c.tipos, c.en, c.etiquetas, c.estados, c.niveles, c.huellas, c.dominios].some(
-    (l) => l.length,
-  ) ||
+  [
+    c.palabras,
+    c.frases,
+    c.excluir,
+    c.tipos,
+    c.en,
+    c.etiquetas,
+    c.estados,
+    c.niveles,
+    c.huellas,
+    c.dominios,
+    c.sinFiltros,
+  ].some((l) => l.length) ||
   c.desde !== undefined ||
   c.hasta !== undefined;
 
@@ -105,30 +120,44 @@ function fecha(valor: string, ahora: Date): number | null {
 /** Quita las comillas de una frase. */
 const sinComillas = (s: string) => s.replace(/^"|"$/g, '').trim();
 
+/** Las comillas tipográficas («», “”, „) cuentan como `"` (las ponen los teclados de iOS y macOS). */
+const conComillasRectas = (s: string) => s.replace(/[«»“”„]/g, '"');
+
+/** ¿Hay algún filtro (y nada de texto)? Para saber si `-x` niega un filtro. */
+const soloFiltros = (c: Consulta) => !c.palabras.length && !c.frases.length && !c.excluir.length && hayConsulta(c);
+
+const vacia = (): Consulta => ({
+  palabras: [],
+  frases: [],
+  excluir: [],
+  tipos: [],
+  en: [],
+  etiquetas: [],
+  estados: [],
+  niveles: [],
+  huellas: [],
+  dominios: [],
+  sinFiltros: [],
+  imposible: false,
+});
+
 export function analizarConsulta(texto: string, { ahora = new Date() }: { ahora?: Date } = {}): Consulta {
-  const c: Consulta = {
-    palabras: [],
-    frases: [],
-    excluir: [],
-    tipos: [],
-    en: [],
-    etiquetas: [],
-    estados: [],
-    niveles: [],
-    huellas: [],
-    dominios: [],
-    imposible: false,
-  };
+  const c = vacia();
   const palabraOFrase = (t: string, destino: 'incluir' | 'excluir') => {
     const limpio = sinComillas(t);
     if (!limpio) return;
     if (destino === 'excluir') c.excluir.push(limpio);
-    else if (/\s/.test(limpio)) c.frases.push(limpio);
+    // Entre comillas, aunque sea una palabra, va tal cual (sin difuso ni prefijo).
+    else if (/\s/.test(limpio) || t.startsWith('"')) c.frases.push(limpio);
     else c.palabras.push(limpio);
   };
-  for (const token of normalizarBusqueda(texto).match(/-?"[^"]*"?|\S+/g) ?? []) {
+  for (const token of normalizarBusqueda(conComillasRectas(texto)).match(/-?"[^"]*"?|\S+/g) ?? []) {
     if (token.startsWith('-') && token.length > 1) {
-      palabraOFrase(token.slice(1), 'excluir');
+      const resto = token.slice(1);
+      // `-#etiqueta` o `-clave:valor` niegan ese filtro; lo demás se excluye como texto.
+      const negado = resto.startsWith('"') ? null : analizarConsulta(resto, { ahora });
+      if (negado && soloFiltros(negado)) c.sinFiltros.push(negado);
+      else palabraOFrase(resto, 'excluir');
       continue;
     }
     if (token.startsWith('"')) {
@@ -157,7 +186,7 @@ export function analizarConsulta(texto: string, { ahora = new Date() }: { ahora?
         break;
       case 'en':
       case 'in':
-        c.en.push(...valores.map((v) => v.replace(/^@/, '')));
+        if (valores.length) c.en.push(valores.map((v) => v.replace(/^@/, '')));
         break;
       case 'desde':
       case 'since':
@@ -222,7 +251,7 @@ export function coincideFiltros(fm: FrontmatterComun, c: Consulta, estadosDe?: E
   if (c.tipos.length && !c.tipos.includes(fm.tipo)) return false;
   if (c.en.length) {
     const grupos = [...(fm.colecciones ?? []), ...(fm.investigaciones ?? [])].map(normalizarBusqueda);
-    if (!c.en.some((e) => grupos.includes(e))) return false;
+    if (!c.en.every((alguno) => alguno.some((e) => grupos.includes(e)))) return false;
   }
   if (c.etiquetas.length) {
     const propias = (fm.etiquetas ?? []).map(normalizarBusqueda);
@@ -253,5 +282,6 @@ export function coincideFiltros(fm: FrontmatterComun, c: Consulta, estadosDe?: E
     const dominio = dominioDe(fm);
     if (!dominio || !c.dominios.some((d) => dominio === d || dominio.endsWith(`.${d}`))) return false;
   }
+  if (c.sinFiltros.some((negado) => !negado.imposible && coincideFiltros(fm, negado, estadosDe))) return false;
   return true;
 }

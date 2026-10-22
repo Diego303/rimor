@@ -423,6 +423,7 @@
         "other": "{n} resultados"
       },
       "algunos": "Los {n} más relevantes de {total} resultados",
+      "alMenos": "Al menos {n} resultados (los más relevantes)",
       "dentro": "coincide dentro",
       "sinResultados": "Sin resultados",
       "sinResultadosTexto": "Quita algún filtro o prueba otra palabra.",

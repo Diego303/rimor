@@ -314,3 +314,118 @@ describe('rendimiento', () => {
     }
   });
 });
+
+describe('motor de búsqueda: casos de la revisión', () => {
+  const conAdjunto = (n: number, titulo: string): Elemento => {
+    const e = el(n, {
+      titulo,
+      adjunto: { ruta: `adjuntos/${n}.log`, hash: 'aa', tam: 3_000_000, mime: 'text/plain' } as never,
+    });
+    return { ...e, original: null };
+  };
+
+  it('un adjunto de texto se busca por su contenido, también con frases', async () => {
+    const e = conAdjunto(1, 'Log grande');
+    const repositorio: RepositorioBusqueda = { elementos: () => [e.frontmatter], leerElemento: async () => ok(e) };
+    const motor = new MotorBusqueda({
+      repositorio,
+      api: apiIndice(),
+      cargarOriginal: async () => 'INFO arranque\nERROR read timeout en el cliente',
+    });
+    await motor.sincronizar();
+    expect(await refs(motor, 'arranque')).toEqual(['TXT-0001']);
+    expect(await refs(motor, '"read timeout"')).toEqual(['TXT-0001']);
+    expect(await refs(motor, 'log -"read timeout"')).toEqual([]);
+  });
+
+  it('un lector nuevo reindexa aunque el frontmatter aún diga la versión anterior', async () => {
+    const repositorio = await espacio(el(1, { titulo: 'uno' }));
+    const indexable = vi.fn(async () => '');
+    let version = 1;
+    const opciones = { repositorio, api: apiIndice(), indexable, lectorVigente: () => `texto@${version}` };
+    const motor = new MotorBusqueda(opciones);
+    await motor.sincronizar();
+    await motor.sincronizar();
+    expect(indexable).toHaveBeenCalledTimes(1);
+    version = 2;
+    await motor.sincronizar();
+    expect(indexable).toHaveBeenCalledTimes(2);
+  });
+
+  it('lo que falla al indexar queda incompleto: no se reintenta en la sesión, sí al abrir otra vez', async () => {
+    const repositorio = await espacio(el(1, { titulo: 'uno' }));
+    const cache = cacheFalsa();
+    let falla = true;
+    const indexable = vi.fn(async () => {
+      if (falla) throw new Error('plazo agotado');
+      return 'plantilla';
+    });
+    const motor = new MotorBusqueda({ repositorio, api: apiIndice(), cache, indexable });
+    await motor.sincronizar();
+    // Lo demás sí se encuentra.
+    expect(await refs(motor, 'uno')).toEqual(['TXT-0001']);
+    await motor.sincronizar();
+    expect(indexable).toHaveBeenCalledTimes(1);
+    await motor.cerrar();
+
+    falla = false;
+    const otro = new MotorBusqueda({ repositorio, api: apiIndice(), cache, indexable });
+    await otro.sincronizar();
+    expect(indexable).toHaveBeenCalledTimes(2);
+    expect(await refs(otro, 'plantilla')).toEqual(['TXT-0001']);
+  });
+
+  it('rehacer vuelve a indexar todo; un índice que falla deja el estado en «listo»', async () => {
+    const repositorio = await espacio(el(1, { titulo: 'uno' }), el(2, { titulo: 'dos' }));
+    const indexable = vi.fn(async () => '');
+    const motor = new MotorBusqueda({ repositorio, api: apiIndice(), indexable });
+    await motor.sincronizar();
+    await motor.rehacer();
+    expect(indexable).toHaveBeenCalledTimes(4);
+
+    const roto = { ...apiIndice(), poner: async () => Promise.reject(new Error('busqueda.workerNoCarga')) };
+    const averiado = new MotorBusqueda({ repositorio, api: roto });
+    await expect(averiado.sincronizar()).resolves.toBeUndefined();
+    expect(averiado.estado()).toEqual({ fase: 'listo' });
+  });
+
+  it('frases por palabras completas; una palabra entre comillas va tal cual', async () => {
+    const repositorio = await espacio(
+      el(1, {}, 'thread timeouts here'),
+      el(2, {}, 'a read-timeout happened'),
+      el(3, {}, 'timeout del timer'),
+      el(4, {}, 'el time pasa'),
+    );
+    const motor = new MotorBusqueda({ repositorio, api: apiIndice() });
+    await motor.sincronizar();
+    expect(await refs(motor, '"read timeout"')).toEqual(['TXT-0002']);
+    expect(await refs(motor, '"time"')).toEqual(['TXT-0004']);
+  });
+
+  it('con más de 200 candidatos el total de una frase es aproximado; excluir una frase mira todos', async () => {
+    const repositorio = await espacio(
+      ...Array.from({ length: 230 }, (_, i) => el(i + 1, { titulo: `log ${i}` }, 'ERROR read timeout')),
+    );
+    const motor = new MotorBusqueda({ repositorio, api: apiIndice() });
+    await motor.sincronizar();
+    const r = await motor.buscar('"read timeout"');
+    expect(r.aproximado).toBe(true);
+    expect(r.total).toBe(200);
+    expect((await motor.buscar('log -"read timeout"')).total).toBe(0);
+    expect((await motor.buscar('log')).aproximado).toBe(false);
+  });
+
+  it('una búsqueda cortada se rechaza; los textos de frase se leen una vez por versión', async () => {
+    const repositorio = await espacio(el(1, {}, 'read timeout'));
+    const leer = vi.spyOn(repositorio, 'leerElemento');
+    const motor = new MotorBusqueda({ repositorio, api: apiIndice() });
+    await motor.sincronizar();
+    leer.mockClear();
+    const corte = new AbortController();
+    corte.abort();
+    await expect(motor.buscar('"read timeout"', { senal: corte.signal })).rejects.toThrow('Cortada');
+    await motor.buscar('"read timeout"');
+    await motor.buscar('"read timeout" -"nada aqui"');
+    expect(leer).toHaveBeenCalledTimes(1);
+  });
+});

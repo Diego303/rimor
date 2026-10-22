@@ -15,7 +15,7 @@ import {
   hayConsulta,
   normalizarBusqueda,
 } from './consulta';
-import { type ApiIndice, claveIndice, type DocumentoBusqueda, type Indexado } from './contrato';
+import { type ApiIndice, claveIndice, type DocumentoBusqueda, type Indexado, MAX_INDEXADO } from './contrato';
 
 /** Como mucho, los resultados que se devuelven (F0-8). */
 export const MAX_RESULTADOS = 50;
@@ -52,6 +52,8 @@ export interface Busqueda {
   consulta: Consulta;
   /** Cuántos cumplen la consulta (los que se devuelven son como mucho `MAX_RESULTADOS`). */
   total: number;
+  /** Con frases, solo se comprueban los mejores candidatos: el total es «al menos». */
+  aproximado: boolean;
   resultados: ResultadoBusqueda[];
   /** De todos los que cumplen la consulta, no solo de los devueltos. */
   facetas: Facetas;
@@ -75,8 +77,12 @@ export interface OpcionesMotor {
   cache?: CacheIndice;
   /** Solo la pestaña que escribe guarda el índice. */
   puedeEscribir?: () => boolean;
-  /** Lo que el lector deriva para buscar (`textoIndexable`); vacío si no hay. */
+  /** Lo que el lector deriva para buscar (`textoIndexable`); vacío si no hay. Lanza si no se pudo derivar. */
   indexable?: (el: Elemento) => Promise<string>;
+  /** El texto de un original que va como adjunto (más de 2 MB); `null` si no es texto. */
+  cargarOriginal?: (el: Elemento) => Promise<string | null>;
+  /** El lector vigente de un elemento (`nombre@version`), para la clave del índice. */
+  lectorVigente?: (fm: FrontmatterComun) => string | undefined;
   estadosDe?: EstadosDe;
   reloj?: () => Date;
   esperaGuardarMs?: number;
@@ -102,18 +108,34 @@ const LEIDOS_A_LA_VEZ = 20;
 /** Las palabras que el índice puede buscar (con alguna letra o cifra: `#` o `-` solos no). */
 const buscables = (palabras: readonly string[]) => palabras.filter((p) => /[\p{L}\p{N}]/u.test(p));
 
-/** El texto en que se comprueba una frase: lo mismo que se indexa, con más del original. */
-function textoDe(el: Elemento): string {
+/** Solo letras y cifras separadas por un espacio, con un espacio a cada lado: así una frase casa por palabras. */
+const enPalabras = (s: string) =>
+  ` ${normalizarBusqueda(s)
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()} `;
+
+/** El texto en que se comprueba una frase: el título, la ref, las etiquetas, las notas y el principio del original. */
+function textoDe(el: Elemento, original: string): string {
   const fm = el.frontmatter;
-  return normalizarBusqueda(
-    [fm.titulo, fm.ref, ...(fm.etiquetas ?? []), el.notas, (el.original ?? '').slice(0, MAX_TEXTO_FRASE)].join('\n'),
-  ).replace(/\s+/g, ' ');
+  return enPalabras(
+    [fm.titulo, fm.ref, ...(fm.etiquetas ?? []), el.notas, original.slice(0, MAX_TEXTO_FRASE)].join('\n'),
+  );
 }
 
 /** Una palabra tal cual la guarda el índice (sin espacios ni signos). */
 const esPalabra = (s: string) => /^[\p{L}\p{N}]+$/u.test(s);
 
-const tieneFrase = (texto: string, frase: string) => texto.includes(frase.replace(/\s+/g, ' '));
+/** La frase está, palabra por palabra («read timeout» no casa con «thread timeouts»). Sin palabras, sí. */
+function tieneFrase(texto: string, frase: string): boolean {
+  const buscada = enPalabras(frase);
+  return buscada === '  ' || texto.includes(buscada);
+}
+
+/** Los textos de frase ya leídos (por elemento y versión): escribir dentro de comillas repite la búsqueda. */
+const MAX_TEXTOS = 400;
+
+/** Error de una búsqueda que se cortó porque llegó otra. */
+const cortada = () => new DOMException('Cortada', 'AbortError');
 
 export class MotorBusqueda {
   private readonly claves = new Map<string, string>();
@@ -126,6 +148,9 @@ export class MotorBusqueda {
   private temporizador: ReturnType<typeof setTimeout> | undefined;
   private cerrado = false;
   private guardando: Promise<void> = Promise.resolve();
+  /** Lo que ya se intentó indexar en esta sesión y quedó incompleto (lectura o derivado fallidos), por su clave. */
+  private readonly incompletos = new Map<string, string>();
+  private readonly textos = new Map<string, string>();
 
   constructor(private readonly o: OpcionesMotor) {
     this.cargado = this.cargar();
@@ -173,12 +198,31 @@ export class MotorBusqueda {
       await this.cargado;
       do {
         this.otraVez = false;
-        await this.sincronizarAhora();
+        try {
+          await this.sincronizarAhora();
+        } catch {
+          // El índice falló (su Worker murió): se queda lo que hay y se reintenta con el próximo cambio.
+          this.ponerEstado({ fase: 'listo' });
+        }
       } while (this.otraVez && !this.cerrado);
     })().finally(() => {
       this.sincronizando = null;
     });
     return this.sincronizando;
+  }
+
+  /**
+   * Olvida lo indexado y lo rehace: cuando el índice se perdió (su Worker no cargó o murió y ahora está en este
+   * hilo, vacío).
+   */
+  rehacer(): Promise<void> {
+    this.claves.clear();
+    this.incompletos.clear();
+    return this.sincronizar();
+  }
+
+  private clave(fm: FrontmatterComun): string {
+    return claveIndice(fm, this.o.lectorVigente?.(fm));
   }
 
   private async sincronizarAhora(): Promise<void> {
@@ -191,7 +235,10 @@ export class MotorBusqueda {
       this.sucio = true;
     }
     const faltan = elementos
-      .filter((fm) => this.claves.get(fm.id) !== claveIndice(fm))
+      .filter((fm) => {
+        const clave = this.clave(fm);
+        return this.claves.get(fm.id) !== clave && this.incompletos.get(fm.id) !== clave;
+      })
       .sort((a, b) => instante(b.modificado) - instante(a.modificado));
     for (let i = 0; i < faltan.length && !this.cerrado; i += TANDA) {
       this.ponerEstado({ fase: 'indexando', hechos: i, total: faltan.length });
@@ -200,24 +247,49 @@ export class MotorBusqueda {
       );
       if (!tanda.length) continue;
       await this.o.api.poner(tanda);
-      for (const { doc, clave } of tanda) this.claves.set(doc.id, clave);
+      for (const { doc, clave } of tanda) {
+        // Lo incompleto se guarda con una clave que nunca coincide: al abrir otra vez se reintenta; en esta sesión,
+        // no (hasta que cambie).
+        const real = clave.replace(/~$/, '');
+        this.claves.set(doc.id, clave);
+        if (real !== clave) this.incompletos.set(doc.id, real);
+        else this.incompletos.delete(doc.id);
+      }
       this.sucio = true;
     }
     this.ponerEstado({ fase: 'listo' });
     if (this.sucio) this.programarGuardado();
   }
 
-  /** Lo que se indexa de un elemento (leído del espacio); `null` si ya no está. */
+  /** El original como texto: el del archivo o, si va como adjunto, el del adjunto (si es texto). */
+  private async original(el: Elemento): Promise<string> {
+    if (el.original !== null) return el.original;
+    if (!el.frontmatter.adjunto || !this.o.cargarOriginal) return '';
+    return (await this.o.cargarOriginal(el)) ?? '';
+  }
+
+  /**
+   * Lo que se indexa de un elemento (leído del espacio); `null` si ya no está. Si algo falla (el archivo, el
+   * adjunto o el derivado), se indexa lo que haya y la clave lleva `~`: incompleto.
+   */
   private async documento(fm: FrontmatterComun): Promise<Indexado | null> {
+    let completo = true;
     const leido = await this.o.repositorio.leerElemento(fm.id).catch(() => null);
+    if (!leido?.ok) completo = false;
     // Si el archivo no se puede leer, al menos lo del frontmatter.
     const el: Elemento = leido?.ok ? leido.valor : { frontmatter: fm, notas: '', original: null };
     if (el.frontmatter.id !== fm.id) return null;
+    let cuerpo = '';
     let indexable = '';
+    try {
+      cuerpo = (await this.original(el)).slice(0, MAX_INDEXADO);
+    } catch {
+      completo = false;
+    }
     try {
       indexable = (await this.o.indexable?.(el)) ?? '';
     } catch {
-      indexable = '';
+      completo = false;
     }
     const f = el.frontmatter;
     const doc: DocumentoBusqueda = {
@@ -226,10 +298,10 @@ export class MotorBusqueda {
       ref: f.ref,
       etiquetas: (f.etiquetas ?? []).join(' '),
       notas: el.notas,
-      cuerpo: el.original ?? '',
+      cuerpo,
       indexable,
     };
-    return { doc, clave: claveIndice(f) };
+    return { doc, clave: `${this.clave(f)}${completo ? '' : '~'}` };
   }
 
   private programarGuardado(): void {
@@ -266,11 +338,21 @@ export class MotorBusqueda {
     return this.claves.size;
   }
 
-  async buscar(texto: string, { ahora = this.o.reloj?.() ?? new Date() }: { ahora?: Date } = {}): Promise<Busqueda> {
+  /**
+   * Busca. `senal` corta una búsqueda que ya no hace falta (llegó otra): se rechaza con `AbortError` antes de leer
+   * más archivos.
+   */
+  async buscar(
+    texto: string,
+    { ahora = this.o.reloj?.() ?? new Date(), senal }: { ahora?: Date; senal?: AbortSignal } = {},
+  ): Promise<Busqueda> {
     const consulta = analizarConsulta(texto, { ahora });
-    const vacia: Busqueda = { consulta, total: 0, resultados: [], facetas: facetasDe([]) };
+    const vacia: Busqueda = { consulta, total: 0, aproximado: false, resultados: [], facetas: facetasDe([]) };
     if (consulta.imposible || !hayConsulta(consulta)) return vacia;
     await this.cargado;
+    const seguir = () => {
+      if (senal?.aborted) throw cortada();
+    };
 
     const palabras = buscables([...consulta.palabras, ...consulta.frases.flatMap((f) => f.split(/\s+/))]);
     const conTexto = consulta.palabras.length > 0 || consulta.frases.length > 0;
@@ -283,7 +365,9 @@ export class MotorBusqueda {
       const porId = new Map(filtradas.map((fm) => [fm.id, fm]));
       candidatos = [];
       // Las palabras sueltas excluidas, en la misma pasada del índice; las frases, después.
-      for (const a of await this.o.api.buscar(palabras, consulta.excluir.filter(esPalabra))) {
+      const aciertos = await this.o.api.buscar(palabras, consulta.excluir.filter(esPalabra));
+      seguir();
+      for (const a of aciertos) {
         const fm = porId.get(a.id);
         if (fm)
           candidatos.push({
@@ -303,11 +387,15 @@ export class MotorBusqueda {
     candidatos = await this.excluir(
       candidatos,
       conTexto ? consulta.excluir.filter((e) => !esPalabra(e)) : consulta.excluir,
+      seguir,
     );
-    if (consulta.frases.length) candidatos = await this.conFrases(candidatos, consulta.frases);
+    // Las frases se comprueban en los mejores candidatos: si había más, el total es aproximado (al menos).
+    const aproximado = consulta.frases.length > 0 && candidatos.length > MAX_LEIDOS;
+    if (consulta.frases.length) candidatos = await this.conFrases(candidatos, consulta.frases, seguir);
     return {
       consulta,
       total: candidatos.length,
+      aproximado,
       facetas: facetasDe(candidatos.map((c) => c.fm)),
       resultados: candidatos
         .slice(0, MAX_RESULTADOS)
@@ -315,14 +403,19 @@ export class MotorBusqueda {
     };
   }
 
-  /** Quita lo que contiene alguna palabra o frase excluida. */
-  private async excluir<T extends { fm: FrontmatterComun }>(lista: T[], excluir: readonly string[]): Promise<T[]> {
+  /** Quita lo que contiene alguna palabra o frase excluida (las frases, comprobadas en todos los que podrían). */
+  private async excluir<T extends { fm: FrontmatterComun }>(
+    lista: T[],
+    excluir: readonly string[],
+    seguir: () => void,
+  ): Promise<T[]> {
     if (!excluir.length || !lista.length) return lista;
     const fuera = new Set<string>();
     for (const e of excluir) {
       const palabras = buscables(e.split(/\s+/));
       if (!palabras.length) continue;
       const ids = await this.o.api.conPalabras(palabras);
+      seguir();
       // Una palabra tal cual la guarda el índice: fuera todos los que la tienen.
       if (esPalabra(e)) {
         for (const id of ids) fuera.add(id);
@@ -331,32 +424,53 @@ export class MotorBusqueda {
       // Una frase (o una palabra con signos): solo los que tienen todas sus palabras pueden tenerla; se comprueba
       // leyéndolos.
       const posibles = new Set(ids);
-      const leer = lista.filter((c) => posibles.has(c.fm.id) && !fuera.has(c.fm.id)).slice(0, MAX_LEIDOS);
-      const textos = await Promise.all(leer.map((c) => this.texto(c.fm.id)));
-      leer.forEach((c, j) => {
-        if (tieneFrase(textos[j] ?? '', e)) fuera.add(c.fm.id);
+      const leer = lista.filter((c) => posibles.has(c.fm.id) && !fuera.has(c.fm.id));
+      await this.porTandas(leer, seguir, (c, texto) => {
+        if (tieneFrase(texto, e)) fuera.add(c.fm.id);
       });
     }
     return lista.filter((c) => !fuera.has(c.fm.id));
   }
 
   /** Deja los que tienen todas las frases, comprobándolo en los mejores candidatos. */
-  private async conFrases<T extends { fm: FrontmatterComun }>(lista: T[], frases: readonly string[]): Promise<T[]> {
+  private async conFrases<T extends { fm: FrontmatterComun }>(
+    lista: T[],
+    frases: readonly string[],
+    seguir: () => void,
+  ): Promise<T[]> {
     const quedan: T[] = [];
-    const leer = lista.slice(0, MAX_LEIDOS);
-    for (let i = 0; i < leer.length; i += LEIDOS_A_LA_VEZ) {
-      const tanda = leer.slice(i, i + LEIDOS_A_LA_VEZ);
-      const textos = await Promise.all(tanda.map((c) => this.texto(c.fm.id)));
-      tanda.forEach((c, j) => {
-        if (frases.every((f) => tieneFrase(textos[j] ?? '', f))) quedan.push(c);
-      });
-    }
+    await this.porTandas(lista.slice(0, MAX_LEIDOS), seguir, (c, texto) => {
+      if (frases.every((f) => tieneFrase(texto, f))) quedan.push(c);
+    });
     return quedan;
   }
 
-  private async texto(id: string): Promise<string> {
-    const leido = await this.o.repositorio.leerElemento(id).catch(() => null);
-    return leido?.ok ? textoDe(leido.valor) : '';
+  /** Lee los textos de frase de una lista, unos cuantos a la vez, en orden, parando si la búsqueda se corta. */
+  private async porTandas<T extends { fm: FrontmatterComun }>(
+    lista: readonly T[],
+    seguir: () => void,
+    cada: (c: T, texto: string) => void,
+  ): Promise<void> {
+    for (let i = 0; i < lista.length; i += LEIDOS_A_LA_VEZ) {
+      seguir();
+      const tanda = lista.slice(i, i + LEIDOS_A_LA_VEZ);
+      const textos = await Promise.all(tanda.map((c) => this.texto(c.fm)));
+      for (const [j, c] of tanda.entries()) cada(c, textos[j] ?? '');
+    }
+    seguir();
+  }
+
+  /** El texto de frase de un elemento, de la memoria si ya se leyó esa misma versión. */
+  private async texto(fm: FrontmatterComun): Promise<string> {
+    const clave = `${fm.id}|${claveIndice(fm)}`;
+    const guardado = this.textos.get(clave);
+    if (guardado !== undefined) return guardado;
+    const leido = await this.o.repositorio.leerElemento(fm.id).catch(() => null);
+    if (!leido?.ok) return '';
+    const texto = textoDe(leido.valor, await this.original(leido.valor).catch(() => ''));
+    if (this.textos.size >= MAX_TEXTOS) this.textos.delete(this.textos.keys().next().value ?? '');
+    this.textos.set(clave, texto);
+    return texto;
   }
 
   /** Deja de indexar y guarda lo pendiente. */

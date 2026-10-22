@@ -423,6 +423,7 @@
         "other": "{n} results"
       },
       "algunos": "The {n} most relevant of {total} results",
+      "alMenos": "At least {n} results (the most relevant)",
       "dentro": "matches inside",
       "sinResultados": "No results",
       "sinResultadosTexto": "Remove a filter or try another word.",

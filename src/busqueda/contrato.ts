@@ -62,24 +62,19 @@ function fnv(s: string): string {
 /**
  * La clave de lo que se indexa de un elemento: cambia si cambia el original (`hash`), una edición (`modificado`),
  * el lector que lo deriva o lo que se indexa del frontmatter (título, ref, etiquetas). No cambia por moverlo de
- * colección (los filtros van sobre el frontmatter del momento).
+ * colección (los filtros van sobre el frontmatter del momento). `lector` es el vigente en el registro
+ * (`nombre@version`): un lector nuevo cambia lo derivado aunque el frontmatter aún diga la versión anterior.
  */
-export function claveIndice(fm: {
-  modificado: string;
-  hash: string;
-  ref: string;
-  titulo: string;
-  etiquetas?: readonly string[] | undefined;
-  lector: { nombre: string; version: number };
-}): string {
-  return fnv(
-    [
-      fm.modificado,
-      fm.hash,
-      `${fm.lector.nombre}@${fm.lector.version}`,
-      fm.ref,
-      fm.titulo,
-      ...(fm.etiquetas ?? []),
-    ].join('\u0000'),
-  );
+export function claveIndice(
+  fm: {
+    modificado: string;
+    hash: string;
+    ref: string;
+    titulo: string;
+    etiquetas?: readonly string[] | undefined;
+    lector: { nombre: string; version: number };
+  },
+  lector = `${fm.lector.nombre}@${fm.lector.version}`,
+): string {
+  return fnv([fm.modificado, fm.hash, lector, fm.ref, fm.titulo, ...(fm.etiquetas ?? [])].join('\u0000'));
 }

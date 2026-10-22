@@ -9,10 +9,12 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
 import { useEspacioOpcional } from '../espacio/Espacio';
+import { cargarTextoAdjunto } from '../lectores/adjuntos';
 import { useLectoresOpcional } from '../lectores/Lectores';
 import { type ClienteIndice, crearClienteIndice, indiceEnHilo } from './cliente';
 import { type Busqueda, type EstadoMotor, MotorBusqueda } from './motor';
@@ -21,6 +23,8 @@ const Contexto = createContext<MotorBusqueda | null>(null);
 
 /** Lo que se espera tras un cambio del espacio para reindexar (agrupa las ráfagas: una importación). */
 const ESPERA_SINCRONIZAR_MS = 300;
+/** Lo que se espera entre pulsaciones antes de buscar (la primera búsqueda va sin espera). */
+export const ESPERA_TECLEO_MS = 120;
 
 interface PropsProveedor {
   children: ReactNode;
@@ -38,12 +42,18 @@ export function ProveedorBusqueda({ children, enHilo = false }: PropsProveedor) 
       setMotor(null);
       return undefined;
     }
-    const cliente: ClienteIndice = enHilo ? { api: indiceEnHilo(), cerrar: () => undefined } : crearClienteIndice();
+    // Si el Worker no carga o muere, el índice sigue en este hilo, vacío: se rehace.
+    const averiado = { motor: null as MotorBusqueda | null };
+    const cliente: ClienteIndice = enHilo
+      ? { api: indiceEnHilo(), cerrar: () => undefined }
+      : crearClienteIndice(() => void averiado.motor?.rehacer().catch(() => undefined));
     const nuevo = new MotorBusqueda({
       repositorio: espacio.repositorio,
       api: cliente.api,
       cache: espacio.cache,
       puedeEscribir: () => espacio.coordinacion.modo() === 'escritor',
+      // Un log de más de 2 MB va como adjunto: su texto también se busca.
+      cargarOriginal: (el) => cargarTextoAdjunto(espacio.repositorio, el),
       ...(lectores
         ? {
             // Lo que el lector deriva para buscar, con prioridad de fondo (lo visible va antes) y de su caché.
@@ -53,9 +63,14 @@ export function ProveedorBusqueda({ children, enHilo = false }: PropsProveedor) 
               return lector.textoIndexable(await lectores.cola.pedir(el, { prioridad: 'fondo' }));
             },
             estadosDe: (fm) => lectores.registro.paraElemento({ frontmatter: fm }),
+            lectorVigente: (fm) => {
+              const lector = lectores.registro.paraElemento({ frontmatter: fm });
+              return lector ? `${lector.nombre}@${lector.version}` : undefined;
+            },
           }
         : {}),
     });
+    averiado.motor = nuevo;
     setMotor(nuevo);
     let temporizador: ReturnType<typeof setTimeout> | undefined;
     const programar = () => {
@@ -94,8 +109,8 @@ export function useEstadoBusqueda(): EstadoMotor {
 
 /**
  * Los resultados de una consulta, al día con el espacio y con el índice (al acabar de indexar se repite). Gana la
- * última consulta: la respuesta de una vieja que llega tarde se descarta. `null` mientras no hay motor o aún no
- * ha respondido a la primera.
+ * última consulta: mientras se escribe se espera un poco y la búsqueda anterior se corta (no sigue leyendo
+ * archivos). `null` mientras no hay motor o aún no ha respondido a la primera.
  */
 export function useBuscar(texto: string): { busqueda: Busqueda | null; buscando: boolean } {
   const motor = useBusquedaOpcional();
@@ -116,18 +131,24 @@ export function useBuscar(texto: string): { busqueda: Busqueda | null; buscando:
     };
   }, [motor, espacio]);
 
+  const primera = useRef(true);
   // biome-ignore lint/correctness/useExhaustiveDependencies: `vuelta` repite la búsqueda tras un cambio.
   useEffect(() => {
     if (!motor) return undefined;
-    let vigente = true;
-    motor
-      .buscar(texto)
-      .then((busqueda) => {
-        if (vigente) setEstado({ texto, busqueda });
-      })
-      .catch(() => undefined);
+    const corte = new AbortController();
+    const espera = primera.current ? 0 : ESPERA_TECLEO_MS;
+    primera.current = false;
+    const temporizador = setTimeout(() => {
+      motor
+        .buscar(texto, { senal: corte.signal })
+        .then((busqueda) => {
+          if (!corte.signal.aborted) setEstado({ texto, busqueda });
+        })
+        .catch(() => undefined);
+    }, espera);
     return () => {
-      vigente = false;
+      clearTimeout(temporizador);
+      corte.abort();
     };
   }, [motor, texto, vuelta]);
 

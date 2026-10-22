@@ -208,9 +208,11 @@ export function Buscar() {
         ) : busqueda ? (
           <>
             <p className="sm muted">
-              {busqueda.total > busqueda.resultados.length
-                ? t('pantallas.buscar.algunos', { n: busqueda.resultados.length, total: busqueda.total })
-                : t('pantallas.buscar.resultados', { n: busqueda.total })}
+              {busqueda.aproximado
+                ? t('pantallas.buscar.alMenos', { n: busqueda.total })
+                : busqueda.total > busqueda.resultados.length
+                  ? t('pantallas.buscar.algunos', { n: busqueda.resultados.length, total: busqueda.total })
+                  : t('pantallas.buscar.resultados', { n: busqueda.total })}
             </p>
             {grupos.length ? (
               grupos.map(([tipo, lista]) => (
