@@ -1,7 +1,7 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-22 23:57
+**Última actualización:** 2026-10-22 23:59
 **Ahora:** IN-034 · Mosaico y lista densa · fase análisis y diseño
 **Siguiente:** IN-035 · Exportar ZIP y JSON
 **Progreso:** F0 9/9 · v0.1 35/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 44/99
@@ -52,8 +52,8 @@
 | IN-030 | Hilos | v0.1 | 5 | hecha | f79375a 2fd00eb 7287d9a | docs/features/IN-030-hilos.md |
 | IN-031 | Colecciones y etiquetas | v0.1 | 5 | hecha | f7526c7 7134d64 0d00edd | docs/features/IN-031-colecciones.md |
 | IN-032 | Búsqueda | v0.1 | 5 | hecha | f797561 e9a801d 7c7f416 6e40ab9 | docs/features/IN-032-busqueda.md |
-| IN-033 | Paleta de comandos | v0.1 | 6 | hecha | dd50a0d 5d9fe05 | docs/features/IN-033-paleta.md |
-| IN-034 | Mosaico y lista densa | v0.1 | 6 | pendiente | — | — |
+| IN-033 | Paleta de comandos | v0.1 | 6 | hecha | dd50a0d 5d9fe05 8301765 | docs/features/IN-033-paleta.md |
+| IN-034 | Mosaico y lista densa | v0.1 | 6 | en análisis y diseño | — | docs/features/IN-034-vistas.md |
 | IN-035 | Exportar ZIP y JSON | v0.1 | 6 | pendiente | — | — |
 | IN-036 | Importar ZIP y JSON | v0.1 | 6 | pendiente | — | — |
 | IN-037 | Datos y copias | v0.1 | 6 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-22 | IN-033 | verificación | pnpm verificar OK (1212 pruebas, 235,3 KB); revisión independiente con 8 hallazgos atendidos con pruebas | … |
+| 2026-10-22 | IN-034 | análisis y diseño | selector Lista, Mosaico y Densa en la dirección; mosaico por tipo o fecha con tarjetas de cada lector en tandas; lista densa ordenable y virtual | … |
+| 2026-10-22 | IN-033 | verificación | pnpm verificar OK (1212 pruebas, 235,3 KB); revisión independiente con 8 hallazgos atendidos con pruebas | 8301765 |
 | 2026-10-22 | IN-033 | implementación | acciones = atajos con o sin tecla, lógica de puntuación y recientes, paleta con combobox, Ctrl+K en la carcasa | 5d9fe05 |
 | 2026-10-22 | IN-033 | análisis y diseño | las acciones son los atajos (con o sin tecla), lógica pura de puntuación y orden con recientes, paleta modal con la caja de Buscar y elementos del motor | dd50a0d |
 | 2026-10-22 | IN-032 | verificación | pnpm verificar OK (1194 pruebas, 232,5 KB); revisión independiente con 12 hallazgos atendidos con pruebas | 7c7f416 |

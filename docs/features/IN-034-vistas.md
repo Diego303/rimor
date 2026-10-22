@@ -1,0 +1,59 @@
+# IN-034 · Mosaico y lista densa
+
+## Objetivo y catálogo
+
+Ver un grupo de elementos de dos formas más que la lista: un **mosaico** con la tarjeta de cada lector, agrupado con cabeceras y recuentos, y una **lista densa** en columnas, ordenable, para recorrer cientos de elementos. Las dos en las colecciones y en los resultados de Buscar. Catálogo: **VIS-02** (mosaico agrupado) y **VIS-03** (lista densa). Depende de IN-027 (pantalla del elemento) e IN-012 (tarjetas de los lectores).
+
+## Estado de partida
+
+- Cada lector tiene su `Tarjeta` (vista previa) y `TarjetaElemento` la pinta con el tipo, el título y la ref (IN-012); ninguna pantalla la usa todavía. Necesita el elemento completo: `useElemento` (Inicio) lo lee y lo recuerda.
+- La colección (`/c/$coleccion`, IN-031) y Buscar (IN-032) pintan listas de filas `it`. El feed ya usa `@tanstack/react-virtual`.
+- La referencia no dibuja estas vistas: se componen con sus piezas (`seg`, `card`, tablas con `th` en mayúsculas pequeñas, `st` para el estado, `ti` para el tipo).
+
+## Diseño
+
+### Elegir la vista
+
+Un `Segmentado` «Lista · Mosaico · Densa» arriba a la derecha de la pantalla (en la colección, junto a sus botones; en Buscar, en la línea de «N resultados»). La vista va en la dirección (`?vista=mosaico`), así que se comparte y vuelve con «Atrás»; sin ella, la lista de siempre.
+
+### Mosaico (`src/ui/vistas/Mosaico.tsx`)
+
+- Grupos con cabecera y recuento («Log · 12»): por **tipo** (en el orden del primero de cada uno) o por **fecha** (hoy, ayer, el día…), con un segundo `Segmentado` pequeño «Tipo · Fecha».
+- Una rejilla adaptable de `TarjetaElemento`: cada tarjeta lee su elemento al montarse (`useElemento`, que pasa a `src/lectores/useElemento.ts` para usarlo fuera de Inicio) y, mientras, enseña el resumen del frontmatter. El título es el botón que abre el elemento; toda la tarjeta se puede pulsar.
+- Para no leer cientos de archivos de golpe: se pintan 60 y «Ver más» añade otros 60.
+
+### Lista densa (`src/ui/vistas/ListaDensa.tsx`)
+
+- Tabla con columnas **tipo**, **título** (con la ref), **fecha**, **colecciones** y **estado** (el visible, con su nombre y tono, como en el elemento).
+- Ordenable pulsando la cabecera (`aria-sort`; otra vez, al revés); por defecto, la fecha de lo más reciente a lo más antiguo. El orden es TS puro (`ordenarDensa`, comparando sin acentos y con el idioma).
+- **Lista virtual**: solo se montan las filas visibles (con un margen) dentro de un contenedor con la cabecera fija; cada fila se abre con un clic o con Enter, y las flechas pasan de una a otra.
+
+## Tareas
+
+- [ ] La `Tarjeta` de cada lector en mosaico, agrupada con cabeceras y recuentos.
+- [ ] Lista densa ordenable (tipo, título, fecha, colecciones, estado) con lista virtual.
+- [ ] Las dos disponibles en colecciones y en los resultados de búsqueda.
+
+## Pruebas previstas
+
+- `ordenarDensa` por cada columna y sentido (acentos, sin colecciones, estados propios) y la agrupación del mosaico (tipo y fecha).
+- Mosaico: grupos con recuento, la tarjeta del lector cuando llega el elemento, abrir, «Ver más».
+- Lista densa: columnas, ordenar con `aria-sort`, solo se montan las filas visibles con muchas, abrir con clic y con Enter, flechas.
+- Colección y Buscar: el selector, la vista en la dirección y volver a la lista.
+
+## Criterios de aceptación
+
+- `pnpm verificar` en verde; la lista densa con 1.000 elementos solo monta las filas que se ven.
+
+## Riesgos y dudas
+
+| Riesgo o duda | Decisión |
+|---|---|
+| La referencia no tiene estas vistas | Se componen con `seg`, `card`, la tabla y los chips de la referencia. |
+| El mosaico lee un archivo por tarjeta | En tandas de 60 con «Ver más»; los leídos se recuerdan (`useElemento`). |
+| ¿Recordar la vista elegida? | En la dirección: se comparte y vuelve con «Atrás»; sin ella, la lista. |
+| Buscar devuelve como mucho 50 | Las vistas pintan esos 50; el recuento de arriba sigue diciendo el total. |
+
+## Autorrevisión
+
+Cubre las tres tareas de IN-034. Reutiliza `TarjetaElemento`, `useElemento`, `Segmentado`, `estadoVisible` y `nombreDeEstado`, y la lista virtual que ya usa el feed; textos por i18n; sin dependencias nuevas.
