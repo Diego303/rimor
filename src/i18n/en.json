@@ -68,7 +68,7 @@
     "buscar": "Search",
     "irInicio": "Go to Home",
     "irBuscar": "Go to Search",
-    "ayuda": "Show this help",
+    "ayuda": "See the keyboard shortcuts",
     "teclas": {
       "ctrl": "Ctrl",
       "shift": "Shift",
@@ -95,7 +95,11 @@
     "elementoFijar": "Pin or unpin",
     "elementoNota": "Write a note",
     "elementoPapelera": "Move to the bin",
-    "feedComparar": "Compare the two selected"
+    "feedComparar": "Compare the two selected",
+    "paleta": "Open the command palette",
+    "irAjustes": "Go to Settings",
+    "irPapelera": "Go to the bin",
+    "irDatos": "Go to Data and backups"
   },
   "errores": {
     "pantalla": {
@@ -588,5 +592,20 @@
     "coleccion": "Shall I add it to the {nombre} collection?",
     "siColeccion": "Yes, to {nombre}",
     "no": "No"
+  },
+  "paleta": {
+    "titulo": "Command palette",
+    "placeholder": "An action, a collection or something saved",
+    "recientes": "Recent",
+    "grupos": {
+      "accion": "Actions",
+      "coleccion": "Collections",
+      "elemento": "Items"
+    },
+    "global": "Anywhere in the app",
+    "pantalla": "On this screen",
+    "coleccion": "Collection",
+    "buscarEn": "Search “{texto}” in Search",
+    "nada": "Nothing matches that."
   }
 }

@@ -1,12 +1,16 @@
 /**
  * Gestor de atajos de teclado (APP-01, Anexo H): registro global y por pantalla, secuencias «g + letra» y
- * respeto a los campos de texto. TS puro: recibe teclas ya descritas, sin depender del DOM.
+ * respeto a los campos de texto. Es también el registro de acciones de la paleta (BUS-03): una acción es un
+ * atajo, con teclas o sin ellas. TS puro: recibe teclas ya descritas, sin depender del DOM.
  */
 import type { Clave } from '../../i18n/i18n';
 
 export interface Atajo {
-  /** `'j'`, `'?'`, `'/'`, `'g h'` (secuencia), `'ctrl+e'`, `'ctrl+shift+space'`. */
-  teclas: string;
+  /**
+   * `'j'`, `'?'`, `'/'`, `'g h'` (secuencia), `'ctrl+e'`, `'ctrl+shift+space'`. Sin teclas, es una acción que solo
+   * se lanza desde la paleta.
+   */
+  teclas?: string;
   descripcion: Clave;
   accion: () => void;
   /** Se atiende también con el foco en un campo de texto. */
@@ -16,7 +20,14 @@ export interface Atajo {
    * abrir lo seleccionado). Se mira en el momento de la pulsación.
    */
   cuando?: () => boolean;
+  /** `false`: no sale en la paleta (mover la selección, confirmar: solo tienen sentido con su tecla). */
+  enPaleta?: boolean;
 }
+
+/** Un atajo con teclas (los que atiende el teclado y lista la ayuda). */
+export type AtajoConTeclas = Atajo & { teclas: string };
+
+export const tieneTeclas = (a: Atajo): a is AtajoConTeclas => Boolean(a.teclas);
 
 export interface TeclaPulsada {
   key: string;
@@ -60,7 +71,7 @@ export class GestorAtajos {
 
   /** Registra atajos en un ámbito (`'global'` o el de una pantalla). Devuelve la baja. */
   registrar(ambito: string, atajos: Atajo[]): () => void {
-    const normalizados = atajos.map((a) => ({ ...a, teclas: normalizar(a.teclas) }));
+    const normalizados = atajos.map((a) => (a.teclas ? { ...a, teclas: normalizar(a.teclas) } : a));
     this.ambitos.set(ambito, normalizados);
     return () => {
       if (this.ambitos.get(ambito) === normalizados) this.ambitos.delete(ambito);
@@ -79,9 +90,9 @@ export class GestorAtajos {
     const conModificador = Boolean(t.ctrlKey || t.metaKey || t.altKey);
     const tecla = describir(t);
     const ahora = this.reloj();
-    const activos = this.activos().filter(
-      (a) => (!t.enCampo || a.enCampos || conModificador) && (!a.cuando || a.cuando()),
-    );
+    const activos = this.activos()
+      .filter(tieneTeclas)
+      .filter((a) => (!t.enCampo || a.enCampos || conModificador) && (!a.cuando || a.cuando()));
 
     if (this.prefijo && ahora <= this.prefijoHasta) {
       const secuencia = `${this.prefijo} ${tecla}`;
@@ -107,9 +118,27 @@ export class GestorAtajos {
     return false;
   }
 
-  /** Atajos por ámbito, para la ayuda. */
-  lista(): { ambito: string; atajos: Atajo[] }[] {
-    return [...this.ambitos].map(([ambito, atajos]) => ({ ambito, atajos }));
+  /** Atajos con teclas por ámbito, para la ayuda. */
+  lista(): { ambito: string; atajos: AtajoConTeclas[] }[] {
+    return [...this.ambitos].map(([ambito, atajos]) => ({ ambito, atajos: atajos.filter(tieneTeclas) }));
+  }
+
+  /**
+   * Lo que la paleta ofrece ahora: los de la pantalla y después los globales, sin los que no van en la paleta ni
+   * los que ahora no se pueden hacer (`cuando`); uno por descripción (la papelera tiene dos teclas), con la
+   * primera tecla.
+   */
+  acciones(): { ambito: string; atajo: Atajo }[] {
+    const vistas = new Set<string>();
+    const lista: { ambito: string; atajo: Atajo }[] = [];
+    const ordenados = [...this.ambitos].sort(([a], [b]) => Number(a === 'global') - Number(b === 'global'));
+    for (const [ambito, atajos] of ordenados)
+      for (const atajo of atajos) {
+        if (atajo.enPaleta === false || vistas.has(atajo.descripcion) || (atajo.cuando && !atajo.cuando())) continue;
+        vistas.add(atajo.descripcion);
+        lista.push({ ambito, atajo });
+      }
+    return lista;
   }
 }
 

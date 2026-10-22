@@ -1001,6 +1001,31 @@ details.more > div {
 .dialogo::backdrop {
   background: var(--grille);
 }
+/* Paleta de comandos: arriba, como un buscador, con la caja de Buscar y filas `it`. */
+.dialogo.paleta {
+  width: min(560px, calc(100% - 32px));
+  max-width: none;
+  margin-top: 12vh;
+  padding: 10px;
+  gap: 6px;
+}
+.paleta .cbox.caja-buscar {
+  box-shadow: none;
+  border-color: var(--line);
+}
+.paleta-lista {
+  max-height: min(420px, 60vh);
+  overflow-y: auto;
+}
+.paleta-grupo {
+  padding: 8px 10px 2px;
+}
+.paleta-vacia {
+  padding: 8px 10px;
+}
+.it[aria-selected="true"] {
+  background: var(--panel-2);
+}
 .contents {
   display: contents;
 }

@@ -8,6 +8,26 @@ const TECLAS = ['ctrl', 'shift', 'alt', 'space', 'enter', 'escape', 'delete'] as
 type Tecla = (typeof TECLAS)[number];
 const esTeclaConNombre = (k: string): k is Tecla => (TECLAS as readonly string[]).includes(k);
 
+/** Las teclas de un atajo, con su nombre traducido: `Ctrl` `K`, `g` luego `h`. */
+export function Teclas({ teclas }: { teclas: string }) {
+  const { t } = useT();
+  const pasos = teclas
+    .split(' ')
+    .map((paso) => paso.split('+').map((k) => (esTeclaConNombre(k) ? t(`atajos.teclas.${k}`) : k)));
+  return (
+    <>
+      {pasos.map((paso, i) => (
+        <span key={paso.join('+')} className="row inline">
+          {i > 0 && <span className="xs faint">{t('atajos.luego')}</span>}
+          {paso.map((k) => (
+            <Kbd key={k}>{k}</Kbd>
+          ))}
+        </span>
+      ))}
+    </>
+  );
+}
+
 export function AyudaAtajos({ abierta, alCerrar }: { abierta: boolean; alCerrar: () => void }) {
   const { t } = useT();
   const gestor = useGestorAtajos();
@@ -21,8 +41,6 @@ export function AyudaAtajos({ abierta, alCerrar }: { abierta: boolean; alCerrar:
   }, [abierta]);
 
   const filas = gestor.lista().flatMap(({ atajos }) => atajos);
-  const mostrar = (teclas: string) =>
-    teclas.split(' ').map((paso) => paso.split('+').map((k) => (esTeclaConNombre(k) ? t(`atajos.teclas.${k}`) : k)));
   return (
     <dialog ref={dialogo} className="dialogo card" aria-labelledby="ayuda-atajos" onClose={alCerrar}>
       <h3 id="ayuda-atajos">{t('atajos.titulo')}</h3>
@@ -30,14 +48,7 @@ export function AyudaAtajos({ abierta, alCerrar }: { abierta: boolean; alCerrar:
         {filas.map((a) => (
           <div key={a.teclas} className="contents">
             <dt>
-              {mostrar(a.teclas).map((paso, i) => (
-                <span key={paso.join('+')} className="row inline">
-                  {i > 0 && <span className="xs faint">{t('atajos.luego')}</span>}
-                  {paso.map((k) => (
-                    <Kbd key={k}>{k}</Kbd>
-                  ))}
-                </span>
-              ))}
+              <Teclas teclas={a.teclas} />
             </dt>
             <dd>{t(a.descripcion)}</dd>
           </div>

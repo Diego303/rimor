@@ -112,3 +112,37 @@ describe('atajos condicionados', () => {
     expect(esControlInteractivo(null)).toBe(false);
   });
 });
+
+describe('acciones de la paleta', () => {
+  it('sin teclas: no se disparan con el teclado ni salen en la ayuda, pero sí en la paleta', () => {
+    const g = new GestorAtajos();
+    const ajustes = vi.fn();
+    g.registrar('global', [
+      { descripcion: 'atajos.irAjustes', accion: ajustes },
+      { teclas: 'g h', descripcion: 'atajos.irInicio', accion: vi.fn() },
+    ]);
+    expect(g.pulsar({ key: 'a' })).toBe(false);
+    expect(g.lista()[0]?.atajos.map((a) => a.descripcion)).toEqual(['atajos.irInicio']);
+    expect(g.acciones().map((a) => a.atajo.descripcion)).toEqual(['atajos.irAjustes', 'atajos.irInicio']);
+  });
+
+  it('la pantalla antes que lo global, sin `enPaleta: false` ni lo que ahora no se puede, una por descripción', () => {
+    const g = new GestorAtajos();
+    let seleccion = false;
+    g.registrar('global', [{ teclas: '?', descripcion: 'atajos.ayuda', accion: vi.fn() }]);
+    g.registrar('inicio', [
+      { teclas: 'j', descripcion: 'atajos.feedSiguiente', enPaleta: false, accion: vi.fn() },
+      { teclas: 'e', descripcion: 'atajos.feedArchivar', cuando: () => seleccion, accion: vi.fn() },
+      { teclas: 'delete', descripcion: 'atajos.elementoPapelera', accion: vi.fn() },
+      { teclas: '#', descripcion: 'atajos.elementoPapelera', accion: vi.fn() },
+    ]);
+    const ver = () => g.acciones().map(({ ambito, atajo }) => `${ambito}:${atajo.descripcion}:${atajo.teclas}`);
+    expect(ver()).toEqual(['inicio:atajos.elementoPapelera:delete', 'global:atajos.ayuda:?']);
+    seleccion = true;
+    expect(ver()).toEqual([
+      'inicio:atajos.feedArchivar:e',
+      'inicio:atajos.elementoPapelera:delete',
+      'global:atajos.ayuda:?',
+    ]);
+  });
+});

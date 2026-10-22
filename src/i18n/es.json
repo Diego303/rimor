@@ -68,7 +68,7 @@
     "buscar": "Buscar",
     "irInicio": "Ir a Inicio",
     "irBuscar": "Ir a Buscar",
-    "ayuda": "Mostrar esta ayuda",
+    "ayuda": "Ver los atajos de teclado",
     "teclas": {
       "ctrl": "Ctrl",
       "shift": "Mayús",
@@ -95,7 +95,11 @@
     "elementoFijar": "Fijar o soltar",
     "elementoNota": "Escribir una nota",
     "elementoPapelera": "Mover a la papelera",
-    "feedComparar": "Comparar los dos seleccionados"
+    "feedComparar": "Comparar los dos seleccionados",
+    "paleta": "Abrir la paleta de comandos",
+    "irAjustes": "Ir a Ajustes",
+    "irPapelera": "Ir a la papelera",
+    "irDatos": "Ir a Datos y copias"
   },
   "errores": {
     "pantalla": {
@@ -588,5 +592,20 @@
     "coleccion": "¿Lo añado a la colección {nombre}?",
     "siColeccion": "Sí, a {nombre}",
     "no": "No"
+  },
+  "paleta": {
+    "titulo": "Paleta de comandos",
+    "placeholder": "Una acción, una colección o algo guardado",
+    "recientes": "Recientes",
+    "grupos": {
+      "accion": "Acciones",
+      "coleccion": "Colecciones",
+      "elemento": "Elementos"
+    },
+    "global": "En toda la app",
+    "pantalla": "En esta pantalla",
+    "coleccion": "Colección",
+    "buscarEn": "Buscar «{texto}» en Buscar",
+    "nada": "No hay nada con eso."
   }
 }

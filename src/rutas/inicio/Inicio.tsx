@@ -277,6 +277,8 @@ export function Inicio() {
     await comparar(a, b);
   }, [comparar, avisos, t]);
 
+  // Sin un mensaje seleccionado, lo que actúa sobre él no se puede hacer (ni se ofrece en la paleta).
+  const haySeleccion = useCallback(() => !!actual.current.seleccionado, []);
   const conSeleccion = useCallback(
     (hacer: (fm: FrontmatterComun) => void) => () => {
       const fm = mensajeDe(actual.current.filas, actual.current.seleccionado);
@@ -289,16 +291,19 @@ export function Inicio() {
       {
         teclas: 'j',
         descripcion: 'atajos.feedSiguiente',
+        enPaleta: false,
         accion: () => setSeleccionado((s) => moverSeleccion(actual.current.filas, s, 1)),
       },
       {
         teclas: 'k',
         descripcion: 'atajos.feedAnterior',
+        enPaleta: false,
         accion: () => setSeleccionado((s) => moverSeleccion(actual.current.filas, s, -1)),
       },
       {
         teclas: 'enter',
         descripcion: 'atajos.feedAbrir',
+        enPaleta: false,
         accion: conSeleccion((fm) => abrir(fm.ref)),
         // Sobre un botón o un enlace, Enter es suyo; sin selección, no hay nada que abrir.
         cuando: () => !!actual.current.seleccionado && !esControlInteractivo(document.activeElement),
@@ -306,26 +311,53 @@ export function Inicio() {
       ...(soloLectura
         ? []
         : ([
-            { teclas: 'r', descripcion: 'atajos.feedResponder', accion: conSeleccion((fm) => responder(fm.ref)) },
+            {
+              teclas: 'r',
+              descripcion: 'atajos.feedResponder',
+              cuando: haySeleccion,
+              accion: conSeleccion((fm) => responder(fm.ref)),
+            },
             {
               teclas: 'c',
               descripcion: 'atajos.feedColeccion',
+              cuando: haySeleccion,
               accion: conSeleccion((fm) => setColeccionPara(fm.ref)),
             },
-            { teclas: 'e', descripcion: 'atajos.feedArchivar', accion: conSeleccion((fm) => void archivar(fm)) },
-            { teclas: 'f', descripcion: 'atajos.feedFijar', accion: conSeleccion((fm) => void fijar(fm)) },
-            { teclas: 't', descripcion: 'atajos.feedTipo', accion: conSeleccion((fm) => setTipoPara(fm.ref)) },
+            {
+              teclas: 'e',
+              descripcion: 'atajos.feedArchivar',
+              cuando: haySeleccion,
+              accion: conSeleccion((fm) => void archivar(fm)),
+            },
+            {
+              teclas: 'f',
+              descripcion: 'atajos.feedFijar',
+              cuando: haySeleccion,
+              accion: conSeleccion((fm) => void fijar(fm)),
+            },
+            {
+              teclas: 't',
+              descripcion: 'atajos.feedTipo',
+              cuando: haySeleccion,
+              accion: conSeleccion((fm) => setTipoPara(fm.ref)),
+            },
             { teclas: 'ctrl+shift+c', descripcion: 'atajos.feedComparar', accion: () => void compararMarcados() },
           ] satisfies Atajo[])),
-      { teclas: 'x', descripcion: 'atajos.feedSeleccionar', accion: conSeleccion((fm) => marcar(fm.ref)) },
+      {
+        teclas: 'x',
+        descripcion: 'atajos.feedSeleccionar',
+        cuando: haySeleccion,
+        accion: conSeleccion((fm) => marcar(fm.ref)),
+      },
       {
         teclas: 'escape',
         descripcion: 'atajos.feedVaciarSeleccion',
+        enPaleta: false,
         accion: () => setMarcados(new Set()),
         cuando: () => actual.current.marcados.size > 0,
       },
     ],
-    [conSeleccion, abrir, responder, archivar, fijar, marcar, soloLectura, compararMarcados],
+    [conSeleccion, haySeleccion, abrir, responder, archivar, fijar, marcar, soloLectura, compararMarcados],
   );
   useAtajos('inicio', atajos);
 

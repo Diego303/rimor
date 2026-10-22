@@ -34,10 +34,10 @@ Hacerlo todo desde el teclado: `Ctrl+K` abre una paleta que mezcla las acciones 
 
 ## Tareas
 
-- [ ] `Ctrl+K` con acciones registradas por pantalla (las de los atajos y las que solo están en la paleta).
-- [ ] Elementos (vía búsqueda) y colecciones.
-- [ ] Navegación con teclado.
-- [ ] Últimas acciones primero.
+- [x] `Ctrl+K` con acciones registradas por pantalla (las de los atajos y las que solo están en la paleta).
+- [x] Elementos (vía búsqueda) y colecciones.
+- [x] Navegación con teclado.
+- [x] Últimas acciones primero.
 
 ## Pruebas previstas
 
@@ -61,3 +61,23 @@ Hacerlo todo desde el teclado: `Ctrl+K` abre una paleta que mezcla las acciones 
 ## Autorrevisión
 
 Cubre las cuatro tareas de IN-033. Reutiliza el gestor de atajos, el motor de IN-032 (`useBuscar`), el resaltado y los componentes de la referencia; textos por i18n; sin dependencias nuevas.
+
+## Implementación
+
+- `src/ui/atajos/atajos.ts`: `teclas` opcional (`tieneTeclas`, `AtajoConTeclas`), `enPaleta` y `acciones()` (la pantalla antes que lo global, sin lo que no va en la paleta ni lo que `cuando` no deja, una por descripción). `pulsar` y la ayuda solo usan los que tienen teclas; `Teclas` (en `AyudaAtajos.tsx`) pinta las teclas para la ayuda y la paleta.
+- `src/ui/paleta/entradas.ts`: `puntuar`, `ordenar` y las recientes (`leerRecientes`, `apuntarReciente`, en `localStorage` con `try`).
+- `src/ui/paleta/Paleta.tsx`: el diálogo (combobox con `aria-activedescendant`), montado en la carcasa.
+- `Carcasa.tsx`: `Ctrl+K` (también en campos) y, solo en la paleta, ir a Ajustes, Papelera y Datos y copias; `/` no sale en la paleta (ya está «Ir a Buscar»). La ayuda se titula «Ver los atajos de teclado» (se lee bien en los dos sitios).
+- Inicio: `j`, `k`, `Enter` y `Esc` no van en la paleta; lo que actúa sobre el mensaje seleccionado tiene `cuando` (sin selección, ni la tecla se consume ni se ofrece).
+- CSS: `.dialogo.paleta`, `.paleta-lista`, `.paleta-grupo` y `.it[aria-selected="true"]`.
+- Pruebas: `atajos.test.ts` (acciones de la paleta), `entradas.test.ts` y `Paleta.test.tsx` (abrir y cerrar, flechas con vuelta, Ctrl+Inicio y Ctrl+Fin, Enter, colecciones, elementos del buscador, «Buscar…», acciones de la pantalla del elemento, recientes, desde un campo).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| `Ctrl+Inicio` y `Ctrl+Fin` mueven por la lista; Inicio y Fin solos, por lo escrito | En un campo, Inicio y Fin ya mueven el cursor. |
+| Solo se recuerdan acciones y colecciones | Los elementos y «Buscar…» dependen de lo escrito; un elemento reciente se encuentra escribiendo. |
+| Los elementos salen solo cuando el buscador ha respondido a lo escrito ahora | Si no, Enter podría abrir uno de la tecla anterior. |
+| La lógica va en `entradas.ts` (no `paleta.ts`) | `paleta.ts` y `Paleta.tsx` solo se distinguen por mayúsculas, y en algunos sistemas de archivos eso no basta. |
+

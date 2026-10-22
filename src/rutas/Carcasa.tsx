@@ -12,6 +12,7 @@ import { AyudaAtajos } from '../ui/atajos/AyudaAtajos';
 import { esCampoDeTexto, GestorAtajos } from '../ui/atajos/atajos';
 import { ContextoAtajos } from '../ui/atajos/useAtajos';
 import { Espera, ProveedorAvisos, ProveedorEsperas } from '../ui/componentes';
+import { Paleta } from '../ui/paleta/Paleta';
 import { LimiteErrores } from './LimiteErrores';
 import { Rail } from './Rail';
 
@@ -22,13 +23,22 @@ export function Carcasa() {
   // La pantalla que de verdad se pinta: `location` cambia antes de que cambie el <Outlet>.
   const ruta = useRouterState({ select: (s) => (s.resolvedLocation ?? s.location).pathname });
   const [ayuda, setAyuda] = useState(false);
+  const [paleta, setPaleta] = useState(false);
   const irAInicio = useCallback(() => void navegar({ to: '/' }), [navegar]);
   const abrirElemento = useCallback((ref: string) => void navegar({ to: '/e/$ref', params: { ref } }), [navegar]);
 
   useEffect(
     () =>
       gestor.registrar('global', [
-        { teclas: '/', descripcion: 'atajos.buscar', accion: () => void navegar({ to: '/buscar' }) },
+        {
+          teclas: 'ctrl+k',
+          descripcion: 'atajos.paleta',
+          enCampos: true,
+          enPaleta: false,
+          accion: () => setPaleta(true),
+        },
+        // En la paleta ya está «Ir a Buscar».
+        { teclas: '/', descripcion: 'atajos.buscar', enPaleta: false, accion: () => void navegar({ to: '/buscar' }) },
         { teclas: 'g h', descripcion: 'atajos.irInicio', accion: () => void navegar({ to: '/' }) },
         { teclas: 'g b', descripcion: 'atajos.irBuscar', accion: () => void navegar({ to: '/buscar' }) },
         { teclas: '?', descripcion: 'atajos.ayuda', accion: () => setAyuda(true) },
@@ -41,6 +51,10 @@ export function Carcasa() {
             useCompositor.getState().enfocar();
           },
         },
+        // Solo en la paleta.
+        { descripcion: 'atajos.irAjustes', accion: () => void navegar({ to: '/ajustes' }) },
+        { descripcion: 'atajos.irPapelera', accion: () => void navegar({ to: '/papelera' }) },
+        { descripcion: 'atajos.irDatos', accion: () => void navegar({ to: '/datos' }) },
       ]),
     [gestor, navegar],
   );
@@ -84,6 +98,7 @@ export function Carcasa() {
             </div>
           </div>
           <AyudaAtajos abierta={ayuda} alCerrar={() => setAyuda(false)} />
+          <Paleta abierta={paleta} alCerrar={() => setPaleta(false)} />
         </ProveedorCaptura>
       </ProveedorAvisos>
     </ContextoAtajos.Provider>
