@@ -30,9 +30,9 @@ Un `Segmentado` «Lista · Mosaico · Densa» arriba a la derecha de la pantalla
 
 ## Tareas
 
-- [ ] La `Tarjeta` de cada lector en mosaico, agrupada con cabeceras y recuentos.
-- [ ] Lista densa ordenable (tipo, título, fecha, colecciones, estado) con lista virtual.
-- [ ] Las dos disponibles en colecciones y en los resultados de búsqueda.
+- [x] La `Tarjeta` de cada lector en mosaico, agrupada con cabeceras y recuentos.
+- [x] Lista densa ordenable (tipo, título, fecha, colecciones, estado) con lista virtual.
+- [x] Las dos disponibles en colecciones y en los resultados de búsqueda.
 
 ## Pruebas previstas
 
@@ -57,3 +57,23 @@ Un `Segmentado` «Lista · Mosaico · Densa» arriba a la derecha de la pantalla
 ## Autorrevisión
 
 Cubre las tres tareas de IN-034. Reutiliza `TarjetaElemento`, `useElemento`, `Segmentado`, `estadoVisible` y `nombreDeEstado`, y la lista virtual que ya usa el feed; textos por i18n; sin dependencias nuevas.
+
+## Implementación
+
+- `src/rutas/vistas/orden.ts`: `vistaDe`, `ordenarDensa` (Intl.Collator sin acentos y numérico; vacío al final; a igualdad, lo reciente), `siguienteOrden` y `agruparMosaico`.
+- `src/rutas/vistas/Vistas.tsx`: `SelectorVista`, `Mosaico` (agrupar por tipo o por día, tandas de 60 con «Ver más») y `ListaDensa` (tabla con cabecera fija, `aria-sort`, lista virtual con `@tanstack/react-virtual` y espaciadores, foco con flechas, Inicio y Fin, Enter abre).
+- `TarjetaElemento` acepta solo el frontmatter (pinta el resumen mientras se lee) y `alAbrir` (el título es el botón y cubre la tarjeta). `useElemento` pasa a `src/lectores/useElemento.ts`.
+- Rutas: `?vista=` en `/buscar` y `/c/$coleccion` (la lista no se escribe); escribir en Buscar y renombrar la colección la conservan.
+- Colección y Buscar: el selector y las tres vistas (en Buscar, sobre los resultados devueltos).
+- CSS: `.mosaico`, `.grupo-mosaico`, `.tarjeta-elemento.pulsable`, `.tarjeta-abrir`, `.lista-densa`, `.th-orden`, `.cabeza-resultados`.
+- Pruebas: `orden.test.ts` y `Vistas.test.tsx` (selector y dirección, mosaico por tipo y fecha con la tarjeta del lector, «Ver más», lista densa con orden y teclado, 1.000 elementos montando solo las visibles, Buscar con la vista y la consulta).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| Las vistas viven en `src/rutas/vistas/` | Las usan pantallas y reutilizan el día de Inicio (`claveDia`, `etiquetaDia`). |
+| La lista densa se desplaza en su propio contenedor (hasta el 70 % del alto) | La cabecera queda fija y la lista virtual mide su propio desplazamiento. |
+| La prueba de 1.000 elementos monta la lista densa sola | Guardar 1.000 archivos por la app entera tardaba y ralentizaba el resto de la suite. |
+| `Inicio.test.tsx` precarga sus pantallas en `beforeAll` | Como las demás pruebas de pantalla: en la suite completa su primera prueba se pasaba del plazo de la carga en frío. |
+

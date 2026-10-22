@@ -4,7 +4,7 @@
  * raíl) o se borra (con confirmación: los elementos se quedan).
  */
 import type { FrontmatterComun } from '@rimor/formato';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { limpiarColeccion } from '../../espacio/ediciones';
@@ -15,6 +15,8 @@ import { Boton, Dialogo, FilaElemento, Vacio } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { TituloElemento } from '../elemento/Cabecera';
 import { Pantalla } from '../Pantalla';
+import { type Vista, vistaDe } from '../vistas/orden';
+import { ListaDensa, Mosaico, SelectorVista } from '../vistas/Vistas';
 
 /** Los elementos de la colección y si existe, al día con cada cambio. */
 function useColeccion(id: string): { existe: boolean; elementos: FrontmatterComun[]; posicion: number; total: number } {
@@ -44,6 +46,14 @@ export function Coleccion() {
   const { t, idioma } = useT();
   const { coleccion } = useParams({ from: '/c/$coleccion' });
   const navegar = useNavigate();
+  const vista = vistaDe(useSearch({ from: '/c/$coleccion' }).vista);
+  const cambiarVista = (nueva: Vista) =>
+    void navegar({
+      to: '/c/$coleccion',
+      params: { coleccion },
+      search: nueva === 'lista' ? {} : { vista: nueva },
+      replace: true,
+    });
   const espacio = useEspacioOpcional();
   const lectores = useLectoresOpcional();
   const avisos = useAvisosOpcional();
@@ -75,7 +85,13 @@ export function Coleccion() {
     const hecho = await espacio.colecciones.renombrar(coleccion, escrito).catch(() => false);
     // Lleva a la colección con su nombre nuevo (limpio, como lo guarda el registro); sus elementos siguen en
     // segundo plano.
-    if (hecho) void navegar({ to: '/c/$coleccion', params: { coleccion: limpiarColeccion(escrito) }, replace: true });
+    if (hecho)
+      void navegar({
+        to: '/c/$coleccion',
+        params: { coleccion: limpiarColeccion(escrito) },
+        search: (antes) => antes,
+        replace: true,
+      });
     else avisos?.avisar(t('pantallas.elemento.noGuardado'));
   }
 
@@ -105,27 +121,36 @@ export function Coleccion() {
       }
       meta={t('pantallas.coleccion.meta', { n: elementos.length })}
       control={
-        editable ? (
-          <div className="row">
-            <Boton variante="fantasma" pequeno disabled={posicion <= 0} onClick={() => void mover(-1)}>
-              {t('pantallas.coleccion.subir')}
-            </Boton>
-            <Boton
-              variante="fantasma"
-              pequeno
-              disabled={posicion < 0 || posicion >= total - 1}
-              onClick={() => void mover(1)}
-            >
-              {t('pantallas.coleccion.bajar')}
-            </Boton>
-            <Boton pequeno peligro onClick={() => setBorrando(true)}>
-              {t('pantallas.coleccion.borrar')}
-            </Boton>
-          </div>
-        ) : undefined
+        <div className="row">
+          {elementos.length > 0 && <SelectorVista vista={vista} alCambiar={cambiarVista} />}
+          {editable && (
+            <>
+              <Boton variante="fantasma" pequeno disabled={posicion <= 0} onClick={() => void mover(-1)}>
+                {t('pantallas.coleccion.subir')}
+              </Boton>
+              <Boton
+                variante="fantasma"
+                pequeno
+                disabled={posicion < 0 || posicion >= total - 1}
+                onClick={() => void mover(1)}
+              >
+                {t('pantallas.coleccion.bajar')}
+              </Boton>
+              <Boton pequeno peligro onClick={() => setBorrando(true)}>
+                {t('pantallas.coleccion.borrar')}
+              </Boton>
+            </>
+          )}
+        </div>
       }
     >
-      {elementos.length ? (
+      {elementos.length && vista === 'mosaico' ? (
+        <Mosaico elementos={elementos} alAbrir={abrir} />
+      ) : elementos.length && vista === 'densa' ? (
+        <section className="card" aria-label={t('pantallas.coleccion.lista')}>
+          <ListaDensa elementos={elementos} alAbrir={abrir} />
+        </section>
+      ) : elementos.length ? (
         <section className="card" aria-label={t('pantallas.coleccion.lista')}>
           <div className="list">
             {elementos.map((fm) => (

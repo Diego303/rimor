@@ -10,6 +10,7 @@ import { useEspacioOpcional } from '../espacio/Espacio';
 import type { Idioma } from '../i18n/formatos';
 import { traducir } from '../i18n/i18n';
 import { useT } from '../i18n/useT';
+import { clases } from '../ui/clases';
 import { ErrorTarjeta, IconoTipo } from '../ui/componentes';
 import { Senal } from '../ui/marca/Senal';
 import { useEsperaVisible } from '../ui/marca/useEsperaVisible';
@@ -169,7 +170,7 @@ function Original({ el }: { el: Elemento }) {
 }
 
 /** Resumen del frontmatter en una línea, si el lector sabe decirlo (un resumen de otra forma no lo rompe). */
-function ResumenFrontmatter({ el, lector }: { el: Elemento; lector: Lector }) {
+function ResumenFrontmatter({ el, lector }: { el: Pick<Elemento, 'frontmatter'>; lector: Lector }) {
   const { idioma } = useT();
   let texto: string | undefined;
   try {
@@ -258,21 +259,38 @@ export function VistaElemento({ el, editable = true }: { el: Elemento; editable?
   );
 }
 
-/** Vista previa de un elemento en mosaico: tipo, título y ref, con la tarjeta del lector o su resumen. */
-export function TarjetaElemento({ el }: { el: Elemento }) {
+/**
+ * Vista previa de un elemento en mosaico: tipo, título y ref, con la tarjeta del lector o su resumen. Con solo el
+ * frontmatter (el elemento aún se está leyendo), el resumen. Con `alAbrir`, el título es el botón que lo abre y
+ * toda la tarjeta se puede pulsar.
+ */
+export function TarjetaElemento({
+  el,
+  alAbrir,
+}: {
+  el: Elemento | Pick<Elemento, 'frontmatter'>;
+  alAbrir?: (ref: string) => void;
+}) {
   const { registro } = useLectores();
   const lector = registro.paraElemento(el);
   const fm = el.frontmatter;
-  const Tarjeta = lector ? tarjetaDe(lector.nombre) : null;
+  const completo = 'original' in el;
+  const Tarjeta = lector && completo ? tarjetaDe(lector.nombre) : null;
   const resumen = lector ? <ResumenFrontmatter el={el} lector={lector} /> : null;
   return (
-    <article className="card tarjeta-elemento">
+    <article className={clases('card tarjeta-elemento', alAbrir && 'pulsable')}>
       <div className="row">
         <IconoTipo tipo={fm.tipo} />
-        <b className="sm">{fm.titulo}</b>
+        {alAbrir ? (
+          <button type="button" className="tarjeta-abrir sm" onClick={() => alAbrir(fm.ref)}>
+            {fm.titulo}
+          </button>
+        ) : (
+          <b className="sm">{fm.titulo}</b>
+        )}
         <span className="mono xs muted">{fm.ref}</span>
       </div>
-      {lector && Tarjeta ? (
+      {lector && Tarjeta && completo ? (
         <LimiteLector key={`${lector.nombre}|${fm.id}`} nombre={lector.nombre} alternativa={resumen}>
           <Suspense fallback={resumen}>
             <Tarjeta el={el} />

@@ -18,6 +18,8 @@ import { Icono } from '../../ui/iconos/Icono';
 import { Senal } from '../../ui/marca/Senal';
 import { useEsperaVisible } from '../../ui/marca/useEsperaVisible';
 import { Pantalla } from '../Pantalla';
+import { type Vista, vistaDe } from '../vistas/orden';
+import { ListaDensa, Mosaico, SelectorVista } from '../vistas/Vistas';
 
 /** Añade la pieza a la consulta o, si ya está, la quita. */
 export function alternarPieza(q: string, pieza: string): string {
@@ -117,7 +119,8 @@ function agrupar(resultados: readonly ResultadoBusqueda[]): [TipoElemento, Resul
 
 export function Buscar() {
   const { t, idioma } = useT();
-  const { q = '' } = useSearch({ from: '/buscar' });
+  const { q = '', vista: enDireccion } = useSearch({ from: '/buscar' });
+  const vista = vistaDe(enDireccion);
   const navegar = useNavigate();
   const lectores = useLectoresOpcional();
   const filtros = useFiltrosRapidos();
@@ -138,7 +141,11 @@ export function Buscar() {
   const cambiar = (nuevo: string) => {
     setTexto(nuevo);
     enviado.current = nuevo;
-    void navegar({ to: '/buscar', search: nuevo ? { q: nuevo } : {}, replace: true });
+    void navegar({
+      to: '/buscar',
+      search: (antes) => ({ ...(nuevo ? { q: nuevo } : {}), ...(antes.vista ? { vista: antes.vista } : {}) }),
+      replace: true,
+    });
   };
 
   const caja = useRef<HTMLInputElement>(null);
@@ -159,6 +166,12 @@ export function Buscar() {
     contar(`buscar:${montaje}:${consulta}`);
     void navegar({ to: '/e/$ref', params: { ref } });
   };
+  const cambiarVista = (nueva: Vista) =>
+    void navegar({
+      to: '/buscar',
+      search: (antes) => ({ ...(antes.q ? { q: antes.q } : {}), ...(nueva === 'lista' ? {} : { vista: nueva }) }),
+      replace: true,
+    });
   const terminosDe = (r: ResultadoBusqueda) => [...r.terminos, ...(busqueda?.consulta.palabras ?? [])];
 
   return (
@@ -207,14 +220,23 @@ export function Buscar() {
           <Vacio titulo={t('pantallas.buscar.vacioTitulo')}>{t('pantallas.buscar.vacio')}</Vacio>
         ) : busqueda ? (
           <>
-            <p className="sm muted">
-              {busqueda.aproximado
-                ? t('pantallas.buscar.alMenos', { n: busqueda.total })
-                : busqueda.total > busqueda.resultados.length
-                  ? t('pantallas.buscar.algunos', { n: busqueda.resultados.length, total: busqueda.total })
-                  : t('pantallas.buscar.resultados', { n: busqueda.total })}
-            </p>
-            {grupos.length ? (
+            <div className="row cabeza-resultados">
+              <p className="sm muted">
+                {busqueda.aproximado
+                  ? t('pantallas.buscar.alMenos', { n: busqueda.total })
+                  : busqueda.total > busqueda.resultados.length
+                    ? t('pantallas.buscar.algunos', { n: busqueda.resultados.length, total: busqueda.total })
+                    : t('pantallas.buscar.resultados', { n: busqueda.total })}
+              </p>
+              {grupos.length > 0 && <SelectorVista vista={vista} alCambiar={cambiarVista} />}
+            </div>
+            {grupos.length > 0 && vista === 'mosaico' ? (
+              <Mosaico elementos={busqueda.resultados.map((r) => r.fm)} alAbrir={abrir} />
+            ) : grupos.length > 0 && vista === 'densa' ? (
+              <section className="card">
+                <ListaDensa elementos={busqueda.resultados.map((r) => r.fm)} alAbrir={abrir} />
+              </section>
+            ) : grupos.length ? (
               grupos.map(([tipo, lista]) => (
                 <section key={tipo} className="card grupo-busqueda" aria-label={t(`tipos.${tipo}`)}>
                   <span className="lbl">

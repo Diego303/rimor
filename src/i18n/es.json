@@ -607,5 +607,22 @@
     "coleccion": "Colección",
     "buscarEn": "Buscar «{texto}» en Buscar",
     "nada": "No hay nada con eso."
+  },
+  "vistas": {
+    "etiqueta": "Vista",
+    "lista": "Lista",
+    "mosaico": "Mosaico",
+    "densa": "Densa",
+    "agrupar": "Agrupar por",
+    "porTipo": "Tipo",
+    "porFecha": "Fecha",
+    "verMas": "Ver más (quedan {n})",
+    "columnas": {
+      "tipo": "Tipo",
+      "titulo": "Título",
+      "fecha": "Fecha",
+      "colecciones": "Colecciones",
+      "estado": "Estado"
+    }
   }
 }

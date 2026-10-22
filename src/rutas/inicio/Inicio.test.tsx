@@ -3,7 +3,7 @@ import { type Elemento, hashOriginal, isoConZona } from '@rimor/formato';
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { IDBFactory } from 'fake-indexeddb';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { AlmacenMemoria } from '../../almacen/memoria';
 import type { Cerrojos } from '../../almacen/pestanas';
 import { useCompositor } from '../../captura/compositor';
@@ -13,9 +13,9 @@ import { ejecutorEnHilo } from '../../lectores/ejecutor';
 import { ProveedorLectores } from '../../lectores/Lectores';
 import { elementoFalso } from '../../lectores/pruebas/falsos';
 import { REGISTRO } from '../../lectores/registro';
+import { olvidarElementos } from '../../lectores/useElemento';
 import { haceMinutos } from '../../pruebas/fechas';
 import { crearRouter } from '../rutas';
-import { olvidarElementos } from './useElemento';
 
 const cerrojos: Cerrojos = { request: (_n, _o, fn) => fn({}) };
 /** La primera pantalla carga en frío sus módulos (con todos los lectores): se mira lo que pinta, no cuánto tarda. */
@@ -65,6 +65,13 @@ const ESCRITURA = { timeout: 5000 };
 const seleccionado = () => document.querySelector('.msg.sel')?.getAttribute('data-ref') ?? null;
 
 describe('Inicio', () => {
+  // La pantalla y lo que pinta cargan en frío: en la suite completa, con todo arrancando a la vez, pasa del plazo
+  // de la primera carga. Se cargan antes.
+  beforeAll(async () => {
+    await import('./Inicio');
+    await import('../elemento/Elemento');
+  }, 120_000);
+
   afterEach(async () => {
     // Desmontar y dar tiempo a lo que sigue en marcha (derivados en la cola, cierre del espacio): que nada termine
     // después de desmontar el entorno de pruebas.

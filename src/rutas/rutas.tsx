@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-router';
 import { Carcasa } from './Carcasa';
 import { NoEncontrada } from './NoEncontrada';
+import { type Vista, vistaDe } from './vistas/orden';
 
 const raiz = createRootRoute({ component: Carcasa });
 
@@ -27,17 +28,26 @@ const hilo = createRoute({
   path: '/hilo/$ref',
   component: lazyRouteComponent(() => import('./hilo/Hilo'), 'Hilo'),
 });
+/** La vista de un grupo en la dirección (`?vista=mosaico`); la lista, que es la de siempre, no se escribe. */
+const conVista = (s: Record<string, unknown>): { vista?: Vista } => {
+  const vista = vistaDe(s.vista);
+  return vista === 'lista' ? {} : { vista };
+};
+
 const buscar = createRoute({
   getParentRoute: () => raiz,
   path: '/buscar',
   // La dirección se lee como JSON: `?q=404` llega como número.
-  validateSearch: (s: Record<string, unknown>): { q?: string } =>
-    ['string', 'number', 'boolean'].includes(typeof s.q) ? { q: String(s.q) } : {},
+  validateSearch: (s: Record<string, unknown>): { q?: string; vista?: Vista } => ({
+    ...(['string', 'number', 'boolean'].includes(typeof s.q) ? { q: String(s.q) } : {}),
+    ...conVista(s),
+  }),
   component: lazyRouteComponent(() => import('./buscar/Buscar'), 'Buscar'),
 });
 const coleccion = createRoute({
   getParentRoute: () => raiz,
   path: '/c/$coleccion',
+  validateSearch: (s: Record<string, unknown>): { vista?: Vista } => conVista(s),
   component: lazyRouteComponent(() => import('./coleccion/Coleccion'), 'Coleccion'),
 });
 const datos = createRoute({

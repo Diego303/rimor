@@ -16,13 +16,13 @@ function horaConDia(fecha: Date, idioma: Idioma): string {
 }
 
 import { useT } from '../../i18n/useT';
+import { useElemento } from '../../lectores/useElemento';
 import { RespuestaRimor } from '../../respuestas/RespuestaRimor';
 import type { Accion as AccionRespuesta } from '../../respuestas/tipos';
 import { useRespuesta } from '../../respuestas/useRespuesta';
 import { clases } from '../../ui/clases';
 import { Boton, IconoTipo } from '../../ui/componentes';
 import { Icono } from '../../ui/iconos/Icono';
-import { useElemento } from './useElemento';
 
 /** Largo de la vista previa (la línea se corta con puntos suspensivos por CSS). */
 const LARGO_PREVIA = 160;

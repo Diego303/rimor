@@ -1,11 +1,11 @@
 /**
- * El elemento completo (con su original) de una fila del feed: el repositorio solo tiene en memoria el
- * frontmatter. Se lee al montarse el mensaje (la lista virtual solo monta los visibles) y se recuerda un rato,
- * por si vuelve a la vista al desplazarse.
+ * El elemento completo (con su original) de una fila del feed o de una tarjeta del mosaico: el repositorio solo
+ * tiene en memoria el frontmatter. Se lee al montarse (las listas virtuales y el mosaico solo montan lo que se ve)
+ * y se recuerda un rato, por si vuelve a la vista al desplazarse.
  */
 import type { Elemento, FrontmatterComun } from '@rimor/formato';
 import { useEffect, useState } from 'react';
-import { useEspacioOpcional } from '../../espacio/Espacio';
+import { useEspacioOpcional } from '../espacio/Espacio';
 
 /** Elementos recordados (los últimos leídos). */
 const MAX_RECORDADOS = 300;

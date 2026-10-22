@@ -607,5 +607,22 @@
     "coleccion": "Collection",
     "buscarEn": "Search “{texto}” in Search",
     "nada": "Nothing matches that."
+  },
+  "vistas": {
+    "etiqueta": "View",
+    "lista": "List",
+    "mosaico": "Mosaic",
+    "densa": "Dense",
+    "agrupar": "Group by",
+    "porTipo": "Type",
+    "porFecha": "Date",
+    "verMas": "Show more ({n} left)",
+    "columnas": {
+      "tipo": "Type",
+      "titulo": "Title",
+      "fecha": "Date",
+      "colecciones": "Collections",
+      "estado": "Status"
+    }
   }
 }
