@@ -240,8 +240,11 @@ export async function abrirEspacio(
     return ok({
       id: dep.espacioId,
       almacen: dep.almacen,
+      // Lo pedido por todos (estado, contadores, colecciones) llega a la cola y la cola lo escribe.
       esperarEscrituras: async () => {
         await pendiente.catch(() => undefined);
+        await contadores.esperar().catch(() => undefined);
+        await gestor.escrito();
         await dep.almacen.esperar?.().catch(() => undefined);
       },
       manifest,

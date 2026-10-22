@@ -150,13 +150,17 @@ describe('exportar ZIP', () => {
 
 describe('ida y vuelta (propiedad)', () => {
   /** Rutas válidas en las carpetas del espacio. */
-  const segmento = fc.stringMatching(/^[a-z0-9][a-z0-9_-]{0,11}$/);
+  // Con acentos, CJK y emoji: los nombres no ASCII viajan con su bandera UTF-8.
+  const segmento = fc.oneof(
+    fc.stringMatching(/^[a-z0-9][a-z0-9_-]{0,11}$/),
+    fc.constantFrom('ñandú', 'canción-1', '日本語', 'émoji-🦤', 'Ωmega'),
+  );
   const carpeta = fc.constantFrom(
     'elementos/2026/10',
     'adjuntos/ab',
     'hilos',
     'historial/TXT-0001',
-    'papelera',
+    'papelera/2026/10/muy/profunda',
     '.rimor',
   );
   const archivo = fc.record({
@@ -183,6 +187,32 @@ describe('ida y vuelta (propiedad)', () => {
       }),
       { numRuns: 60 },
     );
+  });
+});
+
+describe('límites y tiempos', () => {
+  it('más archivos de los que admite un ZIP sin ZIP64: se corta antes de leer nada', async () => {
+    let leidos = 0;
+    const enorme = {
+      leer: async (ruta: string) => {
+        leidos++;
+        return ruta === 'manifest.json' ? new TextEncoder().encode(JSON.stringify(MANIFEST)) : new Uint8Array(1);
+      },
+      async *listar() {
+        yield { ruta: 'manifest.json', tam: 10, modificado: 0 };
+        for (let i = 0; i < 0xffff; i++) yield { ruta: `historial/x/${i}.md`, tam: 1, modificado: 0 };
+      },
+    };
+    await expect(exportarZip(enorme, O)).rejects.toThrow('exportar.demasiadoGrande');
+    expect(leidos).toBe(1);
+  });
+
+  it('cede el hilo de vez en cuando, no en cada archivo', async () => {
+    const archivos = Object.fromEntries(Array.from({ length: 300 }, (_, i) => [`hilos/h${i}.md`, `hilo ${i}`]));
+    const a = await espacio(archivos);
+    let cesiones = 0;
+    await exportarZip(a, { ...O, ceder: async () => void cesiones++ });
+    expect(cesiones).toBeLessThan(30);
   });
 });
 
@@ -217,6 +247,15 @@ describe('exportar JSON', () => {
       { ruta: 'elementos/2026/10/raro.md', texto: 'sin frontmatter' },
       { ruta: 'hilos/HIL-0001.md', texto: '---\nid: x\n---\n' },
     ]);
+  });
+
+  it('un archivo de texto con BOM conserva el BOM (y su hash casa)', async () => {
+    const conBom = new Uint8Array([0xef, 0xbb, 0xbf, ...new TextEncoder().encode('{"a":1}')]);
+    const a = await espacio({ 'colecciones.json': conBom });
+    const json = JSON.parse((await exportarJson(a, O)).texto) as ExportacionJson;
+    const archivo = json.archivos.find((x) => x.ruta === 'colecciones.json');
+    expect(archivo && 'texto' in archivo && new TextEncoder().encode(archivo.texto)).toEqual(conBom);
+    expect(json.manifest.hashes?.archivos['colecciones.json']).toBe(await sha256(conBom));
   });
 
   it('base64 de algo grande sin desbordar la pila', () => {

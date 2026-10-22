@@ -238,6 +238,11 @@ export class GestorColecciones {
     return true;
   }
 
+  /** Espera a que se escriba lo que ya se pidió escribir de `colecciones.json` (antes de exportar). */
+  escrito(): Promise<void> {
+    return this.pendiente.catch(() => undefined);
+  }
+
   private guardar(r: Colecciones): Promise<void> {
     if (!this.opciones.puedeEscribir() || !this.legible) return Promise.resolve();
     this.registro = r;

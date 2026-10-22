@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-23 01:14
-**Ahora:** IN-035 · Exportar ZIP y JSON · fase implementación
-**Siguiente:** IN-036 · Importar
-**Progreso:** F0 9/9 · v0.1 36/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 45/99
+**Última actualización:** 2026-10-23 01:39
+**Ahora:** IN-036 · Importar ZIP y JSON · fase análisis y diseño
+**Siguiente:** IN-037 · Datos y copias
+**Progreso:** F0 9/9 · v0.1 37/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 46/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -54,7 +54,7 @@
 | IN-032 | Búsqueda | v0.1 | 5 | hecha | f797561 e9a801d 7c7f416 6e40ab9 | docs/features/IN-032-busqueda.md |
 | IN-033 | Paleta de comandos | v0.1 | 6 | hecha | dd50a0d 5d9fe05 8301765 | docs/features/IN-033-paleta.md |
 | IN-034 | Mosaico y lista densa | v0.1 | 6 | hecha | 129a1b1 8ed1999 3338b05 | docs/features/IN-034-vistas.md |
-| IN-035 | Exportar ZIP y JSON | v0.1 | 6 | en implementación | 2023eae | docs/features/IN-035-exportar.md |
+| IN-035 | Exportar ZIP y JSON | v0.1 | 6 | hecha | 2023eae b70ba11 | docs/features/IN-035-exportar.md |
 | IN-036 | Importar ZIP y JSON | v0.1 | 6 | pendiente | — | — |
 | IN-037 | Datos y copias | v0.1 | 6 | pendiente | — | — |
 | IN-038 | Ajustes | v0.1 | 6 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-23 | IN-035 | implementación | ZIP en streaming en Worker con manifest de recuentos y hashes, JSON con excluidos declarados, lector por directorio central, propiedad de ida y vuelta, Datos y copias y Ctrl+E | … |
+| 2026-10-23 | IN-035 | verificación | pnpm verificar OK (1255 pruebas, 238,6 KB); revisión independiente con 13 hallazgos atendidos (bombas, validación del directorio, ZIP64, copia exacta, cancelar) | … |
+| 2026-10-23 | IN-035 | implementación | ZIP en streaming en Worker con manifest de recuentos y hashes, JSON con excluidos declarados, lector por directorio central, propiedad de ida y vuelta, Datos y copias y Ctrl+E | b70ba11 |
 | 2026-10-23 | IN-035 | análisis y diseño | ZIP en streaming en un Worker sobre OPFS con manifest de recuentos y hashes, JSON con adjuntos ≤ 1 MB y excluidos declarados, lector por directorio central para la ida y vuelta, Ctrl+E y copia previa | 2023eae |
 | 2026-10-23 | IN-034 | verificación | pnpm verificar OK (1227 pruebas, 236,6 KB); revisión independiente con 5 hallazgos atendidos con pruebas | 3338b05 |
 | 2026-10-23 | IN-034 | implementación | selector de vista en la dirección, mosaico por tipo o día con tarjetas en tandas, lista densa ordenable y virtual, en colecciones y Buscar | 8ed1999 |

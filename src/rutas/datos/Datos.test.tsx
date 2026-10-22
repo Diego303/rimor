@@ -1,7 +1,16 @@
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { exportarEspacio, useExportacion } from '../../datos/exportacion';
+import { escribirTexto } from '../../almacen/contrato';
+import { AlmacenMemoria } from '../../almacen/memoria';
+import {
+  cancelarExportacion,
+  type EspacioExportable,
+  exportarEspacio,
+  PLAZO_SIN_PROGRESO_MS,
+  useExportacion,
+} from '../../datos/exportacion';
 import { MAX_ADJUNTO_JSON } from '../../datos/exportar';
+import { ESTADO_INICIAL, type EstadoCuidado } from '../../espacio/estado';
 import { useEspacio } from '../../estado/espacio';
 import { elementoFalso } from '../../lectores/pruebas/falsos';
 import { ESCRITURA, montarApp, PRIMERA_CARGA } from '../../pruebas/app';
@@ -97,5 +106,111 @@ describe('Datos y copias: exportar', () => {
     // La copia previa a algo destructivo lleva el motivo en el nombre.
     const previa = await act(() => exportarEspacio(espacio, 'zip', { motivo: 'antes de reemplazar' }));
     expect(previa?.nombre).toMatch(/-antes-de-reemplazar\.zip$/);
+  }, 30_000);
+});
+
+/** Un espacio de mentira en memoria, con su estado de cuidado y el modo de la pestaña. */
+async function espacioFalso(modo: 'escritor' | 'lector' = 'escritor') {
+  const almacen = new AlmacenMemoria();
+  const manifest = {
+    formato: 'rimor',
+    esquema: 1,
+    espacio: { id: '01JAB3K9Q2X8M5N7P0R4S6T8V0', nombre: 'Trabajo' },
+    app: { version: '0.0.1' },
+  } as EspacioExportable['manifest'];
+  await escribirTexto(almacen, 'manifest.json', JSON.stringify(manifest));
+  await escribirTexto(almacen, 'elementos/a.md', 'a');
+  let estado: EstadoCuidado = { ...ESTADO_INICIAL, cambiosDesdeCopia: 3 };
+  const guardados: EstadoCuidado[] = [];
+  const espacio: EspacioExportable = {
+    id: 'x',
+    almacen,
+    enMemoria: true,
+    manifest,
+    esperarEscrituras: async () => undefined,
+    estado: () => estado,
+    guardarEstado: async (cambio) => {
+      estado = cambio(estado);
+      guardados.push(estado);
+    },
+    coordinacion: { modo: () => modo },
+  };
+  return {
+    espacio,
+    almacen,
+    guardados,
+    cambiar: (n: number) => (estado = { ...estado, cambiosDesdeCopia: estado.cambiosDesdeCopia + n }),
+  };
+}
+
+describe('exportarEspacio', () => {
+  beforeEach(() => {
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:prueba');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('lo cambiado mientras se exporta sigue contando; la fecha es la del principio', async () => {
+    const { espacio, almacen, guardados, cambiar } = await espacioFalso();
+    const leer = almacen.leer.bind(almacen);
+    // Dos cambios llegan a mitad de la exportación.
+    vi.spyOn(almacen, 'leer').mockImplementation(async (ruta) => {
+      if (ruta === 'elementos/a.md') cambiar(2);
+      return leer(ruta);
+    });
+    const inicio = new Date('2026-10-22T10:00:00+02:00');
+    const hecho = await exportarEspacio(espacio, 'zip', { reloj: () => inicio });
+    expect(hecho?.apuntada).toBe(true);
+    expect(guardados.at(-1)).toMatchObject({ cambiosDesdeCopia: 2, ultimaCopia: '2026-10-22T10:00:00+02:00' });
+  });
+
+  it('en la pestaña que solo lee, se descarga pero no se apunta como copia', async () => {
+    const { espacio, guardados } = await espacioFalso('lector');
+    const hecho = await exportarEspacio(espacio, 'zip');
+    expect(hecho).toMatchObject({ completa: true, apuntada: false });
+    expect(guardados).toEqual([]);
+  });
+
+  it('cancelar corta la exportación (aunque una lectura no vuelva) y no se descarga ni se apunta nada', async () => {
+    const { espacio, almacen, guardados } = await espacioFalso();
+    vi.spyOn(almacen, 'leer').mockImplementation(() => new Promise(() => undefined));
+    const enMarcha = exportarEspacio(espacio, 'zip');
+    await vi.waitFor(() => expect(useExportacion.getState().tipo).toBe('zip'));
+    cancelarExportacion();
+    await expect(enMarcha).rejects.toMatchObject({ name: 'AbortError' });
+    expect(guardados).toEqual([]);
+    expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
+    expect(useExportacion.getState()).toEqual({ tipo: null, porcentaje: 0 });
+  });
+
+  it('sin progreso durante el plazo, se da por atascada y se corta', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    const { espacio, almacen } = await espacioFalso();
+    vi.spyOn(almacen, 'leer').mockImplementation(() => new Promise(() => undefined));
+    const enMarcha = exportarEspacio(espacio, 'zip');
+    const fallo = enMarcha.catch((e: Error) => e.message);
+    await vi.advanceTimersByTimeAsync(PLAZO_SIN_PROGRESO_MS + 10_000);
+    expect(await fallo).toBe('exportar.atascada');
+  });
+});
+
+describe('Ctrl+E con un diálogo abierto', () => {
+  afterEach(async () => {
+    cleanup();
+    await act(async () => new Promise((r) => setTimeout(r, 300)));
+  });
+
+  it('no exporta ni llega al navegador', async () => {
+    await montarApp('/ajustes', [elementoFalso(1, 'hola', 'texto')]);
+    await screen.findByRole('heading', { name: 'Ajustes' }, PRIMERA_CARGA);
+    act(() => void window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' })));
+    const tecla = new KeyboardEvent('keydown', { key: 'e', ctrlKey: true, cancelable: true });
+    act(() => void window.dispatchEvent(tecla));
+    expect(tecla.defaultPrevented).toBe(true);
+    expect(useExportacion.getState().tipo).toBeNull();
   }, 30_000);
 });

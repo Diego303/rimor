@@ -25,11 +25,13 @@ export function useExportar(): (tipo: TipoExportacion, motivo?: string) => Promi
       try {
         const hecho = await exportarEspacio(espacio, tipo, motivo ? { motivo } : {});
         if (!hecho) return false;
-        const texto = hecho.completa
-          ? t('exportar.hecho', { nombre: hecho.nombre, tam: fmtBytes(hecho.bytes, idioma) })
-          : t('exportar.hechoConExcluidos', { nombre: hecho.nombre, n: hecho.excluidos.length });
+        const texto = !hecho.completa
+          ? t('exportar.hechoConExcluidos', { nombre: hecho.nombre, n: hecho.excluidos.length })
+          : hecho.apuntada
+            ? t('exportar.hecho', { nombre: hecho.nombre, tam: fmtBytes(hecho.bytes, idioma) })
+            : t('exportar.hechoSinApuntar', { nombre: hecho.nombre, tam: fmtBytes(hecho.bytes, idioma) });
         avisos?.avisar(
-          hecho.completa ? (
+          hecho.apuntada ? (
             <span className="row inline">
               <Senal estado="copia-al-dia" veces={1} tamano={14} etiqueta={texto} decorativa />
               {texto}
@@ -39,8 +41,10 @@ export function useExportar(): (tipo: TipoExportacion, motivo?: string) => Promi
           ),
         );
         return true;
-      } catch {
-        avisos?.avisar(t('exportar.fallo'));
+      } catch (e) {
+        const cancelada = e instanceof Error && e.name === 'AbortError';
+        const atascada = e instanceof Error && e.message === 'exportar.atascada';
+        avisos?.avisar(t(cancelada ? 'exportar.cancelada' : atascada ? 'exportar.atascada' : 'exportar.fallo'));
         return false;
       }
     },

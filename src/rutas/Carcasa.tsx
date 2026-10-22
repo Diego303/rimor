@@ -86,8 +86,12 @@ export function Carcasa() {
         if (!abierto?.classList.contains('paleta')) setPaleta(true);
         return;
       }
-      // Con un diálogo modal abierto (la ayuda), los atajos de la app no actúan por detrás.
-      if (abierto) return;
+      // Con un diálogo modal abierto (la ayuda), los atajos de la app no actúan por detrás; los de la app con Ctrl
+      // tampoco llegan al navegador (Ctrl+E le llevaría el foco a su barra de búsqueda).
+      if (abierto) {
+        if (describir(e) === 'ctrl+e') e.preventDefault();
+        return;
+      }
       const consumida = gestor.pulsar({
         key: e.key,
         ctrlKey: e.ctrlKey,

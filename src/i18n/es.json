@@ -483,7 +483,8 @@
       "otras": "Otras exportaciones",
       "json": "JSON único. Los adjuntos de más de 1 MB se excluyen y el archivo lo indica.",
       "queContiene": "Qué contiene el ZIP",
-      "arbol": "manifest.json        ← recuentos y hashes\nelementos/2026/10/…\ncomparaciones/  hilos/  investigaciones/  documentos/\nadjuntos/            ← por hash\nhistorial/           ← versiones\ncolecciones.json  papelera/  .rimor/"
+      "arbol": "manifest.json        ← recuentos y hashes\nelementos/2026/10/…\ncomparaciones/  hilos/  investigaciones/  documentos/\nadjuntos/            ← por hash\nhistorial/           ← versiones\ncolecciones.json  papelera/  .rimor/",
+      "cancelar": "Cancelar"
     },
     "ajustes": {
       "titulo": "Ajustes",
@@ -642,6 +643,9 @@
       "one": "Exportado {nombre} · {n} adjunto excluido",
       "other": "Exportado {nombre} · {n} adjuntos excluidos"
     },
-    "fallo": "No se pudo exportar. No se ha tocado nada."
+    "fallo": "No se pudo exportar. No se ha tocado nada.",
+    "hechoSinApuntar": "Exportado {nombre} ({tam}). No se apunta como copia: otra pestaña tiene el espacio abierto.",
+    "cancelada": "Exportación cancelada. No se ha descargado nada.",
+    "atascada": "La exportación se quedó parada y se ha cortado. No se ha tocado nada."
   }
 }

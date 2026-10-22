@@ -51,10 +51,14 @@ export const conCambios = (e: EstadoCuidado, n = 1): EstadoCuidado => ({
   cambiosDesdeCopia: e.cambiosDesdeCopia + n,
 });
 
-export const conCopia = (e: EstadoCuidado, fecha: string): EstadoCuidado => ({
+/**
+ * Apunta una copia hecha en `fecha`. `cambiosAlEmpezar` son los que había cuando empezó: lo cambiado mientras se
+ * hacía no está en ella y sigue contando.
+ */
+export const conCopia = (e: EstadoCuidado, fecha: string, cambiosAlEmpezar = e.cambiosDesdeCopia): EstadoCuidado => ({
   ...e,
   ultimaCopia: fecha,
-  cambiosDesdeCopia: 0,
+  cambiosDesdeCopia: Math.max(0, e.cambiosDesdeCopia - cambiosAlEmpezar),
 });
 
 export const conPersistencia = (e: EstadoCuidado, resultado: ResultadoPersistencia, fecha: string): EstadoCuidado => ({

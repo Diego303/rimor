@@ -2,7 +2,9 @@
  * Leer un ZIP por su directorio central (F0-2): no se usa `Unzip` en streaming, que con entradas de tamaño
  * desconocido no sabe dónde acaba cada una. Se leen primero todas las entradas (nombre, método, tamaños, CRC) y
  * después se infla cada una con su tamaño declarado, cortando si lo pasa (defensa contra bombas ZIP) y
- * comprobando su CRC-32. Sin ZIP64. TS puro: recibe una función que lee un trozo del archivo (`Blob.slice`).
+ * comprobando su CRC-32. Antes de inflar nada se valida el directorio: rutas seguras y sin repetir, entradas
+ * dentro del archivo y sin solaparse, y límites de número y de tamaño total. Sin ZIP64. TS puro: recibe una
+ * función que lee un trozo del archivo (`Blob.slice`).
  */
 import { Inflate } from 'fflate';
 
@@ -23,10 +25,36 @@ export interface EntradaZip {
 }
 
 export class ErrorZip extends Error {
-  constructor(public readonly codigo: string) {
-    super(codigo);
+  constructor(
+    public readonly codigo: string,
+    /** La entrada que lo ha provocado, si es una. */
+    public readonly ruta?: string,
+    /** Con `zip.tamanoMayor`, lo que llegó a inflarse antes de cortar. */
+    public readonly inflado?: number,
+  ) {
+    super(ruta ? `${codigo}: ${ruta}` : codigo);
     this.name = 'ErrorZip';
   }
+}
+
+/** Los límites de un ZIP que se lee (SEG-04, §15). */
+export interface LimitesZip {
+  /** Entradas como mucho. */
+  archivos: number;
+  /** Bytes descomprimidos como mucho, entre todas. */
+  total: number;
+}
+
+export const LIMITES_ZIP: LimitesZip = { archivos: 50_000, total: 2 * 1024 ** 3 };
+
+/** Lo que se infla de una vez: lo más que puede crecer antes de comprobar el tope (DEFLATE llega a ~1.000:1). */
+const TROZO_INFLAR = 4 * 1024;
+
+/** Una ruta dentro del espacio: relativa, sin `..`, sin `\`, sin NUL ni segmentos vacíos. */
+function rutaSegura(ruta: string): boolean {
+  const limpia = ruta.endsWith('/') ? ruta.slice(0, -1) : ruta;
+  if (!limpia || limpia.startsWith('/') || /[\\\0]/.test(limpia) || /^[a-zA-Z]:/.test(limpia)) return false;
+  return limpia.split('/').every((s) => s && s !== '.' && s !== '..');
 }
 
 const FIRMA_FIN = 0x06054b50;
@@ -39,8 +67,15 @@ const FIN_MAXIMO = FIN_MINIMO + 0xffff;
 const u16 = (d: Uint8Array, i: number) => (d[i] ?? 0) | ((d[i + 1] ?? 0) << 8);
 const u32 = (d: Uint8Array, i: number) => (u16(d, i) | (u16(d, i + 2) << 16)) >>> 0;
 
-/** Las entradas del ZIP, de su directorio central. */
-export async function entradasZip(tam: number, leer: LeerTrozo): Promise<EntradaZip[]> {
+/**
+ * Las entradas del ZIP, de su directorio central, ya validadas: lanza `ErrorZip` (con la regla y la ruta) si
+ * alguna no vale, sin haber inflado nada.
+ */
+export async function entradasZip(
+  tam: number,
+  leer: LeerTrozo,
+  limites: LimitesZip = LIMITES_ZIP,
+): Promise<EntradaZip[]> {
   if (tam < FIN_MINIMO) throw new ErrorZip('zip.noEsZip');
   const desde = Math.max(0, tam - FIN_MAXIMO);
   const cola = await leer(desde, tam - desde);
@@ -52,6 +87,7 @@ export async function entradasZip(tam: number, leer: LeerTrozo): Promise<Entrada
     }
   if (fin < 0) throw new ErrorZip('zip.noEsZip');
   const n = u16(cola, fin + 10);
+  if (n > limites.archivos) throw new ErrorZip('zip.demasiadosArchivos');
   const largoCentral = u32(cola, fin + 12);
   const inicioCentral = u32(cola, fin + 16);
   if (n === 0xffff || largoCentral === 0xffffffff || inicioCentral === 0xffffffff) throw new ErrorZip('zip.zip64');
@@ -80,7 +116,30 @@ export async function entradasZip(tam: number, leer: LeerTrozo): Promise<Entrada
     });
     i += 46 + largoNombre + largoExtra + largoComentario;
   }
+  validar(entradas, inicioCentral, limites);
   return entradas;
+}
+
+/** Las reglas del directorio, antes de inflar nada. */
+function validar(entradas: readonly EntradaZip[], inicioCentral: number, limites: LimitesZip): void {
+  const vistas = new Set<string>();
+  let total = 0;
+  for (const e of entradas) {
+    if (!rutaSegura(e.ruta)) throw new ErrorZip('zip.rutaInsegura', e.ruta);
+    if (vistas.has(e.ruta)) throw new ErrorZip('zip.rutaRepetida', e.ruta);
+    vistas.add(e.ruta);
+    // Sus datos, entre el principio del archivo y el directorio central.
+    if (e.local + 30 + e.comprimido > inicioCentral) throw new ErrorZip('zip.fueraDelArchivo', e.ruta);
+    total += e.tam;
+    if (total > limites.total) throw new ErrorZip('zip.demasiadoGrande', e.ruta);
+  }
+  // Dos entradas sobre los mismos datos: la bomba por solapamiento.
+  const porPosicion = [...entradas].sort((a, b) => a.local - b.local);
+  for (let k = 1; k < porPosicion.length; k++) {
+    const antes = porPosicion[k - 1] as EntradaZip;
+    const esta = porPosicion[k] as EntradaZip;
+    if (esta.local < antes.local + 30 + antes.comprimido) throw new ErrorZip('zip.solapadas', esta.ruta);
+  }
 }
 
 const TABLA_CRC = (() => {
@@ -102,30 +161,47 @@ export function crc32(datos: Uint8Array): number {
 /** Lo que trae una entrada, inflado y comprobado (tamaño y CRC). */
 export async function leerEntrada(entrada: EntradaZip, leer: LeerTrozo): Promise<Uint8Array> {
   const cabecera = await leer(entrada.local, 30);
-  if (u32(cabecera, 0) !== FIRMA_LOCAL) throw new ErrorZip('zip.entradaRota');
+  if (u32(cabecera, 0) !== FIRMA_LOCAL) throw new ErrorZip('zip.entradaRota', entrada.ruta);
   const inicio = entrada.local + 30 + u16(cabecera, 26) + u16(cabecera, 28);
   const datos = await leer(inicio, entrada.comprimido);
-  if (datos.length !== entrada.comprimido) throw new ErrorZip('zip.truncado');
+  if (datos.length !== entrada.comprimido) throw new ErrorZip('zip.truncado', entrada.ruta);
   let salida: Uint8Array;
   if (entrada.metodo === 0) salida = datos;
-  else if (entrada.metodo === 8) {
-    salida = new Uint8Array(entrada.tam);
-    let escrito = 0;
-    const inflar = new Inflate((trozo) => {
-      // Más de lo declarado: una bomba o un ZIP mentiroso; se corta.
-      if (escrito + trozo.length > entrada.tam) throw new ErrorZip('zip.tamanoMayor');
-      salida.set(trozo, escrito);
-      escrito += trozo.length;
-    });
-    try {
-      inflar.push(datos, true);
-    } catch (e) {
-      throw e instanceof ErrorZip ? e : new ErrorZip('zip.entradaRota');
-    }
-    if (escrito !== entrada.tam) throw new ErrorZip('zip.tamanoDistinto');
-  } else throw new ErrorZip('zip.metodo');
-  if (salida.length !== entrada.tam) throw new ErrorZip('zip.tamanoDistinto');
-  if (crc32(salida) !== entrada.crc) throw new ErrorZip('zip.crc');
+  else if (entrada.metodo === 8) salida = inflarConTope(datos, entrada);
+  else throw new ErrorZip('zip.metodo', entrada.ruta);
+  if (salida.length !== entrada.tam) throw new ErrorZip('zip.tamanoDistinto', entrada.ruta);
+  if (crc32(salida) !== entrada.crc) throw new ErrorZip('zip.crc', entrada.ruta);
+  return salida;
+}
+
+/**
+ * Infla en trozos pequeños y corta en cuanto pasa del tamaño declarado: fflate infla todo lo que se le empuja de
+ * una vez, así que empujarlo entero gastaría la memoria de una bomba antes de poder comprobar nada.
+ */
+function inflarConTope(datos: Uint8Array, entrada: EntradaZip): Uint8Array {
+  const trozos: Uint8Array[] = [];
+  let escrito = 0;
+  const inflar = new Inflate((trozo) => {
+    escrito += trozo.length;
+    // Más de lo declarado: una bomba o un ZIP mentiroso; se corta.
+    if (escrito > entrada.tam) throw new ErrorZip('zip.tamanoMayor', entrada.ruta, escrito);
+    trozos.push(trozo);
+  });
+  try {
+    for (let i = 0; i < datos.length; i += TROZO_INFLAR)
+      inflar.push(datos.subarray(i, i + TROZO_INFLAR), i + TROZO_INFLAR >= datos.length);
+    if (!datos.length) inflar.push(datos, true);
+  } catch (e) {
+    throw e instanceof ErrorZip ? e : new ErrorZip('zip.entradaRota', entrada.ruta);
+  }
+  if (escrito !== entrada.tam) throw new ErrorZip('zip.tamanoDistinto', entrada.ruta);
+  if (trozos.length === 1) return trozos[0] as Uint8Array;
+  const salida = new Uint8Array(escrito);
+  let i = 0;
+  for (const t of trozos) {
+    salida.set(t, i);
+    i += t.length;
+  }
   return salida;
 }
 

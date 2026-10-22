@@ -40,6 +40,23 @@ export interface OpcionesExportar {
 
 const cederPorDefecto = () => new Promise<void>((r) => setTimeout(r, 0));
 
+/** Cada cuánto se cede el hilo como mucho: ceder en cada archivo sumaría ~4 ms por archivo (el mínimo anidado). */
+const CEDER_CADA_MS = 12;
+
+/** Cede solo si ha pasado un rato desde la última vez. */
+function cederCada(ceder: () => Promise<void>): () => Promise<void> {
+  let ultima = performance.now();
+  return async () => {
+    if (performance.now() - ultima < CEDER_CADA_MS) return;
+    await ceder();
+    ultima = performance.now();
+  };
+}
+
+/** Lo que un ZIP sin ZIP64 admite (los recuentos y posiciones van en 16 y 32 bits): por encima, se corta. */
+export const MAX_ENTRADAS_ZIP = 0xffff - 1;
+export const MAX_BYTES_ZIP = 0xffffffff - 1;
+
 function comprobar(senal: AbortSignal | undefined): void {
   if (senal?.aborted) throw new DOMException('Exportación cancelada', 'AbortError');
 }
@@ -142,16 +159,23 @@ export interface ZipExportado {
 
 /** El ZIP completo del espacio, en streaming. */
 export async function exportarZip(almacen: AlmacenLectura, o: OpcionesExportar): Promise<ZipExportado> {
-  const ceder = o.ceder ?? cederPorDefecto;
+  const ceder = cederCada(o.ceder ?? cederPorDefecto);
   const base = await manifestBase(almacen);
   const archivos = await archivosDe(almacen);
+  // Con el manifest; un ZIP que no cabe sería corrupto en silencio (y se apuntaría como copia).
+  if (archivos.length + 1 > MAX_ENTRADAS_ZIP) throw new Error('exportar.demasiadoGrande');
   const total = archivos.reduce((s, e) => s + e.tam, 0);
   const trozos: Uint8Array[] = [];
   let error: Error | null = null;
   let terminado = false;
+  let bytes = 0;
   const zip = new Zip((e, datos, final) => {
     if (e) error = e;
-    else trozos.push(datos);
+    else {
+      trozos.push(datos);
+      bytes += datos.length;
+      if (bytes > MAX_BYTES_ZIP) error = new Error('exportar.demasiadoGrande');
+    }
     if (final) terminado = true;
   });
   const hashes = new Map<string, string>();
@@ -163,6 +187,7 @@ export async function exportarZip(almacen: AlmacenLectura, o: OpcionesExportar):
     entrada.mtime = o.ahora;
     zip.add(entrada);
     if (!datos.length) entrada.push(datos, true);
+    if (error) throw error;
     for (let i = 0; i < datos.length; i += TROZO) {
       entrada.push(datos.subarray(i, i + TROZO), i + TROZO >= datos.length);
       if (error) throw error;
@@ -186,7 +211,7 @@ export async function exportarZip(almacen: AlmacenLectura, o: OpcionesExportar):
   if (error) throw error;
   if (!terminado) throw new Error('exportar.zipIncompleto');
   o.alProgreso?.({ hechos: total, total });
-  return { trozos, manifest, bytes: trozos.reduce((s, t) => s + t.length, 0) };
+  return { trozos, manifest, bytes };
 }
 
 /** Un elemento en el JSON único: el frontmatter leído, su YAML tal cual y el cuerpo (reconstruyen el archivo). */
@@ -213,7 +238,8 @@ export function aBase64(datos: Uint8Array): string {
   return btoa(binario);
 }
 
-const utf8Estricto = new TextDecoder('utf-8', { fatal: true });
+// `ignoreBOM`: un BOM al principio se queda en el texto (si no, el archivo reconstruido no sería el mismo).
+const utf8Estricto = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 /** El texto si es UTF-8 válido; si no, `null`. */
 function comoTexto(datos: Uint8Array): string | null {
@@ -241,7 +267,7 @@ export async function exportarJson(
   almacen: AlmacenLectura,
   o: OpcionesExportar,
 ): Promise<{ texto: string; manifest: Manifest; excluidos: string[] }> {
-  const ceder = o.ceder ?? cederPorDefecto;
+  const ceder = cederCada(o.ceder ?? cederPorDefecto);
   const base = await manifestBase(almacen);
   const archivos = await archivosDe(almacen);
   const total = archivos.reduce((s, e) => s + e.tam, 0);

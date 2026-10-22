@@ -103,3 +103,38 @@ Cubre las seis tareas y la prueba de propiedad del plan. Aplica F0-2 (Worker, st
 | El módulo exportador se carga al exportar | `Ctrl+E` está en la carcasa: si no, fflate iría en la carga inicial. |
 | La copia previa es `useExportar()('zip', motivo)`; vaciar la papelera sigue con su copia propia | Quien la necesite (IN-036, IN-060) la llama; la papelera ya descargaba su ZIP antes de borrar. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 91 archivos y 1255 pruebas; carga inicial 238,6 KB de 300 (el exportador y su Worker van en trozos aparte).
+
+**Criterios de aceptación:** la propiedad de ida y vuelta (fast-check, 60 espacios al azar con rutas Unicode y profundas, texto y binarios) da los mismos archivos byte a byte y el mismo `manifest.json` (`exportar.test.ts`). El tope de 25 ms por trozo de F0-2 se respeta con trozos de 256 KB; la medida en el navegador queda en «Pendientes de validación humana».
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| ZIP en streaming en un Worker, con progreso, sin `.rimor/cache/`, con su nombre | `exportar.test.ts` (contenido, métodos, progreso, cancelar, nombre) y `Datos.test.tsx` (botón, señal y porcentaje, cancelar) |
+| Señal de copia al día y piloto verde al terminar | `Datos.test.tsx` (aviso, `ultimaCopia`, `copiaAlDia`) |
+| `manifest.json` con recuentos y hashes | `exportar.test.ts` (cada hash casa con su archivo; orden fijo) |
+| JSON único con adjuntos ≤ 1 MB y excluidos declarados | `exportar.test.ts` y `Datos.test.tsx` (no cuenta como copia) |
+| `Ctrl+E` y botón; actualiza la última copia | `Datos.test.tsx` (también con un diálogo abierto, que no exporta) y `Paleta.test.tsx` |
+| ZIP automático antes de lo destructivo | `exportarEspacio(…, { motivo })` y `useExportar()('zip', motivo)` para IN-036 e IN-060 (`Datos.test.tsx`). Vaciar la papelera (IN-027) mantiene su propio ZIP previo: es exactamente lo que se borra y se descarga con el clic del usuario (una exportación completa de varios segundos perdería ese gesto y el navegador podría bloquear la descarga). Es el «Exportar un ZIP antes de vaciar la papelera» de la referencia. |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | La defensa contra bombas no cortaba: fflate inflaba todo lo empujado de una vez | Se infla en trozos de 4 KB y se corta en cuanto pasa de lo declarado; el error dice cuánto llegó a inflarse. `leerZip.test.ts` |
+| 2 | Se reservaba el tamaño declarado antes de comprobarlo | Límite total (2 GB) y de archivos (50.000) antes de inflar; la salida crece por trozos. `leerZip.test.ts` |
+| 3 | El directorio central no se validaba (rutas, repetidas, solapadas, fuera del archivo) | `validar` en `entradasZip`, con la regla y la ruta en el error. `leerZip.test.ts` |
+| 4 | Sin ZIP64, más de 65.535 archivos o 4 GiB daban un ZIP corrupto que se apuntaba como copia | Se corta con `exportar.demasiadoGrande` antes de leer. `exportar.test.ts` |
+| 5 | El JSON perdía el BOM de los archivos de texto | `ignoreBOM`. `exportar.test.ts` |
+| 6 | La copia daba por copiado lo cambiado durante la exportación | Fecha del principio y se descuentan solo los cambios que había entonces. `Datos.test.tsx` |
+| 7 | En la pestaña que solo lee, la copia se «apuntaba» sin guardarse | No se apunta y el aviso lo dice. `Datos.test.tsx` |
+| 8 | Ceder en cada archivo sumaba segundos de espera | Se cede cada 12 ms como mucho. `exportar.test.ts` |
+| 9 | `esperarEscrituras` no esperaba a contadores ni a `colecciones.json` | Los espera (`contadores.esperar`, `colecciones.escrito`) |
+| 10 | `Ctrl+E` con un diálogo abierto llegaba al navegador | Se detiene. `Datos.test.tsx` |
+| 11 | No se podía cancelar y un Worker mudo dejaba la exportación colgada | «Cancelar» (termina el Worker o corta la espera en el hilo) y un plazo de 60 s sin progreso. `Datos.test.tsx` |
+| 12 | Vaciar la papelera no usaba el ZIP completo | Decisión registrada arriba (tarea 6) |
+| 13 | La propiedad no probaba rutas Unicode ni profundas | Las prueba. `exportar.test.ts` |
+

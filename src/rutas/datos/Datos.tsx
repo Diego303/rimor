@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { useExportacion } from '../../datos/exportacion';
+import { cancelarExportacion, useExportacion } from '../../datos/exportacion';
 import { useExportar } from '../../datos/useExportar';
 import { TarjetaCuidado } from '../../espacio/Avisos';
 import { useEspacioOpcional } from '../../espacio/Espacio';
@@ -50,12 +50,17 @@ function AccionesCopia() {
   const { tipo, porcentaje } = useExportacion();
   if (tipo)
     return (
-      <Senal
-        estado="exportando"
-        etiqueta={t(tipo === 'zip' ? 'pantallas.datos.exportandoZip' : 'pantallas.datos.exportandoJson', {
-          p: porcentaje,
-        })}
-      />
+      <div className="row">
+        <Senal
+          estado="exportando"
+          etiqueta={t(tipo === 'zip' ? 'pantallas.datos.exportandoZip' : 'pantallas.datos.exportandoJson', {
+            p: porcentaje,
+          })}
+        />
+        <Boton variante="fantasma" pequeno onClick={cancelarExportacion}>
+          {t('pantallas.datos.cancelar')}
+        </Boton>
+      </div>
     );
   return (
     <div className="row">
