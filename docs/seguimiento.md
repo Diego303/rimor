@@ -1,7 +1,7 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-22 23:25
+**Última actualización:** 2026-10-22 23:27
 **Ahora:** IN-033 · Paleta de comandos · fase análisis y diseño
 **Siguiente:** IN-034 · Mosaico y lista densa
 **Progreso:** F0 9/9 · v0.1 34/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 43/99
@@ -51,8 +51,8 @@
 | IN-029 | Versiones e historial | v0.1 | 5 | hecha | 2a73dd9 701dbe2 7eac401 | docs/features/IN-029-versiones.md |
 | IN-030 | Hilos | v0.1 | 5 | hecha | f79375a 2fd00eb 7287d9a | docs/features/IN-030-hilos.md |
 | IN-031 | Colecciones y etiquetas | v0.1 | 5 | hecha | f7526c7 7134d64 0d00edd | docs/features/IN-031-colecciones.md |
-| IN-032 | Búsqueda | v0.1 | 5 | hecha | f797561 e9a801d 7c7f416 | docs/features/IN-032-busqueda.md |
-| IN-033 | Paleta de comandos | v0.1 | 6 | pendiente | — | — |
+| IN-032 | Búsqueda | v0.1 | 5 | hecha | f797561 e9a801d 7c7f416 6e40ab9 | docs/features/IN-032-busqueda.md |
+| IN-033 | Paleta de comandos | v0.1 | 6 | en análisis y diseño | — | docs/features/IN-033-paleta.md |
 | IN-034 | Mosaico y lista densa | v0.1 | 6 | pendiente | — | — |
 | IN-035 | Exportar ZIP y JSON | v0.1 | 6 | pendiente | — | — |
 | IN-036 | Importar ZIP y JSON | v0.1 | 6 | pendiente | — | — |
@@ -173,6 +173,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
+| 2026-10-22 | IN-033 | análisis y diseño | las acciones son los atajos (con o sin tecla), lógica pura de puntuación y orden con recientes, paleta modal con la caja de Buscar y elementos del motor | … |
 | 2026-10-22 | IN-032 | verificación | pnpm verificar OK (1194 pruebas, 232,5 KB); revisión independiente con 12 hallazgos atendidos con pruebas | 7c7f416 |
 | 2026-10-22 | IN-032 | implementación | consulta del Anexo G, índice MiniSearch en Worker con claves y gzip, motor con ranking y facetas, pantalla Buscar, ? del compositor y contador | e9a801d |
 | 2026-10-20 | IN-032 | análisis y diseño | MiniSearch en Worker con claves por elemento y gzip en la caché, analizador del Anexo G sobre el frontmatter, motor con ranking, pantalla como la referencia y el ? del compositor | f797561 |
