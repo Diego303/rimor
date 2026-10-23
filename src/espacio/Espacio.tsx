@@ -3,6 +3,7 @@
  * enseña la pantalla de arranque si tarda, llena lo que pinta la carcasa y da el espacio a las pantallas.
  */
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { CacheEspacio } from '../almacen/cache/cache';
 import { ColaEscrituras } from '../almacen/cola';
 import { AlmacenMemoria } from '../almacen/memoria';
 import { crearAlmacenOpfs } from '../almacen/opfs/cliente';
@@ -87,6 +88,36 @@ export function recordarEspacioConocido(id: string, nombre: string): void {
   } catch {
     // Sin localStorage, solo se conoce el de ahora.
   }
+}
+
+/** Lo quita de los conocidos (al borrarlo). */
+export function olvidarEspacioConocido(id: string): void {
+  try {
+    globalThis.localStorage?.setItem(CLAVE_CONOCIDOS, JSON.stringify(espaciosConocidos().filter((e) => e.id !== id)));
+  } catch {
+    // Sin localStorage no había lista.
+  }
+}
+
+/** Borra la carpeta de un espacio en OPFS (en las pruebas, otra). */
+async function borrarCarpetaOpfs(id: string): Promise<void> {
+  const raiz = await navigator.storage.getDirectory();
+  const espacios = await raiz.getDirectoryHandle('espacios');
+  await espacios.removeEntry(id, { recursive: true });
+}
+
+/**
+ * Borra un espacio que no es el abierto (IN-039: el de ejemplo, o uno importado): sus archivos, su caché y su sitio
+ * en la lista. Lanza si no se puede (otra pestaña lo tiene abierto); lo de la lista se quita solo si se borró.
+ */
+export async function borrarEspacio(
+  id: string,
+  { abierto, borrarCarpeta = borrarCarpetaOpfs }: { abierto: string; borrarCarpeta?: (id: string) => Promise<void> },
+): Promise<void> {
+  if (id === abierto) throw new Error('espacio.borrarAbierto');
+  await borrarCarpeta(id);
+  await CacheEspacio.borrar(id).catch(() => undefined);
+  olvidarEspacioConocido(id);
 }
 
 /** Abre otro espacio: lo recuerda y recarga la app en él (un espacio nuevo importado, IN-036). */

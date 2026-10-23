@@ -135,14 +135,12 @@
       "abrirEnBuscar": "Abrir en Buscar",
       "nadaSinClasificar": "Nada sin clasificar",
       "nadaSinClasificarTexto": "Lo que pegues aparecerá aquí con lo que Rimor haya entendido.",
-      "primerUsoTitulo": "Pega lo primero que tengas a mano",
-      "primerUsoTexto": "Rimor entiende lo que pegues y te contesta con lo que ha visto. Prueba con uno de estos:",
+      "primerUsoTitulo": "Rimor",
+      "primerUsoTexto": "Pega lo que tengas a mano: un log, una traza, unas mediciones. Rimor lo entiende, te contesta con lo que ha visto y lo recuerda la próxima vez.",
       "ejemplos": {
-        "log": "Un log",
-        "error": "Una traza de error",
-        "enlace": "Un enlace",
-        "mediciones": "Unas mediciones",
-        "idea": "Una idea"
+        "log": "Pega este log",
+        "error": "Esta traza",
+        "mediciones": "Estas mediciones"
       },
       "seleccionados": {
         "one": "{n} seleccionado",
@@ -161,7 +159,14 @@
       "sinOtroTipo": "Este elemento no se puede leer con otro lector.",
       "version": "Lo he guardado como su versión {n}.",
       "verCambios": "Ver cambios",
-      "guardarAparte": "Guardar aparte"
+      "guardarAparte": "Guardar aparte",
+      "primerUsoFrase": "Del rumor a la conclusión",
+      "ejemploCrear": "Abrir un espacio de ejemplo",
+      "ejemploCreando": "Preparando el ejemplo…",
+      "ejemploAbrir": "Abrir «{nombre}»",
+      "ejemploListo": "Listo. Para volver a este espacio, en Datos y copias.",
+      "ejemploFallo": "No se pudo crear el ejemplo.",
+      "instalar": "Instalar Rimor"
     },
     "elemento": {
       "titulo": "Elemento",
@@ -488,7 +493,12 @@
       "queContiene": "Qué contiene el ZIP",
       "arbol": "manifest.json        ← recuentos y hashes\nelementos/2026/10/…\ncomparaciones/  hilos/  investigaciones/  documentos/\nadjuntos/            ← por hash\nhistorial/           ← versiones\ncolecciones.json  papelera/  .rimor/",
       "cancelar": "Cancelar",
-      "abrirEspacio": "Abrir"
+      "abrirEspacio": "Abrir",
+      "borrarEspacio": "Borrar",
+      "borrarEspacioTitulo": "¿Borrar «{nombre}»?",
+      "borrarEspacioTexto": "Se borran sus archivos de este navegador para siempre. Si quieres guardarlo, ábrelo antes y exporta su ZIP.",
+      "espacioBorrado": "Borrado «{nombre}»",
+      "espacioNoBorrado": "No se pudo borrar «{nombre}»: puede que otra pestaña lo tenga abierto."
     },
     "ajustes": {
       "titulo": "Ajustes"

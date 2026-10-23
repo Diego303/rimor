@@ -5,10 +5,11 @@ import { cancelarExportacion, useExportacion } from '../../datos/exportacion';
 import { useArchivoImportar } from '../../datos/importar/importacion';
 import { useExportar } from '../../datos/useExportar';
 import { TarjetaCuidado } from '../../espacio/Avisos';
-import { cambiarDeEspacio, espaciosConocidos, useEspacioOpcional } from '../../espacio/Espacio';
+import { borrarEspacio, cambiarDeEspacio, espaciosConocidos, useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
 import { useT } from '../../i18n/useT';
-import { Boton, Detalles } from '../../ui/componentes';
+import { Boton, Detalles, Dialogo } from '../../ui/componentes';
+import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { Senal } from '../../ui/marca/Senal';
 import { Pantalla } from '../Pantalla';
 
@@ -117,7 +118,21 @@ export function Datos() {
   const { elementos, papelera } = useRecuentos();
   const actual = useEspacioOpcional()?.id;
   // Los demás espacios de este navegador (un espacio nuevo importado): se pueden abrir.
-  const [otros] = useState(() => espaciosConocidos().filter((e) => e.id !== actual));
+  const [otros, setOtros] = useState(() => espaciosConocidos().filter((e) => e.id !== actual));
+  const [aBorrar, setABorrar] = useState<{ id: string; nombre: string } | null>(null);
+  const avisos = useAvisosOpcional();
+  async function borrar() {
+    const e = aBorrar;
+    setABorrar(null);
+    if (!e || !actual) return;
+    try {
+      await borrarEspacio(e.id, { abierto: actual });
+      setOtros((lista) => lista.filter((x) => x.id !== e.id));
+      avisos?.avisar(t('pantallas.datos.espacioBorrado', { nombre: e.nombre }));
+    } catch {
+      avisos?.avisar(t('pantallas.datos.espacioNoBorrado', { nombre: e.nombre }));
+    }
+  }
   return (
     <Pantalla
       titulo={t('pantallas.datos.titulo')}
@@ -149,6 +164,9 @@ export function Datos() {
                 <Boton variante="fantasma" pequeno onClick={() => cambiarDeEspacio(e.id)}>
                   {t('pantallas.datos.abrirEspacio')}
                 </Boton>
+                <Boton variante="fantasma" pequeno peligro onClick={() => setABorrar(e)}>
+                  {t('pantallas.datos.borrarEspacio')}
+                </Boton>
               </dd>
             </div>
           ))}
@@ -161,6 +179,21 @@ export function Datos() {
           </dd>
         </dl>
       </Detalles>
+      <Dialogo
+        abierto={aBorrar !== null}
+        alCerrar={() => setABorrar(null)}
+        titulo={t('pantallas.datos.borrarEspacioTitulo', { nombre: aBorrar?.nombre ?? '' })}
+      >
+        <p className="sm">{t('pantallas.datos.borrarEspacioTexto')}</p>
+        <div className="row">
+          <Boton variante="primario" peligro pequeno onClick={() => void borrar()}>
+            {t('pantallas.datos.borrarEspacio')}
+          </Boton>
+          <Boton pequeno onClick={() => setABorrar(null)}>
+            {t('pantallas.inicio.cancelar')}
+          </Boton>
+        </div>
+      </Dialogo>
       <Detalles resumen={t('pantallas.datos.queContiene')}>
         <pre className="tree">{t('pantallas.datos.arbol')}</pre>
       </Detalles>

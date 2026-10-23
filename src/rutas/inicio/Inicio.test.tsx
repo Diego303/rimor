@@ -84,8 +84,10 @@ describe('Inicio', () => {
 
   it('primer uso: ejemplos de qué pegar que llenan el compositor', async () => {
     montar();
-    const ejemplo = await screen.findByRole('button', { name: /Un log/ }, PRIMERA_CARGA);
-    expect(screen.getByText('Pega lo primero que tengas a mano')).toBeTruthy();
+    const ejemplo = await screen.findByRole('button', { name: /Pega este log/ }, PRIMERA_CARGA);
+    expect(screen.getByText(/^Pega lo que tengas a mano: un log, una traza, unas mediciones\./)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Esta traza/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Estas mediciones/ })).toBeTruthy();
     fireEvent.click(ejemplo);
     expect(useCompositor.getState().texto).toContain('ERROR stream: read timeout');
   }, 30_000);

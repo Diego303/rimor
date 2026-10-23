@@ -46,6 +46,8 @@ export interface OpcionesImportar {
   /** Abre el almacén de un espacio nuevo (en el navegador, su carpeta de OPFS). */
   crearAlmacen?: (id: string) => Promise<Almacen & { cerrar?: () => void; esperar?: () => Promise<void> }>;
   reloj?: () => Date;
+  /** El nombre del espacio nuevo (por defecto, el del paquete con «(importado)»). */
+  nombre?: string;
   /** Un espacio nuevo ya escrito: se apunta entre los conocidos. */
   alCrearEspacio?: (id: string, nombre: string) => void;
 }
@@ -78,7 +80,7 @@ export async function importar(
   if (modo === 'nuevo') {
     if (!o.crearAlmacen) throw new Error('importar.sinEspacioNuevo');
     const id = ulid();
-    const nombre = `${paquete.manifest.espacio.nombre} (importado)`;
+    const nombre = o.nombre ?? `${paquete.manifest.espacio.nombre} (importado)`;
     const almacen = await o.crearAlmacen(id);
     try {
       const manifest: Manifest = manifestNuevo(paquete.manifest, nombre, (o.reloj ?? (() => new Date()))(), id);

@@ -135,14 +135,12 @@
       "abrirEnBuscar": "Open in Search",
       "nadaSinClasificar": "Nothing unsorted",
       "nadaSinClasificarTexto": "What you paste will show here with what Rimor understood.",
-      "primerUsoTitulo": "Paste the first thing you have at hand",
-      "primerUsoTexto": "Rimor understands what you paste and answers with what it saw. Try one of these:",
+      "primerUsoTitulo": "Rimor",
+      "primerUsoTexto": "Paste whatever you have at hand: a log, a trace, some measurements. Rimor understands it, replies with what it saw and remembers it next time.",
       "ejemplos": {
-        "log": "A log",
-        "error": "An error trace",
-        "enlace": "A link",
-        "mediciones": "Some measurements",
-        "idea": "An idea"
+        "log": "Paste this log",
+        "error": "This trace",
+        "mediciones": "These measurements"
       },
       "seleccionados": {
         "one": "{n} selected",
@@ -161,7 +159,14 @@
       "sinOtroTipo": "This item cannot be read with another reader.",
       "version": "I saved it as its version {n}.",
       "verCambios": "See changes",
-      "guardarAparte": "Save separately"
+      "guardarAparte": "Save separately",
+      "primerUsoFrase": "From rumour to conclusion",
+      "ejemploCrear": "Open an example space",
+      "ejemploCreando": "Preparing the example…",
+      "ejemploAbrir": "Open “{nombre}”",
+      "ejemploListo": "Done. To come back to this space, go to Data and backups.",
+      "ejemploFallo": "The example could not be created.",
+      "instalar": "Install Rimor"
     },
     "elemento": {
       "titulo": "Item",
@@ -488,7 +493,12 @@
       "queContiene": "What the ZIP contains",
       "arbol": "manifest.json        ← counts and hashes\nelementos/2026/10/…\ncomparaciones/  hilos/  investigaciones/  documentos/\nadjuntos/            ← by hash\nhistorial/           ← versions\ncolecciones.json  papelera/  .rimor/",
       "cancelar": "Cancel",
-      "abrirEspacio": "Open"
+      "abrirEspacio": "Open",
+      "borrarEspacio": "Delete",
+      "borrarEspacioTitulo": "Delete “{nombre}”?",
+      "borrarEspacioTexto": "Its files are deleted from this browser for good. To keep it, open it first and export its ZIP.",
+      "espacioBorrado": "Deleted “{nombre}”",
+      "espacioNoBorrado": "“{nombre}” could not be deleted: another tab may have it open."
     },
     "ajustes": {
       "titulo": "Settings"

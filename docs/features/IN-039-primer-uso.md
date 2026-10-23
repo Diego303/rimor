@@ -33,9 +33,9 @@ La tarjeta de persistencia sigue arriba en Inicio. La sugerencia de instalar la 
 
 ## Tareas
 
-- [ ] Bienvenida en el feed con `<Senal estado="primer-uso" veces={1}>` (logotipo y «del rumor a la conclusión»), qué es Rimor en dos frases y tres botones de ejemplo («Pega este log», «esta traza», «estas mediciones») que rellenan el compositor.
-- [ ] Espacio de ejemplo (la colección `gateway` del plan) como ZIP empaquetado, importable en modo «espacio nuevo» y que se puede borrar.
-- [ ] Petición de persistencia y sugerencia de instalar la PWA (cuando exista).
+- [x] Bienvenida en el feed con `<Senal estado="primer-uso" veces={1}>` (logotipo y «del rumor a la conclusión»), qué es Rimor en dos frases y tres botones de ejemplo («Pega este log», «esta traza», «estas mediciones») que rellenan el compositor.
+- [x] Espacio de ejemplo (la colección `gateway` del plan) como ZIP empaquetado, importable en modo «espacio nuevo» y que se puede borrar.
+- [x] Petición de persistencia y sugerencia de instalar la PWA (cuando exista).
 
 ## Pruebas previstas
 
@@ -58,3 +58,20 @@ La tarjeta de persistencia sigue arriba en Inicio. La sugerencia de instalar la 
 ## Autorrevisión
 
 Cubre las tres tareas. Reutiliza la captura, la exportación y la importación en espacio nuevo, la lista de espacios de IN-036, la caché del espacio (`CacheEspacio.borrar`) y la señal.
+
+## Implementación
+
+- `src/rutas/inicio/PrimerUso.tsx`: la señal `primer-uso` (40 px, con «Del rumor a la conclusión»), las dos frases, «Pega este log», «Esta traza» y «Estas mediciones», «Abrir un espacio de ejemplo» (y después «Abrir «Ejemplo · gateway»») e «Instalar Rimor» si el navegador lo ofrece.
+- `src/datos/ejemplo/ejemplo.ts`: `zipDeEjemplo` (ocho capturas reales con fechas e ids fijos a partir del reloj, la colección `gateway`, exportado con IN-035); `src/datos/ejemplo/crear.ts`: `crearEspacioDeEjemplo` (lo valida e importa como espacio nuevo con su nombre).
+- `importar` admite el `nombre` del espacio nuevo.
+- `src/espacio/Espacio.tsx`: `borrarEspacio` (carpeta de OPFS, caché y lista; el abierto no) y `olvidarEspacioConocido`; Datos y copias lo ofrece con confirmación.
+- `src/espacio/instalar.ts`: guarda `beforeinstallprompt` y `instalar()`.
+- Pruebas: `datos/ejemplo/ejemplo.test.ts` (valida, contenido, determinista), `rutas/inicio/PrimerUso.test.tsx` (señal, ejemplos, espacio de ejemplo, instalar), `espacio/espacios.test.ts` (borrar) e `Inicio.test.tsx` (textos nuevos).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| La traza y el prompt del ejemplo están escritos para él (no son los fixtures) | Los fixtures llevan rutas de una máquina concreta; el ejemplo se reparte a todo el mundo. |
+| Lo capturado del ejemplo queda «ayer» | Así el feed del espacio de ejemplo tiene su día y el de hoy queda libre para probar. |
+
