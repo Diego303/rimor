@@ -153,7 +153,9 @@ export function Importar() {
                     <b className="sm">{t(`importar.modos.${m}.titulo`)}</b>
                     <br />
                     <span className="xs muted">
-                      {t(`importar.modos.${m}.texto`, { nombre: espacio.manifest.espacio.nombre })}
+                      {m === 'reemplazar' && !espacio.ajustes().copias.zipPrevio
+                        ? t('importar.modos.reemplazar.textoSinCopia', { nombre: espacio.manifest.espacio.nombre })
+                        : t(`importar.modos.${m}.texto`, { nombre: espacio.manifest.espacio.nombre })}
                     </span>
                   </span>
                 </label>

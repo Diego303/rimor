@@ -195,6 +195,20 @@
 .piloto.warn {
   background: var(--warn);
 }
+/* La señal «copia al día» en el sitio del piloto, sin cambiar su tamaño en la línea. */
+.piloto-animado {
+  position: relative;
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex: none;
+}
+.piloto-animado .senal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
 .kbd {
   font-family: var(--f-m);
   font-size: 0.6875rem;

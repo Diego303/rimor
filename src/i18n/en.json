@@ -696,7 +696,8 @@
       },
       "reemplazar": {
         "titulo": "Replace",
-        "texto": "Deletes “{nombre}” and loads the file. A copy is exported first."
+        "texto": "Deletes “{nombre}” and loads the file. A copy is exported first.",
+        "textoSinCopia": "Deletes “{nombre}” and loads the file. No copy is exported first (you turned it off in Data and backups)."
       },
       "nuevo": {
         "titulo": "New space",

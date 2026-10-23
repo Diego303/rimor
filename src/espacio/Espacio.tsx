@@ -151,6 +151,7 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
     // siguiente paso: terminar el Worker a mitad dejaría promesas colgadas y el cerrojo de escritura cogido.
     let soltar: (() => void) | null = null;
     let listo = false;
+    let reloj: ReturnType<typeof setInterval> | undefined;
     (async () => {
       const dep = await dependencias();
       let abierto: EspacioAbierto | null = null;
@@ -190,6 +191,8 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
       pintar();
       e.alCambiar(pintar);
       e.coordinacion.alCambiarModo(pintar);
+      // El paso del tiempo también cambia la copia (vencen los días sin copia): se repinta cada minuto.
+      reloj = setInterval(pintar, 60_000);
       // Una PWA instalada puede tener ya el almacenamiento protegido sin haberlo pedido: se anota. Si no se
       // puede escribir, se sigue igual (nunca bloquea).
       if (!dep.enMemoria && e.estado().persistencia !== 'concedida' && (await estaPersistido()))
@@ -207,6 +210,7 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
     });
     return () => {
       vivo = false;
+      clearInterval(reloj);
       if (listo) soltar?.();
     };
   }, [dependencias, intento]);

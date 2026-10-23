@@ -27,19 +27,35 @@ const actual = (activo: boolean) => (activo ? ('page' as const) : undefined);
  * El piloto de la copia: verde al día, ámbar si toca copiar. Al pasar a verde (una copia completa), en su sitio se ve
  * una vez la señal «copia al día» y después el piloto (IN-037).
  */
-function PilotoCopia({ alDia, etiqueta }: { alDia: boolean; etiqueta: string }) {
-  const antes = useRef(alDia);
+export function PilotoCopia({
+  alDia,
+  ultimaCopia,
+  etiqueta,
+}: {
+  alDia: boolean;
+  ultimaCopia: string | null;
+  etiqueta: string;
+}) {
+  const antes = useRef({ alDia, ultimaCopia });
   const [animando, setAnimando] = useState(false);
   useEffect(() => {
-    const paso = alDia && !antes.current;
-    antes.current = alDia;
-    if (!paso) return undefined;
+    // Solo con una copia nueva (no si se suben los umbrales, ni al abrir).
+    const copia = alDia && !antes.current.alDia && ultimaCopia !== antes.current.ultimaCopia;
+    antes.current = { alDia, ultimaCopia };
+    if (!alDia) setAnimando(false);
+    if (!copia) return undefined;
     setAnimando(true);
     const fin = setTimeout(() => setAnimando(false), ESTADOS_SENAL['copia-al-dia'].duracionS * 1000);
-    return () => clearTimeout(fin);
-  }, [alDia]);
+    return () => {
+      clearTimeout(fin);
+      setAnimando(false);
+    };
+  }, [alDia, ultimaCopia]);
   return animando ? (
-    <Senal estado="copia-al-dia" veces={1} tamano={12} etiqueta={etiqueta} textoOculto />
+    // En una caja del tamaño del piloto: el nombre del espacio no se mueve.
+    <span className="piloto-animado">
+      <Senal estado="copia-al-dia" veces={1} tamano={12} etiqueta={etiqueta} textoOculto />
+    </span>
   ) : (
     <Piloto tono={alDia ? 'ok' : 'warn'} etiqueta={etiqueta} />
   );
@@ -82,6 +98,7 @@ export function Rail() {
       <Link to="/datos" className="space" aria-current={actual(ruta === '/datos')}>
         <b>
           <PilotoCopia
+            ultimaCopia={espacio.ultimaCopia}
             alDia={espacio.copiaAlDia}
             etiqueta={espacio.copiaAlDia ? t('rail.copiaAlDia') : t('rail.copiaPendiente')}
           />

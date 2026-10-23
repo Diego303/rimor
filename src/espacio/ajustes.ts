@@ -58,7 +58,11 @@ export function leerAjustes(texto: string | null): Ajustes {
       ...d,
       esquema: 1,
       respuestas: { ...respuestas, desactivadas },
-      copias: { ...(d.copias as object), ...copiasDe(d.copias) },
+      // De `copias` se conserva también lo que no se conoce (si es un objeto, no una lista ni un texto).
+      copias: {
+        ...(typeof d.copias === 'object' && d.copias !== null && !Array.isArray(d.copias) ? d.copias : {}),
+        ...copiasDe(d.copias),
+      },
     };
   } catch {
     return structuredClone(AJUSTES_INICIALES);

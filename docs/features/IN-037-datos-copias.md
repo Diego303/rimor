@@ -82,3 +82,32 @@ Cubre las cuatro tareas. Reutiliza la tarjeta de cuidado, `exportarEspacio` (ví
 | Los números se guardan al salir del campo, ajustados a sus límites | Mientras se escribe «1» camino de «15» no debe guardarse 5. |
 | La tarjeta no sale en la pestaña que solo lee | No podría apuntar ni la copia ni el aplazamiento. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 95 archivos y 1290 pruebas; carga inicial 242,3 KB de 300.
+
+**Criterios de aceptación:** el recordatorio es una tarjeta que nunca bloquea (`Copias.test.tsx`).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| Tres respuestas y «Exportar ZIP», el único botón naranja | La tarjeta de cuidado (IN-007, IN-035); `copias.test.ts` («el botón naranja») |
+| Piloto verde o ámbar, con la animación al pasar a verde | `copias.test.ts` (umbrales) y `Copias.test.tsx` (exportar y piloto; `PilotoCopia`) |
+| Recordatorio configurable en Inicio, sin bloquear | `copias.test.ts` (`debeRecordarCopia`) y `Copias.test.tsx` (tarjeta, «Más tarde», exportar, plegado) |
+| Plegados: otras exportaciones, recordatorio, espacios y papelera, qué contiene el ZIP | `Datos.tsx`; `Datos.test.tsx`, `Copias.test.tsx` e `Importar.test.tsx` |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | El plegado no seguía a los ajustes de la otra pestaña y guardaba desde su copia | Se suscribe a los cambios y guarda sobre los ajustes de ahora. `Copias.test.tsx` |
+| 2 | Sin ZIP previo, «Reemplazar» seguía diciendo que se exporta una copia | Texto propio. `Importar.test.tsx` |
+| 3 | Si volvía a ámbar durante la animación, la señal se quedaba | Se corta al volver a ámbar. `Copias.test.tsx` |
+| 4 | La animación salía con cualquier paso a verde (subir los umbrales) | Solo con una copia nueva. `Copias.test.tsx` |
+| 5 | El piloto no se recalculaba con el paso del tiempo | Se repinta cada minuto |
+| 6 | Cerrar no esperaba a los ajustes pendientes | Los espera |
+| 7 | Al guardar se perdía lo desconocido de `copias`; una lista daba claves inventadas | Se fusiona sobre lo guardado; solo se copia un objeto. `Copias.test.tsx` |
+| 8 | Un número vacío guardaba el mínimo; Intro no guardaba | Vacío vuelve al anterior; Intro guarda. `Copias.test.tsx` |
+| 9 | La señal desplazaba el nombre del espacio | Va en una caja del tamaño del piloto |
+

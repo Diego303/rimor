@@ -124,6 +124,21 @@ describe('Importar', () => {
     expect(espacio.repositorio.frontmatter('TXT-0002')).toBeTruthy();
   }, 30_000);
 
+  it('sin el ZIP previo, «Reemplazar» dice que no se exporta copia y no la exporta', async () => {
+    const { router, espacio } = await montarApp('/ajustes', [el(1)]);
+    await act(() => espacio.guardarAjustes((a) => ({ ...a, copias: { ...a.copias, zipPrevio: false } })));
+    act(() => useArchivoImportar.setState({ archivo: null }));
+    const archivo = await zipDe([el(2)]);
+    act(() => useArchivoImportar.setState({ archivo }));
+    await act(() => router.navigate({ to: '/importar' }));
+    await screen.findByText(/^ZIP válido/, {}, PRIMERA_CARGA);
+    expect(screen.getByText(/No se exporta una copia antes/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: /Reemplazar/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Importar' }));
+    await screen.findByText(/^Importado:/, {}, ESCRITURA);
+    expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
+  }, 30_000);
+
   it('Datos y copias lista los demás espacios de este navegador para abrirlos', async () => {
     localStorage.setItem('rimor:espacios', JSON.stringify([{ id: 'otro', nombre: 'Trabajo (importado)' }]));
     const { router } = await montarApp('/ajustes', [el(1)]);

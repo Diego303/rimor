@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-23 22:57
-**Ahora:** IN-037 · Datos y copias · fase implementación
-**Siguiente:** IN-038 · Ajustes
-**Progreso:** F0 9/9 · v0.1 38/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 47/99
+**Última actualización:** 2026-10-23 23:10
+**Ahora:** IN-038 · Ajustes · fase análisis y diseño
+**Siguiente:** IN-039 · Primer uso
+**Progreso:** F0 9/9 · v0.1 39/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 48/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -56,7 +56,7 @@
 | IN-034 | Mosaico y lista densa | v0.1 | 6 | hecha | 129a1b1 8ed1999 3338b05 | docs/features/IN-034-vistas.md |
 | IN-035 | Exportar ZIP y JSON | v0.1 | 6 | hecha | 2023eae b70ba11 3361b0b | docs/features/IN-035-exportar.md |
 | IN-036 | Importar ZIP y JSON | v0.1 | 6 | hecha | 9728e95 cb68c02 9790355 | docs/features/IN-036-importar.md |
-| IN-037 | Datos y copias | v0.1 | 6 | en implementación | 0479bc1 | docs/features/IN-037-datos-copias.md |
+| IN-037 | Datos y copias | v0.1 | 6 | hecha | 0479bc1 485e5f9 | docs/features/IN-037-datos-copias.md |
 | IN-038 | Ajustes | v0.1 | 6 | pendiente | — | — |
 | IN-039 | Primer uso y espacio de ejemplo | v0.1 | 6 | pendiente | — | — |
 | IN-040 | Cierre de v0.1 | v0.1 | 7 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-23 | IN-037 | implementación | ajustes de copia con guardarAjustes, recordatorio en Inicio con aplazamiento, piloto animado, plegado del recordatorio y ZIP previo opcional | … |
+| 2026-10-23 | IN-037 | verificación | pnpm verificar OK (1290 pruebas, 242,3 KB); revisión independiente con 9 hallazgos atendidos | … |
+| 2026-10-23 | IN-037 | implementación | ajustes de copia con guardarAjustes, recordatorio en Inicio con aplazamiento, piloto animado, plegado del recordatorio y ZIP previo opcional | 485e5f9 |
 | 2026-10-23 | IN-037 | análisis y diseño | ajustes de copia con guardarAjustes, recordatorio en Inicio que se pospone, animación del piloto, plegado del recordatorio y ZIP previo opcional | 0479bc1 |
 | 2026-10-23 | IN-036 | verificación | pnpm verificar OK (1277 pruebas, 241,3 KB); revisión independiente con 13 hallazgos atendidos (refs al reimportar, rutas, repetidos, relectura, espacios conocidos) | 9790355 |
 | 2026-10-23 | IN-036 | implementación | leerPaquete con corpus malicioso rechazado, plan por id con conflictos y refs reasignadas, tres modos con copia previa y relectura, pantalla Importar | cb68c02 |

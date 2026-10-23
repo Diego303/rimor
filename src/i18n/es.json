@@ -696,7 +696,8 @@
       },
       "reemplazar": {
         "titulo": "Reemplazar",
-        "texto": "Borra «{nombre}» y carga el archivo. Antes se exporta una copia."
+        "texto": "Borra «{nombre}» y carga el archivo. Antes se exporta una copia.",
+        "textoSinCopia": "Borra «{nombre}» y carga el archivo. No se exporta una copia antes (lo desactivaste en Datos y copias)."
       },
       "nuevo": {
         "titulo": "Espacio nuevo",

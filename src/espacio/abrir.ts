@@ -291,6 +291,7 @@ export async function abrirEspacio(
         if (cerrado) return;
         // Primero lo que ya estaba pedido; después nada más se escribe y se sueltan cerrojo y caché.
         await pendiente.catch(() => undefined);
+        await ajustesPendientes.catch(() => undefined);
         await contadores.esperar();
         await dep.almacen.esperar?.().catch(() => undefined);
         cerrado = true;
