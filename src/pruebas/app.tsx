@@ -23,8 +23,14 @@ export const PRIMERA_CARGA = { timeout: 15_000 };
 /** Las escrituras van en turno: bajo carga, alguna tarda más de lo que `waitFor` espera por defecto. */
 export const ESCRITURA = { timeout: 5000 };
 
-export async function montarApp(ruta: string, elementos: readonly Elemento[] = []) {
+export async function montarApp(
+  ruta: string,
+  elementos: readonly Elemento[] = [],
+  /** Lo que se escribe en el almacén antes de abrir el espacio (unos ajustes, un espacio importado). */
+  antes?: (almacen: AlmacenMemoria) => Promise<void>,
+) {
   const almacen = new AlmacenMemoria();
+  await antes?.(almacen);
   const dependencias = async (): Promise<DependenciasProveedor> => ({
     espacioId: `app-${Math.random()}`,
     almacen,

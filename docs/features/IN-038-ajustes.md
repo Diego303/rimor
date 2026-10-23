@@ -41,14 +41,14 @@ Cada cambio se guarda al momento (`guardarAjustes`); en la pestaña que solo lee
 
 ## Tareas
 
-- [ ] Tema.
-- [ ] Idioma.
-- [ ] Detección (umbral de duda).
-- [ ] Secretos (reglas activas).
-- [ ] Respuestas por tipo (D14).
-- [ ] Copias (umbrales).
-- [ ] Red (vacío en v0.1; lo llena IN-041).
-- [ ] Se guarda en `.rimor/ajustes.json`.
+- [x] Tema.
+- [x] Idioma.
+- [x] Detección (umbral de duda).
+- [x] Secretos (reglas activas).
+- [x] Respuestas por tipo (D14).
+- [x] Copias (umbrales).
+- [x] Red (vacío en v0.1; lo llena IN-041).
+- [x] Se guarda en `.rimor/ajustes.json`.
 
 ## Pruebas previstas
 
@@ -72,3 +72,21 @@ Cada cambio se guarda al momento (`guardarAjustes`); en la pestaña que solo lee
 ## Autorrevisión
 
 Cubre las ocho tareas. Reutiliza `guardarAjustes` (IN-037), `SelectorTema`, `cambiarIdioma`, `REGLAS_SECRETOS`, el registro de lectores y el plegado de copias.
+
+## Implementación
+
+- `src/espacio/ajustes.ts`: `deteccion` (`DETECCION_INICIAL`, `LIMITES_DETECCION`), `secretos.desactivadas` (solo ids que existen), `tema` e `idioma` (se quitan si no valen), lo desconocido conservado; `opcionesCaptura`.
+- `src/captura/opciones.ts`: de las opciones a las de `ocultar` y `detectar`. `capturar` recibe `opciones()` (se leen en cada captura); `previsualizar` las recibe también en el Worker; el compositor y el proveedor de captura las pasan.
+- Tema e idioma: `SelectorTema` acepta `alCambiar`; Ajustes guarda los dos en el espacio; al abrir un espacio, `ProveedorEspacio` aplica los suyos.
+- `src/rutas/ajustes/Ajustes.tsx`: Apariencia, Detección, Secretos (por tipo de secreto), Respuestas de Rimor (por tipo), Recordatorio de copia (`src/datos/AjustesRecordatorio.tsx`, compartido con Datos y copias) y Red.
+- `montarApp` acepta preparar el almacén antes de abrir (para probar un espacio con ajustes).
+- Pruebas: `espacio/copias.test.ts` (normalización), `captura/flujo.test.ts` (regla desactivada en la captura) y `rutas/ajustes/Ajustes.test.tsx` (tema e idioma, secretos en la vista previa, duda y respuestas, abrir un espacio con su tema e idioma).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| Las reglas de secretos se agrupan por lo que ocultan (`aws`, `slack`…) | Desactivar la clave de AWS y no su secreto no tendría sentido; 13 casillas en vez de 18. |
+| El margen de duda se guarda al soltar el control (o con el teclado, o al salir) | Arrastrarlo no escribe el archivo en cada paso. |
+| Solo el margen de duda en la pantalla (no el umbral) | Es lo que pide la tarea; el umbral se respeta si viene en el archivo. |
+

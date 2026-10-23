@@ -8,11 +8,14 @@ import { AlmacenMemoria } from '../almacen/memoria';
 import { crearAlmacenOpfs } from '../almacen/opfs/cliente';
 import type { Canal, Cerrojos } from '../almacen/pestanas';
 import { useEspacio } from '../estado/espacio';
+import { idiomaActivo } from '../i18n/i18n';
+import { elegirIdioma } from '../i18n/iniciar';
 import { useT } from '../i18n/useT';
 import { Boton, ErrorTarjeta } from '../ui/componentes';
 import { ESTADOS_SENAL } from '../ui/marca/estadosSenal';
 import { Senal } from '../ui/marca/Senal';
 import { useEsperaVisible } from '../ui/marca/useEsperaVisible';
+import { guardarPreferencia, leerPreferencia } from '../ui/tema/tema';
 import { abrirEspacio, ahoraIso, type DependenciasEspacio, type EspacioAbierto, type FaseApertura } from './abrir';
 import { conPersistencia } from './estado';
 import { estaPersistido, esVentanaPrivada } from './persistencia';
@@ -198,6 +201,10 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
       if (!dep.enMemoria && e.estado().persistencia !== 'concedida' && (await estaPersistido()))
         await e.guardarEstado((x) => conPersistencia(x, 'concedida', ahoraIso())).catch(() => undefined);
       if (!vivo) return soltar();
+      // Un espacio con su tema o su idioma en los ajustes (uno importado, o elegidos en otro navegador): se aplican.
+      const { tema, idioma } = e.ajustes();
+      if (tema && tema !== leerPreferencia()) guardarPreferencia(tema);
+      if (idioma && idioma !== idiomaActivo()) elegirIdioma(idioma);
       if (!dep.enMemoria) {
         recordarEspacio(dep.espacioId);
         recordarEspacioConocido(dep.espacioId, e.manifest.espacio.nombre);

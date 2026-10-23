@@ -1425,6 +1425,28 @@ pre.code.codigo .ln {
   outline-offset: 2px;
 }
 
+/* Ajustes (IN-038): una tarjeta por tema. */
+.ajustes-kv {
+  align-items: center;
+}
+.ajustes-casillas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  gap: 6px 16px;
+}
+.ajustes-rango {
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ajustes-rango input[type="range"] {
+  flex: 1;
+  min-width: 160px;
+  accent-color: var(--accent);
+}
+.warn-texto {
+  color: var(--warn);
+}
+
 /* Importar (IN-036): «Cancelar» e «Importar», a la derecha. */
 .acciones-importar {
   justify-content: flex-end;

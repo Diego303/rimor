@@ -6,6 +6,7 @@
 import type { Elemento } from '@rimor/formato';
 import { proxy, type Remote, wrap } from 'comlink';
 import { type Previa, previsualizar } from '../captura/previa';
+import type { OpcionesCaptura } from '../espacio/ajustes';
 import type { ApiDerivados } from '../workers/derivados.worker';
 import type { Ejecutor } from './derivados';
 import type { Registro } from './registro';
@@ -22,7 +23,7 @@ export function ejecutorEnHilo(registro: Registro): Ejecutor {
 export interface EjecutorCerrable {
   ejecutar: Ejecutor;
   /** Vista previa del compositor: en el Worker si lo hay (textos grandes, IN-015). */
-  previsualizar(texto: string): Promise<Previa>;
+  previsualizar(texto: string, opciones?: OpcionesCaptura): Promise<Previa>;
   /** Termina el Worker atascado; lo siguiente que se pida abre otro. */
   reiniciar(): void;
   /** Termina el Worker para siempre: lo que se pida después se rechaza. */
@@ -35,7 +36,7 @@ export interface EjecutorCerrable {
  */
 export function crearEjecutor(registro: Registro): EjecutorCerrable {
   const enHilo = ejecutorEnHilo(registro);
-  const previaEnHilo = async (texto: string) => previsualizar(texto, registro);
+  const previaEnHilo = async (texto: string, opciones?: OpcionesCaptura) => previsualizar(texto, registro, opciones);
   if (typeof Worker !== 'function')
     return { ejecutar: enHilo, previsualizar: previaEnHilo, reiniciar: () => undefined, cerrar: () => undefined };
 
@@ -88,10 +89,10 @@ export function crearEjecutor(registro: Registro): EjecutorCerrable {
       // El aviso de progreso cruza al Worker como proxy de Comlink (una función no se puede copiar).
       return vigilada((api) => api.derivar(nombre, el, alProgreso ? proxy(alProgreso) : undefined));
     },
-    previsualizar: (texto: string) => {
+    previsualizar: (texto: string, opciones?: OpcionesCaptura) => {
       if (cerrado) return Promise.reject(new Error('derivados.cerrado'));
       if (averiado) return previaEnHilo(texto);
-      return vigilada((api) => api.previsualizar(texto));
+      return vigilada((api) => api.previsualizar(texto, opciones));
     },
     reiniciar: () => terminar('derivados.reiniciado'),
     cerrar: () => {

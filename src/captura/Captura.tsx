@@ -5,6 +5,7 @@
 
 import { isoConZona, type Resultado } from '@rimor/formato';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { opcionesCaptura } from '../espacio/ajustes';
 import { useEspacioOpcional } from '../espacio/Espacio';
 import { useEspacio } from '../estado/espacio';
 import { useFrescos } from '../estado/frescos';
@@ -66,7 +67,12 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
   const capturador = useMemo(
     () =>
       espacio && lectores
-        ? crearCapturador({ repositorio: espacio.repositorio, registro: lectores.registro, cola: lectores.cola })
+        ? crearCapturador({
+            repositorio: espacio.repositorio,
+            registro: lectores.registro,
+            cola: lectores.cola,
+            opciones: () => opcionesCaptura(espacio.ajustes()),
+          })
         : null,
     [espacio, lectores],
   );

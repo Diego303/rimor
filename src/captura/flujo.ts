@@ -20,12 +20,14 @@ import {
   utf8,
 } from '@rimor/formato';
 import { ErrorSoloLectura, type Repositorio } from '../almacen/repositorio';
+import type { OpcionesCaptura } from '../espacio/ajustes';
 import type { Borrador, Entrada, Lector } from '../lectores/contrato';
 import type { ColaDerivados } from '../lectores/derivados';
 import type { Registro } from '../lectores/registro';
 import { type OpcionesOcultar, ocultar } from '../seguridad/secretos/ocultar';
 import { type Candidato, detectar, entradaDeArchivo } from './detector';
 import { etiquetasInferidas } from './etiquetas';
+import { opcionesDetectar, opcionesOcultar } from './opciones';
 import { anteriorDe } from './versiones';
 
 /** Por encima de este tamaño, un archivo se rechaza (ficha IN-014). */
@@ -59,6 +61,8 @@ export interface EfectosCaptura {
   /** Si se da, se piden los derivados en segundo plano (prioridad de fondo). */
   cola?: ColaDerivados;
   secretos?: OpcionesOcultar;
+  /** Las opciones de los ajustes de ahora (se leen en cada captura): reglas de secretos y detección (IN-038). */
+  opciones?: () => OpcionesCaptura;
 }
 
 export interface Capturado {
@@ -139,6 +143,7 @@ export async function capturar(entrada: EntradaCaptura, efectos: EfectosCaptura)
 async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<Resultado<ResultadoCaptura>> {
   const { repositorio, registro, cola } = efectos;
   const reloj = efectos.reloj ?? (() => new Date());
+  const opciones = efectos.opciones?.();
   // Otra pestaña escribe: ni se lee el archivo ni se busca el duplicado.
   if (!repositorio.escribible()) return fallo('almacen.soloLectura');
 
@@ -162,7 +167,7 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
   // 2. Ocultar secretos, antes de nada más: ni el detector ni el lector ven el texto original.
   let ocultados = 0;
   if (texto !== undefined) {
-    const r = ocultar(texto, efectos.secretos);
+    const r = ocultar(texto, efectos.secretos ?? opcionesOcultar(opciones));
     texto = r.texto;
     ocultados = r.hallados.length;
   }
@@ -177,7 +182,9 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
   };
 
   // 3. Detectar, salvo que el tipo venga forzado.
-  const deteccion = entrada.tipo ? null : detectar(vista, registro, cabecera ? { cabecera } : {});
+  const deteccion = entrada.tipo
+    ? null
+    : detectar(vista, registro, { ...opcionesDetectar(opciones), ...(cabecera ? { cabecera } : {}) });
   const lector = lectorPara(registro, entrada.tipo, deteccion?.lector ?? null, bytes !== null);
   if (!lector) return fallo('captura.sinLector', { tipo: entrada.tipo ?? deteccion?.tipo ?? 'texto' });
 

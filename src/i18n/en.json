@@ -491,9 +491,7 @@
       "abrirEspacio": "Open"
     },
     "ajustes": {
-      "titulo": "Settings",
-      "vacioTitulo": "Settings",
-      "vacio": "Theme, language, detection, secrets, replies and backups."
+      "titulo": "Settings"
     },
     "noEncontrada": {
       "titulo": "Nothing here",
@@ -774,5 +772,36 @@
     "zipPrevio": "Export a ZIP before replacing or emptying the bin",
     "cambiosEtiqueta": "Changes without a backup",
     "diasEtiqueta": "Days without a backup"
+  },
+  "ajustes": {
+    "meta": "Saved in the space (.rimor/ajustes.json) and applied at once.",
+    "soloLectura": "Another tab has the space open: change them from there.",
+    "apariencia": "Appearance",
+    "deteccion": "Detection",
+    "duda": "Hesitate between two types when they are less than {n} points apart",
+    "dudaEtiqueta": "Hesitation margin",
+    "dudaTexto": "If two readers are close, the reply offers the other type. More margin, more often.",
+    "secretos": "Secrets",
+    "secretosTexto": "What is hidden before saving. Everything, by default.",
+    "secretosAviso": "Anything matching a disabled rule will be saved as is.",
+    "tiposSecreto": {
+      "clave-privada": "Private keys (PEM, PGP)",
+      "anthropic": "Anthropic keys",
+      "openrouter": "OpenRouter keys",
+      "openai": "OpenAI keys",
+      "aws": "AWS (key and secret)",
+      "gcp": "Google Cloud keys",
+      "azure": "Azure (storage and clients)",
+      "github": "GitHub tokens",
+      "gitlab": "GitLab tokens",
+      "slack": "Slack (tokens and webhooks)",
+      "jwt": "JWT",
+      "authorization": "Authorization headers",
+      "contrasena": "Passwords in URLs and connection strings"
+    },
+    "respuestas": "Rimor’s replies",
+    "respuestasTexto": "Which types Rimor replies to when capturing.",
+    "red": "Network",
+    "redTexto": "Rimor does not connect anywhere. When link enrichment arrives, you will choose here what may be queried."
   }
 }

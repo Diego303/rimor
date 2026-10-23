@@ -3,6 +3,7 @@
 import type { Elemento } from '@rimor/formato';
 import { expose } from 'comlink';
 import { previsualizar } from '../captura/previa';
+import type { OpcionesCaptura } from '../espacio/ajustes';
 import { ejecutorEnHilo } from '../lectores/ejecutor';
 import { REGISTRO } from '../lectores/registro';
 
@@ -12,7 +13,7 @@ const api = {
   derivar: (nombre: string, el: Elemento, alProgreso?: (hechas: number, total: number) => void): Promise<unknown> =>
     derivar(nombre, el, alProgreso),
   /** Vista previa del compositor para textos grandes (IN-015). */
-  previsualizar: (texto: string) => previsualizar(texto, REGISTRO),
+  previsualizar: (texto: string, opciones?: OpcionesCaptura) => previsualizar(texto, REGISTRO, opciones),
 };
 
 export type ApiDerivados = typeof api;

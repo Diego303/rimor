@@ -491,9 +491,7 @@
       "abrirEspacio": "Abrir"
     },
     "ajustes": {
-      "titulo": "Ajustes",
-      "vacioTitulo": "Ajustes",
-      "vacio": "Tema, idioma, detección, secretos, respuestas y copias."
+      "titulo": "Ajustes"
     },
     "noEncontrada": {
       "titulo": "Aquí no hay nada",
@@ -774,5 +772,36 @@
     "zipPrevio": "Exportar un ZIP antes de reemplazar o vaciar la papelera",
     "cambiosEtiqueta": "Cambios sin copia",
     "diasEtiqueta": "Días sin copia"
+  },
+  "ajustes": {
+    "meta": "Se guardan en el espacio (.rimor/ajustes.json) y valen al momento.",
+    "soloLectura": "Otra pestaña tiene el espacio abierto: cámbialos desde ella.",
+    "apariencia": "Apariencia",
+    "deteccion": "Detección",
+    "duda": "Dudar entre dos tipos cuando están a menos de {n} puntos",
+    "dudaEtiqueta": "Margen de duda",
+    "dudaTexto": "Si dos lectores están cerca, la respuesta te ofrece el otro tipo. Más margen, más veces lo ofrece.",
+    "secretos": "Secretos",
+    "secretosTexto": "Lo que se oculta antes de guardar. Por defecto, todo.",
+    "secretosAviso": "Lo que case con una regla desactivada se guardará tal cual.",
+    "tiposSecreto": {
+      "clave-privada": "Claves privadas (PEM, PGP)",
+      "anthropic": "Claves de Anthropic",
+      "openrouter": "Claves de OpenRouter",
+      "openai": "Claves de OpenAI",
+      "aws": "AWS (clave y secreto)",
+      "gcp": "Claves de Google Cloud",
+      "azure": "Azure (almacenamiento y clientes)",
+      "github": "Tokens de GitHub",
+      "gitlab": "Tokens de GitLab",
+      "slack": "Slack (tokens y webhooks)",
+      "jwt": "JWT",
+      "authorization": "Cabeceras Authorization",
+      "contrasena": "Contraseñas en URL y cadenas de conexión"
+    },
+    "respuestas": "Respuestas de Rimor",
+    "respuestasTexto": "A qué tipos responde Rimor al capturar.",
+    "red": "Red",
+    "redTexto": "Rimor no se conecta a ningún sitio. Cuando llegue el enriquecimiento de enlaces, aquí se elegirá qué se puede consultar."
   }
 }

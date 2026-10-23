@@ -6,6 +6,7 @@ import type { Elemento } from '@rimor/formato';
 import { Component, createContext, type ReactNode, Suspense, useContext, useEffect, useState } from 'react';
 import type { Repositorio } from '../almacen/repositorio';
 import { type Previa, previsualizar } from '../captura/previa';
+import type { OpcionesCaptura } from '../espacio/ajustes';
 import { useEspacioOpcional } from '../espacio/Espacio';
 import type { Idioma } from '../i18n/formatos';
 import { traducir } from '../i18n/i18n';
@@ -26,7 +27,7 @@ interface ValorLectores {
   registro: Registro;
   cola: ColaDerivados;
   /** Vista previa del compositor (en el Worker si lo hay). */
-  previsualizar(texto: string): Promise<Previa>;
+  previsualizar(texto: string, opciones?: OpcionesCaptura): Promise<Previa>;
 }
 
 const Contexto = createContext<ValorLectores | null>(null);
@@ -53,7 +54,7 @@ export function ProveedorLectores({ children, registro = REGISTRO, ejecutar }: P
     const ejecutor = ejecutar
       ? {
           ejecutar,
-          previsualizar: async (texto: string) => previsualizar(texto, registro),
+          previsualizar: async (texto: string, opciones?: OpcionesCaptura) => previsualizar(texto, registro, opciones),
           reiniciar: () => undefined,
           cerrar: () => undefined,
         }

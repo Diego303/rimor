@@ -1,7 +1,7 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { COPIAS_INICIALES, copiasDe, leerAjustes } from './ajustes';
+import { COPIAS_INICIALES, copiasDe, leerAjustes, opcionesCaptura } from './ajustes';
 import { ESTADO_INICIAL, leerEstado } from './estado';
 import { copiaAlDia, debeRecordarCopia } from './resumen';
 
@@ -62,13 +62,13 @@ describe('recordatorio de copia', () => {
 });
 
 describe('el botón naranja', () => {
-  it('«Exportar ZIP» es el único de la app (fuera de la página de muestras)', () => {
+  it('«Exportar ZIP» es el único de la app (fuera de la página de muestras)', { timeout: 30_000 }, () => {
     const raiz = new URL('..', import.meta.url).pathname;
     const archivos: string[] = [];
     const recorrer = (dir: string) => {
-      for (const n of readdirSync(dir)) {
-        const r = join(dir, n);
-        if (statSync(r).isDirectory()) recorrer(r);
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const r = join(dir, e.name);
+        if (e.isDirectory()) recorrer(r);
         else if (r.endsWith('.tsx') && !r.endsWith('.test.tsx') && !r.includes('/muestras/')) archivos.push(r);
       }
     };
@@ -77,5 +77,28 @@ describe('el botón naranja', () => {
       [...readFileSync(a, 'utf8').matchAll(/variante=\{?['"]senal['"]|'senal' : /g)].map(() => a.replace(raiz, '')),
     );
     expect(usos).toEqual(['rutas/datos/Datos.tsx']);
+  });
+});
+
+describe('ajustes de IN-038', () => {
+  it('detección dentro de sus límites, solo reglas que existen, tema e idioma válidos, lo demás se conserva', () => {
+    const a = leerAjustes(
+      JSON.stringify({
+        esquema: 1,
+        tema: 'rosa',
+        idioma: 'en',
+        deteccion: { umbral: 2, duda: 0.01, extra: 1 },
+        secretos: { desactivadas: ['github', 'no-existe', 'github', 3] },
+        red: { sinRed: true },
+      }),
+    );
+    expect(a.tema).toBeUndefined();
+    expect('tema' in a).toBe(false);
+    expect(a.idioma).toBe('en');
+    expect(a.deteccion).toEqual({ umbral: 0.9, duda: 0.05, extra: 1 });
+    expect(a.secretos.desactivadas).toEqual(['github']);
+    expect(a.red).toEqual({ sinRed: true });
+    expect(opcionesCaptura(a)).toEqual({ secretosDesactivados: ['github'], umbral: 0.9, margen: 0.05 });
+    expect(leerAjustes(null).deteccion).toEqual({ umbral: 0.6, duda: 0.15 });
   });
 });

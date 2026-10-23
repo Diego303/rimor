@@ -11,6 +11,7 @@ import { useCompositor } from '../../captura/compositor';
 import type { EntradaCaptura } from '../../captura/flujo';
 import { analizarIndicaciones } from '../../captura/indicaciones';
 import { PREVIA_EN_WORKER, type Previa, previsualizar } from '../../captura/previa';
+import { opcionesCaptura } from '../../espacio/ajustes';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
 import { anadirAHilo, hiloDe, hiloPara } from '../../hilos/hilos';
@@ -120,8 +121,10 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
     a?.setSelectionRange(a.value.length, a.value.length);
   }, [llegadas, atendidas, atender]);
 
-  // Vista previa 120 ms después de la última tecla; con textos grandes, en el Worker.
+  // Vista previa 120 ms después de la última tecla; con textos grandes, en el Worker. Con las opciones de los
+  // ajustes de ahora (reglas de secretos y detección), como la captura.
   useEffect(() => {
+    const opciones = espacio ? opcionesCaptura(espacio.ajustes()) : undefined;
     if (!texto.trim() || !lectores) {
       setPrevia(null);
       return undefined;
@@ -130,15 +133,15 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
     const espera = setTimeout(() => {
       const calculo =
         texto.length > PREVIA_EN_WORKER
-          ? lectores.previsualizar(texto)
-          : Promise.resolve(previsualizar(texto, lectores.registro));
+          ? lectores.previsualizar(texto, opciones)
+          : Promise.resolve(previsualizar(texto, lectores.registro, opciones));
       calculo.then((p) => vigente && setPrevia(p)).catch(() => vigente && setPrevia(null));
     }, ESPERA_PREVIA_MS);
     return () => {
       vigente = false;
       clearTimeout(espera);
     };
-  }, [texto, lectores]);
+  }, [texto, lectores, espacio]);
 
   /** Colecciones y etiquetas usadas, y tipos, para autocompletar. */
   const fuentes = useMemo(() => {

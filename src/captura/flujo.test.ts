@@ -398,3 +398,18 @@ describe('con los lectores de la app (red de seguridad)', () => {
     });
   });
 });
+
+describe('capturar con las opciones de los ajustes (IN-038)', () => {
+  it('una regla de secretos desactivada no se oculta; se leen en cada captura', async () => {
+    const token = `ghp_${'a'.repeat(36)}`;
+    let desactivadas: string[] = ['github'];
+    const { efectos: ef } = efectos({
+      opciones: () => ({ secretosDesactivados: desactivadas, umbral: 0.6, margen: 0.15 }),
+    });
+    const sin = creado(await capturar({ texto: `token ${token}`, origen: 'pegado' }, ef));
+    expect(sin.elemento.original).toContain(token);
+    desactivadas = [];
+    const con = creado(await capturar({ texto: `otro token ${token}`, origen: 'pegado' }, ef));
+    expect(con.elemento.original).not.toContain(token);
+  });
+});
