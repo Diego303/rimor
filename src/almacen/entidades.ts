@@ -109,6 +109,11 @@ export class RepositorioEntidades {
     return [...this.porId.values()].filter((e) => e.fm.tipo === tipo).map((e) => e.fm as FrontmatterEntidades[T]);
   }
 
+  /** Id, ref y ruta de cada entidad (para importar: qué hay ya y qué refs se usan). */
+  entradas(): { id: string; ref: string; ruta: string }[] {
+    return [...this.porId.values()].map(({ id, ref, ruta }) => ({ id, ref, ruta }));
+  }
+
   /** Frontmatter de una entidad por ref o id, sin abrir su archivo. */
   frontmatter(refOId: string): FrontmatterEntidad | undefined {
     return this.buscar(refOId)?.fm;

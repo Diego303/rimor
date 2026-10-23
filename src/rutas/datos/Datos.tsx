@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cancelarExportacion, useExportacion } from '../../datos/exportacion';
+import { useArchivoImportar } from '../../datos/importar/importacion';
 import { useExportar } from '../../datos/useExportar';
 import { TarjetaCuidado } from '../../espacio/Avisos';
 import { useEspacioOpcional } from '../../espacio/Espacio';
@@ -44,6 +45,39 @@ function BotonExportar({ tipo }: { tipo: 'zip' | 'json' }) {
   );
 }
 
+/** «Importar…»: elige un `.zip` o un `.json` y lleva a la pantalla Importar, que lo comprueba antes de nada. */
+function BotonImportar() {
+  const { t } = useT();
+  const navegar = useNavigate();
+  const soloLectura = useEspacio((s) => s.soloLectura);
+  const selector = useRef<HTMLInputElement>(null);
+  return (
+    <>
+      <Boton
+        disabled={soloLectura}
+        title={soloLectura ? t('importar.soloLectura') : undefined}
+        onClick={() => selector.current?.click()}
+      >
+        {t('pantallas.datos.importar')}
+      </Boton>
+      <input
+        ref={selector}
+        type="file"
+        accept=".zip,.json,application/zip,application/json"
+        hidden
+        aria-label={t('pantallas.datos.importar')}
+        onChange={(e) => {
+          const archivo = e.target.files?.[0];
+          e.target.value = '';
+          if (!archivo) return;
+          useArchivoImportar.setState({ archivo });
+          void navegar({ to: '/importar' });
+        }}
+      />
+    </>
+  );
+}
+
 /** Los botones de la tarjeta de cuidado o, mientras se exporta, la señal con el porcentaje. */
 function AccionesCopia() {
   const { t } = useT();
@@ -65,9 +99,7 @@ function AccionesCopia() {
   return (
     <div className="row">
       <BotonExportar tipo="zip" />
-      <Boton disabled title={t('pantallas.datos.importarPronto')}>
-        {t('pantallas.datos.importar')}
-      </Boton>
+      <BotonImportar />
     </div>
   );
 }

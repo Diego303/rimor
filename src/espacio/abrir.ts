@@ -42,6 +42,11 @@ export interface EspacioAbierto {
   almacen: Almacen;
   /** Espera a que se escriba lo pendiente (antes de exportar). */
   esperarEscrituras(): Promise<void>;
+  /**
+   * Lo relee todo de sus archivos (tras importar, que los escribe directamente) y avisa a la otra pestaña.
+   * Devuelve si lo consiguió.
+   */
+  recargar(): Promise<boolean>;
   manifest: Manifest;
   repositorio: Repositorio;
   /** Las entidades del espacio: comparaciones e hilos (y, más adelante, investigaciones y documentos). */
@@ -246,6 +251,11 @@ export async function abrirEspacio(
         await contadores.esperar().catch(() => undefined);
         await gestor.escrito();
         await dep.almacen.esperar?.().catch(() => undefined);
+      },
+      recargar: async () => {
+        const hecho = await releer(() => Promise.resolve());
+        coordinacion.avisarCambio([]);
+        return hecho;
       },
       manifest,
       repositorio,

@@ -51,13 +51,13 @@ El resto: los adjuntos (por hash) y el historial se suman sin pisar; `coleccione
 
 ## Tareas
 
-- [ ] Validación antes de escribir nada: rutas sin `..` ni absolutas; límites de tamaño descomprimido (2 GB) y de número de archivos (50.000); `manifest` y esquemas; hashes.
-- [ ] Migración si el esquema es antiguo.
-- [ ] Vista previa: nuevos, idénticos, actualizados y en conflicto, con el detalle de cada conflicto.
-- [ ] Modos: fusionar (por `id`; gana el más reciente y el otro va a `historial/`), reemplazar (con ZIP previo automático) y espacio nuevo.
-- [ ] Choque de refs: reasignar la del importado, reescribir sus menciones y guardar `alias`.
-- [ ] Reindexado en segundo plano.
-- [ ] Final con `<Senal estado="guardado" veces={1}>`; un rechazo usa `ErrorTarjeta` y dice qué archivo y qué regla.
+- [x] Validación antes de escribir nada: rutas sin `..` ni absolutas; límites de tamaño descomprimido (2 GB) y de número de archivos (50.000); `manifest` y esquemas; hashes.
+- [x] Migración si el esquema es antiguo.
+- [x] Vista previa: nuevos, idénticos, actualizados y en conflicto, con el detalle de cada conflicto.
+- [x] Modos: fusionar (por `id`; gana el más reciente y el otro va a `historial/`), reemplazar (con ZIP previo automático) y espacio nuevo.
+- [x] Choque de refs: reasignar la del importado, reescribir sus menciones y guardar `alias`.
+- [x] Reindexado en segundo plano.
+- [x] Final con `<Senal estado="guardado" veces={1}>`; un rechazo usa `ErrorTarjeta` y dice qué archivo y qué regla.
 
 ## Pruebas previstas
 
@@ -84,3 +84,23 @@ El resto: los adjuntos (por hash) y el historial se suman sin pisar; `coleccione
 ## Autorrevisión
 
 Cubre las siete tareas y las dos pruebas del plan. Reutiliza el lector de ZIP y la copia previa de IN-035, los esquemas y migraciones de `@rimor/formato`, el historial de IN-029 y la relectura del espacio. Nada se escribe antes de validar el paquete entero.
+
+## Implementación
+
+- `src/datos/importar/paquete.ts`: `leerPaquete` (ZIP o JSON) y `ErrorImportar` (regla y archivo): el ZIP con `leerZip` y además los enlaces simbólicos (`leerZip` los marca por sus atributos de Unix), el manifest, los hashes (falta, no casa, sobra), la migración y los esquemas.
+- `src/datos/importar/plan.ts`: `planear` (categorías por `id`, ganador por `modificado`, perdedor al historial, refs reasignadas con `alias` y menciones reescritas en notas y entidades, historial movido a la ref nueva, adjuntos e historial sumados, colecciones juntadas, entidades y archivos de aquí que se quedan con aviso) y `reescribirRefs`.
+- `src/datos/importar/aplicar.ts`: `fusionar`, `reemplazar` (escribe primero y borra después), `enEspacioNuevo` y `manifestNuevo`.
+- `src/datos/importar/importacion.ts`: `comprobar`, `importar` (el plan se rehace con lo de ahora antes de fusionar; reemplazar exige la copia previa) y el archivo elegido (`useArchivoImportar`).
+- `EspacioAbierto.recargar()` (la relectura completa, avisando a la otra pestaña); `RepositorioEntidades.entradas()`; `cambiarDeEspacio(id)` en `Espacio.tsx`.
+- `src/rutas/importar/Importar.tsx` (ruta `/importar`) como `SC.importar`, y «Importar…» en Datos y copias.
+- Pruebas: `datos/importar/importar.test.ts` (corpus malicioso, ZIP y JSON iguales, plan, refs, modos) y `rutas/importar/Importar.test.tsx` (rechazo sin escribir nada, vista previa y fusionar, reemplazar con su copia previa, el selector de Datos y copias).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| Las entidades nuevas cuya ref ya se usa aquí también reciben otra (sin `alias`, que su esquema no tiene) | Una comparación o un hilo del paquete no debe pisar ni esconder uno de aquí. |
+| Un archivo que ya está aquí y es distinto (que no sea un elemento) se queda el de aquí, con aviso en la vista previa | Solo los elementos tienen fecha de modificación para decidir. |
+| Los elementos se escriben al final (los adjuntos primero) | Si se corta, ningún elemento apunta a un adjunto que falta. |
+| Importar está deshabilitado en la pestaña que solo lee | Solo la que escribe puede escribir. |
+

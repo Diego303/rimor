@@ -477,7 +477,6 @@
       "exportarZip": "Export ZIP",
       "exportar": "Export",
       "importar": "Import…",
-      "importarPronto": "Comes with importing",
       "exportandoZip": "Exporting the ZIP · {p} %",
       "exportandoJson": "Exporting the JSON · {p} %",
       "otras": "Other exports",
@@ -647,5 +646,104 @@
     "hechoSinApuntar": "Exported {nombre} ({tam}). Not recorded as a backup: another tab has the space open.",
     "cancelada": "Export cancelled. Nothing was downloaded.",
     "atascada": "The export stalled and was stopped. Nothing was changed."
+  },
+  "importar": {
+    "titulo": "Import",
+    "sinArchivo": "Choose a Rimor ZIP or JSON in Data and backups.",
+    "irADatos": "Go to Data and backups",
+    "comprobando": "Checking the file…",
+    "rechazado": "This file cannot be imported",
+    "volver": "Back to Data and backups",
+    "regla": "The file {regla}. Nothing was written.",
+    "reglaEn": "{ruta}: {regla}. Nothing was written.",
+    "exportadoEl": "exported on {fecha}",
+    "validoZip": "Valid ZIP: schema {esquema}, {n} files, no path outside the space.",
+    "validoJson": "Valid JSON: schema {esquema}, {n} files, no path outside the space.",
+    "nuevos": "new",
+    "identicos": "identical",
+    "actualizados": "updated",
+    "enConflicto": "in conflict",
+    "verConflictos": {
+      "one": "See the conflict",
+      "other": "See the {n} conflicts"
+    },
+    "conflictoAqui": "Here {aqui} · in the file {paquete} → the one here stays; the other goes to history",
+    "conflictoPaquete": "Here {aqui} · in the file {paquete} → the file’s stays; the one here goes to history",
+    "verReasignadas": {
+      "one": "A ref is already used here",
+      "other": "{n} refs are already used here"
+    },
+    "reasignada": "becomes {a} (the old one stays as an alias)",
+    "verAvisos": {
+      "one": "One file stays as it is",
+      "other": "{n} files stay as they are"
+    },
+    "como": "How to import",
+    "cancelar": "Cancel",
+    "importar": "Import",
+    "importando": "Importing…",
+    "soloLectura": "Another tab has the space open: import from there.",
+    "motivoCopia": "before replacing",
+    "modos": {
+      "fusionar": {
+        "titulo": "Merge",
+        "texto": "If both changed, the newest wins and the other stays in history."
+      },
+      "reemplazar": {
+        "titulo": "Replace",
+        "texto": "Deletes “{nombre}” and loads the file. A copy is exported first."
+      },
+      "nuevo": {
+        "titulo": "New space",
+        "texto": "Imports alongside without touching anything."
+      }
+    },
+    "noHecho": "Not imported",
+    "sinCopia": "The backup could not be exported: nothing was touched.",
+    "noImportado": "Something failed while writing. What was written stays; import again to complete it.",
+    "hecho": "Imported: {nuevos} new, {actualizados} updated, {conflictos} conflicts resolved · reindexing",
+    "hechoNuevo": "Imported into the space “{nombre}”",
+    "abrirNuevo": "Open “{nombre}”",
+    "irAInicio": "Go to Home",
+    "avisos": {
+      "sinHashes": "Its manifest has no hashes: the files could not be checked against the export.",
+      "conExcluidos": "It is a JSON with excluded attachments: those are not included.",
+      "entidadSeQueda": "is already here and differs: the one here stays.",
+      "archivoSeQueda": "is already here and differs: the one here stays."
+    },
+    "reglas": {
+      "zip": {
+        "noEsZip": "is not a ZIP",
+        "zip64": "uses ZIP64, which Rimor does not read",
+        "truncado": "is cut short",
+        "directorioRoto": "has a broken index",
+        "rutaInsegura": "is a path that leaves the space or is not valid",
+        "rutaRepetida": "is repeated",
+        "fueraDelArchivo": "points outside the file",
+        "solapadas": "shares its data with another entry",
+        "demasiadosArchivos": "has more than 50,000 files",
+        "demasiadoGrande": "would exceed 2 GB uncompressed",
+        "entradaRota": "is broken",
+        "tamanoMayor": "holds more data than it declares",
+        "tamanoDistinto": "does not hold the size it declares",
+        "metodo": "uses a compression Rimor does not read",
+        "crc": "fails the integrity check (CRC)",
+        "enlace": "is a symbolic link"
+      },
+      "importar": {
+        "jsonRoto": "is not a Rimor JSON",
+        "sinManifest": "has no manifest.json",
+        "manifest": "is not a Rimor manifest",
+        "esquemaNuevo": "is from a newer version of Rimor",
+        "falta": "is missing (the manifest lists it)",
+        "hash": "is not the exported one (its hash does not match)",
+        "sobra": "is not in the manifest",
+        "elemento": "does not follow the item format",
+        "entidad": "does not follow the comparison or thread format",
+        "colecciones": "cannot be understood",
+        "migracion": "could not be brought to the current version",
+        "ilegible": "could not be read"
+      }
+    }
   }
 }

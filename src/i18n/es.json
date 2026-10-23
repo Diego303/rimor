@@ -477,7 +477,6 @@
       "exportarZip": "Exportar ZIP",
       "exportar": "Exportar",
       "importar": "Importar…",
-      "importarPronto": "Llega con la importación",
       "exportandoZip": "Exportando el ZIP · {p} %",
       "exportandoJson": "Exportando el JSON · {p} %",
       "otras": "Otras exportaciones",
@@ -647,5 +646,104 @@
     "hechoSinApuntar": "Exportado {nombre} ({tam}). No se apunta como copia: otra pestaña tiene el espacio abierto.",
     "cancelada": "Exportación cancelada. No se ha descargado nada.",
     "atascada": "La exportación se quedó parada y se ha cortado. No se ha tocado nada."
+  },
+  "importar": {
+    "titulo": "Importar",
+    "sinArchivo": "Elige un ZIP o un JSON de Rimor en Datos y copias.",
+    "irADatos": "Ir a Datos y copias",
+    "comprobando": "Comprobando el archivo…",
+    "rechazado": "No se puede importar este archivo",
+    "volver": "Volver a Datos y copias",
+    "regla": "El archivo {regla}. No se ha escrito nada.",
+    "reglaEn": "{ruta}: {regla}. No se ha escrito nada.",
+    "exportadoEl": "exportado el {fecha}",
+    "validoZip": "ZIP válido: esquema {esquema}, {n} archivos, ninguna ruta fuera del espacio.",
+    "validoJson": "JSON válido: esquema {esquema}, {n} archivos, ninguna ruta fuera del espacio.",
+    "nuevos": "nuevos",
+    "identicos": "idénticos",
+    "actualizados": "actualizados",
+    "enConflicto": "en conflicto",
+    "verConflictos": {
+      "one": "Ver el conflicto",
+      "other": "Ver los {n} conflictos"
+    },
+    "conflictoAqui": "Aquí {aqui} · en el archivo {paquete} → se queda la de aquí; la otra, al historial",
+    "conflictoPaquete": "Aquí {aqui} · en el archivo {paquete} → se queda la del archivo; la de aquí, al historial",
+    "verReasignadas": {
+      "one": "Una ref ya se usa aquí",
+      "other": "{n} refs ya se usan aquí"
+    },
+    "reasignada": "pasa a {a} (la anterior queda como alias)",
+    "verAvisos": {
+      "one": "Un archivo se queda como está",
+      "other": "{n} archivos se quedan como están"
+    },
+    "como": "Cómo importar",
+    "cancelar": "Cancelar",
+    "importar": "Importar",
+    "importando": "Importando…",
+    "soloLectura": "Otra pestaña tiene el espacio abierto: importa desde ella.",
+    "motivoCopia": "antes de reemplazar",
+    "modos": {
+      "fusionar": {
+        "titulo": "Fusionar",
+        "texto": "Si los dos cambiaron, gana el más reciente y el otro queda en el historial."
+      },
+      "reemplazar": {
+        "titulo": "Reemplazar",
+        "texto": "Borra «{nombre}» y carga el archivo. Antes se exporta una copia."
+      },
+      "nuevo": {
+        "titulo": "Espacio nuevo",
+        "texto": "Importa al lado sin tocar nada."
+      }
+    },
+    "noHecho": "No se ha importado",
+    "sinCopia": "No se pudo exportar la copia previa: no se ha tocado nada.",
+    "noImportado": "Algo falló al escribir. Lo escrito hasta ahí se queda; vuelve a importar para completarlo.",
+    "hecho": "Importado: {nuevos} nuevos, {actualizados} actualizados, {conflictos} conflictos resueltos · reindexando",
+    "hechoNuevo": "Importado en el espacio «{nombre}»",
+    "abrirNuevo": "Abrir «{nombre}»",
+    "irAInicio": "Ir a Inicio",
+    "avisos": {
+      "sinHashes": "Su manifest no trae hashes: no se ha podido comprobar que los archivos son los exportados.",
+      "conExcluidos": "Es un JSON con adjuntos excluidos: esos no vienen.",
+      "entidadSeQueda": "ya está aquí y es distinta: se queda la de aquí.",
+      "archivoSeQueda": "ya está aquí y es distinto: se queda el de aquí."
+    },
+    "reglas": {
+      "zip": {
+        "noEsZip": "no es un ZIP",
+        "zip64": "usa ZIP64, que Rimor no lee",
+        "truncado": "está cortado",
+        "directorioRoto": "tiene el índice roto",
+        "rutaInsegura": "es una ruta que sale del espacio o no es válida",
+        "rutaRepetida": "está repetida",
+        "fueraDelArchivo": "apunta fuera del archivo",
+        "solapadas": "comparte sus datos con otra entrada",
+        "demasiadosArchivos": "tiene más de 50.000 archivos",
+        "demasiadoGrande": "pasaría de 2 GB descomprimido",
+        "entradaRota": "está rota",
+        "tamanoMayor": "trae más datos de los que declara",
+        "tamanoDistinto": "no trae el tamaño que declara",
+        "metodo": "usa una compresión que Rimor no lee",
+        "crc": "no pasa la comprobación de integridad (CRC)",
+        "enlace": "es un enlace simbólico"
+      },
+      "importar": {
+        "jsonRoto": "no es un JSON de Rimor",
+        "sinManifest": "no trae manifest.json",
+        "manifest": "no es un manifest de Rimor",
+        "esquemaNuevo": "es de una versión más nueva de Rimor",
+        "falta": "falta (el manifest lo lista)",
+        "hash": "no es el que se exportó (su hash no casa)",
+        "sobra": "no está en el manifest",
+        "elemento": "no cumple el formato de un elemento",
+        "entidad": "no cumple el formato de una comparación o un hilo",
+        "colecciones": "no se entiende",
+        "migracion": "no se pudo pasar a la versión actual",
+        "ilegible": "no se pudo leer"
+      }
+    }
   }
 }

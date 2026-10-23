@@ -57,6 +57,12 @@ function idEspacio(): string {
 /** Lo que el proveedor necesita para abrir el espacio; `liberar` suelta lo que no cierra el espacio (el Worker). */
 export type DependenciasProveedor = DependenciasEspacio & { enMemoria: boolean; liberar?: () => void };
 
+/** Abre otro espacio: lo recuerda y recarga la app en él (un espacio nuevo importado, IN-036). */
+export function cambiarDeEspacio(id: string): void {
+  recordarEspacio(id);
+  globalThis.location?.reload();
+}
+
 /** Recuerda el espacio abierto para la próxima vez. */
 function recordarEspacio(id: string): void {
   try {

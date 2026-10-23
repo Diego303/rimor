@@ -1411,6 +1411,11 @@ pre.code.codigo .ln {
   outline-offset: 2px;
 }
 
+/* Importar (IN-036): «Cancelar» e «Importar», a la derecha. */
+.acciones-importar {
+  justify-content: flex-end;
+}
+
 /* ---------- Vistas de un grupo (IN-034): mosaico y lista densa ---------- */
 .cabeza-resultados {
   justify-content: space-between;

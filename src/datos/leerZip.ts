@@ -22,6 +22,8 @@ export interface EntradaZip {
   local: number;
   /** Es una carpeta (termina en `/`). */
   carpeta: boolean;
+  /** Es un enlace simbólico (atributos de Unix): nunca se importa. */
+  enlace: boolean;
 }
 
 export class ErrorZip extends Error {
@@ -51,7 +53,7 @@ export const LIMITES_ZIP: LimitesZip = { archivos: 50_000, total: 2 * 1024 ** 3 
 const TROZO_INFLAR = 4 * 1024;
 
 /** Una ruta dentro del espacio: relativa, sin `..`, sin `\`, sin NUL ni segmentos vacíos. */
-function rutaSegura(ruta: string): boolean {
+export function rutaSegura(ruta: string): boolean {
   const limpia = ruta.endsWith('/') ? ruta.slice(0, -1) : ruta;
   if (!limpia || limpia.startsWith('/') || /[\\\0]/.test(limpia) || /^[a-zA-Z]:/.test(limpia)) return false;
   return limpia.split('/').every((s) => s && s !== '.' && s !== '..');
@@ -105,6 +107,9 @@ export async function entradasZip(
     const local = u32(central, i + 42);
     if (comprimido === 0xffffffff || tamano === 0xffffffff || local === 0xffffffff) throw new ErrorZip('zip.zip64');
     const ruta = new TextDecoder().decode(central.subarray(i + 46, i + 46 + largoNombre));
+    // Hecho en Unix (byte alto de «versión hecha por» = 3): los atributos externos llevan el modo del archivo.
+    const unix = (central[i + 5] ?? 0) === 3;
+    const modo = u32(central, i + 38) >>> 16;
     entradas.push({
       ruta,
       metodo: u16(central, i + 10),
@@ -113,6 +118,7 @@ export async function entradasZip(
       crc: u32(central, i + 16),
       local,
       carpeta: ruta.endsWith('/'),
+      enlace: unix && (modo & 0o170000) === 0o120000,
     });
     i += 46 + largoNombre + largoExtra + largoComentario;
   }
