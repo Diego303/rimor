@@ -1,8 +1,9 @@
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { escribirTexto, leerTexto } from '../../almacen/contrato';
 import { previsualizar } from '../../captura/previa';
 import { opcionesCaptura } from '../../espacio/ajustes';
+import { useEspacio } from '../../estado/espacio';
 import { elegirIdioma } from '../../i18n/iniciar';
 import { REGISTRO } from '../../lectores/registro';
 import { ESCRITURA, montarApp, PRIMERA_CARGA } from '../../pruebas/app';
@@ -76,5 +77,56 @@ describe('Ajustes', () => {
     expect(await screen.findByRole('heading', { name: 'Settings' }, PRIMERA_CARGA)).toBeTruthy();
     expect(document.documentElement.dataset.theme).toBe('dark');
     expect(localStorage.getItem('rimor:tema')).toBe('oscuro');
+  }, 30_000);
+});
+
+describe('Ajustes: casos de la revisión', () => {
+  beforeAll(async () => {
+    await import('./Ajustes');
+  }, 120_000);
+  afterEach(async () => {
+    vi.restoreAllMocks();
+    act(() => useEspacio.setState({ soloLectura: false }));
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.clear();
+    cleanup();
+    await act(async () => new Promise((r) => setTimeout(r, 300)));
+  });
+
+  it('en la pestaña que solo lee, tema e idioma también están deshabilitados', async () => {
+    await montarApp('/ajustes');
+    await screen.findByRole('heading', { name: 'Ajustes' }, PRIMERA_CARGA);
+    act(() => useEspacio.setState({ soloLectura: true }));
+    expect((screen.getByRole('button', { name: 'Oscuro' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'English' }) as HTMLButtonElement).disabled).toBe(true);
+  }, 30_000);
+
+  it('el margen se guarda al poco de moverlo, sin soltar ni salir; el tema sigue a los ajustes de la otra pestaña', async () => {
+    const { almacen, espacio } = await montarApp('/ajustes');
+    await screen.findByRole('heading', { name: 'Ajustes' }, PRIMERA_CARGA);
+    fireEvent.change(screen.getByRole('slider', { name: 'Margen de duda' }), { target: { value: '25' } });
+    await waitFor(async () => expect((await ajustesGuardados(almacen)).deteccion?.duda).toBe(0.25), ESCRITURA);
+    // La otra pestaña cambia el tema: llega con la relectura de los ajustes.
+    await act(() => espacio.guardarAjustes((a) => ({ ...a, tema: 'oscuro' })));
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
+    expect(screen.getByRole('button', { name: 'Oscuro' }).getAttribute('aria-pressed')).toBe('true');
+  }, 30_000);
+
+  it('todos los tipos en las respuestas; el aviso de secretos en una región viva; un fallo al guardar se dice', async () => {
+    const { almacen } = await montarApp('/ajustes');
+    await screen.findByRole('heading', { name: 'Ajustes' }, PRIMERA_CARGA);
+    expect(screen.getByRole('checkbox', { name: 'JSON / TOML' })).toBeTruthy();
+    const region = screen.getAllByRole('status').find((r) => r.classList.contains('warn-texto'));
+    expect(region?.textContent).toBe('');
+    const escribir = almacen.escribir.bind(almacen);
+    vi.spyOn(almacen, 'escribir').mockImplementation(async (ruta, datos) => {
+      if (ruta === '.rimor/ajustes.json') throw new Error('disco lleno');
+      return escribir(ruta, datos);
+    });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Tokens de GitHub' }));
+    expect(region?.textContent).toBe('Lo que case con una regla desactivada se guardará tal cual.');
+    expect(
+      (await screen.findAllByText('No se pudo guardar el ajuste: vale ahora, pero no al volver a abrir.')).length,
+    ).toBeGreaterThan(0);
   }, 30_000);
 });

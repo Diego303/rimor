@@ -329,6 +329,18 @@ describe('ejecutor', () => {
     expect(await ejecutor.ejecutar('falso', elementoFalso(2, 'abc'))).toEqual({ largo: 3 });
   });
 
+  it('con el Worker averiado, la vista previa en el hilo usa las opciones de los ajustes', async () => {
+    vi.stubGlobal('Worker', WorkerMudo);
+    const ejecutor = crearEjecutor(crearRegistro([lectorFalso()]));
+    const pendiente = ejecutor.ejecutar('falso', elementoFalso(1));
+    for (const fn of WorkerMudo.ultimo?.oyentes ?? []) fn({});
+    await expect(pendiente).rejects.toThrow('derivados.workerNoCarga');
+    const token = `ghp_${'a'.repeat(36)}`;
+    const opciones = { secretosDesactivados: ['github'], umbral: 0.6, margen: 0.15 };
+    expect((await ejecutor.previsualizar(`token ${token}`, opciones)).secretos).toBe(0);
+    expect((await ejecutor.previsualizar(`token ${token}`)).secretos).toBe(1);
+  });
+
   it('reiniciar rechaza lo que esperaba del Worker y lo siguiente abre otro', async () => {
     vi.stubGlobal('Worker', WorkerMudo);
     const ejecutor = crearEjecutor(crearRegistro([lectorFalso()]));

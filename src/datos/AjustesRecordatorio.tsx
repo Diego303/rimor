@@ -4,6 +4,7 @@ import { type AjustesCopias, COPIAS_INICIALES, copiasDe, LIMITES_COPIAS } from '
 import { useEspacioOpcional } from '../espacio/Espacio';
 import { useEspacio } from '../estado/espacio';
 import { useT } from '../i18n/useT';
+import { useAvisosOpcional } from '../ui/componentes/Avisos';
 
 /**
  * El recordatorio de copia (DAT-07): avisar o no y tras cuántos cambios o días, y el ZIP previo a lo destructivo.
@@ -12,6 +13,7 @@ import { useT } from '../i18n/useT';
 export function AjustesRecordatorio() {
   const { t } = useT();
   const espacio = useEspacioOpcional();
+  const avisos = useAvisosOpcional();
   const soloLectura = useEspacio((s) => s.soloLectura);
   const [copias, setCopias] = useState(() => espacio?.ajustes().copias ?? COPIAS_INICIALES);
   // Lo que se escribe en los números, hasta guardarlo (al salir del campo o con Intro).
@@ -33,7 +35,7 @@ export function AjustesRecordatorio() {
     // Sobre lo que hay ahora (y lo que no se conoce de `copias` se queda).
     void espacio
       .guardarAjustes((a) => ({ ...a, copias: { ...a.copias, ...copiasDe({ ...a.copias, ...cambio }) } }))
-      .catch(() => undefined);
+      .catch(() => avisos?.avisar(t('ajustes.noGuardado')));
     const nuevas = espacio.ajustes().copias;
     setCopias(nuevas);
     setCambios(String(nuevas.cambios));

@@ -90,3 +90,35 @@ Cubre las ocho tareas. Reutiliza `guardarAjustes` (IN-037), `SelectorTema`, `cam
 | El margen de duda se guarda al soltar el control (o con el teclado, o al salir) | Arrastrarlo no escribe el archivo en cada paso. |
 | Solo el margen de duda en la pantalla (no el umbral) | Es lo que pide la tarea; el umbral se respeta si viene en el archivo. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 96 archivos y 1300 pruebas; carga inicial 244,1 KB de 300.
+
+**Criterios de aceptación:** lo que se cambia en Ajustes vale para la siguiente captura y la vista previa sin recargar (`flujo.test.ts`, `Ajustes.test.tsx`, `lectores.test.ts`).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| Tema e idioma | `Ajustes.test.tsx` (se aplican y se guardan; abrir un espacio con los suyos; siguen a la otra pestaña) |
+| Detección (umbral de duda) | `Ajustes.test.tsx` y `copias.test.ts` (límites, `opcionesCaptura`) |
+| Secretos (reglas activas) | `Ajustes.test.tsx`, `flujo.test.ts` y `lectores.test.ts` |
+| Respuestas por tipo | `Ajustes.test.tsx` (todos los tipos; una desactivada se guarda) |
+| Copias (umbrales) | `AjustesRecordatorio` compartido (`Copias.test.tsx`) |
+| Red | La tarjeta «Red» (vacía hasta IN-041) |
+| Se guarda en `.rimor/ajustes.json` | Todas las pruebas de pantalla leen el archivo |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | Con el Worker averiado, la vista previa de textos grandes ignoraba los ajustes | Le llegan. `lectores.test.ts` |
+| 2 | En la pestaña que solo lee, tema e idioma se podían cambiar (y el del espacio volvía a pisarlos) | `Segmentado` admite `deshabilitado`; los dos lo usan. `Ajustes.test.tsx` |
+| 3 | El margen solo se guardaba al soltar, con el teclado o al salir (y guardaba sin cambios) | Se guarda un momento después de moverlo, y solo si cambió. `Ajustes.test.tsx` |
+| 4 | El selector de tema no seguía a los ajustes de la otra pestaña | Es controlado por los ajustes, y el espacio aplica tema e idioma cada vez que cambian. `Ajustes.test.tsx` |
+| 5 | Se perdían las reglas desactivadas que esta versión no conoce | Se conservan; la captura usa solo las suyas. `copias.test.ts` |
+| 6 | Unas `respuestas` que no son un objeto se copiaban letra a letra | `objeto()`. `copias.test.ts` |
+| 7 | Un fallo al escribir los ajustes no se decía | Aviso. `Ajustes.test.tsx` |
+| 8 | Las respuestas solo listaban los tipos con lector | Todos los tipos. `Ajustes.test.tsx` |
+| 9 | El aviso al desactivar un secreto no se anunciaba | Región viva. `Ajustes.test.tsx` |
+

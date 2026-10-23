@@ -3,8 +3,8 @@
  * idioma también en este navegador, para pintar sin parpadeo). La referencia no dibuja esta pantalla: una tarjeta
  * por tema, con las piezas de las demás.
  */
-import type { TipoElemento } from '@rimor/formato';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { TIPOS_ELEMENTO } from '@rimor/formato';
+import { type ReactNode, useEffect, useState } from 'react';
 import { AjustesRecordatorio } from '../../datos/AjustesRecordatorio';
 import { AJUSTES_INICIALES, type Ajustes as AjustesEspacio, LIMITES_DETECCION } from '../../espacio/ajustes';
 import { useEspacioOpcional } from '../../espacio/Espacio';
@@ -12,9 +12,10 @@ import { useEspacio } from '../../estado/espacio';
 import type { Idioma } from '../../i18n/formatos';
 import { elegirIdioma } from '../../i18n/iniciar';
 import { useT } from '../../i18n/useT';
-import { useLectoresOpcional } from '../../lectores/Lectores';
 import { REGLAS_SECRETOS } from '../../seguridad/secretos/reglas';
 import { Segmentado, SelectorTema } from '../../ui/componentes';
+import { useAvisosOpcional } from '../../ui/componentes/Avisos';
+import { leerPreferencia } from '../../ui/tema/tema';
 import { Pantalla } from '../Pantalla';
 
 /** Las reglas de secretos por lo que ocultan (`aws` agrupa la clave y el secreto). */
@@ -33,7 +34,7 @@ function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) 
 export function Ajustes() {
   const { t, idioma } = useT();
   const espacio = useEspacioOpcional();
-  const lectores = useLectoresOpcional();
+  const avisos = useAvisosOpcional();
   const soloLectura = useEspacio((s) => s.soloLectura);
   const [ajustes, setAjustes] = useState<AjustesEspacio>(() => espacio?.ajustes() ?? AJUSTES_INICIALES);
   // Al día con los ajustes de ahora (también lo que cambia la otra pestaña).
@@ -41,16 +42,20 @@ export function Ajustes() {
   const [duda, setDuda] = useState(Math.round(ajustes.deteccion.duda * 100));
   useEffect(() => setDuda(Math.round(ajustes.deteccion.duda * 100)), [ajustes.deteccion.duda]);
 
-  const tipos = useMemo<TipoElemento[]>(
-    () => [...new Set((lectores?.registro.lectores ?? []).map((l) => l.tipo))],
-    [lectores],
-  );
   const editable = Boolean(espacio) && !soloLectura;
   const guardar = (cambio: (a: AjustesEspacio) => AjustesEspacio) => {
     if (!espacio || soloLectura) return;
-    void espacio.guardarAjustes(cambio).catch(() => undefined);
+    // Si no se pudo escribir, se dice: lo cambiado vale ahora, pero no estaría al volver a abrir.
+    void espacio.guardarAjustes(cambio).catch(() => avisos?.avisar(t('ajustes.noGuardado')));
     setAjustes(espacio.ajustes());
   };
+
+  // El margen se guarda un momento después de dejar de moverlo (ratón, teclado o dedo) y solo si cambió.
+  useEffect(() => {
+    if (!espacio || duda / 100 === espacio.ajustes().deteccion.duda) return undefined;
+    const espera = setTimeout(() => guardar((a) => ({ ...a, deteccion: { ...a.deteccion, duda: duda / 100 } })), 400);
+    return () => clearTimeout(espera);
+  });
   const alternar = <T extends string>(lista: readonly T[], valores: readonly T[], activar: boolean): T[] =>
     activar ? lista.filter((x) => !valores.includes(x)) : [...new Set([...lista, ...valores])];
 
@@ -60,13 +65,15 @@ export function Ajustes() {
         <div className="kv ajustes-kv">
           <span className="sm">{t('tema.etiqueta')}</span>
           <SelectorTema
-            deshabilitado={!editable && Boolean(espacio)}
+            valor={ajustes.tema ?? leerPreferencia()}
+            deshabilitado={soloLectura}
             alCambiar={(tema) => guardar((a) => ({ ...a, tema }))}
           />
           <span className="sm">{t('idioma.etiqueta')}</span>
           <Segmentado<Idioma>
             etiqueta={t('idioma.etiqueta')}
             valor={idioma}
+            deshabilitado={soloLectura}
             opciones={[
               { valor: 'es', etiqueta: t('idioma.es') },
               { valor: 'en', etiqueta: t('idioma.en') },
@@ -91,9 +98,6 @@ export function Ajustes() {
             disabled={!editable}
             aria-label={t('ajustes.dudaEtiqueta')}
             onChange={(e) => setDuda(Number(e.target.value))}
-            onPointerUp={() => guardar((a) => ({ ...a, deteccion: { ...a.deteccion, duda: duda / 100 } }))}
-            onKeyUp={() => guardar((a) => ({ ...a, deteccion: { ...a.deteccion, duda: duda / 100 } }))}
-            onBlur={() => guardar((a) => ({ ...a, deteccion: { ...a.deteccion, duda: duda / 100 } }))}
           />
         </label>
         <p className="xs muted">{t('ajustes.dudaTexto')}</p>
@@ -126,13 +130,16 @@ export function Ajustes() {
             );
           })}
         </div>
-        {ajustes.secretos.desactivadas.length > 0 && <p className="xs warn-texto">{t('ajustes.secretosAviso')}</p>}
+        {/* Región viva siempre presente: el aviso se anuncia al desactivar una regla. */}
+        <p className="xs warn-texto" role="status">
+          {ajustes.secretos.desactivadas.length > 0 ? t('ajustes.secretosAviso') : ''}
+        </p>
       </Seccion>
 
       <Seccion titulo={t('ajustes.respuestas')}>
         <p className="xs muted">{t('ajustes.respuestasTexto')}</p>
         <div className="ajustes-casillas">
-          {tipos.map((tipo) => (
+          {TIPOS_ELEMENTO.map((tipo) => (
             <label key={tipo} className="chk">
               <input
                 type="checkbox"

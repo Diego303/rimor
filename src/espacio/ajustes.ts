@@ -84,7 +84,7 @@ export function leerAjustes(texto: string | null): Ajustes {
   try {
     const d = JSON.parse(texto) as Record<string, unknown>;
     if (typeof d !== 'object' || d === null || Array.isArray(d)) return structuredClone(AJUSTES_INICIALES);
-    const respuestas = (d.respuestas ?? {}) as { desactivadas?: unknown };
+    const respuestas = objeto(d.respuestas) as { desactivadas?: unknown };
     const desactivadas = Array.isArray(respuestas.desactivadas)
       ? [...new Set(respuestas.desactivadas.filter((x): x is TipoElemento => esTipoElemento(x)))]
       : [];
@@ -104,9 +104,9 @@ export function leerAjustes(texto: string | null): Ajustes {
         desactivadas: Array.isArray(objeto(d.secretos).desactivadas)
           ? [
               ...new Set(
-                (objeto(d.secretos).desactivadas as unknown[]).filter(
-                  (x): x is string => typeof x === 'string' && IDS_REGLAS.has(x),
-                ),
+                // También las que esta versión no conoce: una posterior puede haber desactivado una regla nueva, y
+                // reescribir el archivo no debe volver a activarla.
+                (objeto(d.secretos).desactivadas as unknown[]).filter((x): x is string => typeof x === 'string'),
               ),
             ]
           : [],
@@ -132,7 +132,7 @@ export interface OpcionesCaptura {
 }
 
 export const opcionesCaptura = (a: Ajustes): OpcionesCaptura => ({
-  secretosDesactivados: a.secretos.desactivadas,
+  secretosDesactivados: a.secretos.desactivadas.filter((id) => IDS_REGLAS.has(id)),
   umbral: a.deteccion.umbral,
   margen: a.deteccion.duda,
 });

@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-24 00:47
-**Ahora:** IN-038 · Ajustes · fase implementación
-**Siguiente:** IN-039 · Primer uso
-**Progreso:** F0 9/9 · v0.1 39/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 48/99
+**Última actualización:** 2026-10-24 01:06
+**Ahora:** IN-039 · Primer uso y espacio de ejemplo · fase análisis y diseño
+**Siguiente:** IN-040 · Cierre de v0.1
+**Progreso:** F0 9/9 · v0.1 40/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 49/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -57,7 +57,7 @@
 | IN-035 | Exportar ZIP y JSON | v0.1 | 6 | hecha | 2023eae b70ba11 3361b0b | docs/features/IN-035-exportar.md |
 | IN-036 | Importar ZIP y JSON | v0.1 | 6 | hecha | 9728e95 cb68c02 9790355 | docs/features/IN-036-importar.md |
 | IN-037 | Datos y copias | v0.1 | 6 | hecha | 0479bc1 485e5f9 9eb2973 | docs/features/IN-037-datos-copias.md |
-| IN-038 | Ajustes | v0.1 | 6 | en implementación | 26f3057 | docs/features/IN-038-ajustes.md |
+| IN-038 | Ajustes | v0.1 | 6 | hecha | 26f3057 fcf110c | docs/features/IN-038-ajustes.md |
 | IN-039 | Primer uso y espacio de ejemplo | v0.1 | 6 | pendiente | — | — |
 | IN-040 | Cierre de v0.1 | v0.1 | 7 | pendiente | — | — |
 | IN-041 | Enlace enriquecido | v0.2 | 8 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-24 | IN-038 | implementación | ajustes normalizados, opciones de captura en la captura y la vista previa (también el Worker), tema e idioma del espacio, pantalla de tarjetas | … |
+| 2026-10-24 | IN-038 | verificación | pnpm verificar OK (1300 pruebas, 244,1 KB); revisión independiente con 9 hallazgos atendidos | … |
+| 2026-10-24 | IN-038 | implementación | ajustes normalizados, opciones de captura en la captura y la vista previa (también el Worker), tema e idioma del espacio, pantalla de tarjetas | fcf110c |
 | 2026-10-23 | IN-038 | análisis y diseño | ajustes normalizados con opciones de captura (reglas y duda) también en el Worker, tema e idioma en el espacio y el navegador, pantalla de tarjetas | 26f3057 |
 | 2026-10-23 | IN-037 | verificación | pnpm verificar OK (1290 pruebas, 242,3 KB); revisión independiente con 9 hallazgos atendidos | 9eb2973 |
 | 2026-10-23 | IN-037 | implementación | ajustes de copia con guardarAjustes, recordatorio en Inicio con aplazamiento, piloto animado, plegado del recordatorio y ZIP previo opcional | 485e5f9 |

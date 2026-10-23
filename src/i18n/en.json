@@ -802,6 +802,7 @@
     "respuestas": "Rimor’s replies",
     "respuestasTexto": "Which types Rimor replies to when capturing.",
     "red": "Network",
-    "redTexto": "Rimor does not connect anywhere. When link enrichment arrives, you will choose here what may be queried."
+    "redTexto": "Rimor does not connect anywhere. When link enrichment arrives, you will choose here what may be queried.",
+    "noGuardado": "The setting could not be saved: it applies now, but not after reopening."
   }
 }

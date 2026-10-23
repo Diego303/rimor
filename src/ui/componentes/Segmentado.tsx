@@ -11,15 +11,23 @@ interface Props<V extends string> {
   alCambiar: (valor: V) => void;
   /** Nombre del grupo para el lector de pantalla. */
   etiqueta: string;
+  /** No se puede cambiar (la pestaña que solo lee). */
+  deshabilitado?: boolean;
 }
 
 /** De 2 a 4 opciones excluyentes en una píldora hundida (guía §7.2). */
-export function Segmentado<V extends string>({ opciones, valor, alCambiar, etiqueta }: Props<V>) {
+export function Segmentado<V extends string>({ opciones, valor, alCambiar, etiqueta, deshabilitado }: Props<V>) {
   return (
     // biome-ignore lint/a11y/useSemanticElements: un <fieldset> obliga a una leyenda visible; el grupo lleva aria-label.
     <div className="seg" role="group" aria-label={etiqueta}>
       {opciones.map((o) => (
-        <button key={o.valor} type="button" aria-pressed={o.valor === valor} onClick={() => alCambiar(o.valor)}>
+        <button
+          key={o.valor}
+          type="button"
+          aria-pressed={o.valor === valor}
+          disabled={deshabilitado}
+          onClick={() => alCambiar(o.valor)}
+        >
           {o.etiqueta}
         </button>
       ))}

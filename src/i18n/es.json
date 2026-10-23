@@ -802,6 +802,7 @@
     "respuestas": "Respuestas de Rimor",
     "respuestasTexto": "A qué tipos responde Rimor al capturar.",
     "red": "Red",
-    "redTexto": "Rimor no se conecta a ningún sitio. Cuando llegue el enriquecimiento de enlaces, aquí se elegirá qué se puede consultar."
+    "redTexto": "Rimor no se conecta a ningún sitio. Cuando llegue el enriquecimiento de enlaces, aquí se elegirá qué se puede consultar.",
+    "noGuardado": "No se pudo guardar el ajuste: vale ahora, pero no al volver a abrir."
   }
 }

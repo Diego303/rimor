@@ -179,7 +179,18 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
       const e = r.valor;
       const ventanaPrivada = dep.enMemoria || (await esVentanaPrivada());
       if (!vivo) return soltar();
-      const pintar = () =>
+      // El tema y el idioma de los ajustes del espacio (uno importado, elegidos en otro navegador o cambiados en la
+      // otra pestaña) se aplican al abrir y cada vez que cambian; no se insiste si este navegador elige otro.
+      let aplicados: { tema?: string; idioma?: string } = {};
+      const aplicarAjustes = () => {
+        const { tema, idioma } = e.ajustes();
+        if (tema && tema !== aplicados.tema && tema !== leerPreferencia()) guardarPreferencia(tema);
+        if (idioma && idioma !== aplicados.idioma && idioma !== idiomaActivo()) elegirIdioma(idioma);
+        aplicados = { ...(tema ? { tema } : {}), ...(idioma ? { idioma } : {}) };
+      };
+      aplicarAjustes();
+      const pintar = () => {
+        aplicarAjustes();
         useEspacio.setState({
           ...resumenParaCarcasa(
             e.manifest,
@@ -191,6 +202,7 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
           ),
           soloLectura: e.coordinacion.modo() === 'lector',
         });
+      };
       pintar();
       e.alCambiar(pintar);
       e.coordinacion.alCambiarModo(pintar);
@@ -201,10 +213,6 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
       if (!dep.enMemoria && e.estado().persistencia !== 'concedida' && (await estaPersistido()))
         await e.guardarEstado((x) => conPersistencia(x, 'concedida', ahoraIso())).catch(() => undefined);
       if (!vivo) return soltar();
-      // Un espacio con su tema o su idioma en los ajustes (uno importado, o elegidos en otro navegador): se aplican.
-      const { tema, idioma } = e.ajustes();
-      if (tema && tema !== leerPreferencia()) guardarPreferencia(tema);
-      if (idioma && idioma !== idiomaActivo()) elegirIdioma(idioma);
       if (!dep.enMemoria) {
         recordarEspacio(dep.espacioId);
         recordarEspacioConocido(dep.espacioId, e.manifest.espacio.nombre);

@@ -96,9 +96,12 @@ describe('ajustes de IN-038', () => {
     expect('tema' in a).toBe(false);
     expect(a.idioma).toBe('en');
     expect(a.deteccion).toEqual({ umbral: 0.9, duda: 0.05, extra: 1 });
-    expect(a.secretos.desactivadas).toEqual(['github']);
+    // Las que esta versión no conoce se conservan (una posterior pudo desactivarlas); la captura solo usa las suyas.
+    expect(a.secretos.desactivadas).toEqual(['github', 'no-existe']);
     expect(a.red).toEqual({ sinRed: true });
     expect(opcionesCaptura(a)).toEqual({ secretosDesactivados: ['github'], umbral: 0.9, margen: 0.05 });
     expect(leerAjustes(null).deteccion).toEqual({ umbral: 0.6, duda: 0.15 });
+    // Unas respuestas que no son un objeto no dejan claves inventadas.
+    expect(leerAjustes(JSON.stringify({ esquema: 1, respuestas: 'x' })).respuestas).toEqual({ desactivadas: [] });
   });
 });

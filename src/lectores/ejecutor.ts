@@ -91,7 +91,7 @@ export function crearEjecutor(registro: Registro): EjecutorCerrable {
     },
     previsualizar: (texto: string, opciones?: OpcionesCaptura) => {
       if (cerrado) return Promise.reject(new Error('derivados.cerrado'));
-      if (averiado) return previaEnHilo(texto);
+      if (averiado) return previaEnHilo(texto, opciones);
       return vigilada((api) => api.previsualizar(texto, opciones));
     },
     reiniciar: () => terminar('derivados.reiniciado'),
