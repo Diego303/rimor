@@ -290,7 +290,11 @@
       "descargarZip": "Descargar el ZIP",
       "descargada": "Comprueba que el ZIP está en tus descargas antes de vaciar.",
       "noDescargada": "No se pudo descargar el ZIP: no se ha borrado nada.",
-      "noBorrada": "No se pudo vaciar del todo: lo que no se borró sigue en la papelera."
+      "noBorrada": "No se pudo vaciar del todo: lo que no se borró sigue en la papelera.",
+      "vaciarTextoSinZip": {
+        "one": "Se borrará para siempre {n} elemento. Puedes descargar antes su ZIP.",
+        "other": "Se borrarán para siempre {n} elementos. Puedes descargar antes su ZIP."
+      }
     },
     "comparacion": {
       "titulo": "{a} frente a {b}",
@@ -752,5 +756,22 @@
     },
     "noRecargado": "Se importó, pero no se pudo releer el espacio: recarga la página.",
     "terminado": "Importación terminada"
+  },
+  "copias": {
+    "recordatorioTitulo": "Toca hacer una copia",
+    "recordatorio": {
+      "one": "Tu última copia es de {cuando} y llevas {n} cambio desde entonces. Un ZIP tarda un momento.",
+      "other": "Tu última copia es de {cuando} y llevas {n} cambios desde entonces. Un ZIP tarda un momento."
+    },
+    "recordatorioNunca": "Aún no has hecho ninguna copia de este espacio. Un ZIP tarda un momento y es todo lo que tienes.",
+    "exportar": "Exportar ZIP",
+    "masTarde": "Más tarde",
+    "plegado": "Recordatorio de copia",
+    "avisar": "Avisar tras",
+    "cambios": "cambios o",
+    "dias": "días sin copia",
+    "zipPrevio": "Exportar un ZIP antes de reemplazar o vaciar la papelera",
+    "cambiosEtiqueta": "Cambios sin copia",
+    "diasEtiqueta": "Días sin copia"
   }
 }

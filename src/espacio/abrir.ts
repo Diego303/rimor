@@ -64,6 +64,8 @@ export interface EspacioAbierto {
   alCambiar(fn: (e: EstadoCuidado) => void): () => void;
   /** Ajustes del espacio (`.rimor/ajustes.json`). */
   ajustes(): Ajustes;
+  /** Guarda un cambio de los ajustes (en orden; solo escribe la pestaña que escribe) y avisa. */
+  guardarAjustes(cambio: (a: Ajustes) => Ajustes): Promise<void>;
   /** Contadores locales de lo ahorrado (IN-016). */
   contadores: Contadores;
   /** Escribe lo pendiente y suelta el cerrojo y la caché. */
@@ -145,6 +147,17 @@ export async function abrirEspacio(
       }
     };
     let ajustes = (await leerAjustesSeguro()) ?? leerAjustes(null);
+    let ajustesPendientes: Promise<void> = Promise.resolve();
+    const guardarAjustes = (cambio: (a: Ajustes) => Ajustes) => {
+      ajustes = cambio(ajustes);
+      const copia = ajustes;
+      avisar();
+      ajustesPendientes = ajustesPendientes
+        .catch(() => undefined)
+        .then(() => (escribe() && !cerrado ? escribirTexto(dep.almacen, RUTA_AJUSTES, json(copia)) : undefined))
+        .then(() => coordinacion.avisarCambio([]));
+      return ajustesPendientes;
+    };
     const contadores = await abrirContadores(dep.almacen, () => escribe() && alDia && !cerrado, reloj);
 
     const abierta = await abrirCache(dep);
@@ -248,6 +261,7 @@ export async function abrirEspacio(
       // Lo pedido por todos (estado, contadores, colecciones) llega a la cola y la cola lo escribe.
       esperarEscrituras: async () => {
         await pendiente.catch(() => undefined);
+        await ajustesPendientes.catch(() => undefined);
         await contadores.esperar().catch(() => undefined);
         await gestor.escrito();
         await dep.almacen.esperar?.().catch(() => undefined);
@@ -267,6 +281,7 @@ export async function abrirEspacio(
       estado: () => estado,
       guardarEstado,
       ajustes: () => ajustes,
+      guardarAjustes,
       contadores,
       alCambiar: (fn) => {
         oyentes.add(fn);

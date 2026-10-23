@@ -3,8 +3,8 @@ import type { FrontmatterComun, Manifest } from '@rimor/formato';
 import type { ColeccionRail, EstadoEspacio } from '../estado/espacio';
 import type { EstadoCuidado } from './estado';
 
-/** Umbrales del recordatorio de copia (IN-037 los hará configurables en Ajustes). */
-export const UMBRALES_COPIA = { cambios: 50, dias: 7 } as const;
+/** Umbrales del recordatorio de copia por defecto (configurables en Datos y copias, IN-037). */
+export const UMBRALES_COPIA: { cambios: number; dias: number } = { cambios: 50, dias: 7 };
 const DIA = 86_400_000;
 
 /** Lo capturado que no está en ninguna colección, hilo ni investigación, y no está archivado (ORG-01). */
@@ -12,13 +12,28 @@ export function sinClasificar(fm: FrontmatterComun): boolean {
   return !fm.colecciones?.length && !fm.hilo && !fm.investigaciones?.length && fm.estado !== 'archivado';
 }
 
-/** La copia está al día si existe y no han pasado ni 50 cambios ni 7 días desde ella. */
+/** La copia está al día si existe y no han pasado ni los cambios ni los días de los umbrales desde ella. */
 export function copiaAlDia(e: EstadoCuidado, ahora: Date, umbrales = UMBRALES_COPIA): boolean {
   if (!e.ultimaCopia) return false;
   const desde = Date.parse(e.ultimaCopia);
   return (
     Number.isFinite(desde) && e.cambiosDesdeCopia < umbrales.cambios && ahora.getTime() - desde < umbrales.dias * DIA
   );
+}
+
+/**
+ * Toca recordar la copia en Inicio (DAT-07): hay algo guardado, el aviso está activo, la copia no está al día y no se
+ * pospuso hasta más tarde.
+ */
+export function debeRecordarCopia(
+  e: EstadoCuidado,
+  copias: { cambios: number; dias: number; avisar: boolean },
+  ahora: Date,
+  hayElementos: boolean,
+): boolean {
+  if (!hayElementos || !copias.avisar || copiaAlDia(e, ahora, copias)) return false;
+  const hasta = e.recordatorioHasta ? Date.parse(e.recordatorioHasta) : Number.NaN;
+  return !(Number.isFinite(hasta) && ahora.getTime() < hasta);
 }
 
 export function resumenParaCarcasa(
@@ -28,6 +43,7 @@ export function resumenParaCarcasa(
   ahora: Date = new Date(),
   /** Las colecciones del registro en su orden (IN-031); sin él, las de los elementos por orden alfabético. */
   registro?: readonly { id: string; nombre: string }[],
+  umbrales = UMBRALES_COPIA,
 ): Omit<EstadoEspacio, 'soloLectura'> {
   const recuentos = new Map<string, number>();
   for (const fm of elementos) for (const c of fm.colecciones ?? []) recuentos.set(c, (recuentos.get(c) ?? 0) + 1);
@@ -41,6 +57,6 @@ export function resumenParaCarcasa(
     sinClasificar: elementos.filter(sinClasificar).length,
     colecciones,
     ultimaCopia: estado.ultimaCopia,
-    copiaAlDia: copiaAlDia(estado, ahora),
+    copiaAlDia: copiaAlDia(estado, ahora, umbrales),
   };
 }

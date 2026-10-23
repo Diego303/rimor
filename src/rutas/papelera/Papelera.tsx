@@ -40,6 +40,8 @@ export function Papelera() {
   const nombre = useEspacio((s) => s.nombre);
   const lista = useEnPapelera();
   // El diálogo de vaciar: abierto, con la copia (o `null` mientras se prepara), si ya se descargó y si se borra.
+  // Con el ZIP previo en los ajustes (por defecto), no se vacía sin descargarlo antes (IN-037).
+  const zipObligatorio = espacio?.ajustes().copias.zipPrevio ?? true;
   const [vaciado, setVaciado] = useState<{ copia: CopiaZip | null; descargada: boolean; borrando: boolean } | null>(
     null,
   );
@@ -92,7 +94,7 @@ export function Papelera() {
   /** Segundo paso, con el ZIP ya descargado: borrar lo que entró en él. */
   async function vaciar() {
     const copia = vaciado?.copia;
-    if (!espacio || !copia || !vaciado.descargada) return;
+    if (!espacio || !copia || (zipObligatorio && !vaciado.descargada)) return;
     setVaciado({ ...vaciado, borrando: true });
     const n = await espacio.repositorio.vaciarPapelera(copia).catch(() => null);
     cerrar();
@@ -135,7 +137,11 @@ export function Papelera() {
         </section>
       )}
       <Dialogo abierto={ocupado} alCerrar={cerrar} titulo={t('pantallas.papelera.vaciarTitulo')}>
-        <p className="sm">{t('pantallas.papelera.vaciarTexto', { n: vaciado?.copia?.ids.length ?? lista.length })}</p>
+        <p className="sm">
+          {t(zipObligatorio ? 'pantallas.papelera.vaciarTexto' : 'pantallas.papelera.vaciarTextoSinZip', {
+            n: vaciado?.copia?.ids.length ?? lista.length,
+          })}
+        </p>
         {vaciado?.descargada && <p className="xs muted">{t('pantallas.papelera.descargada')}</p>}
         <div className="row">
           <Boton
@@ -151,7 +157,7 @@ export function Papelera() {
             variante="primario"
             peligro
             pequeno
-            disabled={!vaciado?.descargada || vaciado.borrando}
+            disabled={!vaciado?.copia || (zipObligatorio && !vaciado.descargada) || vaciado.borrando}
             onClick={() => void vaciar()}
           >
             {t('pantallas.papelera.confirmar')}

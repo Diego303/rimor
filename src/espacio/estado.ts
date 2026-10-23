@@ -11,6 +11,8 @@ export interface EstadoCuidado {
   pedidaEn: string | null;
   ultimaCopia: string | null;
   cambiosDesdeCopia: number;
+  /** Hasta cuándo no se recuerda copiar («Más tarde» en Inicio). */
+  recordatorioHasta: string | null;
 }
 
 export const RUTA_ESTADO = '.rimor/estado.json';
@@ -21,6 +23,7 @@ export const ESTADO_INICIAL: EstadoCuidado = {
   pedidaEn: null,
   ultimaCopia: null,
   cambiosDesdeCopia: 0,
+  recordatorioHasta: null,
 };
 
 const RESULTADOS: readonly ResultadoPersistencia[] = ['sin-pedir', 'concedida', 'denegada', 'no-disponible'];
@@ -36,6 +39,7 @@ export function leerEstado(texto: string | null): EstadoCuidado {
       persistencia: RESULTADOS.find((r) => r === d.persistencia) ?? 'sin-pedir',
       pedidaEn: cadena(d.pedidaEn),
       ultimaCopia: cadena(d.ultimaCopia),
+      recordatorioHasta: cadena(d.recordatorioHasta),
       cambiosDesdeCopia:
         Number.isInteger(d.cambiosDesdeCopia) && (d.cambiosDesdeCopia as number) >= 0
           ? (d.cambiosDesdeCopia as number)
@@ -59,6 +63,12 @@ export const conCopia = (e: EstadoCuidado, fecha: string, cambiosAlEmpezar = e.c
   ...e,
   ultimaCopia: fecha,
   cambiosDesdeCopia: Math.max(0, e.cambiosDesdeCopia - cambiosAlEmpezar),
+});
+
+/** Pospone el recordatorio de copia hasta `hasta`. */
+export const conRecordatorioHasta = (e: EstadoCuidado, hasta: string): EstadoCuidado => ({
+  ...e,
+  recordatorioHasta: hasta,
 });
 
 export const conPersistencia = (e: EstadoCuidado, resultado: ResultadoPersistencia, fecha: string): EstadoCuidado => ({

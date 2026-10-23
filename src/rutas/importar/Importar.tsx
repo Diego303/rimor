@@ -90,7 +90,9 @@ export function Importar() {
     setEstado({ fase: 'importando', comprobado, modo });
     try {
       const importado = await importar(espacio, comprobado, modo, {
-        copiaPrevia: () => copiaPrevia('zip', t('importar.motivoCopia')),
+        // Sin el ZIP previo en los ajustes (Datos y copias), no se descarga.
+        copiaPrevia: () =>
+          espacio.ajustes().copias.zipPrevio ? copiaPrevia('zip', t('importar.motivoCopia')) : Promise.resolve(true),
         crearAlmacen: (id) => crearAlmacenOpfs(id),
         alCrearEspacio: recordarEspacioConocido,
       });

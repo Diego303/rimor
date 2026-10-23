@@ -4,6 +4,7 @@ import { cancelarExportacion, useExportacion } from '../../datos/exportacion';
 import { useArchivoImportar } from '../../datos/importar/importacion';
 import { useExportar } from '../../datos/useExportar';
 import { TarjetaCuidado } from '../../espacio/Avisos';
+import { type AjustesCopias, COPIAS_INICIALES, copiasDe, LIMITES_COPIAS } from '../../espacio/ajustes';
 import { cambiarDeEspacio, espaciosConocidos, useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
 import { useT } from '../../i18n/useT';
@@ -78,6 +79,74 @@ function BotonImportar() {
   );
 }
 
+/**
+ * El recordatorio de copia (DAT-07): avisar o no y tras cuántos cambios o días, y el ZIP previo a lo destructivo.
+ * Se guarda en los ajustes del espacio al cambiar (los números, al salir del campo, dentro de sus límites).
+ */
+function AjustesRecordatorio() {
+  const { t } = useT();
+  const espacio = useEspacioOpcional();
+  const soloLectura = useEspacio((s) => s.soloLectura);
+  const [copias, setCopias] = useState(() => espacio?.ajustes().copias ?? COPIAS_INICIALES);
+  // Lo que se escribe en los números, hasta salir del campo.
+  const [cambios, setCambios] = useState(String(copias.cambios));
+  const [dias, setDias] = useState(String(copias.dias));
+  if (!espacio) return null;
+  const guardar = (cambio: Partial<AjustesCopias>) => {
+    const nuevas = copiasDe({ ...copias, ...cambio });
+    setCopias(nuevas);
+    setCambios(String(nuevas.cambios));
+    setDias(String(nuevas.dias));
+    void espacio.guardarAjustes((a) => ({ ...a, copias: nuevas })).catch(() => undefined);
+  };
+  return (
+    <div className="list ajustes-copia">
+      <label className="chk">
+        <input
+          type="checkbox"
+          checked={copias.avisar}
+          disabled={soloLectura}
+          onChange={(e) => guardar({ avisar: e.target.checked })}
+        />
+        <span>
+          {t('copias.avisar')}{' '}
+          <input
+            type="number"
+            min={LIMITES_COPIAS.cambios[0]}
+            max={LIMITES_COPIAS.cambios[1]}
+            value={cambios}
+            disabled={soloLectura || !copias.avisar}
+            aria-label={t('copias.cambiosEtiqueta')}
+            onChange={(e) => setCambios(e.target.value)}
+            onBlur={() => guardar({ cambios: Number(cambios) })}
+          />{' '}
+          {t('copias.cambios')}{' '}
+          <input
+            type="number"
+            min={LIMITES_COPIAS.dias[0]}
+            max={LIMITES_COPIAS.dias[1]}
+            value={dias}
+            disabled={soloLectura || !copias.avisar}
+            aria-label={t('copias.diasEtiqueta')}
+            onChange={(e) => setDias(e.target.value)}
+            onBlur={() => guardar({ dias: Number(dias) })}
+          />{' '}
+          {t('copias.dias')}
+        </span>
+      </label>
+      <label className="chk">
+        <input
+          type="checkbox"
+          checked={copias.zipPrevio}
+          disabled={soloLectura}
+          onChange={(e) => guardar({ zipPrevio: e.target.checked })}
+        />
+        <span>{t('copias.zipPrevio')}</span>
+      </label>
+    </div>
+  );
+}
+
 /** Los botones de la tarjeta de cuidado o, mientras se exporta, la señal con el porcentaje. */
 function AccionesCopia() {
   const { t } = useT();
@@ -133,6 +202,9 @@ export function Datos() {
             <BotonExportar tipo="json" />
           </div>
         </div>
+      </Detalles>
+      <Detalles resumen={t('copias.plegado')}>
+        <AjustesRecordatorio />
       </Detalles>
       <Detalles resumen={t('pantallas.datos.espacios')}>
         <dl className="kv">

@@ -177,7 +177,14 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
       if (!vivo) return soltar();
       const pintar = () =>
         useEspacio.setState({
-          ...resumenParaCarcasa(e.manifest, e.repositorio.elementos(), e.estado(), new Date(), e.colecciones.lista()),
+          ...resumenParaCarcasa(
+            e.manifest,
+            e.repositorio.elementos(),
+            e.estado(),
+            new Date(),
+            e.colecciones.lista(),
+            e.ajustes().copias,
+          ),
           soloLectura: e.coordinacion.modo() === 'lector',
         });
       pintar();

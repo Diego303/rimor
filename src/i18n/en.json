@@ -290,7 +290,11 @@
       "descargarZip": "Download the ZIP",
       "descargada": "Check that the ZIP is in your downloads before emptying.",
       "noDescargada": "The ZIP could not be downloaded: nothing was deleted.",
-      "noBorrada": "The bin could not be fully emptied: what was not deleted is still in it."
+      "noBorrada": "The bin could not be fully emptied: what was not deleted is still in it.",
+      "vaciarTextoSinZip": {
+        "one": "{n} item will be deleted for good. You can download its ZIP first.",
+        "other": "{n} items will be deleted for good. You can download their ZIP first."
+      }
     },
     "comparacion": {
       "titulo": "{a} versus {b}",
@@ -752,5 +756,22 @@
     },
     "noRecargado": "It was imported, but the space could not be reread: reload the page.",
     "terminado": "Import finished"
+  },
+  "copias": {
+    "recordatorioTitulo": "Time for a backup",
+    "recordatorio": {
+      "one": "Your last backup is from {cuando} and you have made {n} change since. A ZIP takes a moment.",
+      "other": "Your last backup is from {cuando} and you have made {n} changes since. A ZIP takes a moment."
+    },
+    "recordatorioNunca": "You have not made any backup of this space yet. A ZIP takes a moment and is all you have.",
+    "exportar": "Export ZIP",
+    "masTarde": "Later",
+    "plegado": "Backup reminder",
+    "avisar": "Remind me after",
+    "cambios": "changes or",
+    "dias": "days without a backup",
+    "zipPrevio": "Export a ZIP before replacing or emptying the bin",
+    "cambiosEtiqueta": "Changes without a backup",
+    "diasEtiqueta": "Days without a backup"
   }
 }

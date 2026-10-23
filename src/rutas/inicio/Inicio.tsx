@@ -8,6 +8,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCompositor } from '../../captura/compositor';
 import { cambiarTipo, sePuedeCambiar } from '../../captura/reprocesar';
+import { RecordatorioCopia } from '../../datos/RecordatorioCopia';
 import { TarjetaPersistencia } from '../../espacio/Avisos';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { anadirColeccion as conColeccion, conEstado, conFijado } from '../../espacio/ediciones';
@@ -466,6 +467,7 @@ export function Inicio() {
         }
       >
         <TarjetaPersistencia />
+        <RecordatorioCopia />
         {vacio ? (
           <PrimerUso />
         ) : sinNada ? (

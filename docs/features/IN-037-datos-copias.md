@@ -37,10 +37,10 @@ Cuando pasa de ámbar a verde (una copia completa), en su sitio se ve una vez la
 
 ## Tareas
 
-- [ ] Pantalla con tres respuestas (cuánto ocupa, si está protegido y cuándo se copió) y «Exportar ZIP» (el único botón naranja de la app).
-- [ ] Piloto del raíl: verde con copia al día y ámbar al pasar el umbral. La animación `copia-al-dia` (IN-035) acompaña el cambio a verde.
-- [ ] Recordatorio tras 50 cambios o 7 días (configurable), como mensaje en Inicio, sin bloquear.
-- [ ] Plegados: otras exportaciones, recordatorio, espacios y papelera, y qué contiene el ZIP.
+- [x] Pantalla con tres respuestas (cuánto ocupa, si está protegido y cuándo se copió) y «Exportar ZIP» (el único botón naranja de la app).
+- [x] Piloto del raíl: verde con copia al día y ámbar al pasar el umbral. La animación `copia-al-dia` (IN-035) acompaña el cambio a verde.
+- [x] Recordatorio tras 50 cambios o 7 días (configurable), como mensaje en Inicio, sin bloquear.
+- [x] Plegados: otras exportaciones, recordatorio, espacios y papelera, y qué contiene el ZIP.
 
 ## Pruebas previstas
 
@@ -65,3 +65,20 @@ Cuando pasa de ámbar a verde (una copia completa), en su sitio se ve una vez la
 ## Autorrevisión
 
 Cubre las cuatro tareas. Reutiliza la tarjeta de cuidado, `exportarEspacio` (vía `useExportar`), el estado de cuidado, la `Senal` y el patrón de `guardarEstado`.
+
+## Implementación
+
+- `src/espacio/ajustes.ts`: `AjustesCopias`, `COPIAS_INICIALES`, `LIMITES_COPIAS` y `copiasDe`; `leerAjustes` los normaliza y conserva lo demás. `EspacioAbierto.guardarAjustes` (en orden, solo la pestaña que escribe, avisa a la otra) y `esperarEscrituras` lo espera.
+- `src/espacio/estado.ts`: `recordatorioHasta` y `conRecordatorioHasta`. `src/espacio/resumen.ts`: `debeRecordarCopia`; el resumen del raíl usa los umbrales de los ajustes.
+- `src/datos/RecordatorioCopia.tsx`: la tarjeta de Inicio («Exportar ZIP» y «Más tarde»).
+- `Rail.tsx`: `PilotoCopia` (la señal `copia-al-dia` una vez al pasar a verde).
+- Datos y copias: el plegado «Recordatorio de copia» (`AjustesRecordatorio`). El ZIP previo desactivado: Importar no descarga la copia al reemplazar y la papelera deja vaciar sin descargar (con otro texto).
+- Pruebas: `espacio/copias.test.ts` (ajustes, umbrales, recordatorio, aplazamiento, el único botón naranja) y `rutas/datos/Copias.test.tsx` (tarjeta en Inicio, «Más tarde», exportar y piloto, el plegado y la papelera sin ZIP previo).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| Los números se guardan al salir del campo, ajustados a sus límites | Mientras se escribe «1» camino de «15» no debe guardarse 5. |
+| La tarjeta no sale en la pestaña que solo lee | No podría apuntar ni la copia ni el aplazamiento. |
+

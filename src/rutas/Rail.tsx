@@ -1,11 +1,14 @@
 /** Raíl de la carcasa (rimor-diseno.md §8.1): logotipo, secciones, colecciones y pie del espacio. */
 import { Link, useRouterState } from '@tanstack/react-router';
+import { useEffect, useRef, useState } from 'react';
 import { useEspacio } from '../estado/espacio';
 import { fmtFechaRelativa } from '../i18n/formatos';
 import { useT } from '../i18n/useT';
 import { Piloto } from '../ui/componentes';
 import { Icono, type NombreIcono } from '../ui/iconos/Icono';
+import { ESTADOS_SENAL } from '../ui/marca/estadosSenal';
 import { Logotipo } from '../ui/marca/Logotipo';
+import { Senal } from '../ui/marca/Senal';
 
 /** Contenido de un botón del raíl: icono de 17 px, texto con elipsis y recuento opcional. */
 function ContenidoRb({ icono, texto, recuento }: { icono: NombreIcono; texto: string; recuento?: number }) {
@@ -19,6 +22,28 @@ function ContenidoRb({ icono, texto, recuento }: { icono: NombreIcono; texto: st
 }
 
 const actual = (activo: boolean) => (activo ? ('page' as const) : undefined);
+
+/**
+ * El piloto de la copia: verde al día, ámbar si toca copiar. Al pasar a verde (una copia completa), en su sitio se ve
+ * una vez la señal «copia al día» y después el piloto (IN-037).
+ */
+function PilotoCopia({ alDia, etiqueta }: { alDia: boolean; etiqueta: string }) {
+  const antes = useRef(alDia);
+  const [animando, setAnimando] = useState(false);
+  useEffect(() => {
+    const paso = alDia && !antes.current;
+    antes.current = alDia;
+    if (!paso) return undefined;
+    setAnimando(true);
+    const fin = setTimeout(() => setAnimando(false), ESTADOS_SENAL['copia-al-dia'].duracionS * 1000);
+    return () => clearTimeout(fin);
+  }, [alDia]);
+  return animando ? (
+    <Senal estado="copia-al-dia" veces={1} tamano={12} etiqueta={etiqueta} textoOculto />
+  ) : (
+    <Piloto tono={alDia ? 'ok' : 'warn'} etiqueta={etiqueta} />
+  );
+}
 
 export function Rail() {
   const { t, idioma } = useT();
@@ -56,8 +81,8 @@ export function Rail() {
       </Link>
       <Link to="/datos" className="space" aria-current={actual(ruta === '/datos')}>
         <b>
-          <Piloto
-            tono={espacio.copiaAlDia ? 'ok' : 'warn'}
+          <PilotoCopia
+            alDia={espacio.copiaAlDia}
             etiqueta={espacio.copiaAlDia ? t('rail.copiaAlDia') : t('rail.copiaPendiente')}
           />
           {espacio.nombre || t('rail.espacioSinNombre')}
