@@ -134,20 +134,51 @@ async function comprobarHashes(manifest: Manifest, archivos: Map<string, Uint8Ar
     if ((await sha256(datos)) !== hash) throw new ErrorImportar('importar.hash', ruta);
   }
   for (const ruta of archivos.keys())
-    if (ruta !== RUTA_MANIFEST_EXPORTADO && !(ruta in hashes)) throw new ErrorImportar('importar.sobra', ruta);
+    if (ruta !== RUTA_MANIFEST_EXPORTADO && !Object.hasOwn(hashes, ruta))
+      throw new ErrorImportar('importar.sobra', ruta);
   if (excluidos.size) avisos.push('importar.conExcluidos');
 }
 
 const esElemento = (r: string) => /^(papelera\/)?elementos\/.+\.md$/.test(r);
 const esEntidad = (r: string) => /^(comparaciones|hilos)\/.+\.md$/.test(r);
 
-/** El esquema de lo que tiene uno: elementos, entidades y el registro de colecciones. */
+/**
+ * El esquema de lo que tiene uno (elementos, entidades y el registro de colecciones), y que ningún `id` ni ninguna ref
+ * se repita (el mismo elemento en `elementos/` y en la papelera, dos con la misma ref).
+ */
 function comprobarEsquemas(archivos: Map<string, Uint8Array>) {
+  const ids = new Set<string>();
+  const refs = new Set<string>();
+  const unico = (id: string, ref: string, ruta: string) => {
+    if (ids.has(id)) throw new ErrorImportar('importar.idRepetido', ruta);
+    if (refs.has(ref)) throw new ErrorImportar('importar.refRepetida', ruta);
+    ids.add(id);
+    refs.add(ref);
+  };
   for (const [ruta, datos] of archivos) {
-    if (esElemento(ruta) && !leerElemento(texto(datos)).ok) throw new ErrorImportar('importar.elemento', ruta);
-    if (esEntidad(ruta) && !leerEntidad(texto(datos)).ok) throw new ErrorImportar('importar.entidad', ruta);
+    if (esElemento(ruta)) {
+      const el = leerElemento(texto(datos));
+      if (!el.ok) throw new ErrorImportar('importar.elemento', ruta);
+      unico(el.valor.frontmatter.id, el.valor.frontmatter.ref, ruta);
+    }
+    if (esEntidad(ruta)) {
+      const entidad = leerEntidad(texto(datos));
+      if (!entidad.ok) throw new ErrorImportar('importar.entidad', ruta);
+      unico(entidad.valor.frontmatter.id, entidad.valor.frontmatter.ref, ruta);
+    }
     if (ruta === 'colecciones.json' && leerColecciones(texto(datos)) === null)
       throw new ErrorImportar('importar.colecciones', ruta);
+  }
+}
+
+/** Ningún archivo del paquete está donde otro necesita una carpeta (`a` y `a/b`). */
+function comprobarCarpetas(archivos: Map<string, Uint8Array>) {
+  for (const ruta of archivos.keys()) {
+    const partes = ruta.split('/');
+    for (let i = 1; i < partes.length; i++) {
+      const carpeta = partes.slice(0, i).join('/');
+      if (archivos.has(carpeta)) throw new ErrorImportar('importar.rutaChoca', carpeta);
+    }
   }
 }
 
@@ -172,6 +203,9 @@ export async function leerPaquete(
   nombre: string,
   { limites = LIMITES_ZIP }: { limites?: LimitesZip } = {},
 ): Promise<Paquete> {
+  // Antes de leer nada: un archivo mayor que el límite no se abre (un JSON se lee entero en memoria).
+  const tamano = fuente instanceof Uint8Array ? fuente.length : fuente.size;
+  if (tamano > limites.total) throw new ErrorImportar('zip.demasiadoGrande');
   const esJson =
     /\.json$/i.test(nombre) ||
     (fuente instanceof Uint8Array ? fuente[0] === 0x7b : (await fuente.slice(0, 1).text()) === '{');
@@ -186,5 +220,6 @@ export async function leerPaquete(
   // Primero se migra: un paquete antiguo se valida con el esquema de ahora.
   const migrado = migrarPaquete(manifest, archivos);
   comprobarEsquemas(archivos);
+  comprobarCarpetas(archivos);
   return { origen, manifest: migrado, archivos, avisos };
 }

@@ -483,7 +483,8 @@
       "json": "JSON único. Los adjuntos de más de 1 MB se excluyen y el archivo lo indica.",
       "queContiene": "Qué contiene el ZIP",
       "arbol": "manifest.json        ← recuentos y hashes\nelementos/2026/10/…\ncomparaciones/  hilos/  investigaciones/  documentos/\nadjuntos/            ← por hash\nhistorial/           ← versiones\ncolecciones.json  papelera/  .rimor/",
-      "cancelar": "Cancelar"
+      "cancelar": "Cancelar",
+      "abrirEspacio": "Abrir"
     },
     "ajustes": {
       "titulo": "Ajustes",
@@ -742,8 +743,14 @@
         "entidad": "no cumple el formato de una comparación o un hilo",
         "colecciones": "no se entiende",
         "migracion": "no se pudo pasar a la versión actual",
-        "ilegible": "no se pudo leer"
+        "ilegible": "no se pudo leer",
+        "idRepetido": "repite el id de otro elemento del archivo",
+        "refRepetida": "repite la ref de otro elemento del archivo",
+        "rutaChoca": "choca con una carpeta o un archivo (está donde hace falta una carpeta, o al revés)",
+        "rutaOcupada": "iría donde ya hay otro elemento"
       }
-    }
+    },
+    "noRecargado": "Se importó, pero no se pudo releer el espacio: recarga la página.",
+    "terminado": "Importación terminada"
   }
 }

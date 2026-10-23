@@ -104,3 +104,39 @@ Cubre las siete tareas y las dos pruebas del plan. Reutiliza el lector de ZIP y 
 | Los elementos se escriben al final (los adjuntos primero) | Si se corta, ningún elemento apunta a un adjunto que falta. |
 | Importar está deshabilitado en la pestaña que solo lee | Solo la que escribe puede escribir. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 93 archivos y 1277 pruebas; carga inicial 241,3 KB de 300.
+
+**Criterios de aceptación:** el corpus malicioso (zip slip, absolutas, enlaces simbólicos, bomba, repetidas, solapadas, hashes, sobrantes, manifest ajeno o futuro, esquemas, ids y refs repetidos, archivo donde va una carpeta, sufijos reservados) se rechaza con su regla y su archivo sin escribir nada (`importar.test.ts`, `leerZip.test.ts` e `Importar.test.tsx`, que compara el almacén antes y después); los tres modos dejan los espacios esperados (`importar.test.ts`, `Importar.test.tsx`).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| Validación antes de escribir nada | `importar.test.ts` («leer un paquete», «casos de la revisión»), `leerZip.test.ts` |
+| Migración si el esquema es antiguo | `migrarPaquete` antes de validar los esquemas (hoy solo existe el esquema 1: identidad, `migrar` de `@rimor/formato`) |
+| Vista previa con el detalle de cada conflicto | `importar.test.ts` («plan») e `Importar.test.tsx` (cifras y conflicto) |
+| Fusionar, reemplazar (con ZIP previo) y espacio nuevo | `importar.test.ts` («modos») e `Importar.test.tsx` (fusionar, reemplazar con su copia, espacios conocidos) |
+| Choque de refs | `importar.test.ts` (alias, menciones, historial, hilo, reimportar) |
+| Reindexado en segundo plano | `EspacioAbierto.recargar` relee y avisa; el motor de búsqueda se pone al día solo con el cambio |
+| Final con la señal de guardado; rechazo con `ErrorTarjeta`, archivo y regla | `Importar.test.tsx` |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | Reimportar un paquete con un elemento ya reasignado dejaba dos con la misma ref | Lo que ya está aquí lleva en lo importado la ref de aquí (y sus alias); reimportar da idénticos. `importar.test.ts` |
+| 2 | Solo se reescribían las notas de los nuevos (no `hilo`, `investigaciones` ni los actualizados) | Se normaliza todo elemento del paquete (frontmatter con refs y notas; el original no se toca). `importar.test.ts` |
+| 3 | Se escribía en la ruta del paquete, que podía ser la de otro elemento de aquí | Siempre en la ruta de su ref y su título; si estuviera ocupada por otro, se rechaza. `importar.test.ts` |
+| 4 | Ids o refs repetidos dentro del paquete | Se rechazan al leerlo. `importar.test.ts` |
+| 5 | Reemplazar con un JSON borraba los adjuntos que excluyó | Se quedan. `importar.test.ts` |
+| 6 | Un fallo a mitad dejaba el índice viejo; un archivo donde hace falta una carpeta fallaba al escribir | Se relee siempre (y se dice si la relectura falla); los choques archivo y carpeta se rechazan antes (en el paquete y contra lo de aquí), y reemplazar quita antes lo que estorba. `importar.test.ts` |
+| 7 | Los sufijos reservados daban un rechazo sin regla | `zip.rutaInsegura`. `importar.test.ts` |
+| 8 | Abrir un espacio nuevo dejaba el anterior sin vuelta (o el nuevo huérfano) | Los espacios de este navegador quedan apuntados y Datos y copias deja abrirlos. `Importar.test.tsx` |
+| 9 | Un paquete más antiguo contaba como «actualizado»; mismos bytes en otra ruta iban al historial | Es conflicto; sin historial si los bytes son iguales. `importar.test.ts` |
+| 10 | El archivo seguía elegido tras importar | Se olvida al terminar y al salir. `Importar.test.tsx` |
+| 11 | `ruta in hashes` miraba el prototipo | `Object.hasOwn`. `importar.test.ts` |
+| 12 | El diario de entidades se importaba | No se exporta ni se importa. `importar.test.ts` |
+| 13 | Un JSON enorme se leía entero antes de comprobar nada | Se rechaza por tamaño antes de leerlo. `importar.test.ts` |
+

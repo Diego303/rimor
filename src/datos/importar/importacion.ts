@@ -5,7 +5,7 @@
  */
 import { type Manifest, ulid } from '@rimor/formato';
 import { create } from 'zustand';
-import type { Almacen } from '../../almacen/contrato';
+import { type Almacen, listarTodo } from '../../almacen/contrato';
 import type { EspacioAbierto } from '../../espacio/abrir';
 import { enEspacioNuevo, fusionar, type ModoImportar, manifestNuevo, reemplazar } from './aplicar';
 import { leerPaquete, type Paquete } from './paquete';
@@ -19,13 +19,14 @@ export type EspacioImportable = Pick<
   'almacen' | 'repositorio' | 'entidades' | 'esperarEscrituras' | 'recargar' | 'manifest'
 >;
 
-/** Lo que el plan necesita del espacio: sus elementos (también los de la papelera) y sus entidades. */
-export function localDe(espacio: EspacioImportable): EspacioLocal {
+/** Lo que el plan necesita del espacio: sus elementos (también los de la papelera), sus entidades y sus rutas. */
+export async function localDe(espacio: EspacioImportable): Promise<EspacioLocal> {
   const elementos = [...espacio.repositorio.entradas()].flatMap((e) => {
     const fm = espacio.repositorio.frontmatter(e.id);
     return fm ? [{ id: e.id, ref: e.ref, alias: fm.alias ?? [], ruta: e.ruta, modificado: fm.modificado }] : [];
   });
-  return { elementos, entidades: espacio.entidades.entradas(), leer: (ruta) => espacio.almacen.leer(ruta) };
+  const rutas = new Set((await listarTodo(espacio.almacen, '')).map((e) => e.ruta));
+  return { elementos, entidades: espacio.entidades.entradas(), leer: (ruta) => espacio.almacen.leer(ruta), rutas };
 }
 
 export interface Comprobado {
@@ -36,7 +37,7 @@ export interface Comprobado {
 /** Lee, valida y planea. Lanza `ErrorImportar` (regla y archivo) si el archivo no se puede importar. */
 export async function comprobar(espacio: EspacioImportable, archivo: Blob, nombre: string): Promise<Comprobado> {
   const paquete = await leerPaquete(archivo, nombre);
-  return { paquete, plan: await planear(paquete.archivos, paquete.manifest, localDe(espacio)) };
+  return { paquete, plan: await planear(paquete.archivos, paquete.manifest, await localDe(espacio)) };
 }
 
 export interface OpcionesImportar {
@@ -45,6 +46,24 @@ export interface OpcionesImportar {
   /** Abre el almacén de un espacio nuevo (en el navegador, su carpeta de OPFS). */
   crearAlmacen?: (id: string) => Promise<Almacen & { cerrar?: () => void; esperar?: () => Promise<void> }>;
   reloj?: () => Date;
+  /** Un espacio nuevo ya escrito: se apunta entre los conocidos. */
+  alCrearEspacio?: (id: string, nombre: string) => void;
+}
+
+/**
+ * Escribe y después relee el espacio, también si la escritura falla a mitad (lo ya escrito debe estar en el índice,
+ * o una captura podría repetir una ref). Si la relectura falla, se dice.
+ */
+async function conRelectura(espacio: EspacioImportable, escribir: () => Promise<void>): Promise<void> {
+  let fallo: unknown = null;
+  try {
+    await escribir();
+  } catch (e) {
+    fallo = e;
+  }
+  const releido = await espacio.recargar().catch(() => false);
+  if (fallo) throw fallo;
+  if (!releido) throw new Error('importar.noRecargado');
 }
 
 export type Importado = { modo: 'fusionar' | 'reemplazar'; plan: Plan } | { modo: 'nuevo'; id: string; nombre: string };
@@ -68,21 +87,21 @@ export async function importar(
     } finally {
       almacen.cerrar?.();
     }
+    // Queda apuntado aunque no se abra ahora: desde Datos y copias se puede abrir (y volver a este).
+    o.alCrearEspacio?.(id, nombre);
     return { modo, id, nombre };
   }
   await espacio.esperarEscrituras();
   if (modo === 'reemplazar') {
     if (!(await o.copiaPrevia())) throw new Error('importar.sinCopia');
-    await reemplazar(espacio.almacen, paquete);
-    await espacio.recargar();
+    await conRelectura(espacio, () => reemplazar(espacio.almacen, paquete));
     return {
       modo,
       plan: await planear(paquete.archivos, paquete.manifest, { elementos: [], entidades: [], leer: async () => null }),
     };
   }
   // El plan, otra vez con lo de ahora: pudo cambiar algo mientras se miraba la vista previa.
-  const plan = await planear(paquete.archivos, paquete.manifest, localDe(espacio));
-  await fusionar(espacio.almacen, plan);
-  await espacio.recargar();
+  const plan = await planear(paquete.archivos, paquete.manifest, await localDe(espacio));
+  await conRelectura(espacio, () => fusionar(espacio.almacen, plan));
   return { modo, plan };
 }

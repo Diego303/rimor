@@ -16,9 +16,15 @@ export const TROZO = 256 * 1024;
 /** El texto se comprime; los adjuntos van tal cual (a menudo ya comprimidos). */
 const NIVEL_TEXTO = 6;
 
-/** Lo que no sale del espacio: la caché, el diario de una operación cortada y el manifest (se escribe el nuevo). */
+/**
+ * Lo que no sale del espacio: la caché, los diarios de una operación cortada (de elementos y de entidades: en otro
+ * espacio se repetirían) y el manifest (se escribe el nuevo).
+ */
 export const fueraDeLaExportacion = (ruta: string): boolean =>
-  ruta.startsWith('.rimor/cache/') || ruta === '.rimor/operacion.json' || ruta === RUTA_MANIFEST_EXPORTADO;
+  ruta.startsWith('.rimor/cache/') ||
+  ruta === '.rimor/operacion.json' ||
+  ruta === '.rimor/operacion-entidades.json' ||
+  ruta === RUTA_MANIFEST_EXPORTADO;
 
 export type AlmacenLectura = Pick<Almacen, 'leer' | 'listar'>;
 

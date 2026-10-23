@@ -57,6 +57,35 @@ function idEspacio(): string {
 /** Lo que el proveedor necesita para abrir el espacio; `liberar` suelta lo que no cierra el espacio (el Worker). */
 export type DependenciasProveedor = DependenciasEspacio & { enMemoria: boolean; liberar?: () => void };
 
+const CLAVE_CONOCIDOS = 'rimor:espacios';
+
+/**
+ * Los espacios abiertos o creados en este navegador (id y nombre), para poder volver a cada uno: un espacio nuevo
+ * importado (IN-036) no deja inaccesible al anterior. Cambiar entre espacios a fondo llega con IN-060.
+ */
+export function espaciosConocidos(): { id: string; nombre: string }[] {
+  try {
+    const lista: unknown = JSON.parse(globalThis.localStorage?.getItem(CLAVE_CONOCIDOS) ?? '[]');
+    return Array.isArray(lista)
+      ? lista.filter(
+          (x): x is { id: string; nombre: string } => typeof x?.id === 'string' && typeof x?.nombre === 'string',
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Apunta un espacio como conocido (o le pone el nombre de ahora). */
+export function recordarEspacioConocido(id: string, nombre: string): void {
+  try {
+    const otros = espaciosConocidos().filter((e) => e.id !== id);
+    globalThis.localStorage?.setItem(CLAVE_CONOCIDOS, JSON.stringify([...otros, { id, nombre }]));
+  } catch {
+    // Sin localStorage, solo se conoce el de ahora.
+  }
+}
+
 /** Abre otro espacio: lo recuerda y recarga la app en él (un espacio nuevo importado, IN-036). */
 export function cambiarDeEspacio(id: string): void {
   recordarEspacio(id);
@@ -159,7 +188,10 @@ export function ProveedorEspacio({ children, dependencias = dependenciasDelNaveg
       if (!dep.enMemoria && e.estado().persistencia !== 'concedida' && (await estaPersistido()))
         await e.guardarEstado((x) => conPersistencia(x, 'concedida', ahoraIso())).catch(() => undefined);
       if (!vivo) return soltar();
-      if (!dep.enMemoria) recordarEspacio(dep.espacioId);
+      if (!dep.enMemoria) {
+        recordarEspacio(dep.espacioId);
+        recordarEspacioConocido(dep.espacioId, e.manifest.espacio.nombre);
+      }
       listo = true;
       setApertura({ estado: 'listo', espacio: { ...e, enMemoria: dep.enMemoria, ventanaPrivada } });
     })().catch(() => {

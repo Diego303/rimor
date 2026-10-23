@@ -4,7 +4,7 @@ import { cancelarExportacion, useExportacion } from '../../datos/exportacion';
 import { useArchivoImportar } from '../../datos/importar/importacion';
 import { useExportar } from '../../datos/useExportar';
 import { TarjetaCuidado } from '../../espacio/Avisos';
-import { useEspacioOpcional } from '../../espacio/Espacio';
+import { cambiarDeEspacio, espaciosConocidos, useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
 import { useT } from '../../i18n/useT';
 import { Boton, Detalles } from '../../ui/componentes';
@@ -114,6 +114,9 @@ export function Datos() {
   const nombre = useEspacio((s) => s.nombre);
   const enMemoria = useEspacioOpcional()?.enMemoria ?? false;
   const { elementos, papelera } = useRecuentos();
+  const actual = useEspacioOpcional()?.id;
+  // Los demás espacios de este navegador (un espacio nuevo importado): se pueden abrir.
+  const [otros] = useState(() => espaciosConocidos().filter((e) => e.id !== actual));
   return (
     <Pantalla
       titulo={t('pantallas.datos.titulo')}
@@ -135,6 +138,16 @@ export function Datos() {
         <dl className="kv">
           <dt>{nombre}</dt>
           <dd>{t('pantallas.datos.espacioActivo', { n: elementos })}</dd>
+          {otros.map((e) => (
+            <div key={e.id} className="contents">
+              <dt>{e.nombre}</dt>
+              <dd>
+                <Boton variante="fantasma" pequeno onClick={() => cambiarDeEspacio(e.id)}>
+                  {t('pantallas.datos.abrirEspacio')}
+                </Boton>
+              </dd>
+            </div>
+          ))}
           <dt>{t('pantallas.datos.papelera')}</dt>
           <dd>
             {papelera ? t('pantallas.datos.papeleraN', { n: papelera }) : t('pantallas.datos.papeleraVacia')}{' '}

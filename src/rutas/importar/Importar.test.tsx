@@ -103,6 +103,9 @@ describe('Importar', () => {
     await screen.findByText(/^Importado: 1 nuevos, 0 actualizados, 1 conflictos resueltos/, {}, ESCRITURA);
     await waitFor(() => expect(espacio.repositorio.frontmatter('TXT-0003')).toBeTruthy());
     expect(espacio.repositorio.frontmatter('TXT-0002')?.titulo).toBe('Dos aquí');
+    // El final se queda a la vista y el archivo se olvida: no se puede importar otra vez sin elegirlo.
+    expect(screen.getByRole('heading', { name: 'Importación terminada' })).toBeTruthy();
+    expect(useArchivoImportar.getState().archivo).toBeNull();
   }, 30_000);
 
   it('reemplazar exporta antes una copia y deja solo lo del archivo', async () => {
@@ -119,6 +122,16 @@ describe('Importar', () => {
     expect(descargas.map((a) => a.download)).toEqual([expect.stringMatching(/-antes-de-reemplazar\.zip$/)]);
     await waitFor(() => expect(espacio.repositorio.frontmatter('TXT-0005')).toBeUndefined());
     expect(espacio.repositorio.frontmatter('TXT-0002')).toBeTruthy();
+  }, 30_000);
+
+  it('Datos y copias lista los demás espacios de este navegador para abrirlos', async () => {
+    localStorage.setItem('rimor:espacios', JSON.stringify([{ id: 'otro', nombre: 'Trabajo (importado)' }]));
+    const { router } = await montarApp('/ajustes', [el(1)]);
+    await act(() => router.navigate({ to: '/datos' }));
+    fireEvent.click(await screen.findByText('Espacios y papelera', {}, PRIMERA_CARGA));
+    expect(screen.getByText('Trabajo (importado)')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Abrir' })).toBeTruthy();
+    localStorage.removeItem('rimor:espacios');
   }, 30_000);
 
   it('«Importar…» en Datos y copias elige el archivo y lleva a la pantalla', async () => {

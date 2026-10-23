@@ -17,7 +17,7 @@ import {
 } from '../../datos/importar/importacion';
 import { ErrorImportar } from '../../datos/importar/paquete';
 import { useExportar } from '../../datos/useExportar';
-import { cambiarDeEspacio, useEspacioOpcional } from '../../espacio/Espacio';
+import { cambiarDeEspacio, recordarEspacioConocido, useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
 import { fmtBytes, fmtFecha } from '../../i18n/formatos';
 import type { Clave } from '../../i18n/i18n';
@@ -45,6 +45,8 @@ export function Importar() {
   const copiaPrevia = useExportar();
   const [estado, setEstado] = useState<Estado>({ fase: 'comprobando' });
   const [modo, setModo] = useState<ModoImportar>('fusionar');
+  // Al salir de la pantalla, el archivo elegido se olvida (y su paquete, que puede ser grande).
+  useEffect(() => () => useArchivoImportar.setState({ archivo: null }), []);
 
   useEffect(() => {
     if (!espacio || !archivo) return undefined;
@@ -65,6 +67,13 @@ export function Importar() {
 
   const regla = (codigo: string) => t(`importar.reglas.${codigo}` as Clave);
 
+  if (estado.fase === 'hecho')
+    return (
+      <Pantalla marcas={<span className="lbl">{t('importar.titulo')}</span>} titulo={t('importar.terminado')}>
+        <Hecho importado={estado.importado} />
+      </Pantalla>
+    );
+
   if (!archivo || !espacio)
     return (
       <Pantalla titulo={t('importar.titulo')}>
@@ -83,14 +92,18 @@ export function Importar() {
       const importado = await importar(espacio, comprobado, modo, {
         copiaPrevia: () => copiaPrevia('zip', t('importar.motivoCopia')),
         crearAlmacen: (id) => crearAlmacenOpfs(id),
+        alCrearEspacio: recordarEspacioConocido,
       });
+      // Hecho: el archivo ya no se puede volver a importar desde aquí por error (atrás y adelante).
+      useArchivoImportar.setState({ archivo: null });
       setEstado({ fase: 'hecho', importado });
     } catch (e) {
-      setEstado({
-        fase: 'fallo',
-        comprobado,
-        codigo: e instanceof Error && e.message === 'importar.sinCopia' ? 'importar.sinCopia' : 'importar.noImportado',
-      });
+      if (e instanceof ErrorImportar) {
+        setEstado({ fase: 'rechazado', codigo: e.codigo, ...(e.ruta ? { ruta: e.ruta } : {}) });
+        return;
+      }
+      const conocido = e instanceof Error && ['importar.sinCopia', 'importar.noRecargado'].includes(e.message);
+      setEstado({ fase: 'fallo', comprobado, codigo: conocido ? (e as Error).message : 'importar.noImportado' });
     }
   }
 
@@ -164,7 +177,6 @@ export function Importar() {
           </section>
         </>
       )}
-      {estado.fase === 'hecho' && <Hecho importado={estado.importado} />}
     </Pantalla>
   );
 }

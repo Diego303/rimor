@@ -483,7 +483,8 @@
       "json": "Single JSON. Attachments over 1 MB are left out and the file says so.",
       "queContiene": "What the ZIP contains",
       "arbol": "manifest.json        ← counts and hashes\nelementos/2026/10/…\ncomparaciones/  hilos/  investigaciones/  documentos/\nadjuntos/            ← by hash\nhistorial/           ← versions\ncolecciones.json  papelera/  .rimor/",
-      "cancelar": "Cancel"
+      "cancelar": "Cancel",
+      "abrirEspacio": "Open"
     },
     "ajustes": {
       "titulo": "Settings",
@@ -742,8 +743,14 @@
         "entidad": "does not follow the comparison or thread format",
         "colecciones": "cannot be understood",
         "migracion": "could not be brought to the current version",
-        "ilegible": "could not be read"
+        "ilegible": "could not be read",
+        "idRepetido": "repeats the id of another item in the file",
+        "refRepetida": "repeats the ref of another item in the file",
+        "rutaChoca": "clashes with a folder or a file (it is where a folder is needed, or the other way round)",
+        "rutaOcupada": "would go where another item already is"
       }
-    }
+    },
+    "noRecargado": "It was imported, but the space could not be reread: reload the page.",
+    "terminado": "Import finished"
   }
 }

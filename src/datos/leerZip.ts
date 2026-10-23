@@ -56,6 +56,8 @@ const TROZO_INFLAR = 4 * 1024;
 export function rutaSegura(ruta: string): boolean {
   const limpia = ruta.endsWith('/') ? ruta.slice(0, -1) : ruta;
   if (!limpia || limpia.startsWith('/') || /[\\\0]/.test(limpia) || /^[a-zA-Z]:/.test(limpia)) return false;
+  // Los sufijos de la escritura atómica del almacén están reservados.
+  if (/\.rimor-(tmp|ok)$/.test(limpia)) return false;
   return limpia.split('/').every((s) => s && s !== '.' && s !== '..');
 }
 

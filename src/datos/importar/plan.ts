@@ -18,6 +18,7 @@ import {
   type TipoEntidad,
 } from '@rimor/formato';
 import { CARPETA_PAPELERA } from '../../almacen/repositorio';
+import { ErrorImportar } from './paquete';
 
 export type Categoria = 'nuevo' | 'identico' | 'actualizado' | 'conflicto';
 
@@ -55,6 +56,8 @@ export interface EspacioLocal {
   elementos: readonly ElementoLocal[];
   entidades: readonly EntidadLocal[];
   leer(ruta: string): Promise<Uint8Array | null>;
+  /** Todas las rutas de aquí, para no escribir donde hay una carpeta o dentro de un archivo. */
+  rutas?: ReadonlySet<string>;
 }
 
 export interface Plan {
@@ -138,76 +141,102 @@ export async function planear(
     }
   for (const el of leidos.values()) ocupadas.add(el.frontmatter.ref);
 
-  // Primero, las refs nuevas de los nuevos que chocan (con aquí o entre sí no: el paquete ya las tiene únicas).
   const cambios = new Map<string, string>();
   const refsAqui = new Set(local.elementos.flatMap((e) => [e.ref, ...e.alias]));
   for (const e of local.entidades) refsAqui.add(e.ref);
-  for (const el of leidos.values()) {
-    const fm = el.frontmatter;
-    if (porId.has(fm.id) || !refsAqui.has(fm.ref)) continue;
-    const nueva = asignarRef(fm.tipo, ocupadas);
-    ocupadas.add(nueva);
-    cambios.set(fm.ref, nueva);
-  }
-  // Las entidades nuevas cuya ref ya se usa aquí, igual (sin alias: su esquema no lo tiene).
   const entidadesAqui = new Map(local.entidades.map((e) => [e.id, e]));
   const entidades = new Map<string, ReturnType<typeof leerEntidad>>();
-  for (const [ruta, datos] of archivos)
-    if (esEntidad(ruta)) {
-      const entidad = leerEntidad(texto(datos));
-      entidades.set(ruta, entidad);
-      if (!entidad.ok) continue;
-      const fm = entidad.valor.frontmatter;
-      if (entidadesAqui.has(fm.id) || !refsAqui.has(fm.ref)) continue;
-      const nueva = asignarRef(fm.tipo, ocupadas);
-      ocupadas.add(nueva);
-      cambios.set(fm.ref, nueva);
-    }
-  for (const [de, a] of cambios) plan.reasignadas.push({ de, a });
+  for (const [ruta, datos] of archivos) if (esEntidad(ruta)) entidades.set(ruta, leerEntidad(texto(datos)));
+  const deEntidades = [...entidades.values()].flatMap((e) => (e.ok ? [e.valor.frontmatter] : []));
+
+  // Lo que ya está aquí (el mismo id) con otra ref (se reasignó al importarlo antes, o cambió de tipo allí): en lo
+  // importado, su ref es la de aquí.
+  for (const el of leidos.values()) {
+    const aqui = porId.get(el.frontmatter.id);
+    if (aqui && aqui.ref !== el.frontmatter.ref) cambios.set(el.frontmatter.ref, aqui.ref);
+  }
+  for (const fm of deEntidades) {
+    const aqui = entidadesAqui.get(fm.id);
+    if (aqui && aqui.ref !== fm.ref) cambios.set(fm.ref, aqui.ref);
+  }
+  // Lo nuevo cuya ref ya se usa aquí recibe otra libre (las entidades, sin alias: su esquema no lo tiene).
+  const reasignar = (tipo: Parameters<typeof asignarRef>[0], ref: string) => {
+    const nueva = asignarRef(tipo, ocupadas);
+    ocupadas.add(nueva);
+    cambios.set(ref, nueva);
+    plan.reasignadas.push({ de: ref, a: nueva });
+  };
+  for (const el of leidos.values()) {
+    const fm = el.frontmatter;
+    if (!porId.has(fm.id) && refsAqui.has(fm.ref)) reasignar(fm.tipo, fm.ref);
+  }
+  for (const fm of deEntidades) if (!entidadesAqui.has(fm.id) && refsAqui.has(fm.ref)) reasignar(fm.tipo, fm.ref);
+
+  const mapa = (r: string) => cambios.get(r) ?? r;
+  const porRutaAqui = new Map(local.elementos.map((e) => [e.ruta, e.id]));
+
+  /**
+   * El elemento del paquete con las refs de aquí: la suya, la de su hilo y sus investigaciones, y las menciones de
+   * sus notas (el original no se toca: es lo capturado). Un nuevo reasignado guarda la vieja en `alias`; uno que ya
+   * está aquí suma sus alias de aquí.
+   */
+  const normalizar = (el: Elemento): Elemento => {
+    const fm = el.frontmatter;
+    const aqui = porId.get(fm.id);
+    const ref = mapa(fm.ref);
+    const alias = [
+      ...new Set([...(fm.alias ?? []), ...(aqui?.alias ?? []), ...(!aqui && ref !== fm.ref ? [fm.ref] : [])]),
+    ].filter((a) => a !== ref);
+    const { alias: _a, hilo: _h, investigaciones: _i, ...resto } = fm;
+    return {
+      ...el,
+      notas: reescribirRefs(el.notas, cambios),
+      frontmatter: {
+        ...resto,
+        ref: ref as typeof fm.ref,
+        ...(alias.length ? { alias: alias as typeof fm.alias } : {}),
+        ...(fm.hilo ? { hilo: mapa(fm.hilo) as typeof fm.hilo } : {}),
+        ...(fm.investigaciones ? { investigaciones: fm.investigaciones.map(mapa) as typeof fm.investigaciones } : {}),
+      },
+    };
+  };
+  const igualQue = (a: Elemento, b: Elemento) =>
+    a.notas === b.notas && JSON.stringify(a.frontmatter) === JSON.stringify(b.frontmatter);
 
   for (const [ruta, el] of leidos) {
     const fm = el.frontmatter;
-    const datos = archivos.get(ruta) as Uint8Array;
+    const original = archivos.get(ruta) as Uint8Array;
+    const normal = normalizar(el);
+    const datos = igualQue(normal, el) ? original : bytes(escribirElemento(normal, texto(original)));
+    // Siempre en la ruta de su ref y su título (la del paquete podría ser la de otro elemento de aquí).
+    const destino = rutaDe(normal, enPapelera(ruta));
+    const ocupa = porRutaAqui.get(destino);
+    if (ocupa && ocupa !== fm.id) throw new ErrorImportar('importar.rutaOcupada', ruta);
     const aqui = porId.get(fm.id);
-    const base = { id: fm.id, ref: fm.ref, titulo: fm.titulo };
+    const refNueva = !aqui && normal.frontmatter.ref !== fm.ref ? normal.frontmatter.ref : undefined;
+    const base = { id: fm.id, ref: normal.frontmatter.ref, titulo: fm.titulo };
     if (!aqui) {
-      const refNueva = cambios.get(fm.ref);
-      // Sus notas mencionan refs del paquete: si alguna cambió, se reescribe.
-      const notas = reescribirRefs(el.notas, cambios);
-      const nuevo: Elemento = refNueva
-        ? {
-            ...el,
-            notas,
-            frontmatter: {
-              ...fm,
-              ref: refNueva as typeof fm.ref,
-              alias: [...new Set([...(fm.alias ?? []), fm.ref])] as typeof fm.alias,
-            },
-          }
-        : { ...el, notas };
-      const cambiado = refNueva || notas !== el.notas;
-      plan.escrituras.set(
-        cambiado ? rutaDe(nuevo, enPapelera(ruta)) : ruta,
-        cambiado ? bytes(escribirElemento(nuevo, texto(datos))) : datos,
-      );
+      plan.escrituras.set(destino, datos);
       plan.elementos.push({ ...base, categoria: 'nuevo', ...(refNueva ? { refNueva } : {}) });
       plan.recuentos.nuevo++;
       continue;
     }
     const suyo = await local.leer(aqui.ruta);
-    if (suyo && iguales(suyo, datos) && aqui.ruta === ruta) {
+    const mismos = suyo !== null && iguales(suyo, datos);
+    if (mismos && aqui.ruta === destino) {
       plan.elementos.push({ ...base, categoria: 'identico' });
       plan.recuentos.identico++;
       continue;
     }
-    // Aquí cambió después de exportar el paquete (o no se sabe cuándo se exportó): cambiaron los dos.
-    const categoria: Categoria = !(instante(aqui.modificado) <= exportado) ? 'conflicto' : 'actualizado';
     const ganador = instante(fm.modificado) >= instante(aqui.modificado) ? 'paquete' : 'aqui';
+    // Actualizado: gana el del paquete y aquí no cambió desde que se exportó. Si no, cambiaron los dos.
+    const categoria: Categoria =
+      ganador === 'paquete' && instante(aqui.modificado) <= exportado ? 'actualizado' : 'conflicto';
     if (ganador === 'paquete') {
-      plan.escrituras.set(ruta, datos);
-      if (aqui.ruta !== ruta) plan.borrados.push(aqui.ruta);
-      if (suyo) plan.escrituras.set(rutaHistorial(aqui.ref, aqui.modificado), suyo);
-    } else plan.escrituras.set(rutaHistorial(aqui.ref, fm.modificado), datos);
+      plan.escrituras.set(destino, datos);
+      if (aqui.ruta !== destino) plan.borrados.push(aqui.ruta);
+      if (suyo && !mismos) plan.escrituras.set(rutaHistorial(aqui.ref, aqui.modificado), suyo);
+    } else if (!mismos) plan.escrituras.set(rutaHistorial(aqui.ref, fm.modificado), datos);
     plan.elementos.push({
       ...base,
       categoria,
@@ -253,5 +282,26 @@ export async function planear(
     else if (!iguales(suyo, datos) && !ruta.startsWith('historial/'))
       plan.avisos.push({ codigo: 'importar.archivoSeQueda', ruta });
   }
+  comprobarCarpetasAqui(plan, local.rutas);
   return plan;
+}
+
+/** Nada de lo que se escribe está donde aquí hay una carpeta, ni dentro de un archivo de aquí (`a` y `a/b`). */
+function comprobarCarpetasAqui(plan: Plan, rutas: ReadonlySet<string> | undefined): void {
+  if (!rutas) return;
+  const borrados = new Set(plan.borrados);
+  const carpetas = new Set<string>();
+  for (const r of rutas) {
+    if (borrados.has(r)) continue;
+    const partes = r.split('/');
+    for (let i = 1; i < partes.length; i++) carpetas.add(partes.slice(0, i).join('/'));
+  }
+  for (const destino of plan.escrituras.keys()) {
+    if (carpetas.has(destino)) throw new ErrorImportar('importar.rutaChoca', destino);
+    const partes = destino.split('/');
+    for (let i = 1; i < partes.length; i++) {
+      const carpeta = partes.slice(0, i).join('/');
+      if (rutas.has(carpeta) && !borrados.has(carpeta)) throw new ErrorImportar('importar.rutaChoca', destino);
+    }
+  }
 }

@@ -35,10 +35,23 @@ export async function fusionar(almacen: Almacen, plan: Plan): Promise<void> {
  */
 export async function reemplazar(almacen: Almacen, paquete: Paquete): Promise<void> {
   const delPaquete = [...paquete.archivos].filter(([ruta]) => !deEsteNavegador(ruta));
+  // Los adjuntos que un JSON no trae (excluidos por tamaño) se quedan: sus elementos los siguen citando.
+  const quedan = new Set([...delPaquete.map(([ruta]) => ruta), ...(paquete.manifest.adjuntos_excluidos ?? [])]);
+  const aqui = (await listarTodo(almacen, '')).map((e) => e.ruta);
+  // Lo de aquí que estorba (un archivo donde el paquete necesita una carpeta, o al revés) sale antes de escribir.
+  const carpetas = new Set(
+    delPaquete.flatMap(([ruta]) =>
+      ruta
+        .split('/')
+        .slice(0, -1)
+        .map((_, i, p) => p.slice(0, i + 1).join('/')),
+    ),
+  );
+  for (const ruta of aqui)
+    if (!deEsteNavegador(ruta) && (carpetas.has(ruta) || [...quedan].some((q) => ruta.startsWith(`${q}/`))))
+      await almacen.borrar(ruta);
   await escribirTodo(almacen, delPaquete);
-  const quedan = new Set(delPaquete.map(([ruta]) => ruta));
-  for (const { ruta } of await listarTodo(almacen, ''))
-    if (!deEsteNavegador(ruta) && !quedan.has(ruta)) await almacen.borrar(ruta);
+  for (const ruta of aqui) if (!deEsteNavegador(ruta) && !quedan.has(ruta)) await almacen.borrar(ruta);
 }
 
 /** El manifest de un espacio nuevo con lo importado: id nuevo y el nombre con «(importado)». */
