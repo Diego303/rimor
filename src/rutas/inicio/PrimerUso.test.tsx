@@ -47,13 +47,20 @@ describe('Bienvenida del primer uso', () => {
   it('«Abrir un espacio de ejemplo» crea el espacio «Ejemplo · gateway» y lo apunta para abrirlo', async () => {
     await montarApp('/');
     fireEvent.click(await screen.findByRole('button', { name: 'Abrir un espacio de ejemplo' }, PRIMERA_CARGA));
-    expect(await screen.findByRole('button', { name: 'Abrir «Ejemplo · gateway»' }, ESCRITURA)).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Abrir «Ejemplo · gateway»' }, PRIMERA_CARGA)).toBeTruthy();
     expect(espaciosConocidos().map((e) => e.nombre)).toContain('Ejemplo · gateway');
     const [almacen] = [...creados.values()] as AlmacenMemoria[];
     const rutas = (await listarTodo(almacen as AlmacenMemoria, '')).map((e) => e.ruta);
     expect(rutas.filter((r) => r.startsWith('elementos/'))).toHaveLength(8);
     expect(rutas).toContain('colecciones.json');
   }, 60_000);
+
+  it('si el ejemplo ya se creó, se ofrece abrir ese en vez de crear otro', async () => {
+    localStorage.setItem('rimor:espacios', JSON.stringify([{ id: 'ejemplo-1', nombre: 'Ejemplo · gateway' }]));
+    await montarApp('/');
+    expect(await screen.findByRole('button', { name: 'Abrir «Ejemplo · gateway»' }, PRIMERA_CARGA)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Abrir un espacio de ejemplo' })).toBeNull();
+  }, 30_000);
 
   it('«Instalar Rimor» solo si el navegador lo ofrece', async () => {
     await montarApp('/');

@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-24 01:19
-**Ahora:** IN-039 · Primer uso y espacio de ejemplo · fase implementación
-**Siguiente:** IN-040 · Cierre de v0.1
-**Progreso:** F0 9/9 · v0.1 40/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 49/99
+**Última actualización:** 2026-10-24 02:11
+**Ahora:** IN-040 · Cierre de v0.1 · fase análisis y diseño
+**Siguiente:** IN-041 · Enriquecimiento de enlaces
+**Progreso:** F0 9/9 · v0.1 41/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 50/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -58,7 +58,7 @@
 | IN-036 | Importar ZIP y JSON | v0.1 | 6 | hecha | 9728e95 cb68c02 9790355 | docs/features/IN-036-importar.md |
 | IN-037 | Datos y copias | v0.1 | 6 | hecha | 0479bc1 485e5f9 9eb2973 | docs/features/IN-037-datos-copias.md |
 | IN-038 | Ajustes | v0.1 | 6 | hecha | 26f3057 fcf110c 2249ee7 | docs/features/IN-038-ajustes.md |
-| IN-039 | Primer uso y espacio de ejemplo | v0.1 | 6 | en implementación | fec4ff4 | docs/features/IN-039-primer-uso.md |
+| IN-039 | Primer uso y espacio de ejemplo | v0.1 | 6 | hecha | fec4ff4 4c0df39 | docs/features/IN-039-primer-uso.md |
 | IN-040 | Cierre de v0.1 | v0.1 | 7 | pendiente | — | — |
 | IN-041 | Enlace enriquecido | v0.2 | 8 | pendiente | — | — |
 | IN-042 | Diff y parche | v0.2 | 8 | pendiente | — | — |
@@ -173,7 +173,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-24 | IN-039 | implementación | bienvenida con la señal y tres ejemplos, espacio de ejemplo generado con la captura e importado como nuevo, borrar espacios, instalar | … |
+| 2026-10-24 | IN-039 | verificación | pnpm verificar OK (1310 pruebas, 244,8 KB); revisión independiente con 8 hallazgos atendidos (borrar con cerrojo y copia previa, carpetas huérfanas) | … |
+| 2026-10-24 | IN-039 | implementación | bienvenida con la señal y tres ejemplos, espacio de ejemplo generado con la captura e importado como nuevo, borrar espacios, instalar | 4c0df39 |
 | 2026-10-24 | IN-039 | análisis y diseño | bienvenida con la señal de primer uso y tres ejemplos, espacio de ejemplo generado con la captura real e importado como espacio nuevo, borrar espacios, instalar si el navegador lo ofrece | fec4ff4 |
 | 2026-10-24 | IN-038 | verificación | pnpm verificar OK (1300 pruebas, 244,1 KB); revisión independiente con 9 hallazgos atendidos | 2249ee7 |
 | 2026-10-24 | IN-038 | implementación | ajustes normalizados, opciones de captura en la captura y la vista previa (también el Worker), tema e idioma del espacio, pantalla de tarjetas | fcf110c |

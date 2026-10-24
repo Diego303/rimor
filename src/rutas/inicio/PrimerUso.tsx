@@ -7,8 +7,13 @@
 import { useState } from 'react';
 import { crearAlmacenOpfs } from '../../almacen/opfs/cliente';
 import { useCompositor } from '../../captura/compositor';
-import { crearEspacioDeEjemplo } from '../../datos/ejemplo/crear';
-import { cambiarDeEspacio, recordarEspacioConocido, useEspacioOpcional } from '../../espacio/Espacio';
+import {
+  borrarCarpetaOpfs,
+  cambiarDeEspacio,
+  espaciosConocidos,
+  recordarEspacioConocido,
+  useEspacioOpcional,
+} from '../../espacio/Espacio';
 import { instalar, useInstalacion } from '../../espacio/instalar';
 import { useEspacio } from '../../estado/espacio';
 import { useT } from '../../i18n/useT';
@@ -47,7 +52,11 @@ export function PrimerUso() {
   const lectores = useLectoresOpcional();
   const soloLectura = useEspacio((s) => s.soloLectura);
   const instalable = useInstalacion((s) => s.aviso !== null);
-  const [ejemplo, setEjemplo] = useState<EstadoEjemplo>({ fase: 'nada' });
+  // Si ya se creó (en otra visita), se ofrece abrir ese en vez de crear otro igual.
+  const [ejemplo, setEjemplo] = useState<EstadoEjemplo>(() => {
+    const ya = espaciosConocidos().find((e) => e.nombre === t('pantallas.inicio.ejemploNombre'));
+    return ya ? { fase: 'listo', ...ya } : { fase: 'nada' };
+  });
   // Un espacio nuevo necesita OPFS: en memoria no se ofrece.
   const conEjemplo = Boolean(espacio && lectores && !espacio.enMemoria);
 
@@ -55,9 +64,13 @@ export function PrimerUso() {
     if (!espacio || !lectores) return;
     setEjemplo({ fase: 'creando' });
     try {
+      // El generador y la importación se cargan al pedirlo: no pesan en Inicio.
+      const { crearEspacioDeEjemplo } = await import('../../datos/ejemplo/crear');
       const creado = await crearEspacioDeEjemplo(espacio, lectores.registro, {
         crearAlmacen: crearAlmacenOpfs,
         alCrearEspacio: recordarEspacioConocido,
+        alFallarEspacio: borrarCarpetaOpfs,
+        nombre: t('pantallas.inicio.ejemploNombre'),
       });
       setEjemplo({ fase: 'listo', ...creado });
     } catch {

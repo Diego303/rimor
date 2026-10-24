@@ -6,6 +6,8 @@ import { RouterProvider } from '@tanstack/react-router';
 import { lazy, Suspense, useState } from 'react';
 import { ProveedorBusqueda } from '../busqueda/Busqueda';
 import { ProveedorEspacio } from '../espacio/Espacio';
+// El aviso de instalar llega una vez y pronto: se escucha desde el arranque, no desde una pantalla diferida.
+import '../espacio/instalar';
 import { iniciarIdioma } from '../i18n/iniciar';
 import { ProveedorLectores } from '../lectores/Lectores';
 import { crearRouter } from '../rutas/rutas';

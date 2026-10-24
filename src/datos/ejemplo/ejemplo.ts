@@ -54,11 +54,15 @@ const CAPTURAS: (Omit<EntradaCaptura, 'origen'> & { minutos: number })[] = [
  * El ZIP del espacio de ejemplo. Con el mismo `ahora` (y los mismos lectores), el mismo contenido: las fechas salen
  * de él y los ids, de un contador.
  */
-export async function zipDeEjemplo(registro: Registro, ahora: Date = new Date()): Promise<Uint8Array> {
+export async function zipDeEjemplo(
+  registro: Registro,
+  ahora: Date = new Date(),
+  nombre: string = NOMBRE_EJEMPLO,
+): Promise<Uint8Array> {
   const almacen = new AlmacenMemoria();
   // Empieza un día antes de ahora: lo capturado queda «ayer».
   const inicio = new Date(ahora.getTime() - 86_400_000);
-  const manifest = crearManifest(NOMBRE_EJEMPLO, inicio, '01JAB3K9Q2X8M5N7P0R4EJEMP0');
+  const manifest = crearManifest(nombre, inicio, '01JAB3K9Q2X8M5N7P0R4EJEMP0');
   await escribirTexto(almacen, 'manifest.json', `${JSON.stringify(manifest, null, 2)}\n`);
   const repositorio = new Repositorio(almacen);
   let n = 0;

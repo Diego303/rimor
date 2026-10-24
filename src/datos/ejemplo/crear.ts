@@ -11,6 +11,10 @@ import { planear } from '../importar/plan';
 export interface OpcionesEjemplo {
   crearAlmacen: (id: string) => Promise<Almacen & { cerrar?: () => void; esperar?: () => Promise<void> }>;
   alCrearEspacio?: (id: string, nombre: string) => void;
+  /** Si falla a medias, se borra lo escrito. */
+  alFallarEspacio?: (id: string) => Promise<void>;
+  /** El nombre del espacio (en el idioma de la interfaz). */
+  nombre?: string;
 }
 
 /** Crea el espacio de ejemplo y devuelve su id y su nombre. */
@@ -20,7 +24,8 @@ export async function crearEspacioDeEjemplo(
   o: OpcionesEjemplo,
 ): Promise<{ id: string; nombre: string }> {
   const { NOMBRE_EJEMPLO, zipDeEjemplo } = await import('./ejemplo');
-  const paquete = await leerPaquete(await zipDeEjemplo(registro), 'ejemplo.zip');
+  const nombre = o.nombre ?? NOMBRE_EJEMPLO;
+  const paquete = await leerPaquete(await zipDeEjemplo(registro, new Date(), nombre), 'ejemplo.zip');
   const plan = await planear(paquete.archivos, paquete.manifest, {
     elementos: [],
     entidades: [],
@@ -29,8 +34,9 @@ export async function crearEspacioDeEjemplo(
   const hecho = await importar(espacio, { paquete, plan }, 'nuevo', {
     copiaPrevia: async () => true,
     crearAlmacen: o.crearAlmacen,
-    nombre: NOMBRE_EJEMPLO,
+    nombre,
     ...(o.alCrearEspacio ? { alCrearEspacio: o.alCrearEspacio } : {}),
+    ...(o.alFallarEspacio ? { alFallarEspacio: o.alFallarEspacio } : {}),
   });
   if (hecho.modo !== 'nuevo') throw new Error('ejemplo.noCreado');
   return { id: hecho.id, nombre: hecho.nombre };

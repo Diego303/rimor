@@ -166,7 +166,8 @@
       "ejemploAbrir": "Abrir «{nombre}»",
       "ejemploListo": "Listo. Para volver a este espacio, en Datos y copias.",
       "ejemploFallo": "No se pudo crear el ejemplo.",
-      "instalar": "Instalar Rimor"
+      "instalar": "Instalar Rimor",
+      "ejemploNombre": "Ejemplo · gateway"
     },
     "elemento": {
       "titulo": "Elemento",
@@ -496,9 +497,10 @@
       "abrirEspacio": "Abrir",
       "borrarEspacio": "Borrar",
       "borrarEspacioTitulo": "¿Borrar «{nombre}»?",
-      "borrarEspacioTexto": "Se borran sus archivos de este navegador para siempre. Si quieres guardarlo, ábrelo antes y exporta su ZIP.",
+      "borrarEspacioTexto": "Primero se descarga su ZIP (si no lo desactivaste en el recordatorio de copia) y después se borran sus archivos de este navegador para siempre.",
       "espacioBorrado": "Borrado «{nombre}»",
-      "espacioNoBorrado": "No se pudo borrar «{nombre}»: puede que otra pestaña lo tenga abierto."
+      "espacioNoBorrado": "No se pudo borrar «{nombre}»: puede que esté abierto en otra pestaña, o no se pudo descargar su copia.",
+      "motivoBorrar": "antes de borrar"
     },
     "ajustes": {
       "titulo": "Ajustes"

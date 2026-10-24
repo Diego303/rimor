@@ -99,25 +99,54 @@ export function olvidarEspacioConocido(id: string): void {
   }
 }
 
-/** Borra la carpeta de un espacio en OPFS (en las pruebas, otra). */
-async function borrarCarpetaOpfs(id: string): Promise<void> {
-  const raiz = await navigator.storage.getDirectory();
-  const espacios = await raiz.getDirectoryHandle('espacios');
-  await espacios.removeEntry(id, { recursive: true });
+/** Borra la carpeta de un espacio en OPFS (en las pruebas, otra). Si ya no estaba, no es un error. */
+export async function borrarCarpetaOpfs(id: string): Promise<void> {
+  try {
+    const raiz = await navigator.storage.getDirectory();
+    const espacios = await raiz.getDirectoryHandle('espacios');
+    await espacios.removeEntry(id, { recursive: true });
+  } catch (e) {
+    if (!(e instanceof DOMException && e.name === 'NotFoundError')) throw e;
+  }
+}
+
+export interface OpcionesBorrarEspacio {
+  /** El espacio abierto en esta pestaña: no se borra. */
+  abierto: string;
+  borrarCarpeta?: (id: string) => Promise<void>;
+  cerrojos?: Cerrojos;
+  /** La copia previa (el ZIP del espacio, §13.7): si falla, no se borra nada. */
+  copiaPrevia?: (id: string) => Promise<void>;
 }
 
 /**
- * Borra un espacio que no es el abierto (IN-039: el de ejemplo, o uno importado): sus archivos, su caché y su sitio
- * en la lista. Lanza si no se puede (otra pestaña lo tiene abierto); lo de la lista se quita solo si se borró.
+ * Borra un espacio que no es el abierto (IN-039: el de ejemplo, o uno importado): primero su copia, después sus
+ * archivos, su caché y su sitio en la lista. Con el cerrojo de escritura del espacio cogido: si otra pestaña lo
+ * tiene abierto (y lo escribe), no se borra (`espacio.enUso`).
  */
 export async function borrarEspacio(
   id: string,
-  { abierto, borrarCarpeta = borrarCarpetaOpfs }: { abierto: string; borrarCarpeta?: (id: string) => Promise<void> },
+  {
+    abierto,
+    borrarCarpeta = borrarCarpetaOpfs,
+    cerrojos = (globalThis.navigator?.locks as unknown as Cerrojos | undefined) ?? cerrojoUnico,
+    copiaPrevia,
+  }: OpcionesBorrarEspacio,
 ): Promise<void> {
   if (id === abierto) throw new Error('espacio.borrarAbierto');
-  await borrarCarpeta(id);
+  await cerrojos.request(`rimor:${id}`, { ifAvailable: true }, async (cerrojo) => {
+    if (!cerrojo) throw new Error('espacio.enUso');
+    await copiaPrevia?.(id);
+    await borrarCarpeta(id);
+  });
   await CacheEspacio.borrar(id).catch(() => undefined);
   olvidarEspacioConocido(id);
+  // Si era el que se abre por defecto, la próxima vez se abre el de siempre (no uno vacío con su id).
+  try {
+    if (globalThis.localStorage?.getItem(CLAVE_ESPACIO) === id) globalThis.localStorage.removeItem(CLAVE_ESPACIO);
+  } catch {
+    // Sin localStorage no se recordaba.
+  }
 }
 
 /** Abre otro espacio: lo recuerda y recarga la app en él (un espacio nuevo importado, IN-036). */

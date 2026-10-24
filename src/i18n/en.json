@@ -166,7 +166,8 @@
       "ejemploAbrir": "Open “{nombre}”",
       "ejemploListo": "Done. To come back to this space, go to Data and backups.",
       "ejemploFallo": "The example could not be created.",
-      "instalar": "Install Rimor"
+      "instalar": "Install Rimor",
+      "ejemploNombre": "Example · gateway"
     },
     "elemento": {
       "titulo": "Item",
@@ -496,9 +497,10 @@
       "abrirEspacio": "Open",
       "borrarEspacio": "Delete",
       "borrarEspacioTitulo": "Delete “{nombre}”?",
-      "borrarEspacioTexto": "Its files are deleted from this browser for good. To keep it, open it first and export its ZIP.",
+      "borrarEspacioTexto": "Its ZIP is downloaded first (unless you turned it off in the backup reminder) and then its files are deleted from this browser for good.",
       "espacioBorrado": "Deleted “{nombre}”",
-      "espacioNoBorrado": "“{nombre}” could not be deleted: another tab may have it open."
+      "espacioNoBorrado": "“{nombre}” could not be deleted: it may be open in another tab, or its copy could not be downloaded.",
+      "motivoBorrar": "before deleting"
     },
     "ajustes": {
       "titulo": "Settings"

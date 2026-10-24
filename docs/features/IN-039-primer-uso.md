@@ -75,3 +75,30 @@ Cubre las tres tareas. Reutiliza la captura, la exportación y la importación e
 | La traza y el prompt del ejemplo están escritos para él (no son los fixtures) | Los fixtures llevan rutas de una máquina concreta; el ejemplo se reparte a todo el mundo. |
 | Lo capturado del ejemplo queda «ayer» | Así el feed del espacio de ejemplo tiene su día y el de hoy queda libre para probar. |
 
+## Verificación
+
+**`pnpm verificar`**: en verde, 99 archivos y 1310 pruebas; carga inicial 244,8 KB de 300 (el generador, sus fixtures y la importación se cargan al pedir el ejemplo).
+
+**Criterios de aceptación:** el ejemplo se importa (`ejemplo.test.ts`, `PrimerUso.test.tsx`) y se puede borrar (`espacios.test.ts`, `Datos.tsx`).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| Bienvenida con la señal, dos frases y tres ejemplos | `PrimerUso.test.tsx` e `Inicio.test.tsx` |
+| Espacio de ejemplo como ZIP empaquetado, importable como espacio nuevo y borrable | `ejemplo.test.ts` (valida, contenido, determinista, fallo a medias), `PrimerUso.test.tsx` (crear, no repetir) y `espacios.test.ts` (borrar con cerrojo y copia previa) |
+| Persistencia e instalar la PWA | La tarjeta de persistencia (IN-007) sigue en Inicio; `PrimerUso.test.tsx` («Instalar Rimor» solo si llega el aviso) |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | Se podía borrar un espacio abierto en otra pestaña | Se borra con su cerrojo de escritura cogido; si no está libre, `espacio.enUso`; y deja de ser el que se abre por defecto. `espacios.test.ts` |
+| 2 | Borrar un espacio no hacía antes el ZIP automático (§13.7) | Primero se descarga su ZIP (salvo que se desactive el ZIP previo); si falla, no se borra. `espacios.test.ts` |
+| 3 | El aviso de instalar se escuchaba desde una pantalla diferida | Se escucha desde el arranque (`App.tsx`) |
+| 4 | Un espacio nuevo que fallaba a medias dejaba una carpeta huérfana | Se borra lo escrito y no se apunta. `ejemplo.test.ts` |
+| 5 | Se podía crear el ejemplo dos veces | Si ya existe, se ofrece abrirlo. `PrimerUso.test.tsx` |
+| 6 | Una carpeta que ya no estaba hacía fallar el borrado | `NotFoundError` cuenta como borrado |
+| 7 | La importación entraba en la carga de Inicio | `crear.ts` se carga al pedir el ejemplo (comprobado en `dist/`) |
+| 8 | El nombre del ejemplo solo en español | Del idioma de la interfaz («Example · gateway») |
+

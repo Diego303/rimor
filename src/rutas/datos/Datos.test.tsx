@@ -47,6 +47,8 @@ describe('Datos y copias: exportar', () => {
   it('«Exportar ZIP» descarga el ZIP, avisa con su nombre y apunta la copia (el piloto pasa a verde)', async () => {
     const { router, espacio } = await montarApp('/ajustes', [elementoFalso(1, 'hola', 'texto')]);
     await act(() => router.navigate({ to: '/datos' }));
+    // El cambio de guardar el elemento ya contado (si llegara durante la exportación, seguiría contando: no está en ella).
+    await waitFor(() => expect(espacio.estado().cambiosDesdeCopia).toBe(1), ESCRITURA);
     fireEvent.click(await screen.findByRole('button', { name: 'Exportar ZIP' }, PRIMERA_CARGA));
     await waitFor(() => expect(descargas).toHaveLength(1), ESCRITURA);
     expect(descargas[0]?.nombre).toMatch(/^rimor-trabajo-\d{4}-\d{2}-\d{2}\.zip$/);

@@ -48,6 +48,8 @@ export interface OpcionesImportar {
   reloj?: () => Date;
   /** El nombre del espacio nuevo (por defecto, el del paquete con «(importado)»). */
   nombre?: string;
+  /** Si escribir el espacio nuevo falla a medias, se borra lo escrito (no queda una carpeta huérfana). */
+  alFallarEspacio?: (id: string) => Promise<void>;
   /** Un espacio nuevo ya escrito: se apunta entre los conocidos. */
   alCrearEspacio?: (id: string, nombre: string) => void;
 }
@@ -86,9 +88,12 @@ export async function importar(
       const manifest: Manifest = manifestNuevo(paquete.manifest, nombre, (o.reloj ?? (() => new Date()))(), id);
       await enEspacioNuevo(almacen, paquete, manifest);
       await almacen.esperar?.();
-    } finally {
+    } catch (e) {
       almacen.cerrar?.();
+      await o.alFallarEspacio?.(id).catch(() => undefined);
+      throw e;
     }
+    almacen.cerrar?.();
     // Queda apuntado aunque no se abra ahora: desde Datos y copias se puede abrir (y volver a este).
     o.alCrearEspacio?.(id, nombre);
     return { modo, id, nombre };

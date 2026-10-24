@@ -1,5 +1,5 @@
 import { leerElemento } from '@rimor/formato';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { REGISTRO } from '../../lectores/registro';
 import { leerPaquete } from '../importar/paquete';
 import { NOMBRE_EJEMPLO, zipDeEjemplo } from './ejemplo';
@@ -30,5 +30,27 @@ describe('espacio de ejemplo', () => {
     const b = await leerPaquete(await zipDeEjemplo(REGISTRO, AHORA), 'b.zip');
     expect([...b.archivos.keys()]).toEqual([...a.archivos.keys()]);
     for (const [r, d] of a.archivos) expect(b.archivos.get(r), r).toEqual(d);
+  });
+});
+
+describe('crear el espacio de ejemplo', () => {
+  it('si escribirlo falla a medias, se borra lo escrito y no se apunta', async () => {
+    const { crearEspacioDeEjemplo } = await import('./crear');
+    const { AlmacenMemoria } = await import('../../almacen/memoria');
+    const borrado = vi.fn(async () => undefined);
+    const apuntado = vi.fn();
+    const roto = Object.assign(new AlmacenMemoria(), {
+      escribir: async () => Promise.reject(new Error('cuota')),
+    });
+    const espacio = {} as never;
+    await expect(
+      crearEspacioDeEjemplo(espacio, REGISTRO, {
+        crearAlmacen: async () => roto,
+        alFallarEspacio: borrado,
+        alCrearEspacio: apuntado,
+      }),
+    ).rejects.toThrow('cuota');
+    expect(borrado).toHaveBeenCalledOnce();
+    expect(apuntado).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,8 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
+import { crearAlmacenOpfs } from '../../almacen/opfs/cliente';
 import { AjustesRecordatorio } from '../../datos/AjustesRecordatorio';
+import { descargarCopiaDeEspacio } from '../../datos/copiaDeEspacio';
 import { cancelarExportacion, useExportacion } from '../../datos/exportacion';
 import { useArchivoImportar } from '../../datos/importar/importacion';
 import { useExportar } from '../../datos/useExportar';
@@ -107,16 +109,17 @@ function AccionesCopia() {
 }
 
 /**
- * Datos y copias: de momento, cuánto ocupa, si está protegido y la última copia (IN-007), y el espacio con su
- * papelera (IN-027); el resto, IN-037.
+ * Datos y copias: cuánto ocupa, si está protegido y la última copia, con exportar e importar (IN-007, IN-035,
+ * IN-036); los plegados de otras exportaciones, el recordatorio, los espacios y la papelera, y qué contiene el ZIP.
  */
 export function Datos() {
   const { t } = useT();
   const navegar = useNavigate();
   const nombre = useEspacio((s) => s.nombre);
-  const enMemoria = useEspacioOpcional()?.enMemoria ?? false;
+  const espacio = useEspacioOpcional();
+  const enMemoria = espacio?.enMemoria ?? false;
   const { elementos, papelera } = useRecuentos();
-  const actual = useEspacioOpcional()?.id;
+  const actual = espacio?.id;
   // Los demás espacios de este navegador (un espacio nuevo importado): se pueden abrir.
   const [otros, setOtros] = useState(() => espaciosConocidos().filter((e) => e.id !== actual));
   const [aBorrar, setABorrar] = useState<{ id: string; nombre: string } | null>(null);
@@ -126,7 +129,17 @@ export function Datos() {
     setABorrar(null);
     if (!e || !actual) return;
     try {
-      await borrarEspacio(e.id, { abierto: actual });
+      // Con el ZIP previo en los ajustes (por defecto), primero se descarga su copia.
+      const conCopia = espacio?.ajustes().copias.zipPrevio ?? true;
+      await borrarEspacio(e.id, {
+        abierto: actual,
+        ...(conCopia
+          ? {
+              copiaPrevia: (id: string) =>
+                descargarCopiaDeEspacio(id, e.nombre, t('pantallas.datos.motivoBorrar'), crearAlmacenOpfs),
+            }
+          : {}),
+      });
       setOtros((lista) => lista.filter((x) => x.id !== e.id));
       avisos?.avisar(t('pantallas.datos.espacioBorrado', { nombre: e.nombre }));
     } catch {
