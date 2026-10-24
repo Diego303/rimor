@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { REGISTRO } from '../lectores/registro';
 import { type Ejemplo, evaluar, formatear } from './deteccion';
 
-/** Acierto mínimo del corpus; sube según entran lectores (IN-040 lo deja en 0,9). */
-const ACIERTO_MINIMO = 0.85;
+/** Acierto mínimo del corpus, en total y en cada tipo (IN-040, cierre de v0.1). */
+const ACIERTO_MINIMO = 0.9;
 /** Ejemplos mínimos por tipo (IN-013). */
 const EJEMPLOS_POR_TIPO = 25;
 
@@ -50,5 +50,7 @@ describe('corpus de detección', () => {
     // `pnpm deteccion` activa el informe: la matriz de confusión y el acierto por tipo.
     if (process.env.DETECCION_INFORME) console.log(`\nMatriz de detección\n\n${formatear(ev)}\n`);
     expect(ev.acierto, formatear(ev)).toBeGreaterThanOrEqual(ACIERTO_MINIMO);
+    for (const [tipo, acierto] of Object.entries(ev.aciertoPorTipo))
+      expect(acierto, `${tipo}\n${formatear(ev)}`).toBeGreaterThanOrEqual(ACIERTO_MINIMO);
   });
 });

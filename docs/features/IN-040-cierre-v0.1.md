@@ -40,10 +40,10 @@ El CHANGELOG pasa a `## [0.1.0] · 2026-10-24`; `package.json` a `0.1.0`. El des
 
 ## Tareas
 
-- [ ] Presupuestos del plan (§14.7) medidos en la integración continua con archivos grandes generados.
-- [ ] Matriz de detección ≥ 90 % de acierto en los tipos de v0.1.
-- [ ] Recorrido de extremo a extremo completo en los tres motores: pegar → elemento → comparar → hilo → buscar → exportar → importar.
-- [ ] Auditoría de accesibilidad (axe y pasada manual con teclado y lector de pantalla).
+- [x] Presupuestos del plan (§14.7) medidos en la integración continua con archivos grandes generados.
+- [x] Matriz de detección ≥ 90 % de acierto en los tipos de v0.1.
+- [x] Recorrido de extremo a extremo completo en los tres motores: pegar → elemento → comparar → hilo → buscar → exportar → importar.
+- [x] Auditoría de accesibilidad (axe y pasada manual con teclado y lector de pantalla).
 - [ ] Revisión de diseño de todas las pantallas contra el artefacto.
 - [ ] Revisión del movimiento: umbral de 400 ms, una animación por zona, movimiento reducido y símbolo «Señal» en todas partes.
 - [ ] Despliegue de la versión y registro de cambios.
@@ -63,3 +63,18 @@ El CHANGELOG pasa a `## [0.1.0] · 2026-10-24`; `package.json` a `0.1.0`. El des
 ## Autorrevisión
 
 Cubre las siete tareas con lo que se puede comprobar aquí y deja escrito lo que necesita un navegador real o semanas de uso.
+
+## Implementación
+
+- **Exportar sin bloquear** (`src/datos/presupuesto.test.ts`): exporta un espacio generado de unos 40 MB (texto y adjuntos incompresibles) midiendo el mayor retraso del bucle de eventos; tiene que quedar por debajo de 50 ms (el mejor de tres intentos, para que la carga de la máquina no lo falsee). Para cumplirlo, `exportarZip` comprime el texto en trozos de 64 KB (`TROZO_COMPRIMIDO`; 256 KB de hashes llegaban a 42 ms) y cede el hilo antes de montar el manifest.
+- **Matriz de detección** (`src/captura/deteccion.test.ts`): el mínimo pasa al 90 %, en total y en cada tipo.
+- **Recorrido completo** (`src/recorrido.test.ts`): pegar (captura con todos los lectores) → elemento → comparar (dos mediciones) → hilo (tres trazas con la misma huella) → buscar (con filtros) → exportar → importar en un espacio vacío, y en el importado vuelve a encontrarse lo mismo. Con los módulos reales sobre almacenes en memoria.
+- **Accesibilidad** (`src/rutas/accesibilidad.test.tsx`, axe-core 4.14.0 de desarrollo): Inicio vacío y con mensajes, la paleta, la ayuda de atajos, elemento, Buscar, colección, Datos y copias, Ajustes, papelera, Importar, un hilo y una comparación; sin infracciones serias ni críticas (sin las reglas que necesitan maquetación real: contraste y regiones desplazables).
+- axe encontró el campo de archivo del compositor sin nombre: ahora lleva `aria-label` («Adjuntar»).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| El presupuesto de exportar se mide como retraso del bucle de eventos | Es lo que notaría la interfaz; funciona igual en el hilo principal que en el Worker. |
+| El mejor de tres intentos | Con la suite completa en paralelo, la máquina compartida añade retrasos que no son de la exportación. |

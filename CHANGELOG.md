@@ -48,3 +48,4 @@ Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepacha
 ### Cambiado
 ### Corregido
 - Los diálogos cerrados (la ayuda de atajos, los de estado, tipo y colección) ya no quedan a la vista como una tarjeta vacía (IN-033).
+- Exportar un espacio grande ya no deja la interfaz sin responder mientras comprime el texto, y el botón de adjuntar del compositor tiene nombre para los lectores de pantalla (IN-040).

@@ -365,6 +365,7 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
             type="file"
             multiple
             hidden
+            aria-label={t('compositor.adjuntar')}
             onChange={(e) => {
               adjuntar([...(e.target.files ?? [])]);
               e.target.value = '';

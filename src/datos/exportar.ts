@@ -11,8 +11,13 @@ import { listarTodo } from '../almacen/contrato';
 export const RUTA_MANIFEST_EXPORTADO = 'manifest.json';
 /** Los adjuntos que caben en el JSON único (en base64). */
 export const MAX_ADJUNTO_JSON = 1024 * 1024;
-/** Lo que se empuja al ZIP de una vez, cediendo el hilo entre trozos (F0-2). */
+/** Lo que se empuja al ZIP de una vez, cediendo el hilo entre trozos (F0-2): tal cual, 256 KB. */
 export const TROZO = 256 * 1024;
+/**
+ * Lo que se comprime de una vez: comprimir 256 KB de texto que se comprime mal (los hashes del manifest) llega a
+ * pasar de 40 ms; 64 KB se queda en unos 10 (IN-040).
+ */
+export const TROZO_COMPRIMIDO = 64 * 1024;
 /** El texto se comprime; los adjuntos van tal cual (a menudo ya comprimidos). */
 const NIVEL_TEXTO = 6;
 
@@ -194,8 +199,9 @@ export async function exportarZip(almacen: AlmacenLectura, o: OpcionesExportar):
     zip.add(entrada);
     if (!datos.length) entrada.push(datos, true);
     if (error) throw error;
-    for (let i = 0; i < datos.length; i += TROZO) {
-      entrada.push(datos.subarray(i, i + TROZO), i + TROZO >= datos.length);
+    const trozo = comprimir ? TROZO_COMPRIMIDO : TROZO;
+    for (let i = 0; i < datos.length; i += trozo) {
+      entrada.push(datos.subarray(i, i + trozo), i + trozo >= datos.length);
       if (error) throw error;
       await ceder();
       comprobar(o.senal);
@@ -211,6 +217,7 @@ export async function exportarZip(almacen: AlmacenLectura, o: OpcionesExportar):
     hechos += datos.length;
     o.alProgreso?.({ hechos: Math.min(hechos, total), total });
   }
+  await ceder();
   const manifest = manifestExportado(base, hashes, o);
   await anadir(RUTA_MANIFEST_EXPORTADO, new TextEncoder().encode(aTexto(manifest)), true);
   zip.end();
