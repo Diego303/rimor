@@ -58,7 +58,14 @@
     "copiaAlDia": "Backup up to date",
     "copiaPendiente": "Backup due",
     "espacioSinNombre": "Workspace",
-    "ultimaCopia": "Last backup: {cuando}",
+    "ultimaCopia": {
+      "hoy": "Last backup today",
+      "ayer": "Last backup yesterday",
+      "hace": {
+        "one": "Last backup {n} day ago",
+        "other": "Last backup {n} days ago"
+      }
+    },
     "sinCopia": "No backup yet"
   },
   "atajos": {
@@ -245,6 +252,8 @@
         "version": "v{n}",
         "edicion": "v{n} · edit",
         "actual": "current",
+        "versionActual": "v{n} · current",
+        "verVersion": "Version shown",
         "verCambios": "See changes",
         "restaurar": "Restore this version",
         "restaurarTitulo": "Restore {version}?",
@@ -459,7 +468,10 @@
         "one": "{n} item",
         "other": "{n} items"
       },
-      "lista": "Items in the collection",
+      "desde": "{meta} · since {fecha}",
+      "elementos": "Items",
+      "organizar": "Reorder or delete",
+      "organizarTexto": "Its place among the collections in the rail.",
       "subir": "Move up",
       "bajar": "Move down",
       "borrar": "Delete the collection",
@@ -596,6 +608,10 @@
     },
     "alternativa": "Or {tipo}? Type /{palabra} at the start",
     "buscar": "Search “{texto}”. Enter to see it here.",
+    "buscarConRecuento": {
+      "one": "Search “{texto}”: {n} result. Enter to see it here.",
+      "other": "Search “{texto}”: {n} results. Enter to see them here."
+    },
     "quitarAdjunto": "Remove {nombre}",
     "pista": {
       "coleccion": "collection",
@@ -682,6 +698,8 @@
       "one": "See the conflict",
       "other": "See the {n} conflicts"
     },
+    "conflictoTitulo": "{ref}, in this space",
+    "cerrarConflicto": "Close",
     "conflictoAqui": "Here {aqui} · in the file {paquete} → the one here stays; the other goes to history",
     "conflictoPaquete": "Here {aqui} · in the file {paquete} → the file’s stays; the one here goes to history",
     "verReasignadas": {

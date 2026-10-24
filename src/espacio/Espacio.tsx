@@ -191,7 +191,7 @@ async function dependenciasDelNavegador(): Promise<DependenciasProveedor> {
   }
 }
 
-type Apertura =
+export type Apertura =
   | { estado: 'abriendo'; fase: FaseApertura }
   | { estado: 'listo'; espacio: EspacioEnUso }
   | { estado: 'fallo'; codigo: string };
@@ -308,8 +308,11 @@ const TEXTO_FALLO = {
   'espacio.esquemaNuevo': 'espacio.fallo.esquemaNuevo',
 } as const;
 
-/** Pantalla de arranque: nada antes de 400 ms; después, «arranque» una vez y, si sigue abriendo, «cargando». */
-function Arranque({
+/**
+ * Pantalla de arranque: nada antes de 400 ms; después, «arranque» una vez y, si sigue abriendo, «cargando» (o
+ * «indexando», con el progreso, si está reconstruyendo la caché y el índice: tabla de IN-090).
+ */
+export function Arranque({
   apertura,
   alReintentar,
 }: {
@@ -344,7 +347,7 @@ function Arranque({
   return (
     <div className="arranque">
       {larga ? (
-        <Senal estado="cargando" etiqueta={texto} tamano={32} />
+        <Senal estado={apertura.fase.fase === 'indexando' ? 'indexando' : 'cargando'} etiqueta={texto} tamano={32} />
       ) : (
         <Senal estado="arranque" veces={1} etiqueta={texto} tamano={48} textoOculto />
       )}

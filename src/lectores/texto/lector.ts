@@ -118,7 +118,7 @@ export const lectorTexto: Lector<DatosTexto> = {
       return {
         texto: [guardado, { t: 'texto', v: ` ${t('coleccion', { nombre: coleccion })}` }],
         acciones: [
-          { id: `coleccion:${coleccion}`, etiqueta: t('siColeccion', { nombre: coleccion }), principal: true },
+          { id: `coleccion:${coleccion}`, etiqueta: t('siColeccion', { nombre: coleccion }) },
           { id: 'no', etiqueta: t('no') },
         ],
       };

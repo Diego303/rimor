@@ -98,6 +98,13 @@ describe('Importar', () => {
     expect(cifras).toEqual(['1nuevos', '1idénticos', '0actualizados', '1en conflicto']);
     fireEvent.click(screen.getByText('Ver el conflicto'));
     expect(screen.getByText(/se queda la de aquí; la otra, al historial/)).toBeTruthy();
+    // La ref del conflicto se puede pulsar (como `refb` en `SC.importar`): enseña el de aquí sin salir de Importar.
+    const ref = document.querySelector('.kv dt button.ref') as HTMLElement;
+    fireEvent.click(ref);
+    const visto = screen.getByRole('heading', { name: `${ref.textContent}, en este espacio` }).closest('dialog');
+    expect(visto?.querySelector('.tarjeta-elemento')).toBeTruthy();
+    fireEvent.click(within(visto as HTMLElement).getByRole('button', { name: 'Cerrar' }));
+    expect(screen.getByRole('button', { name: 'Importar' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: /Fusionar/ })).toHaveProperty('checked', true);
     fireEvent.click(screen.getByRole('button', { name: 'Importar' }));
     await screen.findByText(/^Importado: 1 nuevos, 0 actualizados, 1 conflictos resueltos/, {}, ESCRITURA);

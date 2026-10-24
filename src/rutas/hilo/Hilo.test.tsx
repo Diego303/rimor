@@ -41,7 +41,7 @@ describe('Hilo', () => {
     expect(screen.getByText('Hilo', { selector: '.kchip' })).toBeTruthy();
     expect(screen.getByText('abierto', { selector: '.st' })).toBeTruthy();
     expect(document.querySelector('.ah .meta')?.textContent).toBe('2 elementos · desde el 2 oct');
-    expect([...document.querySelectorAll('.mensaje-hilo .tt')].map((e) => e.textContent)).toEqual([
+    expect([...document.querySelectorAll('.feed .msg .tt')].map((e) => e.textContent)).toEqual([
       'Primer timeout',
       'Segundo timeout',
     ]);
@@ -55,7 +55,13 @@ describe('Hilo', () => {
     fireEvent.click(dialogo.getByRole('button', { name: 'Marcar resuelto' }));
     await waitFor(() => expect(hiloDe(hilo, espacio.entidades)?.estado).toBe('resuelto'), ESCRITURA);
     expect(await screen.findByText('Así lo resolviste', {}, ESCRITURA)).toBeTruthy();
-    expect(screen.getByText('Subí el timeout de lectura a 60 s', { selector: '.gap span' })).toBeTruthy();
+    // Dentro de la tarjeta del mensaje que lo resolvió, como `SC.hilo`.
+    expect(
+      screen
+        .getByText('Subí el timeout de lectura a 60 s', { selector: '.gap span' })
+        .closest('article.msg')
+        ?.getAttribute('data-ref'),
+    ).toBe('TXT-0002');
     expect(await screen.findByText('resuelto', { selector: '.st' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Reabrir' }));
@@ -65,7 +71,7 @@ describe('Hilo', () => {
     const caja = screen.getByPlaceholderText('Responder en este hilo: una nota, un log, cómo lo resolviste…');
     act(() => useCompositor.getState().setTexto('Probado también con 1 MB y sigue bien.'));
     fireEvent.keyDown(caja, { key: 'Enter' });
-    await waitFor(() => expect(document.querySelectorAll('.mensaje-hilo')).toHaveLength(3), ESCRITURA);
+    await waitFor(() => expect(document.querySelectorAll('.feed .msg')).toHaveLength(3), ESCRITURA);
     expect(espacio.repositorio.elementos().filter((fm) => fm.hilo === hilo)).toHaveLength(3);
   }, 60_000);
 

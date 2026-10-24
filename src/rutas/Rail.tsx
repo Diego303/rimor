@@ -1,8 +1,10 @@
 /** Raíl de la carcasa (rimor-diseno.md §8.1): logotipo, secciones, colecciones y pie del espacio. */
 import { Link, useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
+import { SenalExportacion, useEsperaExportacion } from '../datos/useExportar';
 import { useEspacio } from '../estado/espacio';
-import { fmtFechaRelativa } from '../i18n/formatos';
+import { diasDesde, type Idioma } from '../i18n/formatos';
+import { traducir } from '../i18n/i18n';
 import { useT } from '../i18n/useT';
 import { Piloto } from '../ui/componentes';
 import { Icono, type NombreIcono } from '../ui/iconos/Icono';
@@ -31,10 +33,13 @@ export function PilotoCopia({
   alDia,
   ultimaCopia,
   etiqueta,
+  exportando,
 }: {
   alDia: boolean;
   ultimaCopia: string | null;
   etiqueta: string;
+  /** Una exportación en marcha (con `Ctrl+E` desde cualquier pantalla): el piloto la enseña. */
+  exportando?: boolean;
 }) {
   const antes = useRef({ alDia, ultimaCopia });
   const [animando, setAnimando] = useState(false);
@@ -51,6 +56,12 @@ export function PilotoCopia({
       setAnimando(false);
     };
   }, [alDia, ultimaCopia]);
+  if (exportando)
+    return (
+      <span className="piloto-animado">
+        <SenalExportacion tamano={12} textoOculto prioridad="secundaria" />
+      </span>
+    );
   return animando ? (
     // En una caja del tamaño del piloto: el nombre del espacio no se mueve.
     <span className="piloto-animado">
@@ -61,13 +72,21 @@ export function PilotoCopia({
   );
 }
 
+/** «Última copia hace 2 días» (como `.space` de la referencia), «hoy» o «ayer»; o «Sin copia todavía». */
+export function textoUltimaCopia(ultimaCopia: string | null, idioma: Idioma, ahora = new Date()): string {
+  const dias = ultimaCopia ? diasDesde(new Date(ultimaCopia), ahora) : Number.NaN;
+  if (!Number.isFinite(dias)) return traducir(idioma, 'rail.sinCopia');
+  if (dias <= 0) return traducir(idioma, 'rail.ultimaCopia.hoy');
+  if (dias === 1) return traducir(idioma, 'rail.ultimaCopia.ayer');
+  return traducir(idioma, 'rail.ultimaCopia.hace', { n: dias });
+}
+
 export function Rail() {
   const { t, idioma } = useT();
   const ruta = useRouterState({ select: (s) => s.location.pathname });
   const espacio = useEspacio();
-  const copia = espacio.ultimaCopia
-    ? t('rail.ultimaCopia', { cuando: fmtFechaRelativa(new Date(espacio.ultimaCopia), new Date(), idioma) })
-    : t('rail.sinCopia');
+  const exportacion = useEsperaExportacion();
+  const copia = textoUltimaCopia(espacio.ultimaCopia, idioma);
   return (
     <nav className="rail" aria-label={t('rail.etiqueta')}>
       <div className="rbrand">
@@ -101,6 +120,8 @@ export function Rail() {
             ultimaCopia={espacio.ultimaCopia}
             alDia={espacio.copiaAlDia}
             etiqueta={espacio.copiaAlDia ? t('rail.copiaAlDia') : t('rail.copiaPendiente')}
+            // En Datos y copias ya la enseña su tarjeta.
+            exportando={exportacion.visible && ruta !== '/datos'}
           />
           {espacio.nombre || t('rail.espacioSinNombre')}
         </b>

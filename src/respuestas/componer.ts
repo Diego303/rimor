@@ -54,11 +54,7 @@ function conSugerencia(r: Respuesta, el: Elemento, ctx: Contexto): Respuesta {
   return {
     texto: [...r.texto, { t: 'texto', v: ` ${traducir(ctx.idioma, 'respuestas.coleccion', { nombre: coleccion })}` }],
     acciones: [
-      {
-        id: `coleccion:${coleccion}`,
-        etiqueta: traducir(ctx.idioma, 'respuestas.siColeccion', { nombre: coleccion }),
-        principal: true,
-      },
+      { id: `coleccion:${coleccion}`, etiqueta: traducir(ctx.idioma, 'respuestas.siColeccion', { nombre: coleccion }) },
       { id: 'no', etiqueta: traducir(ctx.idioma, 'respuestas.no') },
     ],
   };

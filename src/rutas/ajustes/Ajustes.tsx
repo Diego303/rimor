@@ -1,7 +1,8 @@
 /**
  * Ajustes (APP-04): lo que se puede cambiar de Rimor, guardado al momento en `.rimor/ajustes.json` (y el tema y el
- * idioma también en este navegador, para pintar sin parpadeo). La referencia no dibuja esta pantalla: una tarjeta
- * por tema, con las piezas de las demás.
+ * idioma también en este navegador, para pintar sin parpadeo). La referencia no dibuja esta pantalla: se compone
+ * como Datos y copias, con sus piezas: tres tarjetas abiertas (guía §8.3: apariencia, detección y respuestas) y lo
+ * que se toca menos plegado (secretos, recordatorio de copia y red).
  */
 import { TIPOS_ELEMENTO } from '@rimor/formato';
 import { type ReactNode, useEffect, useState } from 'react';
@@ -13,7 +14,7 @@ import type { Idioma } from '../../i18n/formatos';
 import { elegirIdioma } from '../../i18n/iniciar';
 import { useT } from '../../i18n/useT';
 import { REGLAS_SECRETOS } from '../../seguridad/secretos/reglas';
-import { Segmentado, SelectorTema } from '../../ui/componentes';
+import { Detalles, Segmentado, SelectorTema } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { leerPreferencia } from '../../ui/tema/tema';
 import { Pantalla } from '../Pantalla';
@@ -39,6 +40,7 @@ export function Ajustes() {
   const [ajustes, setAjustes] = useState<AjustesEspacio>(() => espacio?.ajustes() ?? AJUSTES_INICIALES);
   // Al día con los ajustes de ahora (también lo que cambia la otra pestaña).
   useEffect(() => (espacio ? espacio.alCambiar(() => setAjustes(espacio.ajustes())) : undefined), [espacio]);
+  const [secretosAbiertos] = useState(() => ajustes.secretos.desactivadas.length > 0);
   const [duda, setDuda] = useState(Math.round(ajustes.deteccion.duda * 100));
   useEffect(() => setDuda(Math.round(ajustes.deteccion.duda * 100)), [ajustes.deteccion.duda]);
 
@@ -103,7 +105,33 @@ export function Ajustes() {
         <p className="xs muted">{t('ajustes.dudaTexto')}</p>
       </Seccion>
 
-      <Seccion titulo={t('ajustes.secretos')}>
+      <Seccion titulo={t('ajustes.respuestas')}>
+        <p className="xs muted">{t('ajustes.respuestasTexto')}</p>
+        <div className="ajustes-casillas">
+          {TIPOS_ELEMENTO.map((tipo) => (
+            <label key={tipo} className="chk">
+              <input
+                type="checkbox"
+                checked={!ajustes.respuestas.desactivadas.includes(tipo)}
+                disabled={!editable}
+                onChange={(e) =>
+                  guardar((a) => ({
+                    ...a,
+                    respuestas: {
+                      ...a.respuestas,
+                      desactivadas: alternar(a.respuestas.desactivadas, [tipo], e.target.checked),
+                    },
+                  }))
+                }
+              />
+              <span>{t(`tipos.${tipo}`)}</span>
+            </label>
+          ))}
+        </div>
+      </Seccion>
+
+      {/* Con alguna regla desactivada, abierto: su aviso tiene que verse. */}
+      <Detalles resumen={t('ajustes.secretos')} {...(secretosAbiertos ? { abierto: true } : {})}>
         <p className="xs muted">{t('ajustes.secretosTexto')}</p>
         <div className="ajustes-casillas">
           {TIPOS_SECRETO.map((tipo) => {
@@ -134,40 +162,15 @@ export function Ajustes() {
         <p className="xs warn-texto" role="status">
           {ajustes.secretos.desactivadas.length > 0 ? t('ajustes.secretosAviso') : ''}
         </p>
-      </Seccion>
+      </Detalles>
 
-      <Seccion titulo={t('ajustes.respuestas')}>
-        <p className="xs muted">{t('ajustes.respuestasTexto')}</p>
-        <div className="ajustes-casillas">
-          {TIPOS_ELEMENTO.map((tipo) => (
-            <label key={tipo} className="chk">
-              <input
-                type="checkbox"
-                checked={!ajustes.respuestas.desactivadas.includes(tipo)}
-                disabled={!editable}
-                onChange={(e) =>
-                  guardar((a) => ({
-                    ...a,
-                    respuestas: {
-                      ...a.respuestas,
-                      desactivadas: alternar(a.respuestas.desactivadas, [tipo], e.target.checked),
-                    },
-                  }))
-                }
-              />
-              <span>{t(`tipos.${tipo}`)}</span>
-            </label>
-          ))}
-        </div>
-      </Seccion>
-
-      <Seccion titulo={t('copias.plegado')}>
+      <Detalles resumen={t('copias.plegado')}>
         <AjustesRecordatorio />
-      </Seccion>
+      </Detalles>
 
-      <Seccion titulo={t('ajustes.red')}>
+      <Detalles resumen={t('ajustes.red')}>
         <p className="sm muted">{t('ajustes.redTexto')}</p>
-      </Seccion>
+      </Detalles>
     </Pantalla>
   );
 }

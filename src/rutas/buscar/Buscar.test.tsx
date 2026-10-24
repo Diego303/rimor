@@ -61,6 +61,8 @@ describe('Buscar', () => {
     const filas = document.querySelectorAll('.grupo-busqueda .it');
     expect(filas[0]?.querySelector('.st')).toBeNull();
     expect(filas[1]?.querySelector('.st')?.textContent).toBe('coincide dentro');
+    // A la derecha, solo el día (`fdia` de `SC.buscar`), sin la hora.
+    expect(filas[0]?.querySelector('.rt')?.textContent).toBe('11 oct');
   }, 30_000);
 
   it('filtros rápidos, facetas de «Afinar», sin resultados y «Limpiar», con la dirección al día', async () => {
@@ -140,6 +142,10 @@ describe('búsqueda desde el compositor', () => {
   it('el mensaje de Inicio usa el motor (difuso, en el contenido) y cuenta una vez el resultado abierto', async () => {
     const { router, espacio } = await montarApp('/', ELEMENTOS);
     await screen.findByRole('textbox', { name: 'Capturar' }, PRIMERA_CARGA);
+    // Mientras se escribe, la vista previa del compositor ya dice cuántos hay (como `SC.inicio`).
+    act(() => useCompositor.getState().setTexto('?harin'));
+    expect(await screen.findByText('Buscar «harin»: 1 resultado. Enter para verlo aquí.', {}, ESCRITURA)).toBeTruthy();
+    act(() => useCompositor.getState().setTexto(''));
     // «harin» casa por prefijo con «Harina», que solo está en el original: la búsqueda en memoria no lo vería.
     act(() => useCompositor.getState().anotarBusqueda('harin', isoConZona(new Date())));
     expect(await screen.findByText('1 resultado:', {}, ESCRITURA)).toBeTruthy();

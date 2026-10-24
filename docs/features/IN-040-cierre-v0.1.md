@@ -36,7 +36,7 @@ Una revisión de todas las pantallas contra `Pantallas de Rimor.html` (estructur
 
 ### Versión
 
-El CHANGELOG pasa a `## [0.1.0] · 2026-10-24`; `package.json` a `0.1.0`. El despliegue en GitHub Pages lo hace la integración continua al subir la rama (no hay push desde aquí). La **puerta de validación** (cuatro semanas de uso real) va a «Pendientes de validación humana» con qué medir y cómo (los contadores locales de IN-016).
+El CHANGELOG pasa a `## [0.1.0] · 2026-10-25`; `package.json` a `0.1.0`. El despliegue en GitHub Pages lo hace la integración continua al subir la rama (no hay push desde aquí). La **puerta de validación** (cuatro semanas de uso real) va a «Pendientes de validación humana» con qué medir y cómo (los contadores locales de IN-016).
 
 ## Tareas
 
@@ -44,9 +44,9 @@ El CHANGELOG pasa a `## [0.1.0] · 2026-10-24`; `package.json` a `0.1.0`. El des
 - [x] Matriz de detección ≥ 90 % de acierto en los tipos de v0.1.
 - [x] Recorrido de extremo a extremo completo en los tres motores: pegar → elemento → comparar → hilo → buscar → exportar → importar.
 - [x] Auditoría de accesibilidad (axe y pasada manual con teclado y lector de pantalla).
-- [ ] Revisión de diseño de todas las pantallas contra el artefacto.
-- [ ] Revisión del movimiento: umbral de 400 ms, una animación por zona, movimiento reducido y símbolo «Señal» en todas partes.
-- [ ] Despliegue de la versión y registro de cambios.
+- [x] Revisión de diseño de todas las pantallas contra el artefacto.
+- [x] Revisión del movimiento: umbral de 400 ms, una animación por zona, movimiento reducido y símbolo «Señal» en todas partes.
+- [x] Despliegue de la versión y registro de cambios.
 
 ## Criterios de aceptación
 
@@ -78,3 +78,62 @@ Cubre las siete tareas con lo que se puede comprobar aquí y deja escrito lo que
 |---|---|
 | El presupuesto de exportar se mide como retraso del bucle de eventos | Es lo que notaría la interfaz; funciona igual en el hilo principal que en el Worker. |
 | El mejor de tres intentos | Con la suite completa en paralelo, la máquina compartida añade retrasos que no son de la exportación. |
+
+## Verificación
+
+**`pnpm verificar`**: en verde, 103 archivos y 1332 pruebas; carga inicial 245,9 KB de 300.
+
+**Criterios de aceptación:** presupuestos, matriz, recorrido y axe en verde en `pnpm verificar`; las dos revisiones atendidas (abajo); el CHANGELOG en `[0.1.0] · 2026-10-25` y `package.json` en 0.1.0. Lo que necesita un navegador real o semanas de uso está en «Pendientes de validación humana» de `docs/seguimiento.md`.
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| Presupuestos con archivos grandes generados | `datos/presupuesto.test.ts` (exportar ~40 MB sin bloquear) y los de antes: `flujo.test.ts`, `log.test.ts`, `motor.test.ts`, `cache.test.ts`, `pnpm tamano` |
+| Matriz ≥ 90 % | `captura/deteccion.test.ts` (total y por tipo) |
+| Recorrido completo | `recorrido.test.ts` (los tres motores, con Playwright, a validación humana) |
+| Accesibilidad | `rutas/accesibilidad.test.tsx` (axe; la pasada manual, a validación humana) |
+| Revisión de diseño y de movimiento | Las dos revisiones independientes de abajo; `ui/clases-css.test.ts` (toda clase del JSX tiene su CSS) |
+| Versión y registro de cambios | `CHANGELOG.md` y `package.json`; el despliegue lo hace la integración continua al subir la rama |
+
+**Revisión de diseño y movimiento** (subagente con contexto limpio, contra `Pantallas de Rimor.html` y la guía). 23 hallazgos; todos corregidos:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | `.day` (separadores del feed) sin CSS | Portado de la referencia. `clases-css.test.ts` |
+| 2 | `.dp` (Markdown de documentos, textos y notas) sin CSS | Portado (`.dp`, `h1`, `h2`, listas, `pre` como `.code`). `clases-css.test.ts` |
+| 3 | «contestando» sin umbral de 400 ms | `useEsperaVisible` en `RespuestaRimor`. `RespuestaRimor.test.tsx` |
+| 4 | Varias animaciones en bucle a la vez | `turnoBucle.ts`: una por pantalla, dentro de `Senal`. `Senal.test.tsx`, `RespuestaRimor.test.tsx` |
+| 5 | Error sin «Ver el hilo» | `ContextoHilo`. `vistas-lectores.test.tsx` |
+| 6 | Log sin «Ver su hilo» | Igual. `vistas-lectores.test.tsx` |
+| 7 | Prompt sin «v1 · v2 · actual» | Segmentado en la cabecera; la vista enseña esa versión sin restaurarla. `Versiones.test.tsx` |
+| 8 | «Así lo resolviste» fuera del mensaje | Dentro (`Mensaje` `pie`). `Hilo.test.tsx` |
+| 9 | «exportando» sin umbral; sin espera con `Ctrl+E` fuera de Datos | Umbral, y el piloto del raíl la enseña fuera de Datos |
+| 10 | Esperas de Importar sin umbral | Umbral; la señal junto a los botones |
+| 11 | Modos de Importar a 2 px | `gap: 8px` como la referencia |
+| 12 | Cabecera de colección distinta; cuatro controles a la derecha | Marca, «desde el…», «Elementos»; subir, bajar y borrar plegados. `Coleccion.test.tsx` |
+| 13 | Ajustes con seis tarjetas abiertas | Tres abiertas y tres plegadas (guía §8.3). `Ajustes.test.tsx` |
+| 14 | `btn pri dan` con contraste insuficiente | `.btn.pri.dan` en rojo con tinta clara. `contraste.test.ts` |
+| 15 | Seleccionado con fondo naranja | `--accent-soft` |
+| 16 | «Preparando…» del ejemplo y del ZIP de la papelera sin señal | Señal con umbral |
+| 17 | Arranque indexando con «cargando» | «indexando». `Espacio.test.tsx` |
+| 18 | Acciones de la respuesta en `btn pri` | Todas `btn sm`; fuera `principal` |
+| 19 | «Última copia: …» | «Última copia hace 2 días». `carcasa.test.tsx` |
+| 20 | `?buscar` sin recuento | Con el del motor. `Buscar.test.tsx` |
+| 21 | Ref de conflicto no pulsable | Pulsable (ver segunda revisión, 1) |
+| 22 | Buscar con hora | Solo el día (`fmtDiaRelativo`). `Buscar.test.tsx`, `formatos.test.ts` |
+| 23 | Palabras clave del código en naranja; versiones tras «Detalles» | En tinta y seminegrita; «Detalles» es el último plegado. `Versiones.test.tsx` |
+
+**Segunda revisión** (subagente con contexto limpio, sobre las correcciones). 9 hallazgos:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | La ref de un conflicto salía de Importar (perdía la comprobación) y usaba la ref del paquete | Enseña el de aquí (por id) en un diálogo, sin salir. `Importar.test.tsx` |
+| 2 | Una respuesta atascada retenía el turno de animación | El turno se suelta a los 20 s. `Senal.test.tsx` |
+| 3 | El foco se perdía al cambiar botones por la señal | La señal va junto a los botones (ejemplo, Importar); en Datos el foco vuelve a la fila |
+| 4 | El catálogo de muestras ya no animaba | `prioridad="sinTurno"` |
+| 5 | Las versiones perdían su estado al volver a montarse la vista | `useEstadoVersiones` en la pantalla (plegados abiertos, diálogos, restaurada) y se ven también mientras la vista calcula o carga. `Versiones.test.tsx` |
+| 6 | La prueba del relevo no lo comprobaba | Con `key`. `Senal.test.tsx` |
+| 7 | Al ver otra versión del prompt, los detalles eran de la actual | Son de esa versión; las cifras citables, de la actual (es a lo que lleva citarlas). `Versiones.test.tsx` |
+| 8 | «contestando» sigue hasta 600 ms con la respuesta escrita | Se deja: es el mínimo visible de la guía §11.1 (que no parpadee) |
+| 9 | El raíl se repintaba con cada paso del porcentaje; anuncio de más en `?buscar` | El raíl solo sigue si hay exportación; el porcentaje, en `SenalExportacion`. La vista previa conserva el último recuento mientras busca |

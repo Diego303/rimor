@@ -141,7 +141,7 @@ export const lectorLog: Lector<DatosLog> = {
     return {
       texto,
       acciones: [
-        { id: `hilo:${err}`, etiqueta: textos.t(i, 'respuesta.siHilo'), principal: true },
+        { id: `hilo:${err}`, etiqueta: textos.t(i, 'respuesta.siHilo') },
         { id: 'no', etiqueta: textos.t(i, 'respuesta.no') },
       ],
     };

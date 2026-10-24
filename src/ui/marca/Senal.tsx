@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { ESTADOS_SENAL, type EstadoSenal, LIMITE_BUCLE_MS } from './estadosSenal';
 import { GUION, NOMBRE_APP, ONDA, PUNTO, TRAZO, TRAZO_PEQUENO, UMBRAL_PEQUENO } from './geometria';
+import { type PrioridadSenal, useSinTurno } from './turnoBucle';
 
 export type { EstadoSenal } from './estadosSenal';
 
@@ -23,12 +24,24 @@ interface Props {
   frase?: string;
   /** El texto y el anuncio ya los da el contenedor (una ErrorTarjeta con su título): solo el símbolo, oculto. */
   decorativa?: boolean;
+  /** Un bucle solo se anima con el turno de la pantalla (`turnoBucle.ts`). */
+  prioridad?: PrioridadSenal;
 }
 
-export function Senal({ estado, tamano = 24, veces, etiqueta, textoOculto, frase, decorativa }: Props) {
+export function Senal({
+  estado,
+  tamano = 24,
+  veces,
+  etiqueta,
+  textoOculto,
+  frase,
+  decorativa,
+  prioridad = 'principal',
+}: Props) {
   const def = ESTADOS_SENAL[estado];
   const bucle = (veces ?? (def.bucle ? 'bucle' : 1)) === 'bucle';
   const [reposo, setReposo] = useState(false);
+  const sinTurno = useSinTurno(bucle && !reposo, prioridad);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: un estado nuevo vuelve a empezar su animación y su límite.
   useEffect(() => {
@@ -48,7 +61,7 @@ export function Senal({ estado, tamano = 24, veces, etiqueta, textoOculto, frase
   const anchoVista = def.ancho ? 156 : 48;
   return (
     <span
-      className={`senal senal-${estado}${reposo ? ' reposo' : ''}`}
+      className={`senal senal-${estado}${reposo || sinTurno ? ' reposo' : ''}`}
       role={decorativa ? undefined : 'status'}
       aria-live={decorativa ? undefined : 'polite'}
       aria-hidden={decorativa ? true : undefined}

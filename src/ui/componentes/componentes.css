@@ -277,6 +277,12 @@
 .btn.dan {
   color: var(--bad);
 }
+/* La confirmación de borrar: relleno rojo con la tinta clara del primario (el rojo sobre tinta no llega a AA). */
+.btn.pri.dan {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: var(--accent-ink);
+}
 .btn.sm {
   padding: 3px 10px;
   font-size: 0.78125rem;
@@ -625,7 +631,34 @@ tr.on td {
 tr.click:hover td {
   background: var(--panel-2);
 }
-.code {
+/* Texto con formato (Markdown saneado: documentos, textos y notas), como `.dp` de la referencia. */
+.dp {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.dp h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.dp h2 {
+  font-size: 0.96875rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.dp ul,
+.dp ol {
+  margin: 0;
+  padding-left: 20px;
+}
+.dp code {
+  font-family: var(--f-m);
+}
+.code,
+.dp pre {
   font-family: var(--f-m);
   font-size: 0.75rem;
   line-height: 1.6;
@@ -1191,8 +1224,8 @@ pre.code.prompt-texto {
   color: var(--accent);
 }
 /* Código (IN-025): números de línea que no se leen ni se copian, y colores de los `tok-*` de Lezer con la paleta
-   de la guía (casi monocroma): palabras clave en `--key`, cadenas en `--ok`, números en `--warn`, comentarios en
-   `--muted`; tipos y definiciones, con el color del texto en seminegrita. */
+   de la guía (casi monocroma): palabras clave, tipos y definiciones en el color del texto y seminegrita (el naranja
+   no va en texto, §3.3); cadenas en `--ok`, números en `--warn` y comentarios en `--muted`. */
 .codigo-desplazable {
   overflow-x: auto;
   border-radius: var(--r-sm);
@@ -1210,7 +1243,8 @@ pre.code.codigo .ln {
 }
 .codigo .tok-keyword,
 .codigo .tok-operator.tok-definition {
-  color: var(--key);
+  color: var(--accent);
+  font-weight: 600;
 }
 .codigo .tok-string,
 .codigo .tok-string2 {
@@ -1254,7 +1288,7 @@ pre.code.codigo .ln {
   outline-offset: 2px;
 }
 .msg.marcado {
-  background: var(--key-soft);
+  background: var(--accent-soft);
 }
 .msg .fijado {
   color: var(--muted);
@@ -1447,7 +1481,11 @@ pre.code.codigo .ln {
   color: var(--warn);
 }
 
-/* Importar (IN-036): «Cancelar» e «Importar», a la derecha. */
+/* Importar (IN-036): los tres modos separados como en `SC.importar` (`.list` con `gap:8px`) y «Cancelar» e
+   «Importar», a la derecha. */
+.list.modos-importar {
+  gap: 8px;
+}
 .acciones-importar {
   justify-content: flex-end;
 }
@@ -1752,15 +1790,26 @@ pre.code.codigo .ln {
   text-decoration: line-through;
 }
 /* Hilos (IN-030), como `SC.hilo` de la referencia. */
+/* El separador de cada día del feed: «Hoy», «Ayer», la fecha, entre dos filetes. */
+.day {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--faint);
+  font-size: 0.75rem;
+  margin: 6px 0 2px;
+}
+.day::before,
+.day::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
 .feed {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-.mensaje-hilo {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 .nota-hilo {
   margin-left: 40px;

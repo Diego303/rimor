@@ -58,7 +58,14 @@
     "copiaAlDia": "Copia al día",
     "copiaPendiente": "Toca hacer copia",
     "espacioSinNombre": "Espacio",
-    "ultimaCopia": "Última copia: {cuando}",
+    "ultimaCopia": {
+      "hoy": "Última copia hoy",
+      "ayer": "Última copia ayer",
+      "hace": {
+        "one": "Última copia hace {n} día",
+        "other": "Última copia hace {n} días"
+      }
+    },
     "sinCopia": "Sin copia todavía"
   },
   "atajos": {
@@ -245,6 +252,8 @@
         "version": "v{n}",
         "edicion": "v{n} · edición",
         "actual": "actual",
+        "versionActual": "v{n} · actual",
+        "verVersion": "Versión que se ve",
         "verCambios": "Ver cambios",
         "restaurar": "Restaurar esta versión",
         "restaurarTitulo": "¿Restaurar {version}?",
@@ -459,7 +468,10 @@
         "one": "{n} elemento",
         "other": "{n} elementos"
       },
-      "lista": "Elementos de la colección",
+      "desde": "{meta} · desde el {fecha}",
+      "elementos": "Elementos",
+      "organizar": "Ordenar o borrar",
+      "organizarTexto": "Su sitio entre las colecciones del raíl.",
       "subir": "Subir",
       "bajar": "Bajar",
       "borrar": "Borrar la colección",
@@ -596,6 +608,10 @@
     },
     "alternativa": "¿o {tipo}? Escribe /{palabra} al principio",
     "buscar": "Buscar «{texto}». Enter para verlo aquí.",
+    "buscarConRecuento": {
+      "one": "Buscar «{texto}»: {n} resultado. Enter para verlo aquí.",
+      "other": "Buscar «{texto}»: {n} resultados. Enter para verlos aquí."
+    },
     "quitarAdjunto": "Quitar {nombre}",
     "pista": {
       "coleccion": "colección",
@@ -682,6 +698,8 @@
       "one": "Ver el conflicto",
       "other": "Ver los {n} conflictos"
     },
+    "conflictoTitulo": "{ref}, en este espacio",
+    "cerrarConflicto": "Cerrar",
     "conflictoAqui": "Aquí {aqui} · en el archivo {paquete} → se queda la de aquí; la otra, al historial",
     "conflictoPaquete": "Aquí {aqui} · en el archivo {paquete} → se queda la del archivo; la de aquí, al historial",
     "verReasignadas": {

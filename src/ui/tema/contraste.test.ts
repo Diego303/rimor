@@ -63,6 +63,13 @@ describe('contraste de los tokens (§13.1)', () => {
     expect(contraste(oscuro['--key'] ?? '', oscuro['--panel'] ?? '')).toBeGreaterThanOrEqual(3);
   });
 
+  it('el botón primario de peligro (`.btn.pri.dan`, --accent-ink sobre --bad) llega a AA en los dos temas', () => {
+    const componentes = readFileSync(new URL('../componentes/componentes.css', import.meta.url), 'utf8');
+    expect(componentes).toMatch(/\.btn\.pri\.dan \{[^}]*background: var\(--bad\);[^}]*color: var\(--accent-ink\);/);
+    expect(contraste(claro['--accent-ink'] ?? '', claro['--bad'] ?? '')).toBeGreaterThanOrEqual(AA);
+    expect(contraste(oscuro['--accent-ink'] ?? '', oscuro['--bad'] ?? '')).toBeGreaterThanOrEqual(AA);
+  });
+
   it('el símbolo sobre el icono de señal llega a 4,8:1 (IN-089)', () => {
     expect(contraste('#191919', '#EE4F1F')).toBeGreaterThanOrEqual(4.8 - TOLERANCIA);
     expect(contraste('#191919', '#EE4F1F')).toBeGreaterThanOrEqual(AA);

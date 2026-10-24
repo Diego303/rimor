@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-24 17:38
-**Ahora:** --registro
-**Siguiente:** IN-041 · Enriquecimiento de enlaces
-**Progreso:** F0 9/9 · v0.1 41/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 50/99
+**Última actualización:** 2026-10-25 01:23
+**Ahora:** IN-041 · Enlace enriquecido · fase análisis y diseño
+**Siguiente:** IN-042 · Diff y parche
+**Progreso:** F0 9/9 · v0.1 42/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 51/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -59,7 +59,7 @@
 | IN-037 | Datos y copias | v0.1 | 6 | hecha | 0479bc1 485e5f9 9eb2973 | docs/features/IN-037-datos-copias.md |
 | IN-038 | Ajustes | v0.1 | 6 | hecha | 26f3057 fcf110c 2249ee7 | docs/features/IN-038-ajustes.md |
 | IN-039 | Primer uso y espacio de ejemplo | v0.1 | 6 | hecha | fec4ff4 4c0df39 86d1dda | docs/features/IN-039-primer-uso.md |
-| IN-040 | Cierre de v0.1 | v0.1 | 7 | en implementación | 6dcf500 | docs/features/IN-040-cierre-v0.1.md |
+| IN-040 | Cierre de v0.1 | v0.1 | 7 | hecha | 6dcf500 8ccb01e | docs/features/IN-040-cierre-v0.1.md |
 | IN-041 | Enlace enriquecido | v0.2 | 8 | pendiente | — | — |
 | IN-042 | Diff y parche | v0.2 | 8 | pendiente | — | — |
 | IN-043 | Comando con huecos | v0.2 | 8 | pendiente | — | — |
@@ -166,6 +166,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **IN-007 (persistencia):** en Chrome con la PWA instalada, «Proteger los datos» queda concedido y Datos y copias lo enseña como «Protegido».
 - **IN-007 (ventana privada):** abrir la app publicada en incógnito de Chrome, privada de Firefox y de Safari y comprobar que aparece el aviso (la heurística de cuota está probada solo con dobles).
 - **IN-007 (dos pestañas):** abrir dos pestañas, comprobar que la segunda avisa de solo lectura y que, al cerrar la primera, la segunda pasa a escribir con lo último guardado.
+- **Puerta de validación de v0.1 (IN-040, plan §19):** cuatro semanas de uso real de la app publicada. Se cumple con ≥ 5 capturas por día laborable, ≥ 1 «esto ya te pasó» útil por semana, lo buscado encontrado en < 10 s y menos de 1 de cada 10 respuestas corregida o descartada. Se mide con los contadores locales de `.rimor/contadores.json` (IN-016: `erroresReconocidos`, `busquedasConResultado`, `correccionesDeTipo`, `respuestasDescartadas`) y el recuento de elementos por día; el tiempo de búsqueda, a mano.
+- **IN-040 (navegador real):** el recorrido pegar → elemento → comparar → hilo → buscar → exportar → importar con Playwright en Chromium, Firefox y WebKit; axe en navegador real (con contraste) y una pasada manual con teclado y lector de pantalla; exportar 200 MB con el panel de rendimiento abierto (ver F0-2); y repasar a ojo cada pantalla contra `Pantallas de Rimor.html` en claro, oscuro y 400 px.
 
 ## Bloqueos
 (ninguno)
@@ -173,6 +175,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
+| 2026-10-25 | IN-040 | verificación | revisión de diseño y movimiento (23 hallazgos) y segunda revisión (9), corregidos con pruebas; v0.1.0 en el CHANGELOG y package.json; verificar en verde: 103 archivos, 1332 pruebas, 245,9 KB | 8ccb01e |
 | 2026-10-24 | IN-040 | análisis y diseño | presupuesto de exportar sin bloquear, matriz al 90 %, recorrido de integración completo, axe sobre las pantallas, revisión de diseño y movimiento, CHANGELOG 0.1.0 | 6dcf500 |
 | 2026-10-24 | IN-039 | verificación | pnpm verificar OK (1310 pruebas, 244,8 KB); revisión independiente con 8 hallazgos atendidos (borrar con cerrojo y copia previa, carpetas huérfanas) | 86d1dda |
 | 2026-10-24 | IN-039 | implementación | bienvenida con la señal y tres ejemplos, espacio de ejemplo generado con la captura e importado como nuevo, borrar espacios, instalar | 4c0df39 |

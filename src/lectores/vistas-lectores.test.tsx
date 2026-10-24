@@ -6,6 +6,8 @@ import { AlmacenMemoria } from '../almacen/memoria';
 import type { Cerrojos } from '../almacen/pestanas';
 import { type DependenciasProveedor, ProveedorEspacio, useEspacioAbierto } from '../espacio/Espacio';
 import VistaArchivo from './archivo/Vista';
+import { ContextoComparar } from './ContextoComparar';
+import { ContextoHilo } from './ContextoHilo';
 import { analizarCodigo } from './codigo/analisis';
 import VistaCodigo from './codigo/Vista';
 import { analizarError } from './error/lector';
@@ -177,6 +179,28 @@ describe('vista de Log', () => {
     expect(deError.querySelector('button')?.getAttribute('aria-pressed')).toBe('true');
     const lineas = container.querySelector('pre.lineas-plantilla')?.textContent ?? '';
     expect(lineas.split('\n').filter(Boolean)).toHaveLength(3);
+    // Sin hilo, no hay «Ver su hilo».
+    expect(screen.queryByRole('button', { name: 'Ver su hilo' })).toBeNull();
+  });
+
+  it('con hilo, «Ver su hilo» junto a «Comparar con otro log» (como `SC.log`)', () => {
+    const el = elementoFalso(8, '2026-10-17T17:40:45Z ERROR stream: read timeout', 'log');
+    const datos = analizar(el.original ?? '', { anio: 2026 });
+    const verHilo = vi.fn();
+    render(
+      <ContextoComparar.Provider value={() => undefined}>
+        <ContextoHilo.Provider value={verHilo}>
+          <VistaLog el={el} datos={datos} />
+        </ContextoHilo.Provider>
+      </ContextoComparar.Provider>,
+    );
+    const botones = [...document.querySelectorAll('.row .btn')].map((b) => [b.textContent, b.className]);
+    expect(botones).toEqual([
+      ['Comparar con otro log', 'btn pri sm'],
+      ['Ver su hilo', 'btn sm'],
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver su hilo' }));
+    expect(verHilo).toHaveBeenCalledOnce();
   });
 });
 
@@ -516,10 +540,12 @@ describe('vista de Error', () => {
       abierto.repo = repositorio;
       return <VistaError el={el} datos={datos} editable={editable} />;
     }
-    const montar = (el: typeof actual, editable = true) => (
+    const montar = (el: typeof actual, editable = true, verHilo: (() => void) | null = null) => (
       <ProveedorEspacio dependencias={dependencias}>
         <ProveedorAvisos>
-          <Montaje el={el} editable={editable} />
+          <ContextoHilo.Provider value={verHilo}>
+            <Montaje el={el} editable={editable} />
+          </ContextoHilo.Provider>
         </ProveedorAvisos>
       </ProveedorEspacio>
     );
@@ -558,5 +584,16 @@ describe('vista de Error', () => {
     );
     expect(await screen.findByText('Lo resolviste así: «Subí el timeout a 60 s»')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Añadir cómo lo resolví' })).toBeNull();
+    // Con hilo, «Ver el hilo» junto al veredicto (como `SC.error`), también ya resuelto.
+    const verHilo = vi.fn();
+    rerender(
+      montar(
+        { ...actual, frontmatter: { ...actual.frontmatter, estado: 'resuelto' }, notas: leido.valor.notas },
+        true,
+        verHilo,
+      ),
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver el hilo' }));
+    expect(verHilo).toHaveBeenCalledOnce();
   });
 });

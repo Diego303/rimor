@@ -3,6 +3,8 @@
 Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
+
+## [0.1.0] · 2026-10-25
 ### Añadido
 - Esqueleto del proyecto: Astro con una isla React, paquetes `@rimor/formato` y `@rimor/estadistica`, Vitest, Biome, comprobación de colores fuera de los tokens, presupuesto de carga inicial e integración continua con despliegue en GitHub Pages (IN-001).
 - Tema Instrumento claro y oscuro con selector (sistema, claro u oscuro), fuentes Archivo y Roboto Mono empaquetadas, iconos y componentes base (botones, segmentados, chips, tarjetas, plegables, tablas, veredicto, estados y avisos) y página de muestras en desarrollo (IN-002).
@@ -46,6 +48,9 @@ Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepacha
 - Ajustes: tema e idioma, cuánto duda la detección entre dos tipos, qué secretos se ocultan (por tipo), a qué tipos responde Rimor y el recordatorio de copia, guardados en el propio espacio y aplicados al momento (también en la vista previa del compositor). Un espacio con su tema o su idioma los aplica al abrirlo (IN-038).
 - Primer uso: la bienvenida enseña el símbolo con «Del rumor a la conclusión», qué es Rimor en dos frases y tres ejemplos (un log, una traza, unas mediciones) que llenan el compositor. Se puede abrir un espacio de ejemplo con la colección `gateway` sin tocar el propio, borrarlo después desde Datos y copias, e instalar Rimor si el navegador lo ofrece (IN-039).
 ### Cambiado
+- Más fiel a las pantallas de referencia: «Ver el hilo» junto al veredicto de un error y «Ver su hilo» en un log; en un prompt, «v1 · v2 · actual» en la cabecera enseña una versión anterior sin restaurarla; la colección lleva su marca, «desde el…» y su lista «Elementos», con subir, bajar y borrar plegados al final; Ajustes deja abiertos apariencia, detección y respuestas, y pliega secretos, copias y red; el pie del raíl dice «Última copia hace 2 días»; la vista previa de `?buscar` dice cuántos resultados hay; en Buscar, cada resultado lleva solo su día; las refs en conflicto de Importar se pueden abrir; las acciones de las respuestas de Rimor son botones discretos; en un hilo, «Así lo resolviste» va dentro de su mensaje; y los cambios y la lista de versiones van antes de «Detalles», que es el último plegado (IN-040).
+- Movimiento: una sola animación en bucle a la vez en pantalla; «Leyendo…» solo anima si tarda más de 400 ms, y exportar, importar, preparar el ejemplo y el ZIP de la papelera enseñan la señal si pasan de 400 ms (exportar con `Ctrl+E` desde otra pantalla, en el piloto del raíl); al arrancar, mientras se reconstruye el índice, la animación «indexando» (IN-040).
 ### Corregido
+- Los separadores de día del feed y el texto con formato (documentos, textos y notas) tienen su estilo; el botón rojo de confirmar borrar se lee bien en los dos temas; lo seleccionado con `x` en Inicio ya no se marca en naranja; las palabras clave del código, en tinta y no en naranja; los tres modos de Importar, separados como en la referencia (IN-040).
 - Los diálogos cerrados (la ayuda de atajos, los de estado, tipo y colección) ya no quedan a la vista como una tarjeta vacía (IN-033).
 - Exportar un espacio grande ya no deja la interfaz sin responder mientras comprime el texto, y el botón de adjuntar del compositor tiene nombre para los lectores de pantalla (IN-040).

@@ -1,10 +1,11 @@
 /**
  * Fila de un elemento en una lista (como `itemRow` de la referencia): icono de tipo, título en negrita, una línea
- * de resumen y el día y la hora a la derecha. Un botón que abre el elemento.
+ * de resumen y el día («hoy», «ayer», «2 oct») y la hora a la derecha; en Buscar, solo el día. Un botón que abre el
+ * elemento.
  */
 import type { FrontmatterComun } from '@rimor/formato';
 import type { ReactNode } from 'react';
-import { fmtDia, fmtHora } from '../../i18n/formatos';
+import { fmtDiaRelativo, fmtHora } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { IconoTipo } from './Marcas';
 
@@ -15,12 +16,15 @@ interface Props {
   /** La línea de debajo del título (el resumen legible del lector). */
   resumen?: ReactNode;
   alAbrir: (ref: string) => void;
+  /** Solo el día, sin la hora (los resultados de Buscar). */
+  sinHora?: boolean;
 }
 
-export function FilaElemento({ fm, titulo, resumen, alAbrir }: Props) {
+export function FilaElemento({ fm, titulo, resumen, alAbrir, sinHora = false }: Props) {
   const { idioma } = useT();
   const fecha = new Date(fm.creado);
-  const cuando = Number.isNaN(fecha.getTime()) ? '' : `${fmtDia(fecha, new Date(), idioma)} ${fmtHora(fecha)}`;
+  const dia = Number.isNaN(fecha.getTime()) ? '' : fmtDiaRelativo(fecha, new Date(), idioma);
+  const cuando = !dia || sinHora ? dia : `${dia} ${fmtHora(fecha)}`;
   return (
     <button type="button" className="it" onClick={() => alAbrir(fm.ref)}>
       <span className="ic">

@@ -5,7 +5,7 @@ import type { AlmacenMemoria } from '../../almacen/memoria';
 import { useCompositor } from '../../captura/compositor';
 import { espaciosConocidos } from '../../espacio/Espacio';
 import { useInstalacion } from '../../espacio/instalar';
-import { ESCRITURA, montarApp, PRIMERA_CARGA } from '../../pruebas/app';
+import { montarApp, PRIMERA_CARGA } from '../../pruebas/app';
 
 /** Los espacios nuevos, en memoria (en el navegador, en OPFS). */
 const creados = vi.hoisted(() => new Map<string, unknown>());

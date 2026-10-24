@@ -25,13 +25,19 @@ interface PropsDetalles {
   resumen: ReactNode;
   recuento?: number;
   abierto?: boolean;
+  /** Al abrirlo o cerrarlo quien lo usa (para recordarlo si se vuelve a montar). */
+  alAlternar?: (abierto: boolean) => void;
   children: ReactNode;
 }
 
 /** Plegable con línea superior; el resumen lleva el recuento cuando lo hay: «Avisos de método (4)». */
-export function Detalles({ resumen, recuento, abierto, children }: PropsDetalles) {
+export function Detalles({ resumen, recuento, abierto, alAlternar, children }: PropsDetalles) {
   return (
-    <details className="more" open={abierto}>
+    <details
+      className="more"
+      open={abierto}
+      onToggle={alAlternar ? (e) => alAlternar(e.currentTarget.open) : undefined}
+    >
       <summary>
         {resumen}
         {recuento !== undefined && ` (${recuento})`}

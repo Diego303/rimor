@@ -11,11 +11,13 @@ export type Fragmento =
   | { t: 'cita'; v: string; fecha: string }
   | { t: 'mono'; v: string };
 
-/** Una decisión que se ofrece en un botón. `etiqueta` llega ya traducida (la compone el lector con sus textos). */
+/**
+ * Una decisión que se ofrece en un botón (`btn sm`, como todas las de `msgHTML` en la referencia). `etiqueta` llega
+ * ya traducida (la compone el lector con sus textos).
+ */
 export interface Accion {
   id: string;
   etiqueta: string;
-  principal?: boolean;
 }
 
 export interface Respuesta {

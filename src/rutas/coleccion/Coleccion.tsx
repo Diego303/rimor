@@ -1,7 +1,8 @@
 /**
- * Una colección (ORG-02): la lista simple de sus elementos, de lo más reciente a lo más antiguo (el panel visual
- * llega con IN-052); el nombre se edita en el sitio (renombrar) y a la derecha se sube, se baja (su sitio en el
- * raíl) o se borra (con confirmación: los elementos se quedan).
+ * Una colección (ORG-02; cabecera como `SC.coleccion`): la lista simple de sus elementos, de lo más reciente a lo
+ * más antiguo (el panel visual llega con IN-052); el nombre se edita en el sitio (renombrar), a la derecha solo el
+ * selector de vista (guía §8.2) y, plegado al final, subirla o bajarla (su sitio en el raíl) o borrarla (con
+ * confirmación: los elementos se quedan).
  */
 import type { FrontmatterComun } from '@rimor/formato';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
@@ -9,10 +10,12 @@ import { useEffect, useState } from 'react';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { limpiarColeccion } from '../../espacio/ediciones';
 import { useEspacio } from '../../estado/espacio';
+import { fmtDia } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { useLectoresOpcional } from '../../lectores/Lectores';
-import { Boton, Dialogo, FilaElemento, Vacio } from '../../ui/componentes';
+import { Boton, Detalles, Dialogo, FilaElemento, Vacio } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
+import { Icono } from '../../ui/iconos/Icono';
 import { TituloElemento } from '../elemento/Cabecera';
 import { Pantalla } from '../Pantalla';
 import { type Vista, vistaDe } from '../vistas/orden';
@@ -108,8 +111,18 @@ export function Coleccion() {
     if (!hecho) avisos?.avisar(t('pantallas.elemento.noGuardado'));
   };
 
+  // «12 elementos · desde el 2 oct»: el más antiguo es el último (están de lo más reciente a lo más antiguo).
+  const masAntiguo = new Date(elementos.at(-1)?.creado ?? '');
+  const meta = t('pantallas.coleccion.meta', { n: elementos.length });
+
   return (
     <Pantalla
+      marcas={
+        <>
+          <Icono nombre="coleccion" tamano={16} />
+          <span className="lbl">{t('pantallas.coleccion.titulo')}</span>
+        </>
+      }
       titulo={
         <TituloElemento
           titulo={coleccion}
@@ -119,39 +132,23 @@ export function Coleccion() {
           alGuardar={(nombre) => void renombrar(nombre)}
         />
       }
-      meta={t('pantallas.coleccion.meta', { n: elementos.length })}
-      control={
-        <div className="row">
-          {elementos.length > 0 && <SelectorVista vista={vista} alCambiar={cambiarVista} />}
-          {editable && (
-            <>
-              <Boton variante="fantasma" pequeno disabled={posicion <= 0} onClick={() => void mover(-1)}>
-                {t('pantallas.coleccion.subir')}
-              </Boton>
-              <Boton
-                variante="fantasma"
-                pequeno
-                disabled={posicion < 0 || posicion >= total - 1}
-                onClick={() => void mover(1)}
-              >
-                {t('pantallas.coleccion.bajar')}
-              </Boton>
-              <Boton pequeno peligro onClick={() => setBorrando(true)}>
-                {t('pantallas.coleccion.borrar')}
-              </Boton>
-            </>
-          )}
-        </div>
+      meta={
+        Number.isNaN(masAntiguo.getTime())
+          ? meta
+          : t('pantallas.coleccion.desde', { meta, fecha: fmtDia(masAntiguo, new Date(), idioma) })
       }
+      control={elementos.length > 0 ? <SelectorVista vista={vista} alCambiar={cambiarVista} /> : undefined}
     >
       {elementos.length && vista === 'mosaico' ? (
         <Mosaico elementos={elementos} alAbrir={abrir} />
       ) : elementos.length && vista === 'densa' ? (
-        <section className="card" aria-label={t('pantallas.coleccion.lista')}>
+        <section className="card" aria-labelledby="elementos-coleccion">
+          <h3 id="elementos-coleccion">{t('pantallas.coleccion.elementos')}</h3>
           <ListaDensa elementos={elementos} alAbrir={abrir} />
         </section>
       ) : elementos.length ? (
-        <section className="card" aria-label={t('pantallas.coleccion.lista')}>
+        <section className="card" aria-labelledby="elementos-coleccion">
+          <h3 id="elementos-coleccion">{t('pantallas.coleccion.elementos')}</h3>
           <div className="list">
             {elementos.map((fm) => (
               <FilaElemento key={fm.id} fm={fm} resumen={legible(fm)} alAbrir={abrir} />
@@ -160,6 +157,23 @@ export function Coleccion() {
         </section>
       ) : (
         <Vacio titulo={t('pantallas.coleccion.vaciaTitulo')}>{t('pantallas.coleccion.vacio')}</Vacio>
+      )}
+      {editable && (
+        <Detalles resumen={t('pantallas.coleccion.organizar')}>
+          <p className="xs muted">{t('pantallas.coleccion.organizarTexto')}</p>
+          <div className="row">
+            <Boton pequeno disabled={posicion <= 0} onClick={() => void mover(-1)}>
+              {t('pantallas.coleccion.subir')}
+            </Boton>
+            <Boton pequeno disabled={posicion < 0 || posicion >= total - 1} onClick={() => void mover(1)}>
+              {t('pantallas.coleccion.bajar')}
+            </Boton>
+            <span className="sp" />
+            <Boton pequeno peligro onClick={() => setBorrando(true)}>
+              {t('pantallas.coleccion.borrar')}
+            </Boton>
+          </div>
+        </Detalles>
       )}
       <Dialogo
         abierto={borrando}

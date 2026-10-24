@@ -178,6 +178,14 @@ export function fmtDia(fecha: Date, ahora: Date, idioma: Idioma, zona?: string):
   return diaMes(p, idioma, p.anio !== partes(ahora, zona).anio);
 }
 
+/** El día de una fila de lista (`fdia` de la referencia): «hoy», «ayer» o «2 oct». */
+export function fmtDiaRelativo(fecha: Date, ahora: Date, idioma: Idioma, zona?: string): string {
+  const dias = diasDesde(fecha, ahora, zona);
+  if (dias === 0) return RELATIVOS[idioma].hoy;
+  if (dias === 1) return RELATIVOS[idioma].ayer;
+  return fmtDia(fecha, ahora, idioma, zona);
+}
+
 /** Fecha completa para Detalles y documentos: «17 oct 2026, 17:49». */
 export function fmtFecha(fecha: Date, idioma: Idioma, zona?: string): string {
   if (!valida(fecha)) return NO_FINITO;

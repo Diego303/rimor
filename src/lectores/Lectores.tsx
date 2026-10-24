@@ -17,7 +17,7 @@ import { Senal } from '../ui/marca/Senal';
 import { useEsperaVisible } from '../ui/marca/useEsperaVisible';
 import { cargarTextoAdjunto } from './adjuntos';
 import type { Lector } from './contrato';
-import { DetallesElemento } from './DetallesElemento';
+import { AntesDeDetalles, DetallesElemento } from './DetallesElemento';
 import { ColaDerivados, type Ejecutor, esCancelado, type Progreso } from './derivados';
 import { crearEjecutor } from './ejecutor';
 import { REGISTRO, type Registro } from './registro';
@@ -245,15 +245,23 @@ export function VistaElemento({ el, editable = true }: { el: Elemento; editable?
           {analizando && <Senal estado="analizando" etiqueta={textoAnalizando(lector, idioma, derivado)} />}
         </div>
         {/* Si el análisis tarda (un log enorme), lo común de «Detalles» ya se puede usar. Solo entonces: en los
-            rápidos, aparecería y se volvería a montar con la vista un instante después. */}
-        {analizando && <DetallesElemento refe={el.frontmatter.ref} />}
+            rápidos, aparecería y se volvería a montar con la vista un instante después. Lo de la pantalla que va antes
+            (las versiones), siempre. */}
+        {analizando ? <DetallesElemento refe={el.frontmatter.ref} /> : <AntesDeDetalles />}
       </>
     );
   const Vista = vistaDe(lector.nombre);
   if (!Vista) return <Original el={el} />;
   return (
     <LimiteLector key={`${lector.nombre}|${el.frontmatter.id}`} nombre={lector.nombre} alternativa={fallo}>
-      <Suspense fallback={<ResumenFrontmatter el={el} lector={lector} />}>
+      <Suspense
+        fallback={
+          <>
+            <ResumenFrontmatter el={el} lector={lector} />
+            <AntesDeDetalles />
+          </>
+        }
+      >
         <Vista el={el} datos={derivado.datos} editable={editable} />
       </Suspense>
     </LimiteLector>

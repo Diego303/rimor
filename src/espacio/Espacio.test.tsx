@@ -8,7 +8,7 @@ import type { Canal, Cerrojos } from '../almacen/pestanas';
 import { useEspacio } from '../estado/espacio';
 import { ESTADOS_SENAL, UMBRAL_ESPERA_MS } from '../ui/marca/estadosSenal';
 import { AvisoAlmacenamiento, TarjetaCuidado, TarjetaPersistencia } from './Avisos';
-import { type DependenciasProveedor, ProveedorEspacio } from './Espacio';
+import { Arranque, type DependenciasProveedor, ProveedorEspacio } from './Espacio';
 import { leerEstado, RUTA_ESTADO } from './estado';
 import { RUTA_MANIFEST } from './manifest';
 
@@ -78,6 +78,20 @@ describe('ProveedorEspacio', () => {
     expect(screen.getByRole('status').className).toContain('senal-cargando');
     expect(screen.getByRole('status').textContent).toBe('Abriendo el espacio');
     expect(screen.queryByText('dentro')).toBeNull();
+  });
+
+  it('si está reconstruyendo la caché y el índice, «indexando» con el progreso (IN-090)', () => {
+    vi.useFakeTimers();
+    render(
+      <Arranque
+        apertura={{ estado: 'abriendo', fase: { fase: 'indexando', hechos: 3, total: 10 } }}
+        alReintentar={() => undefined}
+      />,
+    );
+    act(() => vi.advanceTimersByTime(UMBRAL_ESPERA_MS));
+    act(() => vi.advanceTimersByTime(ESTADOS_SENAL.arranque.duracionS * 1000));
+    expect(screen.getByRole('status').className).toContain('senal-indexando');
+    expect(screen.getByRole('status').textContent).toBe('Indexando 3 de 10');
   });
 
   it('un manifest que no se entiende enseña el error y no toca nada', async () => {

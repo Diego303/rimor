@@ -6,6 +6,7 @@
 import type { TipoElemento } from '@rimor/formato';
 import { isoConZona, TIPOS_ELEMENTO } from '@rimor/formato';
 import { type ChangeEvent, type KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useBuscar } from '../../busqueda/Busqueda';
 import { ATRIBUTO_ZONA_SOLTAR, type ResultadoDe, useCaptura } from '../../captura/Captura';
 import { useCompositor } from '../../captura/compositor';
 import type { EntradaCaptura } from '../../captura/flujo';
@@ -392,6 +393,23 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
   );
 }
 
+/**
+ * «Buscar «timeout»: 3 resultados. Enter para verlos aquí.» (como `SC.inicio`): el recuento, del motor de búsqueda.
+ * Mientras responde a lo último escrito se queda el recuento anterior (la vista previa es una región viva: cambiar a
+ * la frase sin recuento y volver sería un anuncio de más); sin motor, o antes de la primera respuesta, sin recuento.
+ */
+function AvisoBusqueda({ texto }: { texto: string }) {
+  const { t } = useT();
+  const { busqueda } = useBuscar(texto);
+  return (
+    <span>
+      {busqueda && texto.trim()
+        ? t('compositor.buscarConRecuento', { texto, n: busqueda.total })
+        : t('compositor.buscar', { texto })}
+    </span>
+  );
+}
+
 /** Bajo la caja: tipo, confianza, indicaciones, secretos, la duda del detector y los adjuntos. */
 function VistaPrevia({
   previa: p,
@@ -408,7 +426,7 @@ function VistaPrevia({
     piezas.push(
       <span key="buscar" className="row">
         <Icono nombre="buscar" tamano={13} />
-        <span>{t('compositor.buscar', { texto: p.indicaciones.busqueda })}</span>
+        <AvisoBusqueda texto={p.indicaciones.busqueda} />
       </span>,
     );
   } else if (p) {

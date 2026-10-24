@@ -8,6 +8,7 @@ import { fmtDuracion, fmtNumero } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { Boton, Detalles } from '../../ui/componentes';
 import { ContextoComparar } from '../ContextoComparar';
+import { ContextoHilo } from '../ContextoHilo';
 import type { PropsVista } from '../contrato';
 import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { useOriginal } from '../useOriginal';
@@ -92,6 +93,7 @@ export default function VistaLog({ el, datos }: PropsVista<DatosLog>) {
   const { t: tg, idioma } = useT();
   // «Comparar con otro log», si la pantalla lo ofrece (como la referencia, debajo de «Qué dice»).
   const comparar = useContext(ContextoComparar);
+  const verHilo = useContext(ContextoHilo);
   const t = textos.t.bind(textos, idioma) as (
     c: Parameters<typeof textos.t>[1],
     v?: Record<string, string | number>,
@@ -206,11 +208,18 @@ export default function VistaLog({ el, datos }: PropsVista<DatosLog>) {
         )}
       </section>
 
-      {comparar && (
+      {(comparar || verHilo) && (
         <div className="row">
-          <Boton variante="primario" pequeno onClick={comparar}>
-            {tg('pantallas.comparacion.crear.conLog')}
-          </Boton>
+          {comparar && (
+            <Boton variante="primario" pequeno onClick={comparar}>
+              {tg('pantallas.comparacion.crear.conLog')}
+            </Boton>
+          )}
+          {verHilo && (
+            <Boton pequeno onClick={verHilo}>
+              {t('verHilo')}
+            </Boton>
+          )}
         </div>
       )}
 

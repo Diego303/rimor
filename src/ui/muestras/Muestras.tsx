@@ -114,6 +114,8 @@ function Animaciones() {
             etiqueta={texto}
             tamano={48}
             frase="del rumor a la conclusión"
+            // El catálogo enseña todas a la vez: aquí no rige «una en bucle por pantalla».
+            prioridad="sinTurno"
           />
         ))}
       </div>

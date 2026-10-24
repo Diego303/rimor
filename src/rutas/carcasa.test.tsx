@@ -2,6 +2,7 @@ import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { useEspacio } from '../estado/espacio';
+import { textoUltimaCopia } from './Rail';
 import { crearRouter } from './rutas';
 
 /**
@@ -113,5 +114,16 @@ describe('Carcasa', () => {
     expect(await screen.findByRole('heading', { name: 'LOG-0042' }, PRIMERA_CARGA)).toBeTruthy();
     await act(() => router.navigate({ to: '/datos' }));
     expect(await screen.findByRole('heading', { name: 'Datos y copias' }, PRIMERA_CARGA)).toBeTruthy();
+  });
+});
+
+describe('textoUltimaCopia', () => {
+  it('como el pie del raíl de la referencia: «Última copia hace 2 días», hoy, ayer o sin copia', () => {
+    const ahora = new Date('2026-10-24T12:00:00');
+    expect(textoUltimaCopia('2026-10-22T09:00:00', 'es', ahora)).toBe('Última copia hace 2 días');
+    expect(textoUltimaCopia('2026-10-23T20:00:00', 'es', ahora)).toBe('Última copia ayer');
+    expect(textoUltimaCopia('2026-10-24T08:00:00', 'es', ahora)).toBe('Última copia hoy');
+    expect(textoUltimaCopia(null, 'es', ahora)).toBe('Sin copia todavía');
+    expect(textoUltimaCopia('2026-10-22T09:00:00', 'en', ahora)).toBe('Last backup 2 days ago');
   });
 });

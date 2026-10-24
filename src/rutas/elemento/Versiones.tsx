@@ -4,7 +4,7 @@
  * «Restaurar esta versión» (con confirmación y la señal «guardado» al hacerlo).
  */
 import type { Elemento } from '@rimor/formato';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import type { VersionGuardada } from '../../almacen/repositorio';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { fmtFecha } from '../../i18n/formatos';
@@ -71,13 +71,73 @@ export function DiffLineas({ antigua, nueva }: { antigua: string; nueva: string 
   );
 }
 
+/**
+ * Lo que los plegados de versiones necesitan recordar aunque se vuelvan a montar: van dentro de la vista del lector,
+ * antes de «Detalles», y esa vista se vuelve a montar cuando se recalcula (al restaurar una versión, o si la otra
+ * pestaña cambia el elemento). Lo guarda la pantalla del elemento.
+ */
+export interface EstadoVersiones {
+  abierto: (plegado: 'cambios' | 'versiones') => boolean;
+  alternar: (plegado: 'cambios' | 'versiones', abierto: boolean) => void;
+  viendo: VersionGuardada | null;
+  setViendo: (v: VersionGuardada | null) => void;
+  restaurando: VersionGuardada | null;
+  setRestaurando: (v: VersionGuardada | null) => void;
+  /** La versión recién restaurada, para la señal «guardado» (un momento). */
+  restaurada: number | null;
+  alRestaurada: (version: number) => void;
+}
+
+/** El estado de los plegados de versiones de un elemento; con otro elemento, vuelve a empezar. */
+export function useEstadoVersiones(id: string): EstadoVersiones {
+  const abiertos = useRef(new Set<string>());
+  const [viendo, setViendo] = useState<VersionGuardada | null>(null);
+  const [restaurando, setRestaurando] = useState<VersionGuardada | null>(null);
+  const [restaurada, setRestaurada] = useState<number | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: se reinicia al cambiar de elemento.
+  useEffect(() => {
+    abiertos.current = new Set();
+    setViendo(null);
+    setRestaurando(null);
+    setRestaurada(null);
+  }, [id]);
+  useEffect(() => {
+    if (restaurada === null) return undefined;
+    const espera = setTimeout(() => setRestaurada(null), 2500);
+    return () => clearTimeout(espera);
+  }, [restaurada]);
+  return {
+    abierto: (plegado) => abiertos.current.has(plegado),
+    alternar: (plegado, abierto) => {
+      if (abierto) abiertos.current.add(plegado);
+      else abiertos.current.delete(plegado);
+    },
+    viendo,
+    setViendo,
+    restaurando,
+    setRestaurando,
+    restaurada,
+    alRestaurada: setRestaurada,
+  };
+}
+
 /** «Cambios de la versión 1 a la 2»: entre la versión de contenido anterior y la actual. */
-export function CambiosDeVersion({ el, anterior }: { el: Elemento; anterior: VersionGuardada }) {
+export function CambiosDeVersion({
+  el,
+  anterior,
+  estado,
+}: {
+  el: Elemento;
+  anterior: VersionGuardada;
+  estado: EstadoVersiones;
+}) {
   const { t } = useT();
   if (el.original === null || anterior.elemento.original === null) return null;
   return (
     <Detalles
       resumen={t('pantallas.elemento.versiones.cambios', { de: anterior.version, a: el.frontmatter.version ?? 1 })}
+      abierto={estado.abierto('cambios')}
+      alAlternar={(abierto) => estado.alternar('cambios', abierto)}
     >
       <DiffLineas antigua={anterior.elemento.original} nueva={el.original} />
     </Detalles>
@@ -90,21 +150,31 @@ interface PropsLista {
   editable: boolean;
   /** Restaura una copia; devuelve la versión que queda, o `null` si no se pudo. */
   alRestaurar: (v: VersionGuardada) => Promise<number | null>;
+  estado: EstadoVersiones;
+}
+
+/** Las versiones anteriores que se pueden ver en la cabecera de un prompt (CMP-02). */
+export const MAX_VERSIONES_VISTA = 3;
+
+/**
+ * Las anteriores a la actual, una por número (la última copia de cada una: lo que era al dejar de ser la actual) y
+ * las más recientes (`MAX_VERSIONES_VISTA`), de la más antigua a la más nueva.
+ */
+export function versionesParaVer(versiones: readonly VersionGuardada[], actual: number): VersionGuardada[] {
+  const porNumero = new Map<number, VersionGuardada>();
+  for (const v of versiones) {
+    if (v.version >= actual || v.elemento.original === null) continue;
+    const ya = porNumero.get(v.version);
+    if (!ya || v.reemplazado > ya.reemplazado) porNumero.set(v.version, v);
+  }
+  return [...porNumero.values()].sort((a, b) => a.version - b.version).slice(-MAX_VERSIONES_VISTA);
 }
 
 /** «Versiones (N)»: la actual y cada copia del historial, con su diff con la actual y «Restaurar esta versión». */
-export function ListaVersiones({ el, versiones, editable, alRestaurar }: PropsLista) {
+export function ListaVersiones({ el, versiones, editable, alRestaurar, estado }: PropsLista) {
   const { t, idioma } = useT();
-  const [viendo, setViendo] = useState<VersionGuardada | null>(null);
-  const [restaurando, setRestaurando] = useState<VersionGuardada | null>(null);
-  const [hecha, setHecha] = useState<number | null>(null);
+  const { viendo, setViendo, restaurando, setRestaurando, restaurada } = estado;
   const fm = el.frontmatter;
-  // La señal «guardado» se ve un momento al restaurar.
-  useEffect(() => {
-    if (hecha === null) return undefined;
-    const id = setTimeout(() => setHecha(null), 2500);
-    return () => clearTimeout(id);
-  }, [hecha]);
   if (!versiones.length) return null;
 
   const nombre = (v: VersionGuardada) =>
@@ -117,13 +187,17 @@ export function ListaVersiones({ el, versiones, editable, alRestaurar }: PropsLi
     setRestaurando(null);
     if (!v) return;
     const version = await alRestaurar(v);
-    if (version !== null) setHecha(version);
+    if (version !== null) estado.alRestaurada(version);
   }
 
   return (
-    <Detalles resumen={t('pantallas.elemento.versiones.titulo')}>
-      {hecha !== null && (
-        <Senal estado="guardado" veces={1} etiqueta={t('pantallas.elemento.versiones.restaurada', { n: hecha })} />
+    <Detalles
+      resumen={t('pantallas.elemento.versiones.titulo')}
+      abierto={estado.abierto('versiones')}
+      alAlternar={(abierto) => estado.alternar('versiones', abierto)}
+    >
+      {restaurada !== null && (
+        <Senal estado="guardado" veces={1} etiqueta={t('pantallas.elemento.versiones.restaurada', { n: restaurada })} />
       )}
       <dl className="kv lista-versiones">
         <dt>{t('pantallas.elemento.versiones.version', { n: fm.version ?? 1 })}</dt>

@@ -39,11 +39,17 @@ describe('Colección', () => {
     await act(async () => void (await espacio.colecciones.borrar('lecturas')));
     await act(() => router.navigate({ to: '/c/$coleccion', params: { coleccion: 'gateway' } }));
     expect(await screen.findByRole('button', { name: 'gateway' }, PRIMERA_CARGA)).toBeTruthy();
-    expect(document.querySelector('.ah .meta')?.textContent).toBe('2 elementos');
+    // Como `SC.coleccion`: la marca con su icono, «N elementos · desde el …» y la tarjeta «Elementos».
+    expect(document.querySelector('.ah .lbl')?.textContent).toBe('Colección');
+    expect(document.querySelector('.ah .meta')?.textContent).toBe('2 elementos · desde el 11 oct');
+    expect(screen.getByRole('heading', { name: 'Elementos' })).toBeTruthy();
     expect([...document.querySelectorAll('.list .it .tt')].map((e) => e.textContent)).toEqual([
       'Probar ureq',
       'Timeout en streaming',
     ]);
+    // Subir, bajar y borrar, plegados al final: a la derecha solo queda el selector de vista.
+    expect(document.querySelector('.ah')?.textContent).not.toContain('Subir');
+    fireEvent.click(screen.getByText('Ordenar o borrar'));
     expect((screen.getByRole('button', { name: 'Subir' }) as HTMLButtonElement).disabled).toBe(true);
 
     // Renombrar en el sitio: sus elementos cambian y se va a la colección con su nombre nuevo.

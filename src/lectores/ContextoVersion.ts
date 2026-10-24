@@ -12,3 +12,9 @@ export interface VersionAnterior {
 }
 
 export const ContextoVersion = createContext<VersionAnterior | null>(null);
+
+/**
+ * La versión que se está viendo, si no es la actual: la de Prompt la elige en la cabecera («v1 · v2 · actual», como
+ * `SC.prompt`) y la vista enseña su texto y copia con sus variables, sin restaurarla.
+ */
+export const ContextoVersionVista = createContext<VersionAnterior | null>(null);

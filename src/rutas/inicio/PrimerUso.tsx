@@ -20,6 +20,7 @@ import { useT } from '../../i18n/useT';
 import { useLectoresOpcional } from '../../lectores/Lectores';
 import { Boton, IconoTipo } from '../../ui/componentes';
 import { Senal } from '../../ui/marca/Senal';
+import { useEsperaVisible } from '../../ui/marca/useEsperaVisible';
 
 /** Ejemplos de qué pegar: un log del gateway, su traza y unas mediciones. */
 export const EJEMPLOS = {
@@ -57,6 +58,8 @@ export function PrimerUso() {
     const ya = espaciosConocidos().find((e) => e.nombre === t('pantallas.inicio.ejemploNombre'));
     return ya ? { fase: 'listo', ...ya } : { fase: 'nada' };
   });
+  // Generar e importar un espacio entero tarda: pasados 400 ms, la señal junto al botón.
+  const creandoVisible = useEsperaVisible(ejemplo.fase === 'creando');
   // Un espacio nuevo necesita OPFS: en memoria no se ofrece.
   const conEjemplo = Boolean(espacio && lectores && !espacio.enMemoria);
 
@@ -106,6 +109,10 @@ export function PrimerUso() {
           >
             {ejemplo.fase === 'creando' ? t('pantallas.inicio.ejemploCreando') : t('pantallas.inicio.ejemploCrear')}
           </Boton>
+        )}
+        {/* Al lado del botón (que dice lo que pasa), sin quitarlo: el foco no se pierde. */}
+        {conEjemplo && ejemplo.fase === 'creando' && creandoVisible && (
+          <Senal estado="cargando" etiqueta="" decorativa tamano={16} />
         )}
         {ejemplo.fase === 'listo' && (
           <Boton variante="primario" pequeno onClick={() => cambiarDeEspacio(ejemplo.id)}>

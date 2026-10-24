@@ -5,14 +5,13 @@ import { AjustesRecordatorio } from '../../datos/AjustesRecordatorio';
 import { descargarCopiaDeEspacio } from '../../datos/copiaDeEspacio';
 import { cancelarExportacion, useExportacion } from '../../datos/exportacion';
 import { useArchivoImportar } from '../../datos/importar/importacion';
-import { useExportar } from '../../datos/useExportar';
+import { SenalExportacion, useEsperaExportacion, useExportar } from '../../datos/useExportar';
 import { TarjetaCuidado } from '../../espacio/Avisos';
 import { borrarEspacio, cambiarDeEspacio, espaciosConocidos, useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
 import { useT } from '../../i18n/useT';
 import { Boton, Detalles, Dialogo } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
-import { Senal } from '../../ui/marca/Senal';
 import { Pantalla } from '../Pantalla';
 
 /** Cuántos elementos hay en el espacio y en su papelera, al día con cada cambio. */
@@ -82,26 +81,38 @@ function BotonImportar() {
   );
 }
 
-/** Los botones de la tarjeta de cuidado o, mientras se exporta, la señal con el porcentaje. */
+/**
+ * Los botones de la tarjeta de cuidado o, si la exportación pasa de 400 ms, la señal con el porcentaje y «Cancelar»
+ * (los botones, deshabilitados mientras tanto). Si el foco se pierde al cambiar unos por otros, vuelve a la fila.
+ */
 function AccionesCopia() {
   const { t } = useT();
-  const { tipo, porcentaje } = useExportacion();
-  if (tipo)
+  const { visible, enMarcha } = useEsperaExportacion();
+  const fila = useRef<HTMLDivElement>(null);
+  const montada = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: se mira cada vez que cambian los botones de la fila.
+  useEffect(() => {
+    // Al montar no: entrar en la pantalla no mueve el foco.
+    if (!montada.current) {
+      montada.current = true;
+      return;
+    }
+    if (document.activeElement === document.body || !document.activeElement)
+      fila.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+  }, [visible]);
+  if (visible)
     return (
-      <div className="row">
-        <Senal
-          estado="exportando"
-          etiqueta={t(tipo === 'zip' ? 'pantallas.datos.exportandoZip' : 'pantallas.datos.exportandoJson', {
-            p: porcentaje,
-          })}
-        />
-        <Boton variante="fantasma" pequeno onClick={cancelarExportacion}>
-          {t('pantallas.datos.cancelar')}
-        </Boton>
+      <div className="row" ref={fila}>
+        <SenalExportacion />
+        {enMarcha && (
+          <Boton variante="fantasma" pequeno onClick={cancelarExportacion}>
+            {t('pantallas.datos.cancelar')}
+          </Boton>
+        )}
       </div>
     );
   return (
-    <div className="row">
+    <div className="row" ref={fila}>
       <BotonExportar tipo="zip" />
       <BotonImportar />
     </div>

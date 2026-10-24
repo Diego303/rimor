@@ -4,6 +4,7 @@
  * nuevos, idénticos, actualizados y en conflicto (con el detalle), y las refs reasignadas; al terminar, la señal de
  * guardado.
  */
+import type { FrontmatterComun } from '@rimor/formato';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { crearAlmacenOpfs } from '../../almacen/opfs/cliente';
@@ -22,8 +23,10 @@ import { useEspacio } from '../../estado/espacio';
 import { fmtBytes, fmtFecha } from '../../i18n/formatos';
 import type { Clave } from '../../i18n/i18n';
 import { useT } from '../../i18n/useT';
-import { Boton, Detalles, ErrorTarjeta, Vacio } from '../../ui/componentes';
+import { TarjetaElemento } from '../../lectores/Lectores';
+import { Boton, Detalles, Dialogo, ErrorTarjeta, Ref, Vacio } from '../../ui/componentes';
 import { Senal } from '../../ui/marca/Senal';
+import { useEsperaVisible } from '../../ui/marca/useEsperaVisible';
 import { Pantalla } from '../Pantalla';
 
 type Estado =
@@ -64,6 +67,10 @@ export function Importar() {
       vigente = false;
     };
   }, [espacio, archivo]);
+
+  // Las dos esperas, con su umbral (guía §11.1); lo que llega después las sustituye.
+  const comprobando = useEsperaVisible(estado.fase === 'comprobando');
+  const importando = useEsperaVisible(estado.fase === 'importando');
 
   const regla = (codigo: string) => t(`importar.reglas.${codigo}` as Clave);
 
@@ -120,7 +127,9 @@ export function Importar() {
       titulo={archivo.name}
       meta={`${fmtBytes(archivo.size, idioma)}${estado.fase === 'listo' ? exportado(estado.comprobado) : ''}`}
     >
-      {estado.fase === 'comprobando' && <Senal estado="analizando" etiqueta={t('importar.comprobando')} />}
+      {estado.fase === 'comprobando' && comprobando && (
+        <Senal estado="analizando" etiqueta={t('importar.comprobando')} />
+      )}
       {estado.fase === 'rechazado' && (
         <ErrorTarjeta
           titulo={t('importar.rechazado')}
@@ -145,7 +154,7 @@ export function Importar() {
           )}
           <section className="card" aria-labelledby="como-importar">
             <h3 id="como-importar">{t('importar.como')}</h3>
-            <div className="list" role="radiogroup" aria-labelledby="como-importar">
+            <div className="list modos-importar" role="radiogroup" aria-labelledby="como-importar">
               {MODOS.filter((m) => m !== 'nuevo' || !espacio.enMemoria).map((m) => (
                 <label key={m} className={`radio${modo === m ? ' on' : ''}`}>
                   <input type="radio" name="modo" checked={modo === m} onChange={() => setModo(m)} />
@@ -162,21 +171,21 @@ export function Importar() {
               ))}
             </div>
             <div className="row acciones-importar">
-              {estado.fase === 'importando' ? (
+              {/* La señal junto a los botones (deshabilitados), sin quitarlos. */}
+              {estado.fase === 'importando' && importando && (
                 <Senal estado="cargando" etiqueta={t('importar.importando')} />
-              ) : (
-                <>
-                  <Boton onClick={() => void navegar({ to: '/datos' })}>{t('importar.cancelar')}</Boton>
-                  <Boton
-                    variante="primario"
-                    disabled={soloLectura}
-                    title={soloLectura ? t('importar.soloLectura') : undefined}
-                    onClick={() => void hacer(estado.comprobado)}
-                  >
-                    {t('importar.importar')}
-                  </Boton>
-                </>
               )}
+              <Boton disabled={estado.fase === 'importando'} onClick={() => void navegar({ to: '/datos' })}>
+                {t('importar.cancelar')}
+              </Boton>
+              <Boton
+                variante="primario"
+                disabled={soloLectura || estado.fase === 'importando'}
+                title={soloLectura ? t('importar.soloLectura') : undefined}
+                onClick={() => void hacer(estado.comprobado)}
+              >
+                {t('importar.importar')}
+              </Boton>
             </div>
           </section>
         </>
@@ -188,8 +197,12 @@ export function Importar() {
 /** La comprobación y lo que va a pasar. */
 function Vista({ comprobado: { paquete, plan } }: { comprobado: Comprobado }) {
   const { t, idioma } = useT();
+  const espacio = useEspacioOpcional();
+  // El elemento de aquí de un conflicto, para ver cuál es sin salir de la pantalla (y sin perder la comprobación).
+  const [viendo, setViendo] = useState<FrontmatterComun | null>(null);
   const conflictos = plan.elementos.filter((c) => c.categoria === 'conflicto');
   const fecha = (iso?: string) => (iso ? fmtFecha(new Date(iso), idioma) : '');
+  const aqui = (id: string) => espacio?.repositorio.frontmatter(id);
   const cifras: [number, string, boolean][] = [
     [plan.recuentos.nuevo, t('importar.nuevos'), false],
     [plan.recuentos.identico, t('importar.identicos'), false],
@@ -226,7 +239,14 @@ function Vista({ comprobado: { paquete, plan } }: { comprobado: Comprobado }) {
           <dl className="kv">
             {conflictos.map((c) => (
               <div key={c.id} className="contents">
-                <dt className="mono">{c.ref}</dt>
+                <dt>
+                  {/* Como `refb`: se puede pulsar para ver el de aquí (por su id: la ref del paquete puede ser otra). */}
+                  {aqui(c.id) ? (
+                    <Ref refe={aqui(c.id)?.ref ?? c.ref} alPulsar={() => setViendo(aqui(c.id) ?? null)} />
+                  ) : (
+                    <span className="mono">{c.ref}</span>
+                  )}
+                </dt>
                 <dd>
                   {t(c.ganador === 'aqui' ? 'importar.conflictoAqui' : 'importar.conflictoPaquete', {
                     aqui: fecha(c.modificadoAqui),
@@ -261,6 +281,18 @@ function Vista({ comprobado: { paquete, plan } }: { comprobado: Comprobado }) {
           </ul>
         </Detalles>
       )}
+      <Dialogo
+        abierto={viendo !== null}
+        alCerrar={() => setViendo(null)}
+        titulo={t('importar.conflictoTitulo', { ref: viendo?.ref ?? '' })}
+      >
+        {viendo && <TarjetaElemento el={{ frontmatter: viendo }} />}
+        <div className="row">
+          <Boton pequeno onClick={() => setViendo(null)}>
+            {t('importar.cerrarConflicto')}
+          </Boton>
+        </div>
+      </Dialogo>
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import { type Elemento, hashOriginal, isoConZona } from '@rimor/formato';
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import type { VersionGuardada } from '../../almacen/repositorio';
 import { useCompositor } from '../../captura/compositor';
 import { crearCapturador } from '../../captura/flujo';
 import { tituloDePrompt } from '../../lectores/prompt/lector';
@@ -8,6 +9,7 @@ import { REGISTRO } from '../../lectores/registro';
 import { ESCRITURA, montarApp, PRIMERA_CARGA } from '../../pruebas/app';
 import { haceMinutos } from '../../pruebas/fechas';
 import { construirContexto } from '../../respuestas/contexto';
+import { versionesParaVer } from './Versiones';
 
 const PREFIJO = { prompt: 'PRM', markdown: 'DOC-MD' } as const;
 
@@ -77,8 +79,28 @@ describe('Versiones en la pantalla', () => {
       '− Señala riesgos y alternativas.',
     ]);
     expect(await screen.findByText('Versiones', { selector: 'summary' }, ESCRITURA)).toBeTruthy();
+    // Los metadatos («Detalles») son el último plegado (guía §8.2): las versiones, justo antes.
+    await screen.findByText('Detalles', { selector: 'summary' }, ESCRITURA);
+    const plegados = [...document.querySelectorAll('details.more > summary')].map((s) => s.textContent);
+    expect(plegados.slice(-3)).toEqual(['Cambios de la versión 1 a la 2', 'Versiones', 'Detalles']);
 
-    // Ver cambios de la v1 hasta ahora.
+    // «v1 · v2 · actual» en la cabecera (como `SC.prompt`): la v1 se ve sin restaurarla, y se vuelve a la actual.
+    const texto = () => document.querySelector('pre.prompt-texto')?.textContent;
+    const tokens = () => screen.getByText('Tokens (aprox.)').nextElementSibling?.querySelector('.mono')?.textContent;
+    expect(texto()).toBe(V2);
+    const tokensV2 = tokens();
+    fireEvent.click(screen.getByRole('button', { name: 'v1' }));
+    expect(texto()).toBe(V1);
+    // Sus detalles son los de la v1 (más corta).
+    expect(Number(tokens())).toBeLessThan(Number(tokensV2));
+    expect(screen.getByRole('button', { name: 'v1' }).getAttribute('aria-pressed')).toBe('true');
+    expect(espacio.repositorio.frontmatter('PRM-0012')?.version).toBe(2);
+    fireEvent.click(screen.getByRole('button', { name: 'v2 · actual' }));
+    expect(texto()).toBe(V2);
+
+    // Ver cambios de la v1 hasta ahora (con la lista abierta, como se haría).
+    fireEvent.click(screen.getByText('Versiones', { selector: 'summary' }));
+    fireEvent.click(screen.getByText('Cambios de la versión 1 a la 2', { selector: 'summary' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ver los cambios desde v1' }));
     expect(dialogoDe(/Cambios desde v1 hasta ahora/).getAllByText(/Señala riesgos/).length).toBe(2);
     fireEvent.click(dialogoDe(/Cambios desde v1 hasta ahora/).getByRole('button', { name: 'Cerrar' }));
@@ -86,8 +108,15 @@ describe('Versiones en la pantalla', () => {
     // Restaurar la v1: con confirmación; vuelve su texto como versión 3 y lo de ahora queda en el historial.
     fireEvent.click(screen.getByRole('button', { name: 'Restaurar v1' }));
     fireEvent.click(dialogoDe(/¿Restaurar v1\?/).getByRole('button', { name: 'Restaurar esta versión' }));
-    // La señal «guardado» se ve en la lista (que no se desmonta al releer).
+    // La señal «guardado» se ve en la lista, abierta aunque se vuelva a montar al recalcular la vista.
     await waitFor(() => expect(document.querySelector('.senal-guardado')).toBeTruthy(), ESCRITURA);
+    expect(document.querySelector('.senal-guardado')?.closest('details')?.open).toBe(true);
+    // Los cambios, también abiertos como estaban (ahora de la 2 a la 3).
+    expect(
+      (await screen.findByText(/^Cambios de la versión 2 a la 3/, { selector: 'summary' }, ESCRITURA)).closest(
+        'details',
+      )?.open,
+    ).toBe(true);
     await waitFor(() => expect(espacio.repositorio.frontmatter('PRM-0012')?.version).toBe(3), ESCRITURA);
     const restaurado = await espacio.repositorio.leerElemento('PRM-0012');
     expect(restaurado.ok && restaurado.valor.original).toBe(V1);
@@ -185,4 +214,32 @@ Reenviar los fragmentos.
     expect(espacio.repositorio.frontmatter('PRM-0013')?.tipo).toBe('prompt');
     await waitFor(() => expect(screen.queryByText('Lo he guardado como su versión 2.')).toBeNull());
   }, 60_000);
+});
+
+describe('versionesParaVer', () => {
+  const copia = (version: number, reemplazado: string, original: string | null = `v${version}`) =>
+    ({
+      ruta: `h/${version}-${reemplazado}`,
+      version,
+      reemplazado,
+      motivo: 'version',
+      elemento: { frontmatter: {}, original, notas: '' },
+    }) as unknown as VersionGuardada;
+
+  it('una por número (la última copia), solo las anteriores a la actual, las tres más recientes en orden', () => {
+    const lista = [
+      copia(1, '2026-10-01T10:00:00+02:00', 'primera'),
+      copia(1, '2026-10-02T10:00:00+02:00', 'primera editada'),
+      copia(2, '2026-10-03T10:00:00+02:00'),
+      copia(3, '2026-10-04T10:00:00+02:00'),
+      copia(4, '2026-10-05T10:00:00+02:00'),
+      copia(5, '2026-10-06T10:00:00+02:00', null),
+      copia(6, '2026-10-07T10:00:00+02:00'),
+    ];
+    expect(versionesParaVer(lista, 6).map((v) => v.version)).toEqual([2, 3, 4]);
+    expect(versionesParaVer(lista, 3).map((v) => [v.version, v.elemento.original])).toEqual([
+      [1, 'primera editada'],
+      [2, 'v2'],
+    ]);
+  });
 });

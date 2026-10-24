@@ -2,6 +2,7 @@ import { act, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LIMITE_BUCLE_MS, MINIMO_VISIBLE_MS, UMBRAL_ESPERA_MS } from './estadosSenal';
 import { Senal } from './Senal';
+import { PRIORIDAD_BUCLE, useTurnoBucle } from './turnoBucle';
 import { useEsperaVisible } from './useEsperaVisible';
 
 afterEach(() => vi.useRealTimers());
@@ -23,6 +24,56 @@ describe('Senal', () => {
     expect(zona.style.getPropertyValue('--senal-veces')).toBe('infinite');
     act(() => vi.advanceTimersByTime(LIMITE_BUCLE_MS));
     expect(zona.className).toContain('reposo');
+  });
+
+  it('una sola en bucle por pantalla: la secundaria cede y la siguiente toma el turno al acabar', () => {
+    // Con `key`: al quitar la que tiene el turno se desmonta ella (no se reutiliza su instancia para otra).
+    const { rerender } = render(
+      <>
+        <Senal key="e" estado="exportando" etiqueta="Exportando" prioridad="secundaria" />
+        <Senal key="i" estado="indexando" etiqueta="Indexando" />
+        <Senal key="a" estado="analizando" etiqueta="Analizando" />
+        <Senal key="g" estado="guardado" etiqueta="Guardado" />
+      </>,
+    );
+    const clase = (texto: string) => screen.getByText(texto).closest('.senal')?.className;
+    expect(clase('Indexando')).toBe('senal senal-indexando');
+    expect(clase('Analizando')).toContain('reposo');
+    expect(clase('Exportando')).toContain('reposo');
+    // Una de una vez no cuenta: se anima siempre.
+    expect(clase('Guardado')).toBe('senal senal-guardado');
+    rerender(
+      <>
+        <Senal key="e" estado="exportando" etiqueta="Exportando" prioridad="secundaria" />
+        <Senal key="a" estado="analizando" etiqueta="Analizando" />
+      </>,
+    );
+    expect(clase('Analizando')).toBe('senal senal-analizando');
+    expect(clase('Exportando')).toContain('reposo');
+    rerender(<Senal key="e" estado="exportando" etiqueta="Exportando" prioridad="secundaria" />);
+    expect(clase('Exportando')).toBe('senal senal-exportando');
+  });
+
+  it('al pasar sus 20 s, un bucle deja el turno', () => {
+    vi.useFakeTimers();
+    render(<Senal estado="cargando" etiqueta="Cargando" />);
+    act(() => vi.advanceTimersByTime(LIMITE_BUCLE_MS));
+    render(<Senal estado="indexando" etiqueta="Indexando" />);
+    expect(screen.getByText('Indexando').closest('.senal')?.className).toBe('senal senal-indexando');
+  });
+
+  it('una espera atascada suelta el turno a los 20 s de pedirlo', () => {
+    vi.useFakeTimers();
+    const atascada = renderHook(() => useTurnoBucle(true, PRIORIDAD_BUCLE.principal));
+    expect(atascada.result.current).toBe(true);
+    act(() => vi.advanceTimersByTime(LIMITE_BUCLE_MS / 2));
+    const otra = renderHook(() => useTurnoBucle(true, PRIORIDAD_BUCLE.secundaria));
+    expect(otra.result.current).toBe(false);
+    act(() => vi.advanceTimersByTime(LIMITE_BUCLE_MS / 2));
+    expect(atascada.result.current).toBe(false);
+    expect(otra.result.current).toBe(true);
+    atascada.unmount();
+    otra.unmount();
   });
 
   it('una vez se detiene en la fracción del ciclo de su reposo', () => {

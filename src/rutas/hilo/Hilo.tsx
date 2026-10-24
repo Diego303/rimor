@@ -178,34 +178,35 @@ export function Hilo() {
           {elementos.map((fm, i) => {
             const nota = notas.get(fm.id);
             return (
-              <div key={fm.id} className="mensaje-hilo">
-                <Mensaje
-                  fm={fm}
-                  seleccionado={false}
-                  marcado={false}
-                  fresco={false}
-                  // Las acciones de la respuesta (añadir a una colección, a su hilo) son de Inicio: aquí, ninguna.
-                  sinAcciones
-                  soloLectura={soloLectura}
-                  resumen={legible(fm)}
-                  posicion={i + 1}
-                  total={elementos.length}
-                  alAbrir={abrir}
-                  alResponder={responderA}
-                  alArchivar={() => undefined}
-                  alAccion={() => undefined}
-                  conDia
-                  sinArchivar
-                />
-                {nota && (
-                  <div className="nota-hilo">
-                    <Hueco gravedad="resuelto">
-                      <b className="sm">{t('pantallas.hilo.asiLoResolviste')}</b>
-                      <span className="sm">{nota}</span>
-                    </Hueco>
-                  </div>
-                )}
-              </div>
+              <Mensaje
+                key={fm.id}
+                fm={fm}
+                seleccionado={false}
+                marcado={false}
+                fresco={false}
+                // Las acciones de la respuesta (añadir a una colección, a su hilo) son de Inicio: aquí, ninguna.
+                sinAcciones
+                soloLectura={soloLectura}
+                resumen={legible(fm)}
+                posicion={i + 1}
+                total={elementos.length}
+                alAbrir={abrir}
+                alResponder={responderA}
+                alArchivar={() => undefined}
+                alAccion={() => undefined}
+                conDia
+                sinArchivar
+                pie={
+                  nota && (
+                    <div className="nota-hilo">
+                      <Hueco gravedad="resuelto">
+                        <b className="sm">{t('pantallas.hilo.asiLoResolviste')}</b>
+                        <span className="sm">{nota}</span>
+                      </Hueco>
+                    </div>
+                  )
+                }
+              />
             );
           })}
         </div>

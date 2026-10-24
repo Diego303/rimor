@@ -27,6 +27,13 @@ describe('Ajustes', () => {
   it('tema e idioma se aplican y se guardan en el espacio', async () => {
     const { almacen } = await montarApp('/ajustes');
     await screen.findByRole('heading', { name: 'Ajustes' }, PRIMERA_CARGA);
+    // Tres tarjetas abiertas y lo demás plegado (guía §8.3), como Datos y copias.
+    expect([...document.querySelectorAll('.card.ajustes > h3')].map((h) => h.textContent)).toEqual([
+      'Apariencia',
+      'Detección',
+      'Respuestas de Rimor',
+    ]);
+    expect(document.querySelectorAll('details.more:not([open])')).toHaveLength(3);
     fireEvent.click(screen.getByRole('button', { name: 'Oscuro' }));
     expect(document.documentElement.dataset.theme).toBe('dark');
     fireEvent.click(screen.getByRole('button', { name: 'English' }));

@@ -4,16 +4,17 @@
  * no deja, el texto listo para seleccionarlo); los resultados plegados con su número y los detalles.
  */
 import { isoConZona } from '@rimor/formato';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
 import { fmtDia, fmtNumero } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { Boton, Detalles, Hueco, Huecos, Tarjeta } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
+import { ContextoVersionVista } from '../ContextoVersion';
 import type { PropsVista } from '../contrato';
 import { cifrasDe, DetallesElemento } from '../DetallesElemento';
-import { escrituraDe, sustituir, trozosDe } from './analisis';
+import { analizarPrompt, escrituraDe, sustituir, trozosDe } from './analisis';
 import { type DatosPrompt, lectorPrompt } from './lector';
 import {
   archivoResultado,
@@ -81,6 +82,9 @@ function CopiarConValores({
   const id = useId();
 
   useEffect(() => setValores(leerValores(clave)), [clave]);
+  // El texto listo para copiar a mano era el de otra versión: fuera.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: se descarta al cambiar el texto del prompt.
+  useEffect(() => setListo(null), [el.original]);
   // Si el navegador no dejó copiar, el texto queda seleccionado para Ctrl+C.
   useEffect(() => {
     if (listo !== null) areaLista.current?.select();
@@ -270,14 +274,21 @@ function Resultados({ el, resultados, alGuardar, editable, t }: PropsResultados)
   );
 }
 
-export default function VistaPrompt({ el, datos, editable = true }: PropsVista<DatosPrompt>) {
+export default function VistaPrompt({ el, datos: datosActuales, editable = true }: PropsVista<DatosPrompt>) {
   const { idioma } = useT();
   const t = textos.t.bind(textos, idioma) as unknown as T;
-  const trozos = useMemo(() => trozosDe(el.original ?? ''), [el.original]);
+  // Otra versión elegida en la cabecera: su texto, y copiar con sus variables (sin restaurarla).
+  const vista = useContext(ContextoVersionVista);
+  const texto = vista?.original ?? el.original ?? '';
+  const trozos = useMemo(() => trozosDe(texto), [texto]);
+  const elVisto = useMemo(() => (vista ? { ...el, original: vista.original } : el), [el, vista]);
+  // Sus variables y detalles, los de esa versión (se analiza aquí: es un texto corto y ya escrito).
+  const datos = useMemo(() => (vista ? analizarPrompt(vista.original) : datosActuales), [datosActuales, vista]);
   const [resultados, setResultados] = useState(() => resultadosDe(el.frontmatter));
   // Cuando llega el elemento releído (o otro), manda lo que dice su frontmatter.
   useEffect(() => setResultados(resultadosDe(el.frontmatter)), [el.frontmatter]);
-  const cifras = cifrasDe(lectorPrompt, datos);
+  // Las cifras citables son siempre las de la actual: es a lo que lleva citarlas (`{{PRM-0012.tokens}}`).
+  const cifras = cifrasDe(lectorPrompt, datosActuales);
 
   return (
     <>
@@ -296,7 +307,7 @@ export default function VistaPrompt({ el, datos, editable = true }: PropsVista<D
         </pre>
       </Tarjeta>
 
-      {datos.variables.length > 0 && <CopiarConValores el={el} datos={datos} resultados={resultados} t={t} />}
+      {datos.variables.length > 0 && <CopiarConValores el={elVisto} datos={datos} resultados={resultados} t={t} />}
 
       <Resultados
         el={el}

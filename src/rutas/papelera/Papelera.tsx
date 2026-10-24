@@ -14,6 +14,8 @@ import { descargar } from '../../lectores/descargar';
 import { useLectoresOpcional } from '../../lectores/Lectores';
 import { Boton, Dialogo, FilaElemento, Vacio } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
+import { Senal } from '../../ui/marca/Senal';
+import { useEsperaVisible } from '../../ui/marca/useEsperaVisible';
 import { Pantalla } from '../Pantalla';
 
 /** Lo que hay en la papelera, al día con cada cambio, de lo más reciente a lo más antiguo. */
@@ -46,6 +48,8 @@ export function Papelera() {
     null,
   );
   const pedida = useRef(0);
+  // Preparar el ZIP de lo que hay en la papelera puede tardar: pasados 400 ms, la señal.
+  const preparando = useEsperaVisible(vaciado !== null && !vaciado.copia);
   const editable = Boolean(espacio) && !soloLectura;
   // Mientras se vacía, nada de restaurar: lo que entró en la copia se va a borrar.
   const ocupado = vaciado !== null;
@@ -143,6 +147,7 @@ export function Papelera() {
           })}
         </p>
         {vaciado?.descargada && <p className="xs muted">{t('pantallas.papelera.descargada')}</p>}
+        {preparando && !vaciado?.copia && <Senal estado="cargando" etiqueta={t('pantallas.papelera.preparando')} />}
         <div className="row">
           <Boton
             variante={vaciado?.descargada ? 'secundario' : 'primario'}
@@ -151,7 +156,7 @@ export function Papelera() {
             disabled={!vaciado?.copia || vaciado.borrando}
             onClick={bajarZip}
           >
-            {vaciado?.copia ? t('pantallas.papelera.descargarZip') : t('pantallas.papelera.preparando')}
+            {t('pantallas.papelera.descargarZip')}
           </Boton>
           <Boton
             variante="primario"

@@ -5,6 +5,7 @@ import {
   fmtBytes,
   fmtCifra,
   fmtDia,
+  fmtDiaRelativo,
   fmtDuracion,
   fmtFecha,
   fmtFechaRelativa,
@@ -119,6 +120,9 @@ describe('fechas', () => {
   it('relativa: hoy, ayer, día y mes, y año si no es el actual', () => {
     expect(fmtFechaRelativa(new Date('2026-10-17T17:49:00+02:00'), ahora, 'es', 'Europe/Madrid')).toBe('hoy, 17:49');
     expect(fmtFechaRelativa(new Date('2026-10-16T18:21:00+02:00'), ahora, 'es', 'Europe/Madrid')).toBe('ayer, 18:21');
+    expect(fmtDiaRelativo(new Date('2026-10-17T17:49:00+02:00'), ahora, 'es', 'Europe/Madrid')).toBe('hoy');
+    expect(fmtDiaRelativo(new Date('2026-10-16T18:21:00+02:00'), ahora, 'en', 'Europe/Madrid')).toBe('yesterday');
+    expect(fmtDiaRelativo(new Date('2026-10-02T09:00:00+02:00'), ahora, 'es', 'Europe/Madrid')).toBe('2 oct');
     expect(fmtFechaRelativa(new Date('2026-10-02T10:00:00+02:00'), ahora, 'es', 'Europe/Madrid')).toBe('2 oct');
     expect(fmtFechaRelativa(new Date('2025-10-02T10:00:00+02:00'), ahora, 'es', 'Europe/Madrid')).toBe('2 oct 2025');
     expect(fmtFechaRelativa(new Date('2026-10-17T17:49:00+02:00'), ahora, 'en', 'Europe/Madrid')).toBe('today, 17:49');

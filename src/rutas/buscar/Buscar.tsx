@@ -256,6 +256,7 @@ export function Buscar() {
                           </>
                         }
                         alAbrir={abrir}
+                        sinHora
                       />
                     ))}
                   </div>

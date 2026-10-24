@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import type { Elemento } from '@rimor/formato';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { IDBFactory } from 'fake-indexeddb';
 import { describe, expect, it, vi } from 'vitest';
 import { escribirTexto } from '../almacen/contrato';
@@ -12,6 +12,7 @@ import { ejecutorEnHilo } from '../lectores/ejecutor';
 import { ProveedorLectores } from '../lectores/Lectores';
 import { elementoFalso, lectorFalso } from '../lectores/pruebas/falsos';
 import { crearRegistro } from '../lectores/registro';
+import { MINIMO_VISIBLE_MS, UMBRAL_ESPERA_MS } from '../ui/marca/estadosSenal';
 import { RespuestaRimor } from './RespuestaRimor';
 import { useRespuesta } from './useRespuesta';
 
@@ -45,10 +46,48 @@ describe('RespuestaRimor', () => {
     expect(alAbrir).toHaveBeenCalledWith('ERR-0015');
   });
 
-  it('mientras se compone: «contestando» y «Leyendo…»', () => {
-    const { container } = render(<RespuestaRimor respuesta={null} />);
-    expect(container.querySelector('.senal-contestando')).toBeTruthy();
-    expect(container.querySelector('p')?.textContent).toBe('Leyendo…');
+  it('mientras se compone: «Leyendo…» y, pasados 400 ms, «contestando»', async () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(<RespuestaRimor respuesta={null} />);
+      expect(container.querySelector('p')?.textContent).toBe('Leyendo…');
+      // Una espera corta no anima (guía §11.1).
+      expect(container.querySelector('.senal-contestando')).toBeNull();
+      expect(container.querySelector('.rimor .av svg.simbolo.mono')).toBeTruthy();
+      await act(async () => vi.advanceTimersByTime(UMBRAL_ESPERA_MS));
+      expect(container.querySelector('.senal-contestando')).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('una sola «contestando» a la vez, con preferencia para la que se anuncia', async () => {
+    vi.useFakeTimers();
+    try {
+      const { container, rerender } = render(
+        <>
+          <RespuestaRimor respuesta={null} anunciar={false} />
+          <RespuestaRimor respuesta={null} anunciar={false} />
+          <RespuestaRimor respuesta={null} anunciar />
+        </>,
+      );
+      await act(async () => vi.advanceTimersByTime(UMBRAL_ESPERA_MS));
+      const animadas = () =>
+        [...container.querySelectorAll('.rimor')].map((r) => !!r.querySelector('.senal-contestando'));
+      expect(animadas()).toEqual([false, false, true]);
+      // Al llegar la suya (y pasado su mínimo visible), el turno pasa a la siguiente pendiente.
+      rerender(
+        <>
+          <RespuestaRimor respuesta={null} anunciar={false} />
+          <RespuestaRimor respuesta={null} anunciar={false} />
+          <RespuestaRimor respuesta={{ texto: [{ t: 'texto', v: 'Hecho.' }] }} anunciar />
+        </>,
+      );
+      await act(async () => vi.advanceTimersByTime(MINIMO_VISIBLE_MS));
+      expect(animadas()).toEqual([true, false, false]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

@@ -4,7 +4,7 @@
  * detalles con la huella y las cifras.
  */
 import { type FrontmatterComun, isoConZona } from '@rimor/formato';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
 import { fmtDia, fmtOrdinal, type Idioma } from '../../i18n/formatos';
@@ -12,6 +12,7 @@ import { useT } from '../../i18n/useT';
 import { construirContexto } from '../../respuestas/contexto';
 import { Boton, Detalles, Tarjeta, Veredicto } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
+import { ContextoHilo } from '../ContextoHilo';
 import type { Contexto, PropsVista } from '../contrato';
 import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { type DatosError, lectorError } from './lector';
@@ -53,6 +54,7 @@ export default function VistaError({ el, datos, editable = true }: PropsVista<Da
   const t = textos.t.bind(textos, idioma) as unknown as T;
   const espacio = useEspacioOpcional();
   const soloLectura = useEspacio((s) => s.soloLectura);
+  const verHilo = useContext(ContextoHilo);
   const avisos = useAvisosOpcional();
   const [ctx, setCtx] = useState<Contexto | null>(null);
   const [escribiendo, setEscribiendo] = useState(false);
@@ -89,6 +91,7 @@ export default function VistaError({ el, datos, editable = true }: PropsVista<Da
           .find((l) => l.trim())
           ?.trim() ?? null)
       : null;
+  const puedeAnotar = editable && !soloLectura && !notaPropia;
 
   async function guardarNota() {
     const texto = nota.trim();
@@ -149,30 +152,30 @@ export default function VistaError({ el, datos, editable = true }: PropsVista<Da
             explicacionAtenuada={false}
           />
           {notaPropia && <p className="sm">{t('loResolviste', { nota: notaPropia })}</p>}
-          {editable &&
-            !soloLectura &&
-            !notaPropia &&
-            (escribiendo ? (
-              <div className="nota-resolucion">
-                <textarea
-                  aria-label={t('resolucion')}
-                  rows={3}
-                  value={nota}
-                  onChange={(e) => setNota(e.target.value)}
-                />
-                <div className="row">
-                  <Boton variante="primario" pequeno onClick={() => void guardarNota()} disabled={!nota.trim()}>
-                    {t('guardarResolucion')}
-                  </Boton>
-                </div>
-              </div>
-            ) : (
-              <div className="row">
+          {(verHilo || (puedeAnotar && !escribiendo)) && (
+            <div className="row">
+              {verHilo && (
+                <Boton variante="primario" pequeno onClick={verHilo}>
+                  {t('verHilo')}
+                </Boton>
+              )}
+              {puedeAnotar && !escribiendo && (
                 <Boton pequeno onClick={() => setEscribiendo(true)}>
                   {t('anadirResolucion')}
                 </Boton>
+              )}
+            </div>
+          )}
+          {puedeAnotar && escribiendo && (
+            <div className="nota-resolucion">
+              <textarea aria-label={t('resolucion')} rows={3} value={nota} onChange={(e) => setNota(e.target.value)} />
+              <div className="row">
+                <Boton variante="primario" pequeno onClick={() => void guardarNota()} disabled={!nota.trim()}>
+                  {t('guardarResolucion')}
+                </Boton>
               </div>
-            ))}
+            </div>
+          )}
         </Tarjeta>
       )}
 

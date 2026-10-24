@@ -28,13 +28,14 @@ import { formarSiEsError } from '../../hilos/formar';
 import { elementosDe, hiloDe, moverAHilo } from '../../hilos/hilos';
 import { useT } from '../../i18n/useT';
 import { ContextoComparar } from '../../lectores/ContextoComparar';
-import { ContextoVersion } from '../../lectores/ContextoVersion';
+import { ContextoHilo } from '../../lectores/ContextoHilo';
+import { ContextoVersion, ContextoVersionVista } from '../../lectores/ContextoVersion';
 import type { Lector } from '../../lectores/contrato';
-import { ContextoDetalles } from '../../lectores/DetallesElemento';
+import { ContextoAntesDeDetalles, ContextoDetalles } from '../../lectores/DetallesElemento';
 import { useLectoresOpcional, VistaElemento } from '../../lectores/Lectores';
 import type { Atajo } from '../../ui/atajos/atajos';
 import { useAtajos } from '../../ui/atajos/useAtajos';
-import { Banner, Boton, Vacio } from '../../ui/componentes';
+import { Banner, Boton, Segmentado, Vacio } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { PantallaComparacion } from '../comparacion/Comparacion';
 import { DialogoComparar } from '../comparacion/DialogoComparar';
@@ -46,7 +47,14 @@ import { FilasComunes } from './Comunes';
 import { DialogoEstado, DialogoMoverHilo, DialogoOriginal } from './Dialogos';
 import { Notas } from './Notas';
 import { useElementoVivo } from './useElementoVivo';
-import { anteriorDe, CambiosDeVersion, ListaVersiones, useVersiones } from './Versiones';
+import {
+  anteriorDe,
+  CambiosDeVersion,
+  ListaVersiones,
+  useEstadoVersiones,
+  useVersiones,
+  versionesParaVer,
+} from './Versiones';
 
 export function Elemento() {
   const { ref } = useParams({ from: '/e/$ref' });
@@ -235,6 +243,22 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       anterior?.elemento.original != null ? { version: anterior.version, original: anterior.elemento.original } : null,
     [anterior],
   );
+  // Prompt (CMP-02, como `SC.prompt`): «v1 · v2 · actual» en la cabecera; una anterior se ve sin restaurarla.
+  const paraVer = useMemo(
+    () => (lector?.nombre === 'prompt' && versiones ? versionesParaVer(versiones, fm.version ?? 1) : []),
+    [lector, versiones, fm.version],
+  );
+  const [vista, setVista] = useState<number | null>(null);
+  // Otro elemento, o una versión nueva: se vuelve a la actual.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: se reinicia al cambiar de elemento o de versión.
+  useEffect(() => setVista(null), [fm.id, fm.version]);
+  const vistaVersion = useMemo(() => {
+    const v = paraVer.find((p) => p.version === vista);
+    return v?.elemento.original != null ? { version: v.version, original: v.elemento.original } : null;
+  }, [paraVer, vista]);
+
+  // Lo que los plegados de versiones recuerdan aunque la vista del lector se vuelva a montar.
+  const estadoVersiones = useEstadoVersiones(fm.id);
   const restaurarVersion = useCallback(
     async (v: VersionGuardada) => {
       if (!espacio) return null;
@@ -360,6 +384,24 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
     // Un resumen de otra forma (de otra versión del lector) no rompe la cabecera.
   }
 
+  // Los plegados de versiones van antes de «Detalles», que es el último (guía §8.2).
+  const antesDeDetalles = (
+    <>
+      {anterior && <CambiosDeVersion el={el} anterior={anterior} estado={estadoVersiones} />}
+      {versiones && (
+        <ListaVersiones
+          el={el}
+          versiones={versiones}
+          editable={editable}
+          alRestaurar={restaurarVersion}
+          estado={estadoVersiones}
+        />
+      )}
+    </>
+  );
+
+  const abrirHilo = (r: string) => void navegar({ to: '/hilo/$ref', params: { ref: r } });
+
   const comunes = (
     <FilasComunes
       fm={fm}
@@ -370,7 +412,7 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       alCambiarTipo={() => setDialogo('tipo')}
       alVerOriginal={() => setDialogo('original')}
       hilo={hiloActual ? { ref: hiloActual.ref, titulo: hiloActual.titulo } : null}
-      alAbrirHilo={(r) => void navegar({ to: '/hilo/$ref', params: { ref: r } })}
+      alAbrirHilo={abrirHilo}
       alMoverHilo={() => setDialogo('hilo')}
     />
   );
@@ -389,27 +431,52 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       }
       meta={metaDe(fm, legible, new Date(), idioma, t)}
       control={
-        espacio && !soloLectura ? (
-          <AccionesElemento
-            fijado={Boolean(fm.fijado)}
-            enPapelera={enPapelera}
-            alFijar={() => void fijar()}
-            alPapelera={() => void aPapelera()}
-            alRestaurar={() => void restaurar(fm.id, fm.ref)}
-          />
+        paraVer.length || (espacio && !soloLectura) ? (
+          <div className="row">
+            {paraVer.length > 0 && (
+              <Segmentado
+                etiqueta={t('pantallas.elemento.versiones.verVersion')}
+                valor={String(vista ?? 'actual')}
+                opciones={[
+                  ...paraVer.map((v) => ({
+                    valor: String(v.version),
+                    etiqueta: t('pantallas.elemento.versiones.version', { n: v.version }),
+                  })),
+                  {
+                    valor: 'actual',
+                    etiqueta: t('pantallas.elemento.versiones.versionActual', { n: fm.version ?? 1 }),
+                  },
+                ]}
+                alCambiar={(v) => setVista(v === 'actual' ? null : Number(v))}
+              />
+            )}
+            {espacio && !soloLectura && (
+              <AccionesElemento
+                fijado={Boolean(fm.fijado)}
+                enPapelera={enPapelera}
+                alFijar={() => void fijar()}
+                alPapelera={() => void aPapelera()}
+                alRestaurar={() => void restaurar(fm.id, fm.ref)}
+              />
+            )}
+          </div>
         ) : undefined
       }
     >
       {enPapelera && <Banner>{t('pantallas.elemento.enPapelera')}</Banner>}
       <ContextoDetalles.Provider value={comunes}>
-        <ContextoComparar.Provider value={sePuedeComparar ? abrirComparar : null}>
-          <ContextoVersion.Provider value={versionAnterior}>
-            <VistaElemento el={el} editable={!enPapelera} />
-          </ContextoVersion.Provider>
-        </ContextoComparar.Provider>
+        <ContextoAntesDeDetalles.Provider value={antesDeDetalles}>
+          <ContextoComparar.Provider value={sePuedeComparar ? abrirComparar : null}>
+            <ContextoHilo.Provider value={hiloActual ? () => abrirHilo(hiloActual.ref) : null}>
+              <ContextoVersion.Provider value={versionAnterior}>
+                <ContextoVersionVista.Provider value={vistaVersion}>
+                  <VistaElemento el={el} editable={!enPapelera} />
+                </ContextoVersionVista.Provider>
+              </ContextoVersion.Provider>
+            </ContextoHilo.Provider>
+          </ContextoComparar.Provider>
+        </ContextoAntesDeDetalles.Provider>
       </ContextoDetalles.Provider>
-      {anterior && <CambiosDeVersion el={el} anterior={anterior} />}
-      {versiones && <ListaVersiones el={el} versiones={versiones} editable={editable} alRestaurar={restaurarVersion} />}
       <Notas
         notas={el.notas}
         editable={editable}

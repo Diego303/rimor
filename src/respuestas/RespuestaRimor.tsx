@@ -1,6 +1,7 @@
 /**
  * Respuesta de Rimor (guía §7.6, IN-016): bloque hundido con el símbolo mono como avatar y la frase con sus
- * datos marcados. Mientras se compone, el avatar es la animación «contestando» y el texto, «Leyendo…».
+ * datos marcados. Mientras se compone, el texto es «Leyendo…» y, si tarda más de 400 ms, el avatar pasa a la
+ * animación «contestando»: una sola a la vez en pantalla (las demás respuestas pendientes, con el avatar quieto).
  */
 import type { ReactNode } from 'react';
 import { fmtFecha } from '../i18n/formatos';
@@ -8,6 +9,8 @@ import { useT } from '../i18n/useT';
 import { Ref } from '../ui/componentes';
 import { Senal } from '../ui/marca/Senal';
 import { SimboloRimor } from '../ui/marca/SimboloRimor';
+import { PRIORIDAD_BUCLE, useTurnoBucle } from '../ui/marca/turnoBucle';
+import { useEsperaVisible } from '../ui/marca/useEsperaVisible';
 import type { Fragmento, Respuesta } from './tipos';
 
 interface Props {
@@ -24,13 +27,16 @@ interface Props {
 
 export function RespuestaRimor({ respuesta, alAbrir, anunciar = true }: Props) {
   const { t } = useT();
+  const esperaVisible = useEsperaVisible(respuesta === null);
+  // La de lo recién capturado (la que se anuncia) tiene preferencia para animarse.
+  const conTurno = useTurnoBucle(esperaVisible, anunciar ? PRIORIDAD_BUCLE.principal : PRIORIDAD_BUCLE.secundaria);
   return (
     <div className="rimor">
       <span className="av">
-        {respuesta ? (
-          <SimboloRimor variante="mono" tamano={13} />
+        {conTurno ? (
+          <Senal estado="contestando" decorativa tamano={13} etiqueta="" prioridad="sinTurno" />
         ) : (
-          <Senal estado="contestando" decorativa tamano={13} etiqueta="" />
+          <SimboloRimor variante="mono" tamano={13} />
         )}
       </span>
       <p aria-live={anunciar ? 'polite' : undefined}>

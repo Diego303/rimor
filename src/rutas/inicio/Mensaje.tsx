@@ -4,7 +4,7 @@
  * naranja mientras está fresco; anillo de foco si es el seleccionado con el teclado.
  */
 import type { Elemento, FrontmatterComun } from '@rimor/formato';
-import { memo, useEffect, useRef } from 'react';
+import { memo, type ReactNode, useEffect, useRef } from 'react';
 import { diasDesde, fmtDia, fmtFechaRelativa, fmtHora, type Idioma } from '../../i18n/formatos';
 
 /** «hoy, 17:49», «ayer, 18:21» o «15 oct, 19:12». */
@@ -62,6 +62,8 @@ export interface PropsMensaje {
   conDia?: boolean;
   /** Sin «Archivar» (en un hilo, archivar el que guarda la solución haría que no se citara). */
   sinArchivar?: boolean;
+  /** Lo que va dentro de la tarjeta tras la respuesta (en un hilo, «Así lo resolviste», como `SC.hilo`). */
+  pie?: ReactNode;
 }
 
 /** La fila de acciones: las del lector, un hueco, «Responder» y «Archivar» (como `msgHTML`). */
@@ -70,12 +72,7 @@ function Acciones({ p, acciones }: { p: PropsMensaje; acciones: readonly AccionR
   return (
     <div className="mact">
       {acciones.map((a) => (
-        <Boton
-          key={a.id}
-          pequeno
-          {...(a.principal ? { variante: 'primario' as const } : {})}
-          onClick={() => p.alAccion(p.fm, a)}
-        >
+        <Boton key={a.id} pequeno onClick={() => p.alAccion(p.fm, a)}>
           {a.etiqueta}
         </Boton>
       ))}
@@ -108,6 +105,7 @@ function ConRespuesta({ el, p }: { el: Elemento; p: PropsMensaje }) {
   return (
     <>
       {respuesta !== 'desactivada' && <RespuestaRimor respuesta={respuesta} alAbrir={p.alAbrir} anunciar={p.fresco} />}
+      {p.pie}
       <Acciones p={p} acciones={acciones} />
     </>
   );
@@ -154,6 +152,7 @@ export const Mensaje = memo(function Mensaje(p: PropsMensaje) {
       ) : (
         <>
           <RespuestaRimor respuesta={null} anunciar={false} />
+          {p.pie}
           <Acciones p={p} acciones={[]} />
         </>
       )}
