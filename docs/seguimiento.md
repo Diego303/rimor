@@ -1,7 +1,7 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-25 01:23
+**Última actualización:** 2026-10-25 01:28
 **Ahora:** IN-041 · Enlace enriquecido · fase análisis y diseño
 **Siguiente:** IN-042 · Diff y parche
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 0/22 · v0.3 0/17 · v0.4 0/9 · total 51/99
@@ -60,7 +60,7 @@
 | IN-038 | Ajustes | v0.1 | 6 | hecha | 26f3057 fcf110c 2249ee7 | docs/features/IN-038-ajustes.md |
 | IN-039 | Primer uso y espacio de ejemplo | v0.1 | 6 | hecha | fec4ff4 4c0df39 86d1dda | docs/features/IN-039-primer-uso.md |
 | IN-040 | Cierre de v0.1 | v0.1 | 7 | hecha | 6dcf500 8ccb01e | docs/features/IN-040-cierre-v0.1.md |
-| IN-041 | Enlace enriquecido | v0.2 | 8 | pendiente | — | — |
+| IN-041 | Enlace enriquecido | v0.2 | 8 | en análisis y diseño | — | docs/features/IN-041-enlace-enriquecido.md |
 | IN-042 | Diff y parche | v0.2 | 8 | pendiente | — | — |
 | IN-043 | Comando con huecos | v0.2 | 8 | pendiente | — | — |
 | IN-044 | Datos tabulares con DuckDB | v0.2 | 8 | pendiente | — | — |
@@ -175,6 +175,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
+| 2026-10-25 | IN-041 | análisis y diseño | proveedores de F0-7 (GitHub, GitLab, paquetes con OSV, Crossref, arXiv por DataCite), ficha en el frontmatter con la anterior, dominios en Ajustes, token solo en el navegador, sin-conexion en la señal | … |
 | 2026-10-25 | IN-040 | verificación | revisión de diseño y movimiento (23 hallazgos) y segunda revisión (9), corregidos con pruebas; v0.1.0 en el CHANGELOG y package.json; verificar en verde: 103 archivos, 1332 pruebas, 245,9 KB | 8ccb01e |
 | 2026-10-24 | IN-040 | análisis y diseño | presupuesto de exportar sin bloquear, matriz al 90 %, recorrido de integración completo, axe sobre las pantallas, revisión de diseño y movimiento, CHANGELOG 0.1.0 | 6dcf500 |
 | 2026-10-24 | IN-039 | verificación | pnpm verificar OK (1310 pruebas, 244,8 KB); revisión independiente con 8 hallazgos atendidos (borrar con cerrojo y copia previa, carpetas huérfanas) | 86d1dda |
