@@ -5,6 +5,7 @@
 import type { Elemento, FrontmatterComun, TipoElemento } from '@rimor/formato';
 import type { Idioma } from '../i18n/formatos';
 import type { Respuesta } from '../respuestas/tipos';
+import type { EstadoSenal } from '../ui/marca/estadosSenal';
 import type { TextosLector } from './textos';
 
 /** Lo que llega al capturar: texto pegado, archivos soltados o compartidos. */
@@ -115,6 +116,10 @@ export interface Lector<D = unknown> {
   informaProgreso?: boolean;
   /** Si `derivar` necesita los bytes del adjunto (un binario, como un Parquet): la cola los carga y se los pasa. */
   necesitaBytes?: boolean;
+  /** Su plazo de `derivar`, si necesita más que el general (DuckDB se descarga e instancia la primera vez). */
+  plazoMs?: number;
+  /** La señal mientras deriva, si no es la de analizar (`leyendo-datos` al perfilar unos datos). */
+  senal?: EstadoSenal;
   resumen(d: D): ResumenLector;
   /** Una línea con el resumen del frontmatter, para enseñar mientras se deriva o en la tarjeta. */
   resumenLegible?(r: ResumenLector, idioma: Idioma): string;

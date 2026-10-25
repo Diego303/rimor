@@ -21,10 +21,13 @@ function cambioFilas(a: number, b: number, idioma: Idioma): string {
 export function VeredictoDatos({
   r,
 }: {
-  r: Pick<ResultadoDatos, 'filas_a' | 'filas_b' | 'cambian' | 'columnas_anadidas' | 'columnas_quitadas'>;
+  r: Pick<
+    ResultadoDatos,
+    'filas_a' | 'filas_b' | 'cambian' | 'columnas_anadidas' | 'columnas_quitadas' | 'columnas_tipo'
+  >;
 }) {
   const { t, idioma } = useT();
-  const columnas = r.columnas_anadidas + r.columnas_quitadas;
+  const columnas = r.columnas_anadidas + r.columnas_quitadas + r.columnas_tipo;
   return (
     <Veredicto
       tono={r.cambian || columnas ? 'warn' : 'ok'}
@@ -33,10 +36,11 @@ export function VeredictoDatos({
         antes: fmtNumero(r.filas_a, idioma),
         despues: fmtNumero(r.filas_b, idioma),
       })}
-      explicacion={`${t('pantallas.comparacion.datos.cambian', { n: r.cambian })} · ${t(
-        'pantallas.comparacion.datos.columnas',
-        { anadidas: r.columnas_anadidas, quitadas: r.columnas_quitadas },
-      )}`}
+      explicacion={[
+        t('pantallas.comparacion.datos.cambian', { n: r.cambian }),
+        t('pantallas.comparacion.datos.columnas', { anadidas: r.columnas_anadidas, quitadas: r.columnas_quitadas }),
+        ...(r.columnas_tipo ? [t('pantallas.comparacion.datos.tipos', { n: r.columnas_tipo })] : []),
+      ].join(' · ')}
     />
   );
 }
@@ -56,6 +60,7 @@ export function VistaComparacionDatos({ c }: { c: ComparacionDatos }) {
             cambian: c.cambios.length,
             columnas_anadidas: c.anadidas.length,
             columnas_quitadas: c.quitadas.length,
+            columnas_tipo: c.cambianTipo.length,
           }}
         />
         {(c.anadidas.length > 0 || c.quitadas.length > 0 || c.cambianTipo.length > 0) && (

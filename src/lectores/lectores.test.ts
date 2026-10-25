@@ -217,6 +217,16 @@ describe('ColaDerivados', () => {
     expect(agotados).toBe(1);
   });
 
+  it('un lector con su propio plazo (DuckDB la primera vez) no se corta con el general', async () => {
+    const lento = lectorFalso({
+      plazoMs: 200,
+      derivar: () => new Promise((ok) => setTimeout(() => ok({ largo: 7 }), 60)),
+    });
+    const registro = crearRegistro([lento]);
+    const cola = new ColaDerivados({ registro, ejecutar: ejecutorEnHilo(registro), plazoMs: 20 });
+    expect(await cola.pedir(elementoFalso(1))).toEqual({ largo: 7 });
+  });
+
   it('si se cancela la única petición visible, el trabajo vuelve a ser de fondo', async () => {
     const m = ejecutorManual();
     const cola = new ColaDerivados({ registro: crearRegistro([lectorFalso()]), ejecutar: m.ejecutar });

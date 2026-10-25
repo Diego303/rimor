@@ -1,0 +1,5 @@
+2026-10-17 17:40:00,123 - gateway - INFO - Arranca el servicio en el puerto 8080
+2026-10-17 17:40:01,456 - gateway - INFO - Conectado a la base de datos
+2026-10-17 17:40:05,789 - gateway - WARNING - Latencia alta en /api/pedidos: 2300 ms
+2026-10-17 17:40:07,012 - gateway - ERROR - Timeout al llamar a pagos tras 30 s
+2026-10-17 17:40:07,013 - gateway - INFO - Reintento 1 de 3

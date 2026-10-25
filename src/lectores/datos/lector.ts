@@ -7,8 +7,8 @@ import { fmtNumero, type Idioma } from '../../i18n/formatos';
 import type { Fragmento } from '../../respuestas/tipos';
 import type { Borrador, Entrada, Lector } from '../contrato';
 import { formaCsv, puntuarCsv } from './csv';
-import { obtenerMotor, type Valor } from './motor';
-import { type DatosTabla, type FormatoDatos, type PerfilColumna, perfilar } from './perfil';
+import type { Valor } from './motor';
+import type { DatosTabla, FormatoDatos, PerfilColumna } from './perfil';
 import { textos } from './textos';
 
 export type { DatosTabla } from './perfil';
@@ -25,6 +25,9 @@ export function formatoDe(el: Pick<Elemento, 'frontmatter'>): FormatoDatos {
   return a && /\.tsv$/i.test(a.nombre ?? '') ? 'tsv' : 'csv';
 }
 
+/** El error de un elemento sin bytes que leer (ni original ni adjunto): la consulta lo dice con sus palabras. */
+export const ERROR_SIN_BYTES = 'datos.sinBytes';
+
 /** Un valor de una celda, como se lee. */
 export function valorLegible(v: Valor | undefined, idioma: Idioma): string {
   if (v === null || v === undefined) return 'null';
@@ -32,16 +35,19 @@ export function valorLegible(v: Valor | undefined, idioma: Idioma): string {
   return String(v);
 }
 
-/** «latencia_ms» → «latencias» y el valor en su unidad («30 s»); sin unidad en el nombre, `null`. */
-function conUnidad(c: PerfilColumna, idioma: Idioma): { nombre: string; valor: string } | null {
+/** «latencia_ms» → «latencias» y el valor en su unidad («30 s», «250 ms»); sin unidad en el nombre, `null`. */
+export function conUnidad(c: PerfilColumna, idioma: Idioma): { nombre: string; valor: string } | null {
   const m = /^(.+?)_(ms|s)$/i.exec(c.nombre);
   if (!m || typeof c.max !== 'number') return null;
   const base = (m[1] ?? '').replace(/_/g, ' ');
   const plural = /[aeiouáéíóú]$/i.test(base) ? `${base}s` : `${base}es`;
-  const enSegundos = m[2]?.toLowerCase() === 'ms' ? c.max / 1000 : c.max;
-  const valor = enSegundos >= 1 ? `${fmtNumero(enSegundos, idioma)} s` : `${fmtNumero(c.max, idioma)} ms`;
+  const ms = m[2]?.toLowerCase() === 'ms' ? c.max : c.max * 1000;
+  const valor = ms >= 1000 ? `${fmtNumero(ms / 1000, idioma)} s` : `${fmtNumero(ms, idioma)} ms`;
   return { nombre: idioma === 'en' ? `${base}s` : plural, valor };
 }
+
+/** Las filas del archivo entero: las de la muestra si se perfiló entero. */
+export const filasTotales = (d: DatosTabla) => d.muestra?.total ?? d.filas;
 
 /**
  * Lo raro, para la respuesta: las filas en el máximo de la columna donde más se repite un máximo atípico
@@ -97,9 +103,13 @@ function conColumna(frase: string, columna: string): Fragmento[] {
 export const lectorDatos: Lector<DatosTabla> = {
   nombre: 'datos',
   tipo: 'datos',
-  version: 1,
+  // 2: valores de Arrow según su tipo (fechas, decimales) y muestra también de un Parquet grande.
+  version: 2,
   textos,
   necesitaBytes: true,
+  senal: 'leyendo-datos',
+  // La primera vez se descarga e instancia DuckDB (unos 7 MB) y un CSV de 50 MB se lee entero: más que el plazo general.
+  plazoMs: 180_000,
 
   // Un Parquet llega por el atajo de binarios del detector; un CSV o un TSV, por su forma.
   detectar: (e: Entrada) => (e.texto !== undefined ? puntuarCsv(e.texto) : 0),
@@ -119,11 +129,13 @@ export const lectorDatos: Lector<DatosTabla> = {
 
   async derivar(el, o) {
     const bytes = o?.bytes ?? (el.original !== null ? new TextEncoder().encode(el.original) : null);
-    if (!bytes) throw new Error('datos.sinBytes');
+    if (!bytes) throw new Error(ERROR_SIN_BYTES);
+    // El perfil y el motor, solo al derivar (en el Worker): no van en la carga inicial.
+    const [{ obtenerMotor }, { perfilar }] = await Promise.all([import('./motor'), import('./perfil')]);
     return perfilar(await obtenerMotor(), bytes, formatoDe(el));
   },
 
-  resumen: (d) => ({ formato: d.formato, filas: d.muestra?.aproximadas ?? d.filas, columnas: d.columnas.length }),
+  resumen: (d) => ({ formato: d.formato, filas: filasTotales(d), columnas: d.columnas.length }),
 
   resumenLegible(r, idioma) {
     const filas = typeof r.filas === 'number' ? t(idioma, 'filas', { n: r.filas }) : '';
@@ -133,14 +145,16 @@ export const lectorDatos: Lector<DatosTabla> = {
 
   respuesta(_el, d, ctx) {
     const i = ctx.idioma;
-    const forma = t(i, 'respuesta.forma', {
-      filas: t(i, 'filas', { n: d.muestra?.aproximadas ?? d.filas }),
+    // De una muestra de un CSV, las filas son aproximadas; y lo raro se cuenta en la muestra (y lo dice).
+    const forma = t(i, d.muestra && !d.muestra.exacto ? 'respuesta.formaAprox' : 'respuesta.forma', {
+      filas: t(i, 'filas', { n: filasTotales(d) }),
       columnas: t(i, 'columnas', { n: d.columnas.length }),
     });
     const cosas = loRaro(d, i);
     if (!cosas.length) return { texto: [{ t: 'texto', v: forma }] };
     // «Hay {cosas}.»: lo de antes y lo de después de las cosas, con cada una entre «y».
-    const [antes = '', despues = ''] = t(i, 'respuesta.hay', { cosas: HUECO }).split(HUECO);
+    const hay = !d.muestra ? 'respuesta.hay' : d.muestra.exacto ? 'respuesta.hayPrimeras' : 'respuesta.hayPrincipio';
+    const [antes = '', despues = ''] = t(i, hay, { cosas: HUECO, n: d.filas }).split(HUECO);
     const texto: Fragmento[] = [{ t: 'texto', v: `${forma} ${antes}` }];
     cosas.forEach((c, k) => {
       if (k > 0) texto.push({ t: 'texto', v: t(i, 'respuesta.y') });
@@ -159,7 +173,7 @@ export const lectorDatos: Lector<DatosTabla> = {
   },
 
   cifras: {
-    filas: (d) => ({ texto: fmtNumero(d.filas, 'es'), valor: d.filas }),
+    filas: (d) => ({ texto: fmtNumero(filasTotales(d), 'es'), valor: filasTotales(d) }),
     columnas: (d) => ({ texto: fmtNumero(d.columnas.length, 'es'), valor: d.columnas.length }),
   },
 

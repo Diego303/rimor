@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-25 15:41
-**Ahora:** IN-044 · Datos tabulares con DuckDB · fase implementación
-**Siguiente:** IN-045 · JSON, YAML y TOML con comparación estructural
-**Progreso:** F0 9/9 · v0.1 42/42 · v0.2 3/22 · v0.3 0/17 · v0.4 0/9 · total 54/99
+**Última actualización:** 2026-10-25 17:58
+**Ahora:** IN-045 · JSON, YAML y TOML con comparación estructural · fase análisis y diseño
+**Siguiente:** IN-046 · Petición HTTP
+**Progreso:** F0 9/9 · v0.1 42/42 · v0.2 4/22 · v0.3 0/17 · v0.4 0/9 · total 55/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -63,7 +63,7 @@
 | IN-041 | Enlace enriquecido | v0.2 | 8 | hecha | f2f85db 76c95a1 a78cdaf | docs/features/IN-041-enlace-enriquecido.md |
 | IN-042 | Diff y parche | v0.2 | 8 | hecha | d1d8e29 f901a5a b8ff910 | docs/features/IN-042-diff-parche.md |
 | IN-043 | Comando con huecos | v0.2 | 8 | hecha | 6073c48 c6eb683 b9ca2c0 | docs/features/IN-043-comando.md |
-| IN-044 | Datos tabulares con DuckDB | v0.2 | 8 | en implementación | 5e9f8b1 | docs/features/IN-044-datos-tabulares.md |
+| IN-044 | Datos tabulares con DuckDB | v0.2 | 8 | hecha | 5e9f8b1 be063ce | docs/features/IN-044-datos-tabulares.md |
 | IN-045 | JSON, YAML y TOML con comparación estructural | v0.2 | 8 | pendiente | — | — |
 | IN-046 | Petición HTTP | v0.2 | 8 | pendiente | — | — |
 | IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | pendiente | — | — |
@@ -143,7 +143,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
 
 ## Notas para funcionalidades futuras
-- **Lectores de imagen y PDF (v0.3, IN-017):** al registrarlos, releer los elementos con `pendiente_lector: true` de su tipo (y quitar la marca).
+- **Lectores de imagen y PDF (v0.3, IN-017):** `releerPendientes` (IN-044) ya relee al abrir el espacio los elementos con `pendiente_lector: true` que un lector de binarios nuevo reconoce (y les quita la marca); basta con registrar el lector y que su `leer` devuelva `original: null`.
 - **IN-026 e IN-049 (IN-016):** contar `respuestasDescartadas` («No» o archivar sin actuar) en el triaje y `correccionesDeTipo` cuando se corrija el tipo (también un `/tipo` que contradice al detector) con `espacio.contadores.contar(…)`. IN-021, IN-023 e IN-032 cuentan `erroresReconocidos`, `copiasConValores` y `busquedasConResultado`.
 - **IN-029 (IN-016):** rellenar `Contexto.versiones` desde `historial/` y `version`.
 - **IN-014/IN-016/IN-026 (IN-012):** `VistaElemento` y `TarjetaElemento` aún no están en ninguna pantalla; la pantalla Elemento (IN-016/IN-026) y el feed deben usarlas para que un lector nuevo «aparezca en la app». La captura pide los derivados con prioridad de fondo y pasa los primeros bytes de los archivos al detector (`cabecera`).
@@ -159,6 +159,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **F0-3 (Pandoc):** medir descarga y compilación de `pandoc.wasm` en los tres navegadores; abrir el `.docx` en Word y compilar el `.tex` en Overleaf.
 - **F0-4 (Typst):** abrir en un lector de PDF el PDF que genere la app publicada.
 - **F0-5 (DuckDB):** medir en los tres navegadores la instanciación y el perfil de un CSV de 50 MB.
+- **IN-044 (navegador real):** en la app publicada, soltar un Parquet y comprobar en el panel de red que la extensión sale de `<base>/duckdb/v1.5.4/…` (ninguna petición a extensions.duckdb.org) y que, ya descargada, funciona sin red; abrir un CSV exportado de Excel (Latin-1) y la consulta SQL con `⌘+Intro` en Safari.
 - **F0-7 (CORS):** confirmar en la app publicada que el enriquecimiento de IN-041 no lo bloquea el navegador.
 - **F0-8 (MiniSearch):** medir en el navegador la búsqueda por pulsación y la carga del índice con un espacio real grande.
 - **F0-9 (fuentes):** comprobar en la app publicada que las fuentes salen del propio sitio y que la CSP no bloquea nada.
@@ -175,7 +176,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-25 | IN-044 | implementación | lector datos con DuckDB-WASM (eh/mvp) diferido, perfil por columna con muestra, consulta SQL con CodeMirror, gráfico rápido, comparación de datos, Parquet por firma, leyendo-datos en la señal, wasm-unsafe-eval en la CSP; verificar en verde: 113 archivos, 1437 pruebas, 259,8 KB | … |
+| 2026-10-25 | IN-044 | verificación | revisión independiente (15 hallazgos) corregida con pruebas: bytes transferidos, extensión de Parquet servida por el sitio, valores de Arrow por tipo, muestra de Parquet, plazo propio y perfil en 7 consultas, consulta en su conexión y recortada, unidades, señal leyendo-datos, escalas de la muestra, CSV en Latin-1/UTF-16, detección (GFM corta, asctime, comillas multilínea), infinitos, resultado validado, releer pendientes y accesibilidad; pruebas de rendimiento en su proyecto; verificar en verde: 113 archivos, 1462 pruebas, 259,8 KB | … |
+| 2026-10-25 | IN-044 | implementación | lector datos con DuckDB-WASM (eh/mvp) diferido, perfil por columna con muestra, consulta SQL con CodeMirror, gráfico rápido, comparación de datos, Parquet por firma, leyendo-datos en la señal, wasm-unsafe-eval en la CSP; verificar en verde: 113 archivos, 1437 pruebas, 259,8 KB | be063ce |
 | 2026-10-25 | IN-044 | análisis y diseño | lector datos (puesto 8), DuckDB-WASM diferido (1.33.1-dev57.0, eh/mvp), perfil por columna con muestra por encima de 50 MB, SQL con CodeMirror, comparación por perfiles, leyendo-datos en la señal, wasm-unsafe-eval en la CSP | 5e9f8b1 |
 | 2026-10-25 | IN-043 | verificación | revisión independiente (10 hallazgos) corregida con pruebas: prompts y prosa, sudo/env/time, plantillas de Go, heredocs y sesiones, tarjeta desde el original, segunda frase, Copiar con respaldo, abrir en solo lectura y en el hilo; verificar en verde: 109 archivos, 1414 pruebas, 255,2 KB | b9ca2c0 |
 | 2026-10-25 | IN-043 | implementación | lector comando (puesto 13) con huecos {{x}}, chuleta, Copiar con valores común con el Prompt y la acción abrir en Inicio; verificar en verde: 109 archivos, 1407 pruebas, 254,2 KB | c6eb683 |

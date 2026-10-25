@@ -167,10 +167,13 @@ export class ColaDerivados {
     try {
       // Un cálculo que no termina (bucle, Worker atascado) no puede dejar la cola parada para siempre.
       const plazo = new Promise<never>((_, ko) => {
-        tiempo = setTimeout(() => {
-          this.opciones.alAgotarPlazo?.();
-          ko(new Error('derivados.tiempoAgotado'));
-        }, this.opciones.plazoMs ?? PLAZO_DERIVAR_MS);
+        tiempo = setTimeout(
+          () => {
+            this.opciones.alAgotarPlazo?.();
+            ko(new Error('derivados.tiempoAgotado'));
+          },
+          t.lector.plazoMs ?? this.opciones.plazoMs ?? PLAZO_DERIVAR_MS,
+        );
       });
       // La carga del adjunto también cuenta en el plazo; si falla, el trabajo falla (nunca se deriva ni se
       // guarda en la caché un análisis de un texto vacío).

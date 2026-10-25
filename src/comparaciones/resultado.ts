@@ -53,6 +53,8 @@ export interface ResultadoDatos extends Comun {
   filas_b: number;
   columnas_anadidas: number;
   columnas_quitadas: number;
+  /** Columnas comunes que cambian de tipo. */
+  columnas_tipo: number;
   /** Columnas comunes que cambian de distribución. */
   cambian: number;
 }
@@ -110,6 +112,7 @@ export function resultadoDeDatos(c: ComparacionDatos, f: DeLasFuentes): Resultad
     filas_b: c.filas[1],
     columnas_anadidas: c.anadidas.length,
     columnas_quitadas: c.quitadas.length,
+    columnas_tipo: c.cambianTipo.length,
     cambian: c.cambios.length,
   };
 }
@@ -126,7 +129,9 @@ export function leerResultado(r: Record<string, unknown>): ResultadoComparacion 
   if (r.clase === 'logs')
     return esNumeroONulo(r.divergencia) && typeof r.nuevos === 'number' ? (r as unknown as ResultadoLogs) : null;
   if (r.clase === 'datos')
-    return typeof r.filas_a === 'number' && typeof r.filas_b === 'number' && typeof r.cambian === 'number'
+    return ['filas_a', 'filas_b', 'columnas_anadidas', 'columnas_quitadas', 'columnas_tipo', 'cambian'].every((k) =>
+      Number.isFinite(r[k]),
+    )
       ? (r as unknown as ResultadoDatos)
       : null;
   return null;

@@ -1929,6 +1929,21 @@ pre.code.codigo .ln {
 .tabla-columnas {
   min-width: 520px;
 }
+/* El nombre de cada columna es la cabecera de su fila, pero se ve como una celda (como en la referencia). */
+.tabla-columnas th {
+  padding: 8px 9px;
+  border-bottom: 1px solid var(--line-2);
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: normal;
+  vertical-align: middle;
+}
+.tabla-columnas tr:last-child th {
+  border-bottom: 0;
+}
 .tabla-vista-previa,
 .tabla-resultado,
 .tabla-cambios-datos {

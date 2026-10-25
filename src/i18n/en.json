@@ -362,6 +362,10 @@
           "other": "{n} columns change their distribution"
         },
         "columnas": "{anadidas} columns added and {quitadas} removed",
+        "tipos": {
+          "one": "{n} column changes type",
+          "other": "{n} columns change type"
+        },
         "anadidas": "Added columns",
         "quitadas": "Removed columns",
         "tipo": "{columna}: type",

@@ -235,6 +235,13 @@ describe('lector de punta a punta', () => {
     terminar();
   });
 
+  it('mientras deriva, la señal del lector si tiene una (`leyendo-datos` al perfilar)', async () => {
+    const datos = crearRegistro([lectorFalso({ senal: 'leyendo-datos', derivar: () => new Promise(() => undefined) })]);
+    montar(datos, ejecutorEnHilo(datos), elementoFalso(6, 'a,b'));
+    const senal = await screen.findByRole('status', {}, { timeout: 2000 });
+    expect(senal.className).toContain('senal-leyendo-datos');
+  });
+
   it('sin lector para el elemento, el original tal cual', async () => {
     const vacio = crearRegistro([]);
     montar(vacio, ejecutorEnHilo(vacio), elementoFalso(3, 'sin lector'));

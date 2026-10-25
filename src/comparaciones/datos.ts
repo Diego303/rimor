@@ -33,9 +33,14 @@ function relativo(a: number | undefined, b: number | undefined): number {
   return escala === 0 ? 0 : Math.abs(b - a) / escala;
 }
 
-const filasDe = (d: DatosTabla) => d.muestra?.aproximadas ?? d.filas;
+/** Las filas del archivo entero (las de la muestra si se perfiló entero). */
+const filasDe = (d: DatosTabla) => d.muestra?.total ?? d.filas;
 const proporcion = (n: number, total: number) => (total > 0 ? n / total : 0);
 
+/**
+ * El cambio de una columna. La proporción de nulos, sobre las filas perfiladas (`filas`, las de la muestra): los
+ * nulos se cuentan en la muestra, no en el archivo entero.
+ */
 function cambioDe(a: PerfilColumna, b: PerfilColumna, filas: [number, number]): CambioColumna | null {
   const numero = (x: Valor | undefined) => (typeof x === 'number' ? x : undefined);
   const peso =
@@ -62,13 +67,14 @@ export function compararDatos(a: DatosTabla, b: DatosTabla): ComparacionDatos {
   const enB = new Map(b.columnas.map((c) => [c.nombre, c]));
   const enA = new Set(a.columnas.map((c) => c.nombre));
   const filas: [number, number] = [filasDe(a), filasDe(b)];
+  const perfiladas: [number, number] = [a.filas, b.filas];
   const cambianTipo: ComparacionDatos['cambianTipo'] = [];
   const cambios: CambioColumna[] = [];
   for (const ca of a.columnas) {
     const cb = enB.get(ca.nombre);
     if (!cb) continue;
     if (ca.tipo !== cb.tipo) cambianTipo.push({ nombre: ca.nombre, antes: ca.tipo, despues: cb.tipo });
-    const c = cambioDe(ca, cb, filas);
+    const c = cambioDe(ca, cb, perfiladas);
     if (c) cambios.push(c);
   }
   return {

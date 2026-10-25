@@ -6,7 +6,10 @@
 import { asignarRef, type Elemento, type FrontmatterComun, isoConZona } from '@rimor/formato';
 import type { Repositorio } from '../almacen/repositorio';
 import { esEstadoComun } from '../espacio/estados';
+import { MARCA_PENDIENTE } from '../lectores/archivo/lector';
 import type { Lector } from '../lectores/contrato';
+import type { Registro } from '../lectores/registro';
+import { detectar, entradaDeArchivo } from './detector';
 import { decodificarTexto } from './firmas';
 
 /** Tipos que leen bytes: no se puede llegar a ellos (ni salir) cambiando de lector un texto. */
@@ -108,4 +111,60 @@ export async function cambiarTipo(
     };
   });
   return r.ok && r.valor ? nueva : null;
+}
+
+/**
+ * Los archivos guardados con el lector genérico porque aún no tenían el suyo (`pendiente_lector`, IN-017) se releen
+ * con el que ahora los reconoce (un Parquet de antes de IN-044): tipo, ref, resumen y sin la marca. Solo con un
+ * lector de binarios, que guarda el adjunto tal cual (como el genérico). Devuelve las refs nuevas.
+ */
+export async function releerPendientes(
+  repositorio: Repositorio,
+  registro: Registro,
+  { reloj = () => new Date() }: Pick<OpcionesCambio, 'reloj'> = {},
+): Promise<string[]> {
+  const nuevas: string[] = [];
+  const pendientes = repositorio
+    .elementos()
+    .filter((fm) => fm.lector.nombre === 'archivo' && (fm as Record<string, unknown>)[MARCA_PENDIENTE] && fm.adjunto);
+  for (const fm of pendientes) {
+    const adjunto = fm.adjunto;
+    if (!adjunto) continue;
+    const nombre = adjunto.nombre ?? fm.titulo;
+    const mime = adjunto.mime ?? '';
+    // Sin leerlo: si ni por su nombre ni por su tipo lo reclama un lector (un vídeo, un ZIP), no se lee el adjunto
+    // entero en cada apertura. Uno renombrado (un Parquet sin `.parquet`) se queda pendiente.
+    const porNombre = detectar({ archivos: [new File([], nombre, { type: mime })], nombre, mime }, registro).lector;
+    if (!porNombre || porNombre === 'archivo') continue;
+    const bytes = await repositorio.leerAdjunto(adjunto.ruta).catch(() => null);
+    if (!bytes) continue;
+    const { entrada, cabecera } = entradaDeArchivo(nombre, mime, bytes);
+    const detectado = detectar(entrada, registro, { cabecera }).lector;
+    const lector = detectado ? registro.porNombre(detectado) : undefined;
+    if (!lector || lector.nombre === 'archivo') continue;
+    const borrador = await lector.leer(entrada).catch(() => null);
+    if (!borrador || borrador.original !== null) continue;
+    let nueva: string | null = null;
+    const r = await repositorio.actualizarElemento(fm.id, (actual) => {
+      // Si cambió mientras se leía (otra pestaña ya lo releyó, o se editó), no se pisa.
+      if (actual.frontmatter.hash !== fm.hash || actual.frontmatter.lector.nombre !== 'archivo') return null;
+      nueva = asignarRef(lector.tipo, repositorio.refs());
+      return {
+        ...actual,
+        frontmatter: frontmatterConTipo(
+          actual.frontmatter,
+          lector,
+          {
+            ref: nueva,
+            resumen: borrador.resumen ?? {},
+            metadatos: borrador.metadatos ?? {},
+            viejas: [MARCA_PENDIENTE],
+          },
+          reloj(),
+        ),
+      };
+    });
+    if (r.ok && r.valor && nueva) nuevas.push(nueva);
+  }
+  return nuevas;
 }

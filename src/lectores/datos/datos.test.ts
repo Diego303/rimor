@@ -1,14 +1,14 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { detectar, entradaDeArchivo } from '../../captura/detector';
 import { comprobarEstilo } from '../../respuestas/reglas';
 import { elementoFalso } from '../pruebas/falsos';
 import { REGISTRO } from '../registro';
-import { formaCsv, puntuarCsv } from './csv';
-import { lectorDatos } from './lector';
-import { obtenerMotor } from './motor';
-import { LIMITE_PERFIL, perfilar, principio } from './perfil';
+import { filasCsv, formaCsv, puntuarCsv } from './csv';
+import { conUnidad, lectorDatos } from './lector';
+import { type MotorSql, obtenerMotor, VERSION_DUCKDB } from './motor';
+import { type DatosTabla, LIMITE_PERFIL, muestraCsv, type PerfilColumna, perfilar, principio } from './perfil';
 
 const ctx = (idioma: 'es' | 'en') => ({ idioma, mismaHuella: [], versiones: [], notas: [], colecciones: [] });
 const bytes = (s: string) => new TextEncoder().encode(s);
@@ -49,6 +49,25 @@ describe('reconocer un CSV', () => {
     ).toBeNull();
     expect(formaCsv('- uno\n- dos\n- tres\n')).toBeNull();
     expect(formaCsv('a,b\n1,2\n')).toBeNull();
+    // La fila de guiones corta de GFM (`|-|-|`) también es de una tabla de Markdown.
+    expect(formaCsv('| a | b |\n|-|-|\n| 1 | 2 |\n| 3 | 4 |\n')).toBeNull();
+    expect(formaCsv('a | b\n:-|-:\n1 | 2\n3 | 4\n')).toBeNull();
+    // Un log de Python: la coma es la de los milisegundos.
+    const log = [
+      '2026-10-17 17:40:00,123 - app - INFO - Arranca',
+      '2026-10-17 17:40:01,456 - app - INFO - Conecta',
+      '2026-10-17 17:40:02,789 - app - ERROR - Se cae',
+    ].join('\n');
+    expect(formaCsv(log)).toBeNull();
+    expect(detectar({ texto: log }, REGISTRO).lector).toBe('log');
+  });
+
+  it('un campo entre comillas con saltos de línea no parte la fila; una comilla suelta no abre nada', () => {
+    const texto = 'id,nota,total\n1,"una nota\nen dos líneas",3\n2,"otra, con coma",4\n3,corta,5\n';
+    expect(formaCsv(texto)).toEqual({ separador: ',', columnas: 3, filas: 3 });
+    expect(filasCsv(texto, ',').filas[1]).toEqual(['1', 'una nota\nen dos líneas', '3']);
+    expect(detectar({ texto }, REGISTRO).lector).toBe('datos');
+    expect(formaCsv('modelo,pantalla,precio\ntv,55" 4K,499\nmonitor,27",199\nportátil,14",899\n')?.filas).toBe(3);
   });
 
   it('un CSV va al lector datos; un Parquet soltado también (por su firma)', () => {
@@ -139,4 +158,141 @@ describe('respuesta', () => {
     });
     expect((await lectorDatos.leer({ texto: gateway(), nombre: 'latencias.csv' })).titulo).toBe('latencias.csv');
   });
+});
+
+/** El motor de Node, con un `registrar` que se lleva el búfer como `registerFileBuffer` en el navegador. */
+async function motorQueSeLlevaLosBytes(): Promise<MotorSql> {
+  const base = await obtenerMotor();
+  return {
+    ...base,
+    registrar: async (nombre, datos) => {
+      const copia = datos.slice();
+      structuredClone(datos.buffer, { transfer: [datos.buffer as ArrayBuffer] });
+      await base.registrar(nombre, copia);
+    },
+  };
+}
+
+describe('revisión de IN-044', () => {
+  it('la muestra se nota aunque el motor se lleve los bytes al registrarlos', async () => {
+    const texto = gateway();
+    const d = await perfilar(await motorQueSeLlevaLosBytes(), bytes(texto), 'csv', 1000);
+    expect(d.muestra).toMatchObject({ exacto: false, filas: d.filas });
+    expect(d.filas).toBeLessThan(100);
+    expect(d.muestra?.total).toBeGreaterThan(80);
+    expect(d.muestra?.total).toBeLessThan(120);
+  }, 60_000);
+
+  it('valores según su tipo: fechas, marcas de tiempo, decimales con su escala, horas, bytes y columnas repetidas', async () => {
+    const r = await (await obtenerMotor()).consultar(
+      "SELECT TIMESTAMP '2026-10-17 17:40:00' t, TIMESTAMPTZ '2026-10-17 17:40:00.5+00' tz, DATE '2026-10-17' d, -1.5::DECIMAL(10,2) x, 12345678901234.5678::DECIMAL(20,4) grande, TIME '10:00:00.25' h, 'xy'::BLOB b, 1 a, 2 a, 170141183460469231731687303715884105727::HUGEINT enorme, INTERVAL 3 HOUR i",
+    );
+    expect(r.columnas).toEqual(['t', 'tz', 'd', 'x', 'grande', 'h', 'b', 'a', 'a', 'enorme', 'i']);
+    expect(r.filas[0]).toEqual([
+      '2026-10-17 17:40:00',
+      '2026-10-17T17:40:00.500Z',
+      '2026-10-17',
+      -1.5,
+      '12345678901234.5678',
+      '10:00:00.25',
+      'xy',
+      1,
+      2,
+      '170141183460469231731687303715884105727',
+      null,
+    ]);
+  }, 60_000);
+
+  it('con `maxFilas`, solo se convierten las primeras y se dice cuántas había', async () => {
+    const r = await (await obtenerMotor()).consultar('SELECT * FROM range(1000)', { maxFilas: 200 });
+    expect([r.filas.length, r.total]).toEqual([200, 1000]);
+  }, 60_000);
+
+  it('la vista previa, como la escribe DuckDB (una fecha no es un número de milisegundos)', async () => {
+    const d = await perfilar(await obtenerMotor(), bytes(gateway()), 'csv');
+    expect(String(d.vistaPrevia.filas[0]?.[0])).toMatch(/^2026-10-17 17:00:00/);
+  }, 60_000);
+
+  it('la extensión de Parquet va con el sitio, en la carpeta de la versión de DuckDB', async () => {
+    const r = await (await obtenerMotor()).consultar('PRAGMA version');
+    expect(r.filas[0]?.[0]).toBe(VERSION_DUCKDB);
+    for (const variante of ['wasm_eh', 'wasm_mvp'])
+      expect(
+        existsSync(join(process.cwd(), 'public/duckdb', VERSION_DUCKDB, variante, 'parquet.duckdb_extension.wasm')),
+      ).toBe(true);
+    const ajuste = await (await obtenerMotor()).consultar("SELECT current_setting('custom_extension_repository')");
+    expect(ajuste.filas[0]?.[0]).not.toMatch(/duckdb\.org/);
+  }, 60_000);
+
+  it('un Parquet grande se perfila por sus primeras filas, con el total exacto', async () => {
+    const parquet = new Uint8Array(readFileSync(join(process.cwd(), 'fixtures/deteccion/datos/tabla.parquet')));
+    const d = await perfilar(await obtenerMotor(), parquet, 'parquet', parquet.length / 2);
+    expect(d.muestra).toEqual({ filas: 100, total: 200, exacto: true });
+    expect(d.filas).toBe(100);
+  }, 60_000);
+
+  it('un CSV en Windows-1252 o en UTF-16 se lee (DuckDB solo lee UTF-8)', async () => {
+    const latin1 = new Uint8Array(
+      [...'nombre,n\ncaf']
+        .map((c) => c.charCodeAt(0))
+        .concat(
+          [0xe9],
+          [...',1\nte,2\nt\xe9,3\n'].map((c) => c.charCodeAt(0)),
+        ),
+    );
+    const d = await perfilar(await obtenerMotor(), latin1, 'csv');
+    expect(d.columnas[0]?.frecuentes?.map(([v]) => v)).toEqual(['café', 'te', 'té']);
+    const texto = 'nombre,n\ncafé,1\nte,2\nté,3\n';
+    const utf16 = new Uint8Array(2 + texto.length * 2);
+    utf16.set([0xff, 0xfe]);
+    for (let i = 0; i < texto.length; i++) utf16[2 + i * 2] = texto.charCodeAt(i);
+    expect(new TextDecoder().decode(muestraCsv(utf16).datos)).toBe(texto);
+    const d16 = await perfilar(await obtenerMotor(), utf16, 'csv');
+    expect(d16.filas).toBe(3);
+  }, 60_000);
+
+  it('infinitos y rangos enormes no rompen el perfil (nada de `Infinity` dentro del SQL)', async () => {
+    const d = await perfilar(await obtenerMotor(), bytes('x,y\n1,-1.7e308\n2,1.7e308\ninf,0\n3,1\n'), 'csv');
+    const [x, y] = d.columnas;
+    expect(x?.clase).toBe('numero');
+    expect(x?.histograma).toBeUndefined();
+    expect(y).toMatchObject({ clase: 'numero', min: -1.7e308, max: 1.7e308 });
+    expect(y?.histograma?.reduce((s, n) => s + n, 0)).toBe(4);
+  }, 60_000);
+
+  it('la unidad de un nombre: `_s` por debajo de 1 se dice en ms; `_ms` de 1.000 o más, en s', () => {
+    const col = (nombre: string, max: number) =>
+      ({ nombre, max, tipo: 'DOUBLE', clase: 'numero', nulos: 0, unicos: 1 }) as PerfilColumna;
+    expect(conUnidad(col('espera_s', 0.25), 'es')?.valor).toBe('250 ms');
+    expect(conUnidad(col('espera_s', 2), 'es')?.valor).toBe('2 s');
+    expect(conUnidad(col('latencia_ms', 30000), 'es')?.valor).toBe('30 s');
+    expect(conUnidad(col('latencia_ms', 250), 'es')?.valor).toBe('250 ms');
+  });
+
+  it('de una muestra, la respuesta no mezcla escalas: filas del archivo, lo raro de la muestra (y lo dice)', async () => {
+    const base = await lectorDatos.derivar(elementoFalso(9, gateway(), 'datos'));
+    const aprox: DatosTabla = { ...base, muestra: { filas: 100, total: 1000, exacto: false } };
+    const exacta: DatosTabla = { ...base, muestra: { filas: 100, total: 1000, exacto: true } };
+    const el = elementoFalso(9, '', 'datos');
+    expect(leer(lectorDatos.respuesta(el, aprox, ctx('es')))).toBe(
+      'Unas 1000 filas y 5 columnas. En los primeros 50 MB hay 4 latencias de 30 s y 5 nulos en bytes.',
+    );
+    expect(leer(lectorDatos.respuesta(el, exacta, ctx('es')))).toBe(
+      '1000 filas y 5 columnas. En las primeras 100 filas hay 4 latencias de 30 s y 5 nulos en bytes.',
+    );
+    expect(leer(lectorDatos.respuesta(el, aprox, ctx('en')))).toBe(
+      'About 1,000 rows and 5 columns. In the first 50 MB there are 4 latencias of 30 s and 5 nulls in bytes.',
+    );
+    for (const d of [aprox, exacta]) expect(comprobarEstilo(lectorDatos.respuesta(el, d, ctx('es')))).toEqual([]);
+    expect(lectorDatos.resumen(aprox).filas).toBe(1000);
+  }, 60_000);
+
+  it('el perfil, con pocas consultas para todas las columnas (no tres por columna)', async () => {
+    const base = await obtenerMotor();
+    let consultas = 0;
+    const contador: MotorSql = { ...base, consultar: (sql, o) => (consultas++, base.consultar(sql, o)) };
+    await perfilar(contador, bytes(gateway()), 'csv');
+    // Crear la tabla, describirla, medidas, histogramas, más repetidos, vista previa y borrarla.
+    expect(consultas).toBe(7);
+  }, 60_000);
 });

@@ -362,6 +362,10 @@
           "other": "{n} columnas cambian de distribución"
         },
         "columnas": "{anadidas} columnas añadidas y {quitadas} quitadas",
+        "tipos": {
+          "one": "{n} columna cambia de tipo",
+          "other": "{n} columnas cambian de tipo"
+        },
         "anadidas": "Columnas añadidas",
         "quitadas": "Columnas quitadas",
         "tipo": "{columna}: tipo",

@@ -6,6 +6,7 @@ import type { Elemento } from '@rimor/formato';
 import { Component, createContext, type ReactNode, Suspense, useContext, useEffect, useState } from 'react';
 import type { Repositorio } from '../almacen/repositorio';
 import { type Previa, previsualizar } from '../captura/previa';
+import { releerPendientes } from '../captura/reprocesar';
 import type { OpcionesCaptura } from '../espacio/ajustes';
 import { useEspacioOpcional } from '../espacio/Espacio';
 import type { Idioma } from '../i18n/formatos';
@@ -86,6 +87,8 @@ export function ProveedorLectores({ children, registro = REGISTRO, ejecutar }: P
         : {}),
     });
     setValor({ registro, cola: nueva, previsualizar: ejecutor.previsualizar });
+    // Los archivos que se guardaron sin su lector y ya lo tienen (un Parquet de antes de IN-044) se releen con él.
+    if (espacio && escribe()) void releerPendientes(espacio.repositorio, registro).catch(() => undefined);
     return () => ejecutor.cerrar();
   }, [registro, ejecutar, espacio]);
 
@@ -248,7 +251,9 @@ export function VistaElemento({ el, editable = true }: { el: Elemento; editable?
       <>
         <div className="vista-elemento">
           <ResumenFrontmatter el={el} lector={lector} />
-          {analizando && <Senal estado="analizando" etiqueta={textoAnalizando(lector, idioma, derivado)} />}
+          {analizando && (
+            <Senal estado={lector.senal ?? 'analizando'} etiqueta={textoAnalizando(lector, idioma, derivado)} />
+          )}
         </div>
         {/* Si el análisis tarda (un log enorme), lo común de «Detalles» ya se puede usar. Solo entonces: en los
             rápidos, aparecería y se volvería a montar con la vista un instante después. Lo de la pantalla que va antes

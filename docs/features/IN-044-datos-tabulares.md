@@ -106,3 +106,56 @@ Cubre las nueve tareas. Reutiliza el contrato de lectores, los adjuntos, la cola
 | El gráfico rápido es un histograma propio en SVG | El de Observable Plot llega con IN-058, que depende de esta. |
 | Los nombres de las columnas van en mono en la respuesta | Son del usuario (una cabecera como `#!/usr/bin/env bash` no debe contar para las reglas de estilo). |
 | Los recursos de los Workers se llaman como los del hilo principal (`astro.config.mjs`) | El `.wasm` de DuckDB lo usan los dos: así es un solo archivo y se descarga una vez. |
+
+## Verificación
+
+**`pnpm verificar`**: en verde, 113 archivos y 1461 pruebas, más la de rendimiento en su proyecto aparte (1462); carga inicial 259,8 KB de 300.
+
+**Criterios de aceptación:** un CSV pegado o soltado y un Parquet soltado se guardan con el lector `datos`, con su perfil, su respuesta y su consulta SQL (`datos.test.ts`, `Vista.test.tsx`; corpus de detección al 100 %); DuckDB, el perfil y CodeMirror quedan fuera de la carga inicial (`tamano`: 259,8 KB, igual que antes de la revisión).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| DuckDB diferido en su Worker, «DuckDB, solo la primera vez» | `motorNavegador.ts` (por `import()`), `Vista.test.tsx` (consulta), `tamano` |
+| `leyendo-datos` al perfilar o consultar | `Senal.test.tsx`, `Lectores.test.tsx` (señal del lector al derivar), `ConsultaSql.tsx` |
+| CSV, TSV y Parquet como adjuntos | `datos.test.ts` (detección, Parquet por firma, Windows-1252 y UTF-16), `reprocesar.test.ts` (Parquet pendiente que se relee) |
+| Perfil por columna | `datos.test.ts` (tipos, nulos, únicos, extremos, media, histograma, atípicos, más repetidos, infinitos; 7 consultas en total) |
+| Vista previa y consulta SQL con CodeMirror | `Vista.test.tsx` (resultado recortado, sesión propia, dos elementos a la vez, archivo soltado al salir, errores con palabras, ⌘ en Mac) |
+| Gráfico rápido | `Vista.test.tsx` |
+| Comparación de dos conjuntos | `comparaciones/datos.test.ts` (filas, columnas, tipo, distribución sobre las filas perfiladas, resultado guardado validado), `Vista.test.tsx` (veredicto con tipo cambiado) |
+| Límite con aviso y muestra | `datos.test.ts` (CSV por sus primeros bytes; Parquet por sus primeras filas con el total exacto; respuesta sin mezclar escalas) |
+| Respuesta | `datos.test.ts` (con lo raro, sin nada raro, muestra aproximada y exacta, es y en, reglas de estilo) |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | En el navegador, `registerFileBuffer` se lleva el búfer: el aviso de muestra no salía nunca (0 < 0) | `registrar` copia los bytes en los dos motores, y el perfil cuenta el tamaño antes de registrar. `datos.test.ts` (motor que se lleva los bytes) |
+| 2 | `read_parquet` descargaba la extensión de extensions.duckdb.org (fuera de la CSP y sin red) | La extensión de Parquet de DuckDB v1.5.4 (`wasm_eh` y `wasm_mvp`) va con el sitio en `public/duckdb/` y cada conexión apunta `custom_extension_repository` allí. En Node, las pruebas la ponen en la caché de DuckDB desde esa copia y usan un repositorio inexistente (nunca la red). `datos.test.ts` (versión y carpeta, ajuste sin duckdb.org) |
+| 3 | Arrow: fechas y marcas de tiempo como milisegundos, decimales sin su escala (1,5 → 150), columnas con el mismo nombre fundidas | Conversión por el tipo del campo y por posición (`valorDeCampo`, `deArrow`); la vista previa, como la escribe DuckDB. `datos.test.ts` |
+| 4 | Un Parquet se cargaba entero, sin límite ni muestra | Por encima de 50 MB, sus primeras filas en proporción, con el total exacto de sus metadatos y el aviso «las primeras N filas de M». `datos.test.ts`, `Vista.test.tsx` |
+| 5 | 60 s de plazo para descargar e instanciar DuckDB y perfilar 50 MB; tres consultas por columna | `Lector.plazoMs` (180 s para `datos`) y el perfil en 7 consultas para todas las columnas (`histogram()` en un recorrido). `lectores.test.ts`, `datos.test.ts` |
+| 6 | La consulta convertía el resultado entero en el hilo principal | `maxFilas`: se convierten 200 y se cuenta el total. `datos.test.ts`, `Vista.test.tsx` |
+| 7 | Consulta: archivos registrados para siempre, vista `datos` compartida (carrera entre dos elementos) y una consulta (`BEGIN`, `SET`) que dejaba la conexión tocada | Cada ejecución en su propia conexión, un archivo por consulta montada que se suelta al salir, y una ejecución a la vez. `Vista.test.tsx` |
+| 8 | `_s` por debajo de 1 decía el valor en «ms» sin convertirlo | Se convierte (0,25 s → «250 ms»). `datos.test.ts` |
+| 9 | Al perfilar salía la señal «analizando» | `Lector.senal`: `leyendo-datos` mientras deriva. `Lectores.test.tsx` |
+| 10 | Muestra: la respuesta y la proporción de nulos mezclaban las filas del archivo con los recuentos de la muestra | «Unas N filas… En los primeros 50 MB hay…» (o «En las primeras N filas»); la proporción, sobre las filas perfiladas. `datos.test.ts`, `comparaciones/datos.test.ts` |
+| 11 | Un CSV adjunto en Windows-1252 o UTF-16 fallaba | Se pasa a UTF-8 al perfilar y al consultar (`muestraCsv`). `datos.test.ts` |
+| 12 | Detección: tabla GFM con `|-|`, log de Python (`17:40:00,123`) y CSV con campos de varias líneas | Las tres; también el detector de Markdown acepta `|-|`. `datos.test.ts`, corpus (`datos/26`, `log/26`, `markdown/26`) |
+| 13 | `Infinity` dentro del SQL del histograma | Solo números finitos en el SQL. `datos.test.ts` |
+| 14 | El resultado guardado no validaba las columnas (NaN) y el veredicto ignoraba los cambios de tipo | `columnas_tipo` en el resultado, validación de todas las cifras y aviso por tipo. `comparaciones/datos.test.ts`, `Vista.test.tsx` |
+| 15 | Códigos sin traducir (`datos.sinBytes`), `tabla.parquet` suelto en la raíz, Parquet antiguos con `pendiente_lector` sin releer, accesibilidad | Errores con palabras; el archivo, fuera; `releerPendientes` al abrir el espacio (cualquier lector de binarios nuevo); región viva del resultado, nombres de columna como cabeceras de fila y ⌘ en Mac. `Vista.test.tsx`, `reprocesar.test.ts` |
+
+### Decisiones de la verificación
+
+| Decisión | Por qué |
+|---|---|
+| La extensión de Parquet (unos 3 MB por variante) va en el repositorio, en `public/duckdb/v1.5.4/` | Nada sale del navegador y funciona sin red; es el archivo oficial y firmado de la versión de DuckDB que trae el paquete (una prueba comprueba que la versión coincide). |
+| `lectorDatos` pasa a la versión 2 | Los derivados guardados tenían fechas en milisegundos y la muestra con otra forma: se recalculan. |
+| Los intervalos de una consulta salen vacíos (`null`) | apache-arrow no lee bien los intervalos de DuckDB: mejor nada que un valor falso. El perfil y la vista previa los escriben como texto de DuckDB. |
+| «DuckDB, solo la primera vez» solo en la consulta | El perfil corre en el Worker de derivados y el hilo principal no sabe si allí DuckDB ya está listo; mientras deriva sale «Perfilando los datos» con `leyendo-datos`. |
+| La prueba de rendimiento de la búsqueda va en su proyecto (`*.rendimiento.test.ts`) y `pnpm test` la corre después del resto | Mide tiempo de reloj: con todos los workers ocupados (más pruebas con DuckDB) medía la máquina (55–85 ms) y no la búsqueda (28 ms sola, igual antes y después). El umbral no cambia. |
+| Los elementos de las pruebas de Importar llevan el resumen de verdad del lector Texto | Con el de mentira, la puesta al día del resumen en segundo plano escribía a destiempo y, con carga, cambiaba lo comparado («sin escribir nada», «idénticos»); lo que se comprueba no cambia. |
+| `releerPendientes` solo lee un adjunto si su nombre o su tipo apuntan a un lector (no el genérico) | Así no lee entero cada binario pendiente (un vídeo, un ZIP) en cada apertura; un Parquet renombrado sin `.parquet` se queda pendiente (se puede volver a soltar). |
+| `formaCsv` lee por índices | Con el corte por filas entre comillas era hasta 12 veces más lento en cada pegado; ahora unos 4 ms en un log de 230 KB y 9–16 ms en un CSV de 1,4 MB. |

@@ -47,6 +47,28 @@ describe('comparar dos conjuntos de datos', () => {
   }, 60_000);
 });
 
+describe('revisión de IN-044', () => {
+  it('la proporción de nulos, sobre las filas perfiladas: una muestra no se compara con el total del archivo', async () => {
+    const motor = await obtenerMotor();
+    const a = await perfilar(motor, csv('x,y\n1,\n2,5\n3,6\n4,7\n'), 'csv');
+    // La misma proporción (1 de 4), con el archivo entero 10 veces más grande que la muestra.
+    const muestra = { ...a, muestra: { filas: 4, total: 40, exacto: false } };
+    expect(compararDatos(muestra, a).cambios).toEqual([]);
+    expect(compararDatos(muestra, a).filas).toEqual([40, 4]);
+  }, 60_000);
+
+  it('un resultado guardado con cifras que no son números no se lee; cuenta las columnas que cambian de tipo', async () => {
+    const motor = await obtenerMotor();
+    const a = await perfilar(motor, csv('x,y\n1,2\n3,4\n5,6\n'), 'csv');
+    const b = await perfilar(motor, csv('x,y\nuno,2\ndos,4\ntres,6\n'), 'csv');
+    const r = resultadoDeDatos(compararDatos(a, b), { hashes: ['a', 'b'] }) as unknown as Record<string, unknown>;
+    expect(leerResultado(r)).toMatchObject({ columnas_tipo: 1 });
+    for (const clave of ['columnas_anadidas', 'columnas_quitadas', 'columnas_tipo', 'filas_a'])
+      for (const malo of [undefined, 'dos', Number.NaN])
+        expect(leerResultado({ ...r, [clave]: malo }), clave).toBeNull();
+  }, 60_000);
+});
+
 describe('calcular una comparación de datos', () => {
   it('con los derivados de las dos fuentes', async () => {
     const { calcular } = await import('./crear');

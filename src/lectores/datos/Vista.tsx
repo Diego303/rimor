@@ -135,9 +135,9 @@ export default function VistaDatos({ el, datos }: PropsVista<DatosTabla>) {
     <>
       {datos.muestra && (
         <Banner>
-          {t('muestra', {
+          {t(datos.muestra.exacto ? 'muestraPrimeras' : 'muestra', {
             filas: fmtNumero(datos.muestra.filas, idioma),
-            aproximadas: fmtNumero(datos.muestra.aproximadas, idioma),
+            total: fmtNumero(datos.muestra.total, idioma),
           })}
         </Banner>
       )}
@@ -147,11 +147,12 @@ export default function VistaDatos({ el, datos }: PropsVista<DatosTabla>) {
             <tbody>
               {datos.columnas.map((c) => (
                 <tr key={c.nombre}>
-                  <td>
+                  {/* El nombre es la cabecera de su fila: el lector de pantalla lo dice con la forma y los avisos. */}
+                  <th scope="row">
                     <b className="mono sm">{c.nombre}</b>
                     <br />
                     <span className="xs faint">{c.tipo}</span>
-                  </td>
+                  </th>
                   <td>
                     <Forma c={c} idioma={idioma} />
                   </td>

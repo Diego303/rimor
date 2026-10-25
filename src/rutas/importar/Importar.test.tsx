@@ -7,11 +7,19 @@ import { AlmacenMemoria } from '../../almacen/memoria';
 import { exportarZip } from '../../datos/exportar';
 import { useArchivoImportar } from '../../datos/importar/importacion';
 import { elementoFalso } from '../../lectores/pruebas/falsos';
+import { lectorTexto } from '../../lectores/texto/lector';
 import { ESCRITURA, montarApp, PRIMERA_CARGA } from '../../pruebas/app';
+
+/**
+ * El resumen de verdad de lector Texto para `texto N` (el mismo para todos). Con el de mentira de `elementoFalso`, la
+ * puesta al día del resumen (en segundo plano) escribiría a destiempo y cambiaría lo que se compara.
+ */
+let resumenTexto: Record<string, unknown> = {};
 
 function el(n: number, cambios: Partial<Elemento['frontmatter']> = {}): Elemento {
   const base = elementoFalso(n, `texto ${n}`, 'texto');
-  return { ...base, frontmatter: { ...base.frontmatter, ...cambios } };
+  const lector = { nombre: 'texto', version: lectorTexto.version, resumen: resumenTexto };
+  return { ...base, frontmatter: { ...base.frontmatter, lector, ...cambios } };
 }
 
 /** Un ZIP exportado de otro espacio con estos elementos. */
@@ -53,6 +61,7 @@ describe('Importar', () => {
     await import('../datos/Datos');
     await import('../ajustes/Ajustes');
     await import('../inicio/Inicio');
+    resumenTexto = lectorTexto.resumen(await lectorTexto.derivar(elementoFalso(1, 'texto 1', 'texto')));
   }, 120_000);
 
   beforeEach(() => {

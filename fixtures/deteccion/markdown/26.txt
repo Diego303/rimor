@@ -1,0 +1,7 @@
+## Latencias por cliente
+
+| cliente | p50 |
+|-|-|
+| ureq | 31 ms |
+| reqwest | 30 s |
+| curl | 35 ms |

@@ -39,12 +39,15 @@ export function cuerpoDe(texto: string): { cuerpo: string; frontmatter: string |
   return { cuerpo: tras.replace(/^\n/, ''), frontmatter: yaml };
 }
 
-/** Fila separadora de una tabla GFM (`|---|:--:|`), a mano: con una expresión, los espacios retrocedían. */
+/**
+ * Fila separadora de una tabla GFM (`|---|:--:|`, también con un solo guion: `|-|-|`), a mano: con una expresión,
+ * los espacios retrocedían.
+ */
 function esSeparadorDeTabla(linea: string): boolean {
   const t = linea.trim();
   if (!t.includes('|') || !t.includes('-')) return false;
   const celdas = t.replace(/^\|/, '').replace(/\|$/, '').split('|');
-  return celdas.every((c) => /^:?-{3,}:?$/.test(c.trim()));
+  return celdas.every((c) => /^:?-+:?$/.test(c.trim()));
 }
 
 /** Encabezado Setext: una línea de texto subrayada con `===` o `---`. */

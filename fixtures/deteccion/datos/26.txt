@@ -1,0 +1,7 @@
+id,cliente,nota,latencia_ms
+1,ureq,"Reintento tras timeout,
+segundo intento correcto",31
+2,reqwest,"Sin incidencias",30000
+3,ureq,"Cabecera ""Retry-After"" ignorada",33
+4,curl,"Dos líneas:
+una y otra",35
