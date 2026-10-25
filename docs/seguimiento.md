@@ -1,7 +1,7 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-25 14:41
+**Última actualización:** 2026-10-25 14:44
 **Ahora:** IN-044 · Datos tabulares con DuckDB · fase análisis y diseño
 **Siguiente:** IN-045 · JSON, YAML y TOML con comparación estructural
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 3/22 · v0.3 0/17 · v0.4 0/9 · total 54/99
@@ -62,8 +62,8 @@
 | IN-040 | Cierre de v0.1 | v0.1 | 7 | hecha | 6dcf500 8ccb01e | docs/features/IN-040-cierre-v0.1.md |
 | IN-041 | Enlace enriquecido | v0.2 | 8 | hecha | f2f85db 76c95a1 a78cdaf | docs/features/IN-041-enlace-enriquecido.md |
 | IN-042 | Diff y parche | v0.2 | 8 | hecha | d1d8e29 f901a5a b8ff910 | docs/features/IN-042-diff-parche.md |
-| IN-043 | Comando con huecos | v0.2 | 8 | hecha | 6073c48 c6eb683 | docs/features/IN-043-comando.md |
-| IN-044 | Datos tabulares con DuckDB | v0.2 | 8 | pendiente | — | — |
+| IN-043 | Comando con huecos | v0.2 | 8 | hecha | 6073c48 c6eb683 b9ca2c0 | docs/features/IN-043-comando.md |
+| IN-044 | Datos tabulares con DuckDB | v0.2 | 8 | en análisis y diseño | — | docs/features/IN-044-datos-tabulares.md |
 | IN-045 | JSON, YAML y TOML con comparación estructural | v0.2 | 8 | pendiente | — | — |
 | IN-046 | Petición HTTP | v0.2 | 8 | pendiente | — | — |
 | IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | pendiente | — | — |
@@ -175,7 +175,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-25 | IN-043 | verificación | revisión independiente (10 hallazgos) corregida con pruebas: prompts y prosa, sudo/env/time, plantillas de Go, heredocs y sesiones, tarjeta desde el original, segunda frase, Copiar con respaldo, abrir en solo lectura y en el hilo; verificar en verde: 109 archivos, 1414 pruebas, 255,2 KB | … |
+| 2026-10-25 | IN-044 | análisis y diseño | lector datos (puesto 8), DuckDB-WASM diferido (1.33.1-dev57.0, eh/mvp), perfil por columna con muestra por encima de 50 MB, SQL con CodeMirror, comparación por perfiles, leyendo-datos en la señal, wasm-unsafe-eval en la CSP | … |
+| 2026-10-25 | IN-043 | verificación | revisión independiente (10 hallazgos) corregida con pruebas: prompts y prosa, sudo/env/time, plantillas de Go, heredocs y sesiones, tarjeta desde el original, segunda frase, Copiar con respaldo, abrir en solo lectura y en el hilo; verificar en verde: 109 archivos, 1414 pruebas, 255,2 KB | b9ca2c0 |
 | 2026-10-25 | IN-043 | implementación | lector comando (puesto 13) con huecos {{x}}, chuleta, Copiar con valores común con el Prompt y la acción abrir en Inicio; verificar en verde: 109 archivos, 1407 pruebas, 254,2 KB | c6eb683 |
 | 2026-10-25 | IN-043 | análisis y diseño | lector comando (puesto 13), huecos {{x}}, chuleta con resaltado, Copiar con valores compartido con el Prompt, acción abrir en Inicio | 6073c48 |
 | 2026-10-25 | IN-042 | verificación | revisión independiente (12 hallazgos) corregida con pruebas: .patch soltado, unificado en estrecho, rutas de git y Subversion, RFC 2047, sin versiones, plegados perezosos, más formatos, series, ref al cambiar tipo, lector de pantalla, modos; verificar en verde: 107 archivos, 1394 pruebas, 252,6 KB | b8ff910 |
