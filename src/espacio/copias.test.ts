@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { COPIAS_INICIALES, copiasDe, leerAjustes, opcionesCaptura } from './ajustes';
+import { COPIAS_INICIALES, copiasDe, dominiosActivos, leerAjustes, opcionesCaptura } from './ajustes';
 import { ESTADO_INICIAL, leerEstado } from './estado';
 import { copiaAlDia, debeRecordarCopia } from './resumen';
 
@@ -98,10 +98,25 @@ describe('ajustes de IN-038', () => {
     expect(a.deteccion).toEqual({ umbral: 0.9, duda: 0.05, extra: 1 });
     // Las que esta versión no conoce se conservan (una posterior pudo desactivarlas); la captura solo usa las suyas.
     expect(a.secretos.desactivadas).toEqual(['github', 'no-existe']);
-    expect(a.red).toEqual({ sinRed: true });
+    expect(a.red).toEqual({ sinRed: true, dominios: [] });
     expect(opcionesCaptura(a)).toEqual({ secretosDesactivados: ['github'], umbral: 0.9, margen: 0.05 });
     expect(leerAjustes(null).deteccion).toEqual({ umbral: 0.6, duda: 0.15 });
     // Unas respuestas que no son un objeto no dejan claves inventadas.
     expect(leerAjustes(JSON.stringify({ esquema: 1, respuestas: 'x' })).respuestas).toEqual({ desactivadas: [] });
+  });
+});
+
+describe('ajustes de red (IN-041)', () => {
+  it('ningún dominio por defecto; solo textos, sin repetir; el modo sin red los apaga todos', () => {
+    expect(leerAjustes(null).red).toEqual({ sinRed: false, dominios: [] });
+    const a = leerAjustes(
+      JSON.stringify({ red: { dominios: ['api.github.com', 3, 'api.github.com', 'futuro.example'], otra: 1 } }),
+    );
+    expect(a.red).toEqual({ sinRed: false, dominios: ['api.github.com', 'futuro.example'], otra: 1 });
+    expect([...dominiosActivos(a)]).toEqual(['api.github.com', 'futuro.example']);
+    expect(
+      dominiosActivos(leerAjustes(JSON.stringify({ red: { sinRed: true, dominios: ['api.github.com'] } }))).size,
+    ).toBe(0);
+    expect(leerAjustes(JSON.stringify({ red: 'roto' })).red).toEqual({ sinRed: false, dominios: [] });
   });
 });

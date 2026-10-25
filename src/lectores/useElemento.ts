@@ -11,7 +11,11 @@ import { useEspacioOpcional } from '../espacio/Espacio';
 const MAX_RECORDADOS = 300;
 const recordados = new Map<string, Elemento>();
 
-const claveDe = (fm: FrontmatterComun) => `${fm.id}|${fm.modificado}|${fm.hash}`;
+/**
+ * El frontmatter entero: `modificado` va al segundo, y un cambio en el mismo segundo que el anterior (la ficha de un
+ * enlace que llega justo después de capturarlo) no debe dejar el elemento de antes.
+ */
+const claveDe = (fm: FrontmatterComun) => `${fm.id}|${JSON.stringify(fm)}`;
 
 function recordar(clave: string, el: Elemento) {
   recordados.delete(clave);

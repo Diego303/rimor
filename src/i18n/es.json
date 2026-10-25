@@ -832,7 +832,14 @@
     "respuestas": "Respuestas de Rimor",
     "respuestasTexto": "A qué tipos responde Rimor al capturar.",
     "red": "Red",
-    "redTexto": "Rimor no se conecta a ningún sitio. Cuando llegue el enriquecimiento de enlaces, aquí se elegirá qué se puede consultar.",
+    "redTexto": "Rimor solo se conecta para completar la ficha de un enlace, y solo a los sitios que actives aquí. Lo que se consulta es la dirección del enlace; nada de tu espacio.",
+    "gruposRed": {
+      "repositorios": "Repositorios",
+      "paquetes": "Paquetes",
+      "papers": "Papers"
+    },
+    "tokenGithub": "Token de GitHub (opcional)",
+    "tokenTexto": "Sube el límite de 60 a 5.000 consultas por hora. Se guarda solo en este navegador: no va en el espacio ni en el ZIP.",
     "noGuardado": "No se pudo guardar el ajuste: vale ahora, pero no al volver a abrir."
   }
 }

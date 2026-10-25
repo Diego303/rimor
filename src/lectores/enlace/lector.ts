@@ -1,11 +1,14 @@
 /**
- * Lector Enlace básico (LEC-03): una URL o un DOI, normalizados (sin seguimiento) y clasificados por destino,
- * sin red (D7). La huella es la URL normalizada: así Rimor recuerda si ya se guardó («Ya lo guardaste el …»).
+ * Lector Enlace (LEC-03): una URL o un DOI, normalizados (sin seguimiento) y clasificados por destino, sin red (D7).
+ * La huella es la URL normalizada: así Rimor recuerda si ya se guardó («Ya lo guardaste el …»). Con su ficha
+ * (LEC-03b, IN-041: se consulta aparte, en `enriquecer/`), la respuesta dice lo que sabe de él.
  */
 import type { Elemento } from '@rimor/formato';
 import { esEnlaceCompleto } from '../../captura/detector';
 import { fmtDia } from '../../i18n/formatos';
 import type { Borrador, Entrada, Lector } from '../contrato';
+import { fichaDe } from './enriquecer/ficha';
+import { fraseDeFicha } from './enriquecer/frase';
 import { textos } from './textos';
 import { type ClaseEnlace, clasificar, type Destino, normalizar, rutaLegible, tituloDe } from './urls';
 
@@ -61,7 +64,10 @@ export const lectorEnlace: Lector<DatosEnlace> = {
     const vars = { nombre: d.nombre ?? '', sitio: d.sitio, numero: String(d.numero ?? '') };
     const clave =
       (d.clase === 'paper' || d.clase === 'documentacion') && !d.nombre ? (`${d.clase}SinNombre` as const) : d.clase;
-    const frase = d.sitio ? t(ctx.idioma, `respuesta.${clave}`, vars) : t(ctx.idioma, 'sinDireccion');
+    // Con ficha (IN-041), lo que dice: «Repositorio activo: último lanzamiento hace 12 días, licencia MIT.».
+    const ficha = fichaDe(_el.frontmatter);
+    const conFicha = ficha && d.url ? fraseDeFicha(d, ficha, ctx.idioma) : null;
+    const frase = conFicha ?? (d.sitio ? t(ctx.idioma, `respuesta.${clave}`, vars) : t(ctx.idioma, 'sinDireccion'));
     // Si ya se guardó la misma dirección (misma huella) antes que este, se dice cuándo: la vez más antigua.
     const propio = Date.parse(_el.frontmatter.creado);
     const antes = ctx.mismaHuella.filter((o) => !(Date.parse(o.creado) >= propio)).at(-1);

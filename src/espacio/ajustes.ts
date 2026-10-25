@@ -58,6 +58,11 @@ export interface Ajustes {
   secretos: { desactivadas: string[] };
   respuestas: { desactivadas: TipoElemento[] };
   copias: AjustesCopias;
+  /**
+   * La red (IN-041): los dominios que el enriquecimiento de enlaces puede consultar (ninguno por defecto) y el modo
+   * sin red (IN-061), que corta toda petición.
+   */
+  red: { sinRed: boolean; dominios: string[] };
   /** Lo que escriban versiones posteriores: se conserva tal cual. */
   [otra: string]: unknown;
 }
@@ -68,6 +73,7 @@ export const AJUSTES_INICIALES: Ajustes = {
   secretos: { desactivadas: [] },
   respuestas: { desactivadas: [] },
   copias: COPIAS_INICIALES,
+  red: { sinRed: false, dominios: [] },
 };
 
 /** Un objeto (no una lista ni un texto), o vacío. */
@@ -99,6 +105,14 @@ export function leerAjustes(texto: string | null): Ajustes {
         umbral: enLimites(objeto(d.deteccion).umbral, LIMITES_DETECCION.umbral, DETECCION_INICIAL.umbral),
         duda: enLimites(objeto(d.deteccion).duda, LIMITES_DETECCION.duda, DETECCION_INICIAL.duda),
       },
+      red: {
+        ...objeto(d.red),
+        sinRed: objeto(d.red).sinRed === true,
+        // Los que no se conocen se conservan (los de una versión posterior); solo se consultan los de esta.
+        dominios: Array.isArray(objeto(d.red).dominios)
+          ? [...new Set((objeto(d.red).dominios as unknown[]).filter((x): x is string => typeof x === 'string'))]
+          : [],
+      },
       secretos: {
         ...objeto(d.secretos),
         desactivadas: Array.isArray(objeto(d.secretos).desactivadas)
@@ -120,6 +134,9 @@ export function leerAjustes(texto: string | null): Ajustes {
     return structuredClone(AJUSTES_INICIALES);
   }
 }
+
+/** Los dominios que se pueden consultar ahora: ninguno en modo sin red. */
+export const dominiosActivos = (a: Ajustes): ReadonlySet<string> => new Set(a.red.sinRed ? [] : a.red.dominios);
 
 export const respuestaDesactivada = (a: Ajustes, tipo: TipoElemento): boolean =>
   a.respuestas.desactivadas.includes(tipo);

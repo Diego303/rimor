@@ -348,6 +348,7 @@
 }
 textarea,
 input[type="text"],
+input[type="password"],
 input[type="search"] {
   width: 100%;
   border: 1px solid var(--line);
@@ -1406,6 +1407,10 @@ pre.code.codigo .ln {
 .enlace-url {
   overflow-wrap: anywhere;
 }
+/* La ficha de un enlace (IN-041): descripciones y títulos largos, sin desbordar. */
+.ficha-enlace dd {
+  overflow-wrap: anywhere;
+}
 .tarjeta-texto {
   white-space: pre-line;
   overflow: hidden;
@@ -1467,6 +1472,23 @@ pre.code.codigo .ln {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
   gap: 6px 16px;
+}
+/* Red (IN-041): los dominios por grupos, sin el marco del fieldset, y el token de GitHub. */
+.ajustes-dominios {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ajustes-token {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ajustes-token input {
+  font-family: var(--f-m);
 }
 .ajustes-rango {
   flex-wrap: wrap;

@@ -13,6 +13,7 @@ import { useEspacio } from '../../estado/espacio';
 import type { Idioma } from '../../i18n/formatos';
 import { elegirIdioma } from '../../i18n/iniciar';
 import { useT } from '../../i18n/useT';
+import { GRUPOS_DOMINIOS, guardarTokenGithub, leerTokenGithub } from '../../lectores/enlace/enriquecer/dominios';
 import { REGLAS_SECRETOS } from '../../seguridad/secretos/reglas';
 import { Detalles, Segmentado, SelectorTema } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
@@ -40,6 +41,8 @@ export function Ajustes() {
   const [ajustes, setAjustes] = useState<AjustesEspacio>(() => espacio?.ajustes() ?? AJUSTES_INICIALES);
   // Al día con los ajustes de ahora (también lo que cambia la otra pestaña).
   useEffect(() => (espacio ? espacio.alCambiar(() => setAjustes(espacio.ajustes())) : undefined), [espacio]);
+  // El token de GitHub es de este navegador (no del espacio): se guarda al salir del campo.
+  const [token, setToken] = useState(() => leerTokenGithub() ?? '');
   const [secretosAbiertos] = useState(() => ajustes.secretos.desactivadas.length > 0);
   const [duda, setDuda] = useState(Math.round(ajustes.deteccion.duda * 100));
   useEffect(() => setDuda(Math.round(ajustes.deteccion.duda * 100)), [ajustes.deteccion.duda]);
@@ -169,7 +172,42 @@ export function Ajustes() {
       </Detalles>
 
       <Detalles resumen={t('ajustes.red')}>
-        <p className="sm muted">{t('ajustes.redTexto')}</p>
+        <p className="xs muted">{t('ajustes.redTexto')}</p>
+        {GRUPOS_DOMINIOS.map(({ grupo, dominios }) => (
+          <fieldset key={grupo} className="ajustes-dominios">
+            <legend className="xs muted">{t(`ajustes.gruposRed.${grupo}`)}</legend>
+            <div className="ajustes-casillas">
+              {dominios.map((dominio) => (
+                <label key={dominio} className="chk">
+                  <input
+                    type="checkbox"
+                    checked={ajustes.red.dominios.includes(dominio)}
+                    disabled={!editable}
+                    onChange={(e) =>
+                      guardar((a) => ({
+                        ...a,
+                        red: { ...a.red, dominios: alternar(a.red.dominios, [dominio], !e.target.checked) },
+                      }))
+                    }
+                  />
+                  <span className="mono xs">{dominio}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ))}
+        <label className="ajustes-token">
+          <span className="sm">{t('ajustes.tokenGithub')}</span>
+          <input
+            type="password"
+            autoComplete="off"
+            spellCheck={false}
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            onBlur={() => guardarTokenGithub(token)}
+          />
+          <span className="xs muted">{t('ajustes.tokenTexto')}</span>
+        </label>
       </Detalles>
     </Pantalla>
   );

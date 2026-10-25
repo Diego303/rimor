@@ -1,7 +1,5 @@
-/* Animaciones del símbolo «Señal» (IN-090, D18): cada estado porta su SVG de rimor-animaciones.
-   Los porcentajes son los keyTimes; la curva, la de los keySplines (.4 0 .2 1) o lineal en los recorridos.
-   Los estilos sin animación de cada estado son su fotograma de reposo: es lo que se ve con movimiento
-   reducido (base.css anula toda animación), al acabar una animación de una vez y al cortar un bucle a los 20 s. */
+/* «Señal» (IN-090, D18): cada estado porta su SVG de rimor-animaciones (porcentajes = keyTimes; curva, la de
+   los keySplines o lineal). Lo que no anima es el reposo: con movimiento reducido, al acabar y a los 20 s. */
 
 .senal {
   display: inline-flex;
@@ -59,14 +57,12 @@
 .senal .anima {
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   animation-fill-mode: var(--senal-relleno, both);
-  /* «infinite» en bucle; en una vez, la fracción del ciclo donde está el reposo (Senal.tsx). */
+  /* Duración, iteraciones («infinite» en bucle; en una vez, la fracción del ciclo de su reposo) y relleno: Senal.tsx. */
+  animation-duration: var(--senal-dur);
   animation-iteration-count: var(--senal-veces, infinite);
 }
 
-/* 01 · arranque (3,6 s; reposo: logotipo completo, 88 %) */
-.senal-arranque .anima {
-  animation-duration: 3.6s;
-}
+/* 01 · arranque (reposo: logotipo completo, 88 %) */
 .senal-arranque .onda {
   stroke-dasharray: 100;
   animation-name: senal-arranque-onda;
@@ -160,10 +156,7 @@
   }
 }
 
-/* 02 · primer uso (5,5 s; reposo: logotipo con la frase, 90 %) */
-.senal-primer-uso .anima {
-  animation-duration: 5.5s;
-}
+/* 02 · primer uso (reposo: logotipo con la frase, 90 %) */
 .senal-primer-uso .onda {
   stroke-dasharray: 100;
   animation-name: senal-primer-uso-onda;
@@ -277,12 +270,11 @@
   }
 }
 
-/* 04 · cargando (1,4 s, lineal, bucle; reposo: símbolo con la onda tenue) */
+/* 04 · cargando (reposo: símbolo con la onda tenue) */
 .senal-cargando .tramo {
   stroke-dasharray: 26 74;
   opacity: 0;
   animation-name: senal-cargando-tramo;
-  animation-duration: 1.4s;
   animation-timing-function: linear;
 }
 @keyframes senal-cargando-tramo {
@@ -296,14 +288,13 @@
   }
 }
 
-/* 06 · indexando (2,4 s, lineal, bucle; reposo: símbolo) */
+/* 06 · indexando (reposo: símbolo) */
 .senal-indexando .tenue {
   opacity: 0.22;
 }
 .senal-indexando .onda {
   stroke-dasharray: 100;
   animation-name: senal-indexando-onda;
-  animation-duration: 2.4s;
   animation-timing-function: linear;
 }
 .senal-indexando .punto {
@@ -311,7 +302,6 @@
   offset-rotate: 0deg;
   offset-distance: 100%;
   animation-name: senal-indexando-punto;
-  animation-duration: 2.4s;
   animation-timing-function: linear;
 }
 @keyframes senal-indexando-onda {
@@ -337,10 +327,9 @@
   }
 }
 
-/* 09 · guardado (1,8 s, una vez; reposo: símbolo) */
+/* 09 · guardado (reposo: símbolo) */
 .senal-guardado .anillo {
   animation-name: senal-guardado-anillo;
-  animation-duration: 1.8s;
 }
 @keyframes senal-guardado-anillo {
   0% {
@@ -357,10 +346,9 @@
   }
 }
 
-/* 11 · analizando (1,6 s, bucle; reposo: símbolo) */
+/* 11 · analizando (reposo: símbolo) */
 .senal-analizando .escala {
   animation-name: senal-analizando-onda;
-  animation-duration: 1.6s;
 }
 @keyframes senal-analizando-onda {
   0% {
@@ -374,10 +362,9 @@
   }
 }
 
-/* 14 · copia al día (3 s, una vez; reposo: punto encendido, 88 %) */
+/* 14 · copia al día (reposo: punto encendido, 88 %) */
 .senal-copia-al-dia .punto {
   animation-name: senal-copia-al-dia-punto;
-  animation-duration: 3s;
 }
 @keyframes senal-copia-al-dia-punto {
   0% {
@@ -397,17 +384,15 @@
   }
 }
 
-/* 15 · error (3,2 s, una vez; reposo: onda normal y punto en --bad, no la línea plana, que parecería «vacío»).
+/* 15 · error (reposo: onda normal y punto en --bad, no la línea plana, que parecería «vacío»).
    Sin fill-mode: al acabar el ciclo (punto en --key de nuevo) queda el reposo de la base. */
 .senal-error .punto {
   fill: var(--bad);
   animation-name: senal-error-punto;
-  animation-duration: 3.2s;
   animation-fill-mode: none;
 }
 .senal-error .escala {
   animation-name: senal-error-onda;
-  animation-duration: 3.2s;
   animation-fill-mode: none;
 }
 @keyframes senal-error-onda {
@@ -445,14 +430,12 @@
   }
 }
 
-/* 17 · comparando (3 s, una vez; reposo: ondas alineadas y punto, 75 %) */
+/* 17 · comparando (reposo: ondas alineadas y punto, 75 %) */
 .senal-comparando .referencia {
   animation-name: senal-comparando-referencia;
-  animation-duration: 3s;
 }
 .senal-comparando .punto {
   animation-name: senal-comparando-punto;
-  animation-duration: 3s;
 }
 @keyframes senal-comparando-referencia {
   0% {
@@ -486,10 +469,9 @@
   }
 }
 
-/* 19 · exportando (2,4 s, bucle; reposo: símbolo). Junta los tiempos de las dos animaciones del punto. */
+/* 19 · exportando (reposo: símbolo). Junta los tiempos de las dos animaciones del punto. */
 .senal-exportando .punto {
   animation-name: senal-exportando-punto;
-  animation-duration: 2.4s;
 }
 @keyframes senal-exportando-punto {
   0% {
@@ -522,11 +504,10 @@
   }
 }
 
-/* 20 · Rimor contesta (2,4 s, bucle; reposo: símbolo mono). El punto solo se enciende mientras anima. */
+/* 20 · Rimor contesta (reposo: símbolo mono). El punto solo se enciende mientras anima. */
 .senal-contestando .punto {
   fill: var(--ink);
   animation-name: senal-contestando-punto;
-  animation-duration: 2.4s;
 }
 @keyframes senal-contestando-punto {
   0% {
@@ -559,6 +540,32 @@
   }
   100% {
     fill: var(--key);
+    opacity: 1;
+  }
+}
+
+/* 16 · sin conexión (reposo: onda discontinua y punto hueco) */
+.senal-sin-conexion .tenue {
+  opacity: 0.55;
+  stroke-dasharray: 4 5;
+}
+.senal-sin-conexion .guion {
+  opacity: 0.55;
+}
+.senal-sin-conexion .anillo {
+  r: 2.6px;
+  stroke-width: 1.6;
+  opacity: 1;
+  animation-name: senal-sin-conexion-anillo;
+}
+@keyframes senal-sin-conexion-anillo {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
     opacity: 1;
   }
 }

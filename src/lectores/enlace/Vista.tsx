@@ -1,12 +1,16 @@
-/** Vista del lector Enlace: la dirección limpia (se abre aparte), qué es y en qué sitio, y lo pegado si era otro. */
+/**
+ * Vista del lector Enlace: la dirección limpia (se abre aparte), qué es y en qué sitio, y lo pegado si era otro; y su
+ * ficha, si se puede enriquecer (IN-041).
+ */
 import { useT } from '../../i18n/useT';
 import { Tarjeta } from '../../ui/componentes';
 import type { PropsVista } from '../contrato';
 import { DetallesElemento } from '../DetallesElemento';
+import { FichaEnlace } from './FichaEnlace';
 import type { DatosEnlace } from './lector';
 import { textos } from './textos';
 
-export default function VistaEnlace({ el, datos }: PropsVista<DatosEnlace>) {
+export default function VistaEnlace({ el, datos, editable = true }: PropsVista<DatosEnlace>) {
   const { idioma } = useT();
   const t = (clave: Parameters<typeof textos.t>[1]) => textos.t(idioma, clave);
   const pegado = (el.original ?? '').trim();
@@ -40,6 +44,7 @@ export default function VistaEnlace({ el, datos }: PropsVista<DatosEnlace>) {
           )}
         </dl>
       </Tarjeta>
+      <FichaEnlace el={el} datos={datos} editable={editable} />
       <DetallesElemento refe={el.frontmatter.ref} />
     </>
   );

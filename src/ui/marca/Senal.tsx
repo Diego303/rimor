@@ -1,7 +1,6 @@
 /**
- * Animaciones del símbolo «Señal» (IN-090, D18): SVG en línea con la geometría del símbolo y una clase por
- * estado; los @keyframes de senal.css portan los SVG de rimor-animaciones. Siempre con texto al lado y
- * anunciada como estado; con movimiento reducido, el fotograma de reposo.
+ * Animaciones del símbolo «Señal» (IN-090, D18): SVG en línea y una clase por estado (senal.css porta los SVG de
+ * rimor-animaciones). Siempre con texto al lado y anunciada como estado.
  */
 import { useEffect, useState } from 'react';
 import { ESTADOS_SENAL, type EstadoSenal, LIMITE_BUCLE_MS } from './estadosSenal';
@@ -53,10 +52,10 @@ export function Senal({
   }, [bucle, estado]);
 
   const trazo = tamano < UMBRAL_PEQUENO ? TRAZO_PEQUENO : TRAZO;
-  // Una vez: se detiene en la fracción del ciclo de su reposo (iteraciones fraccionarias y fill-mode both).
+  // Onda discontinua y punto hueco (SVG 16).
+  const sinRed = estado === 'sin-conexion';
+  // Una vez: se para en la fracción del ciclo de su reposo; si es el final, sin fill-mode (queda la base, el reposo).
   const iteraciones = bucle ? 'infinite' : String(def.reposo);
-  // Con el reposo al final del ciclo, el último fotograma no tiene por qué ser el reposo (el tramo de «cargando»
-  // sigue visible): sin fill-mode, al acabar se ve la base, que es el reposo.
   const relleno = !bucle && def.reposo === 1 ? 'none' : 'both';
   const anchoVista = def.ancho ? 156 : 48;
   return (
@@ -65,7 +64,11 @@ export function Senal({
       role={decorativa ? undefined : 'status'}
       aria-live={decorativa ? undefined : 'polite'}
       aria-hidden={decorativa ? true : undefined}
-      style={{ ['--senal-veces' as string]: iteraciones, ['--senal-relleno' as string]: relleno }}
+      style={{
+        ['--senal-dur' as string]: `${def.duracionS}s`,
+        ['--senal-veces' as string]: iteraciones,
+        ['--senal-relleno' as string]: relleno,
+      }}
     >
       <svg
         viewBox={`0 0 ${anchoVista} 48`}
@@ -74,19 +77,21 @@ export function Senal({
         aria-hidden="true"
         focusable="false"
       >
-        {(estado === 'cargando' || estado === 'indexando') && (
+        {(estado === 'cargando' || estado === 'indexando' || sinRed) && (
           <path className="tenue" d={ONDA} pathLength={100} strokeWidth={trazo} />
         )}
         {estado === 'comparando' && <path className="referencia anima" d={ONDA} strokeWidth={trazo} />}
         {/* «cargando» no lleva la onda llena: solo la tenue y el tramo que la recorre (SVG 04). */}
-        {estado !== 'cargando' && (
+        {estado !== 'cargando' && !sinRed && (
           <g className="escala anima">
             <path className="onda anima" d={ONDA} pathLength={100} strokeWidth={trazo} />
           </g>
         )}
         {estado === 'cargando' && <path className="tramo anima" d={ONDA} pathLength={100} strokeWidth={trazo} />}
-        {estado === 'guardado' && <circle className="anillo anima" cx={PUNTO.cx} cy={PUNTO.cy} r={PUNTO.r} />}
-        {estado === 'indexando' ? (
+        {(estado === 'guardado' || sinRed) && (
+          <circle className="anillo anima" cx={PUNTO.cx} cy={PUNTO.cy} r={PUNTO.r} />
+        )}
+        {sinRed ? null : estado === 'indexando' ? (
           // Recorre la onda con offset-path: sin cx/cy, la posición la da la ruta.
           <circle className="punto anima" r={PUNTO.r} />
         ) : (

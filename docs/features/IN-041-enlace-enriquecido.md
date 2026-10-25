@@ -73,11 +73,11 @@ El estado del SVG 16: onda discontinua al 55 % y punto hueco que respira (opacid
 
 ## Tareas
 
-- [ ] Proveedores con interfaz común `Enriquecedor` (`acepta`, `consultar` → ficha), solo los validados por F0-7: GitHub (token opcional), GitLab; deps.dev, OSV, npm, crates.io y PyPI; Crossref y arXiv (por DataCite).
-- [ ] Ficha con fecha de consulta; «Volver a consultar» con los cambios respecto a la anterior.
-- [ ] Dominios visibles antes de la primera consulta y lista de dominios activados en Ajustes.
-- [ ] Sin red o con el dominio bloqueado, `<Senal estado="sin-conexion">` con «Sin red: guardado sin enriquecer».
-- [ ] Respuestas enriquecidas.
+- [x] Proveedores con interfaz común `Enriquecedor` (`acepta`, `consultar` → ficha), solo los validados por F0-7: GitHub (token opcional), GitLab; deps.dev, OSV, npm, crates.io y PyPI; Crossref y arXiv (por DataCite).
+- [x] Ficha con fecha de consulta; «Volver a consultar» con los cambios respecto a la anterior.
+- [x] Dominios visibles antes de la primera consulta y lista de dominios activados en Ajustes.
+- [x] Sin red o con el dominio bloqueado, `<Senal estado="sin-conexion">` con «Sin red: guardado sin enriquecer».
+- [x] Respuestas enriquecidas.
 
 ## Pruebas previstas
 
@@ -109,3 +109,22 @@ El estado del SVG 16: onda discontinua al 55 % y punto hueco que respira (opacid
 ## Autorrevisión
 
 Cubre las cinco tareas con solo los proveedores de F0-7. Reutiliza el lector Enlace, los ajustes del espacio (`guardarAjustes`), la tarjeta «Red», `RespuestaRimor` y la `Senal`. Lo pesado (los proveedores) se carga al consultar, fuera de la carga inicial.
+
+## Implementación
+
+- `src/lectores/enlace/enriquecer/`: `contrato.ts` (`Enriquecedor`, `Ficha`, `FalloConsulta` y `pedirJson`, que solo pide a dominios activados y da nombre a los fallos), `forjas.ts` (GitHub y GitLab), `paquetes.ts` (deps.dev, OSV y la fecha del registro si falta), `papers.ts` (Crossref y DataCite para arXiv), `enriquecer.ts` (proveedor, dominios, consulta y cambios entre fichas), `ficha.ts` (la ficha y la anterior en el frontmatter), `frase.ts` (la respuesta con la ficha), `dominios.ts` (los grupos de Ajustes y el token de este navegador) y `aplicar.ts` (consultar y guardar; activar dominios).
+- `src/lectores/enlace/FichaEnlace.tsx`, en la vista del enlace.
+- `src/espacio/ajustes.ts`: `red: { sinRed, dominios }` normalizado (lo desconocido se conserva) y `dominiosActivos`.
+- Ajustes · Red: los dominios por grupos y el token de GitHub.
+- `Captura.tsx`: un enlace nuevo se enriquece en segundo plano si su proveedor tiene sus dominios activados (sin ninguno activado no se carga ni el módulo).
+- `Senal`: el estado `sin-conexion` (SVG 16). Para que quepa en los 4 KB, la duración de cada animación pasa a una variable que pone `Senal.tsx` (estaba repetida en el CSS y en `estadosSenal.ts`) y los comentarios se acortan.
+- `useElemento`: el elemento recordado se reconoce por su frontmatter entero (`modificado` va al segundo y la ficha llega en el mismo segundo que la captura).
+- Pruebas: `enriquecer/enriquecer.test.ts` (cada proveedor con un `fetch` falso, dominios y CSP, fallos con nombre, cambios, frases y sus reglas de estilo), `FichaEnlace.test.tsx` (activar y consultar, volver a consultar con cambios, sin red, sin proveedor, Ajustes y la consulta al capturar), `copias.test.ts` (ajustes de red) y las de la señal (fidelidad de `sin-conexion` con su SVG).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| Sin BibTeX en la ficha | No lo pide la ficha de IN-041; `doi.org` queda en la CSP para la bibliografía (IN-086, BibTeX desde enlaces a papers y DOI). |
+| deps.dev es el dominio imprescindible de un paquete; OSV y el registro, secundarios | deps.dev da versión, fecha y licencias de los cinco ecosistemas (F0-7); sin OSV, sus avisos cuentan como vulnerabilidades. |
+| Las fechas de la ficha se enseñan como día («20 oct»); la consulta, con hora | Lo que importa de una actividad es el día; de la consulta, cuándo exactamente. |

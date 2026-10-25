@@ -5,7 +5,7 @@
 
 import { isoConZona, type Resultado } from '@rimor/formato';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { opcionesCaptura } from '../espacio/ajustes';
+import { dominiosActivos, opcionesCaptura } from '../espacio/ajustes';
 import { useEspacioOpcional } from '../espacio/Espacio';
 import { useEspacio } from '../estado/espacio';
 import { useFrescos } from '../estado/frescos';
@@ -102,6 +102,20 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
     [espacio, lectores],
   );
 
+  /**
+   * Un enlace nuevo cuyo proveedor tiene sus dominios activados: su ficha, en segundo plano (IN-041). Sin ningún
+   * dominio activado no se carga ni el módulo; con otros activados, `enriquecerElemento` no consulta nada.
+   */
+  const enriquecerSiToca = useCallback(
+    async (c: Capturado) => {
+      if (!espacio || c.elemento.frontmatter.tipo !== 'enlace' || !espacio.repositorio.escribible()) return;
+      if (!dominiosActivos(espacio.ajustes()).size) return;
+      const { enriquecerElemento } = await import('../lectores/enlace/enriquecer/aplicar');
+      await enriquecerElemento(espacio, c.elemento.frontmatter.id).catch(() => null);
+    },
+    [espacio],
+  );
+
   const informar = useCallback(
     (resultados: readonly ResultadoDe[]) => {
       const creados: Capturado[] = [];
@@ -172,11 +186,14 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
         });
       for (const avisarOtro of otros) avisarOtro();
       // Lo que Rimor ha ahorrado (MET-06): un error que ya había pasado, reconocido por su huella.
-      for (const c of creados) void contarSiReconocido(c);
+      for (const c of creados) {
+        void contarSiReconocido(c);
+        void enriquecerSiToca(c);
+      }
       // El feed los marca como frescos (borde naranja) durante unos minutos.
       if (creados.length) useFrescos.getState().anadir(creados.map((c) => c.elemento.frontmatter.id));
     },
-    [avisar, t, idioma, alAbrir, capturador, espacio, contarSiReconocido],
+    [avisar, t, idioma, alAbrir, capturador, espacio, contarSiReconocido, enriquecerSiToca],
   );
 
   // Pegar fuera de un campo: al compositor (no guarda directamente) y a Inicio.

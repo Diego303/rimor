@@ -3,6 +3,8 @@
 Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Sin publicar]
+### Añadido
+- Enlaces con ficha: un enlace a un repositorio de GitHub o GitLab, a un paquete (npm, PyPI, crates.io, Go o Maven) o a un paper (DOI o arXiv) puede completarse con lo que dicen sus APIs públicas: actividad, último lanzamiento, licencia, vulnerabilidades conocidas, autores y año, con la fecha de la consulta y «Volver a consultar», que enseña qué cambió. Antes de la primera consulta se dice qué sitio se consultaría; en Ajustes · Red se eligen los sitios (ninguno por defecto) y un token de GitHub opcional que se queda en este navegador. Con los sitios activados, la ficha llega sola al capturar y la respuesta de Rimor la usa («Repositorio activo: último lanzamiento hace 12 días, licencia MIT.»). Sin red, la señal «sin conexión» y «Sin red: guardado sin enriquecer.» (IN-041).
 
 ## [0.1.0] · 2026-10-25
 ### Añadido

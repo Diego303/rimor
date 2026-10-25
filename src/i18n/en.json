@@ -832,7 +832,14 @@
     "respuestas": "Rimor’s replies",
     "respuestasTexto": "Which types Rimor replies to when capturing.",
     "red": "Network",
-    "redTexto": "Rimor does not connect anywhere. When link enrichment arrives, you will choose here what may be queried.",
+    "redTexto": "Rimor only connects to complete a link’s card, and only to the sites you enable here. What is queried is the link’s address; nothing from your space.",
+    "gruposRed": {
+      "repositorios": "Repositories",
+      "paquetes": "Packages",
+      "papers": "Papers"
+    },
+    "tokenGithub": "GitHub token (optional)",
+    "tokenTexto": "Raises the limit from 60 to 5,000 checks per hour. Stored only in this browser: it is not in the space or the ZIP.",
     "noGuardado": "The setting could not be saved: it applies now, but not after reopening."
   }
 }
