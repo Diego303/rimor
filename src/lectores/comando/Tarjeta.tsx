@@ -1,21 +1,30 @@
-/** Tarjeta del lector Comando: el comando en mono, con sus huecos resaltados. */
+/**
+ * Tarjeta del lector Comando: los comandos de verdad (del original, no del título, que el usuario puede cambiar y que
+ * va recortado), con sus huecos resaltados.
+ */
 import type { PropsTarjeta } from '../contrato';
-import { trozosComando } from './analisis';
+import { analizarComando, trozosComando } from './analisis';
 
 export default function TarjetaComando({ el }: PropsTarjeta) {
-  const comando = el.frontmatter.titulo;
+  const d = analizarComando(el.original ?? '');
   return (
     <p className="mono xs comando-tarjeta">
-      {trozosComando(comando).map((tr, i) =>
-        tr.t === 'hueco' ? (
-          // biome-ignore lint/suspicious/noArrayIndexKey: los trozos de un comando son fijos y en su orden.
-          <span key={i} className="var">
-            {tr.v}
-          </span>
-        ) : (
-          tr.v
-        ),
-      )}
+      {d.comandos.map((c, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: los comandos son fijos y en su orden.
+        <span key={i} className="linea">
+          {trozosComando(c, d.huecos).map((tr, j) =>
+            tr.t === 'hueco' ? (
+              // biome-ignore lint/suspicious/noArrayIndexKey: los trozos de un comando son fijos y en su orden.
+              <span key={j} className="var">
+                {tr.v}
+              </span>
+            ) : (
+              tr.v
+            ),
+          )}
+          {'\n'}
+        </span>
+      ))}
     </p>
   );
 }

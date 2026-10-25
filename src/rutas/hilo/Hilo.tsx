@@ -184,7 +184,7 @@ export function Hilo() {
                 seleccionado={false}
                 marcado={false}
                 fresco={false}
-                // Las acciones de la respuesta (añadir a una colección, a su hilo) son de Inicio: aquí, ninguna.
+                // Las decisiones de la respuesta (añadir a una colección, a su hilo) son de Inicio: aquí, solo abrir.
                 sinAcciones
                 soloLectura={soloLectura}
                 resumen={legible(fm)}
@@ -193,7 +193,7 @@ export function Hilo() {
                 alAbrir={abrir}
                 alResponder={responderA}
                 alArchivar={() => undefined}
-                alAccion={() => undefined}
+                alAccion={(fm, accion) => accion.id === 'abrir' && abrir(fm.ref)}
                 conDia
                 sinArchivar
                 pie={

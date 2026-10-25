@@ -62,7 +62,9 @@ export const lectorComando: Lector<DatosComando> = {
           },
         ],
       };
-    // «Comando con 2 huecos: {{host}} y {{puerto}}.»: los huecos en mono (son del usuario).
+    // «Comando con 2 huecos: {{host}} y {{puerto}}. Puedes copiarlo con los valores rellenados.» (como `CMD-0009`):
+    // los huecos en mono (son del usuario); con más de tres, «… y 2 más».
+    const quedan = d.huecos.length - HUECOS_EN_RESPUESTA;
     const nombrados = d.huecos.slice(0, HUECOS_EN_RESPUESTA);
     const texto: Fragmento[] = [
       {
@@ -74,11 +76,13 @@ export const lectorComando: Lector<DatosComando> = {
       if (k > 0)
         texto.push({
           t: 'texto',
-          v: k === nombrados.length - 1 && d.huecos.length <= HUECOS_EN_RESPUESTA ? t(i, 'respuesta.y') : ', ',
+          v: k === nombrados.length - 1 && quedan <= 0 ? t(i, 'respuesta.y') : ', ',
         });
       texto.push({ t: 'mono', v: h });
     });
-    texto.push({ t: 'texto', v: `${d.huecos.length > HUECOS_EN_RESPUESTA ? '…' : ''}${t(i, 'respuesta.fin')}` });
+    const mas = quedan > 0 ? t(i, 'respuesta.mas', { n: quedan }) : '';
+    const copiar = t(i, d.huecos.length === 1 ? 'respuesta.copiarUno' : 'respuesta.copiarVarios');
+    texto.push({ t: 'texto', v: `${mas}. ${copiar}` });
     return { texto, acciones: [{ id: 'abrir', etiqueta: t(i, 'copiarConValores') }] };
   },
 

@@ -1241,6 +1241,12 @@ pre.code.comando-texto {
 }
 .comando-tarjeta {
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
 }
 .copia-manual,
 .nuevo-resultado {

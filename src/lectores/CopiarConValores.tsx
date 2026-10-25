@@ -69,24 +69,69 @@ interface Props {
   pie?: ReactNode;
 }
 
-export function CopiarConValores({ ambito, idElemento, texto, huecos, sustituir, textos, pie }: Props) {
-  const espacio = useEspacioOpcional();
+/**
+ * Copiar un texto: al portapapeles (con el aviso «Copiado») o, si el navegador no deja, a la vista y seleccionado.
+ * El texto listo se descarta cuando cambia `texto` (otra versión).
+ */
+function useCopiar(texto: string, copiado: string) {
   const avisos = useAvisosOpcional();
-  const clave = claveValores(ambito, espacio?.manifest.espacio.id ?? 'local', idElemento);
-  const [valores, setValores] = useState<Record<string, string>>(() => leerValores(clave));
   // `vez` cambia en cada intento: si vuelve a fallar con el mismo texto, se vuelve a seleccionar.
   const [listo, setListo] = useState<{ texto: string; vez: number } | null>(null);
   const areaLista = useRef<HTMLTextAreaElement>(null);
-  const id = useId();
-
-  useEffect(() => setValores(leerValores(clave)), [clave]);
-  // El texto listo para copiar a mano era el de otro texto (otra versión): fuera.
   // biome-ignore lint/correctness/useExhaustiveDependencies: se descarta al cambiar el texto.
   useEffect(() => setListo(null), [texto]);
   // Si el navegador no dejó copiar, el texto queda seleccionado para Ctrl+C.
   useEffect(() => {
     if (listo !== null) areaLista.current?.select();
   }, [listo]);
+  const copiar = async (conValores: string) => {
+    if (await copiarAlPortapapeles(conValores)) {
+      setListo(null);
+      avisos?.avisar(copiado);
+    } else setListo((previo) => ({ texto: conValores, vez: (previo?.vez ?? 0) + 1 }));
+  };
+  return { listo, setListo, areaLista, copiar };
+}
+
+function TextoListo({
+  listo,
+  areaLista,
+  textos,
+}: Pick<ReturnType<typeof useCopiar>, 'listo' | 'areaLista'> & { textos: TextosCopiar }) {
+  if (listo === null) return null;
+  return (
+    <div className="copia-manual">
+      <p className="xs muted" role="status">
+        {textos.noCopiado}
+      </p>
+      <textarea ref={areaLista} readOnly rows={6} aria-label={textos.textoListo} value={listo.texto} />
+    </div>
+  );
+}
+
+/** «Copiar» a secas (un comando sin huecos), con el mismo respaldo si el navegador no deja copiar. */
+export function CopiarTexto({ texto, textos }: { texto: string; textos: TextosCopiar }) {
+  const { listo, areaLista, copiar } = useCopiar(texto, textos.copiado);
+  return (
+    <>
+      <div className="row">
+        <Boton variante="primario" pequeno onClick={() => void copiar(texto)}>
+          {textos.copiar}
+        </Boton>
+      </div>
+      <TextoListo listo={listo} areaLista={areaLista} textos={textos} />
+    </>
+  );
+}
+
+export function CopiarConValores({ ambito, idElemento, texto, huecos, sustituir, textos, pie }: Props) {
+  const espacio = useEspacioOpcional();
+  const clave = claveValores(ambito, espacio?.manifest.espacio.id ?? 'local', idElemento);
+  const [valores, setValores] = useState<Record<string, string>>(() => leerValores(clave));
+  const { listo, setListo, areaLista, copiar: copiarTexto } = useCopiar(texto, textos.copiado);
+  const id = useId();
+
+  useEffect(() => setValores(leerValores(clave)), [clave]);
 
   function cambiar(hueco: string, valor: string) {
     const nuevos = { ...valores, [hueco]: valor };
@@ -96,12 +141,8 @@ export function CopiarConValores({ ambito, idElemento, texto, huecos, sustituir,
   }
 
   async function copiar() {
-    const conValores = sustituir(texto, valores);
     void espacio?.contadores.contar('copiasConValores').catch(() => undefined);
-    if (await copiarAlPortapapeles(conValores)) {
-      setListo(null);
-      avisos?.avisar(textos.copiado);
-    } else setListo((previo) => ({ texto: conValores, vez: (previo?.vez ?? 0) + 1 }));
+    await copiarTexto(sustituir(texto, valores));
   }
 
   return (
@@ -125,14 +166,7 @@ export function CopiarConValores({ ambito, idElemento, texto, huecos, sustituir,
         </Boton>
         {pie}
       </div>
-      {listo !== null && (
-        <div className="copia-manual">
-          <p className="xs muted" role="status">
-            {textos.noCopiado}
-          </p>
-          <textarea ref={areaLista} readOnly rows={6} aria-label={textos.textoListo} value={listo.texto} />
-        </div>
-      )}
+      <TextoListo listo={listo} areaLista={areaLista} textos={textos} />
     </Tarjeta>
   );
 }

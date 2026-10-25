@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ESCRITURA, montarApp, PRIMERA_CARGA } from '../../pruebas/app';
 import { elementoFalso } from '../pruebas/falsos';
 import { analizarComando } from './analisis';
+import TarjetaComando from './Tarjeta';
 import VistaComando from './Vista';
 
 const COMANDO = 'cargo bench --bench http -- --save-baseline {{baseline}}';
@@ -53,6 +54,30 @@ describe('vista de Comando', () => {
     expect(screen.queryByText('Copiar con valores')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Copiar' }));
     await waitFor(() => expect(escribir).toHaveBeenCalledWith('git log --oneline\ngit status'));
+  });
+});
+
+describe('tarjeta y respaldo de «Copiar»', () => {
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it('la tarjeta enseña los comandos del original, aunque el título se haya cambiado', () => {
+    const el = comando(12, `$ ${COMANDO}\n$ cargo test`);
+    el.frontmatter = { ...el.frontmatter, titulo: 'Benchmark del gateway' };
+    const { container } = render(<TarjetaComando el={el} />);
+    expect(container.textContent).toBe(`${COMANDO}\ncargo test\n`);
+    expect(container.querySelector('.var')?.textContent).toBe('{{baseline}}');
+  });
+
+  it('sin huecos, si el navegador no deja copiar, el texto queda listo para Ctrl+C', async () => {
+    vi.stubGlobal('navigator', { ...navigator, clipboard: undefined });
+    render(<VistaComando el={comando(13, 'git log --oneline')} datos={analizarComando('git log --oneline')} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Copiar' }));
+    expect(((await screen.findByLabelText('Comando con los valores')) as HTMLTextAreaElement).value).toBe(
+      'git log --oneline',
+    );
   });
 });
 

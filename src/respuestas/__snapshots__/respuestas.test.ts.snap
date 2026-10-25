@@ -57,7 +57,7 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
         },
         {
           "t": "texto",
-          "v": ".",
+          "v": ". You can copy it with the value filled in.",
         },
       ],
     },
@@ -79,7 +79,7 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
         },
         {
           "t": "texto",
-          "v": ".",
+          "v": ". Puedes copiarlo con el valor rellenado.",
         },
       ],
     },

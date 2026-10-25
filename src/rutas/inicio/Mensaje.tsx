@@ -103,7 +103,11 @@ function ConRespuesta({ el, p }: { el: Elemento; p: PropsMensaje }) {
   const lista: (AccionRespuesta | undefined)[] =
     respuesta && respuesta !== 'desactivada' ? [...(respuesta.acciones ?? [])] : [];
   const acciones =
-    p.sinAcciones || p.soloLectura ? [] : lista.filter((a): a is AccionRespuesta => !!a && accionSoportada(a.id));
+    // «Abrir» no cambia nada: también en la pestaña que solo lee y cuando las decisiones ya no se ofrecen.
+    lista.filter(
+      (a): a is AccionRespuesta =>
+        !!a && accionSoportada(a.id) && (a.id === 'abrir' || !(p.sinAcciones || p.soloLectura)),
+    );
   return (
     <>
       {respuesta !== 'desactivada' && <RespuestaRimor respuesta={respuesta} alAbrir={p.alAbrir} anunciar={p.fresco} />}

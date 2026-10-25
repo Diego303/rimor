@@ -77,3 +77,45 @@ Cubre las cinco tareas. Reutiliza «Copiar con valores» del Prompt (sacado a un
 - CSS: `.comando-texto`, `.prompt-comando` (el `$`, tenue y sin copiar) y `.comando-tarjeta`.
 - Corpus de detección: `fixtures/deteccion/comando/` (26 ejemplos; la matriz sigue al 100 %).
 - Pruebas: `comando/comando.test.ts` (detección, continuaciones, programa, huecos, lo que no es comando, título, respuesta y estilo) y `comando/Vista.test.tsx` (chuleta, copiar con valores y recordarlos, «Copiar» sin huecos, la acción en Inicio). Las del Prompt pasan sin tocarlas.
+
+### Decisiones tomadas al implementar y en la verificación
+
+| Decisión | Por qué |
+|---|---|
+| Marcas de prompt: `$ `, `% `, `❯ `, `usuario@máquina:~$ `, `PS C:\…> `, y `> ` solo si le sigue un programa conocido | Son las que se pegan de verdad; `> ` sola es una cita de Markdown. Con prompt, la primera palabra tiene que parecer un programa (no «20 al mes»). |
+| La prosa se reconoce por sus palabras («the», «to», «de», «la»…) sin nada con forma de argumento, no por el punto final | `git add .` y `cd ..` acaban en punto; «make sure to call mom» no. |
+| En una sesión pegada (la primera línea con prompt), las líneas sin prompt son la salida | Se guarda todo, pero la chuleta y los huecos son de los comandos. |
+| Los heredocs y las comillas abiertas siguen en la línea siguiente | Un `cat <<EOF` es un comando, no tres. |
+| En una plantilla de Go (`{{.Names}}`, `{{range}}`), `{{end}}` y `{{else}}` no son huecos | Son de `docker --format`, `gh --template` o `helm`. |
+| La respuesta lleva la segunda frase de la referencia («Puedes copiarlo con el valor rellenado.») | Como `CMD-0009`. |
+
+## Verificación
+
+**`pnpm verificar`**: en verde, 109 archivos y 1414 pruebas; carga inicial 255,2 KB de 300.
+
+**Criterios de aceptación:** un comando pegado se guarda con el lector `comando`, su respuesta y su chuleta (`comando.test.ts`, `Vista.test.tsx`; corpus de detección al 100 %).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| Detecta una línea con `$` o programa conocido | `comando.test.ts` (prompts, programas, prosa, sesiones, heredocs) y `fixtures/deteccion/comando/`, con negativos en `idea/` y `texto/` |
+| Huecos `{{x}}` | `comando.test.ts` (sin repetir, `${VAR}`, plantillas de Go) |
+| Tarjeta de chuleta | `Vista.test.tsx` (chuleta, tarjeta desde el original) |
+| Copiar con valores | `Vista.test.tsx` (copiar, recordar, «Copiar» con respaldo) y las del Prompt sin tocar |
+| Respuesta | `comando.test.ts` (uno, varios, más de tres, ninguno; estilo) y la instantánea |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | `>`, `%`, `❯` y `$ ` aceptaban citas, precios y porcentajes | `>` solo con un programa; con prompt, la primera palabra parece un programa. `comando.test.ts` |
+| 2 | `git add .`, `cd ..` se tomaban por prosa | La prosa se mira por sus palabras, no por el punto. `comando.test.ts` |
+| 3 | Un programa seguido de prosa («make sure…», `export const`) | Prosa sin argumentos descartada; `export` solo con `NOMBRE=`. `comando.test.ts` |
+| 4 | La tarjeta pintaba el título (recortado o cambiado) | Los comandos del original. `Vista.test.tsx` |
+| 5 | Faltaba la segunda frase de la referencia; «…» y punto | La frase, y «y N más». `comando.test.ts` |
+| 6 | «Copiar» sin huecos fallaba en silencio | El mismo respaldo que «Copiar con valores» (`CopiarTexto`). `Vista.test.tsx` |
+| 7 | `sudo -u x`, `time`, `env` y variables en minúscula | Se saltan. `comando.test.ts` |
+| 8 | `{{end}}` de las plantillas de Go como hueco | Ya no. `comando.test.ts` |
+| 9 | Heredocs, comillas en varias líneas, sesiones con salida y otros prompts | Se reconocen. `comando.test.ts` |
+| 10 | «Copiar con valores» se ocultaba en solo lectura (y en el hilo no hacía nada) | «Abrir» se ofrece siempre y lleva al elemento también desde el hilo |
