@@ -32,7 +32,7 @@ const masReciente = (a: FrontmatterComun, b: FrontmatterComun) => Date.parse(b.m
 export async function anteriorDe(
   texto: string,
   titulo: string,
-  { tipo, nombre }: { tipo: TipoElemento; nombre: string },
+  { tipo, mismoLector }: { tipo: TipoElemento; mismoLector: (fm: FrontmatterComun) => boolean },
   repositorio: Pick<Repositorio, 'elementos' | 'leerElemento'>,
   generico?: string,
 ): Promise<FrontmatterComun | null> {
@@ -40,7 +40,7 @@ export async function anteriorDe(
   // Los guardados como adjunto (más de 2 MB) no tienen versiones.
   const mismos = repositorio
     .elementos()
-    .filter((fm) => fm.tipo === tipo && fm.lector.nombre === nombre && !fm.adjunto)
+    .filter((fm) => fm.tipo === tipo && mismoLector(fm) && !fm.adjunto)
     .sort(masReciente);
   if (!mismos.length) return null;
   const nuevos = shingles(texto);

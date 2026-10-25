@@ -16,9 +16,13 @@ const t = textos.t as unknown as T;
 
 const LARGO_TITULO = 80;
 
-/** El asunto del parche; si no, «Cambios en src/x.ts» (un archivo) o «Parche de 4 archivos». */
-export function tituloDeDiff(d: Pick<DatosDiff, 'archivos' | 'asunto'>, idioma: Idioma = 'es'): string {
+/**
+ * «Serie de 3 parches» (varios `format-patch` juntos); el asunto del parche; o «Cambios en src/x.ts» (un archivo) o
+ * «Parche de 4 archivos».
+ */
+export function tituloDeDiff(d: Pick<DatosDiff, 'archivos' | 'asunto' | 'parches'>, idioma: Idioma = 'es'): string {
   const titulo =
+    (d.parches > 1 ? t(idioma, 'tituloSerie', { n: d.parches }) : undefined) ??
     d.asunto ??
     (d.archivos.length === 1 && d.archivos[0]?.ruta
       ? t(idioma, 'tituloUno', { ruta: d.archivos[0].ruta })
@@ -34,8 +38,15 @@ export const lectorDiff: Lector<DatosDiff> = {
   version: 1,
   textos,
   etiqueta: (idioma) => t(idioma, 'etiqueta'),
+  // Un parche nuevo es otro parche, no la versión de uno anterior (sus títulos se repiten: «Cambios en src/x.ts»).
+  sinVersiones: true,
 
-  detectar: (e: Entrada) => (e.texto !== undefined && !e.archivos?.length ? puntuarDiff(e.texto) : 0),
+  // Pegado o soltado como archivo de texto (`fix.patch`): con la extensión de parche, aún más seguro.
+  detectar: (e: Entrada) => {
+    if (e.texto === undefined) return 0;
+    const p = puntuarDiff(e.texto);
+    return p > 0 && /\.(?:diff|patch)$/i.test(e.nombre ?? '') ? 0.97 : p;
+  },
 
   async leer(e: Entrada): Promise<Borrador> {
     const texto = e.texto ?? '';

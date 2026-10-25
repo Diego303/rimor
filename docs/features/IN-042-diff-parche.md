@@ -37,7 +37,7 @@ Que un diff pegado (de `git diff`, `git format-patch` o un diff unificado) se en
 - **El lector de un tipo:** `Registro.deTipo(tipo)` da el lector cuyo nombre es el tipo (`codigo`) y, si no hay, el primero de ese tipo. Lo usan la captura (`/codigo`), el detector y el elemento cuyo lector ya no existe.
 - **Nombre del lector:** `Lector.etiqueta?(idioma)` («Diff o parche»); el diálogo «Cambiar tipo» y la vista previa del compositor lo usan cuando lo hay.
 - **La duda del detector** entre dos candidatos del mismo tipo no es duda: la alternativa es el primero de **otro** tipo.
-- **Versiones:** el anterior se busca entre los del mismo tipo **y** del mismo lector (un parche nuevo puede ser la versión de otro parche, nunca de un código).
+- **Versiones:** el anterior se busca entre los del mismo tipo **y** del mismo lector (el que lo leería hoy). Los parches no guardan versiones (`Lector.sinVersiones`): un parche nuevo es otro parche, y sus títulos se repiten. (Cambiado en la verificación.)
 
 ## Tareas
 
@@ -89,3 +89,35 @@ Cubre las cuatro tareas. Reutiliza el contrato de lectores, el estilo `.diff` de
 |---|---|
 | Los trozos se leen por sus cuentas (`@@ -a,b +c,d @@`) | Así la firma `-- ` de un `format-patch` o una línea de texto después del diff no se cuentan como quitadas. |
 | «Ver todo» cuenta líneas, no filas | Las cabeceras de los trozos son filas de la vista, no líneas del parche. |
+
+## Verificación
+
+**`pnpm verificar`**: en verde, 107 archivos y 1394 pruebas; carga inicial 252,6 KB de 300.
+
+**Criterios de aceptación:** un diff pegado (o soltado como `.patch`/`.diff`) se guarda con el lector `diff`, su respuesta y su vista lado a lado (`diff.test.ts`, `Vista.test.tsx`).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| Detecta `diff --git` y `@@` | `diff.test.ts` (git diff, format-patch, unificado, git show, `diff -ruN`, Mercurial, bloque ```` ```diff ````, binarios, modos; lo que no es diff) y el corpus de detección |
+| Archivos afectados y líneas por archivo | `diff.test.ts` (estados, cuentas, rutas entrecomilladas, sin prefijo, Subversion, series) |
+| Vista lado a lado con resaltado | `Vista.test.tsx` (filas con sus números, unificado en estrecho, plegados, lector de pantalla) |
+| Respuesta «Parche de 4 archivos: +120 −37.» | `diff.test.ts` (es, en, binario, reglas de estilo) y la instantánea de respuestas |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | Un `.patch` soltado como archivo no llegaba al lector | Se admite el texto de un archivo; con extensión de parche, 0,97. `diff.test.ts` |
+| 2 | En estrecho, la columna única ocupaba media tabla y no iba en el orden unificado | En estrecho se pinta el diff unificado (una lista en su orden). `Vista.test.tsx` |
+| 3 | Rutas entrecomilladas, sin prefijo o con « b/» mal leídas; nuevos de Subversion como modificados | Mandan las rutas de `---`/`+++`, desentrecomilladas en UTF-8; `(nonexistent)` y `(revision 0)` son `/dev/null`. `diff.test.ts` |
+| 4 | Asunto en RFC 2047 sin descodificar | Se descodifica. `diff.test.ts` |
+| 5 | Las versiones juntaban parches distintos | Los parches no guardan versiones. `diff.test.ts` |
+| 6 | Los archivos plegados se pintaban igual | Solo al abrir el plegado. `Vista.test.tsx` |
+| 7 | `git show`, `diff -ruN`, Mercurial, un bloque ```` ```diff ```` y los binarios de git no se detectaban | Se detectan. `diff.test.ts` |
+| 8 | Una serie de parches contaba de más y se titulaba por el primero | Archivos únicos y «Serie de N parches». `diff.test.ts` |
+| 9 | «Cambiar tipo» entre Código y Diff cambiaba la ref | La conserva si el tipo es el mismo. `reprocesar.test.ts` |
+| 10 | Añadido y quitado solo por color | «añadida:»/«quitada:» para el lector de pantalla. `Vista.test.tsx` |
+| 11 | Las versiones comparaban el nombre literal del lector | El lector que lo leería hoy (`paraElemento`) |
+| 12 | Cambios de modo y renombrados sin contenido | Se detectan; el modo se enseña («modo 100644 → 100755»). `diff.test.ts` |

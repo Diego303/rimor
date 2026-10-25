@@ -232,13 +232,11 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     utf8(textoVersion).length <= LIMITE_ORIGINAL_EN_MD
   ) {
     const generico = (lector.textos.t as (i: 'es', c: string) => string)('es', 'titulo');
-    const anterior = await anteriorDe(
-      textoVersion,
-      borrador.titulo,
-      { tipo, nombre: lector.nombre },
-      repositorio,
-      generico,
-    );
+    // Del mismo lector: el que lo leería hoy (un elemento cuyo lector ya no existe, el de su tipo).
+    const mismoLector = (fm: FrontmatterComun) => registro.paraElemento({ frontmatter: fm })?.nombre === lector.nombre;
+    const anterior = lector.sinVersiones
+      ? null
+      : await anteriorDe(textoVersion, borrador.titulo, { tipo, mismoLector }, repositorio, generico);
     if (anterior) {
       const hilo =
         entrada.hilo && analizarRef(entrada.hilo)?.prefijo === PREFIJOS.hilo

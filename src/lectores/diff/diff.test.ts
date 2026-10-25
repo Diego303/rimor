@@ -73,10 +73,13 @@ describe('análisis de un diff', () => {
 
   it('títulos: un archivo, varios o el genérico', () => {
     expect(
-      tituloDeDiff({ archivos: [{ ruta: 'a.ts', estado: 'modificado', anadidas: 1, quitadas: 0, trozos: [] }] }),
+      tituloDeDiff({
+        archivos: [{ ruta: 'a.ts', estado: 'modificado', anadidas: 1, quitadas: 0, trozos: [] }],
+        parches: 1,
+      }),
     ).toBe('Cambios en a.ts');
     expect(tituloDeDiff(analizarDiff(fixture('git-varios.diff')))).toBe('Parche de 5 archivos');
-    expect(tituloDeDiff({ archivos: [] })).toBe('Parche');
+    expect(tituloDeDiff({ archivos: [], parches: 1 })).toBe('Parche');
   });
 });
 
@@ -167,7 +170,106 @@ describe('versiones', () => {
         titulo: 'leer',
       },
     });
-    expect(await anteriorDe(texto, 'leer', { tipo: 'codigo', nombre: 'diff' }, repositorio)).toBeNull();
-    expect((await anteriorDe(texto, 'leer', { tipo: 'codigo', nombre: 'codigo' }, repositorio))?.ref).toBe('COD-0009');
+    expect(
+      await anteriorDe(
+        texto,
+        'leer',
+        { tipo: 'codigo', mismoLector: (fm) => fm.lector.nombre === 'diff' },
+        repositorio,
+      ),
+    ).toBeNull();
+    expect(
+      (
+        await anteriorDe(
+          texto,
+          'leer',
+          { tipo: 'codigo', mismoLector: (fm) => fm.lector.nombre === 'codigo' },
+          repositorio,
+        )
+      )?.ref,
+    ).toBe('COD-0009');
+  });
+});
+
+describe('correcciones de la revisión', () => {
+  it('un .patch soltado como archivo va al lector Diff', async () => {
+    const texto = fixture('format-patch.patch');
+    expect(lectorDiff.detectar({ texto, nombre: 'fix.patch', archivos: [new File([texto], 'fix.patch')] })).toBe(0.97);
+    const repositorio = new Repositorio(new AlmacenMemoria());
+    await repositorio.cargar();
+    const r = await capturar(
+      { archivo: new File([texto], 'fix.patch', { type: 'text/x-patch' }), origen: 'soltado' },
+      { repositorio, registro: REGISTRO },
+    );
+    expect(r.ok && r.valor.tipo === 'creado' ? r.valor.capturado.elemento.frontmatter.lector.nombre : r).toBe('diff');
+  });
+
+  it('rutas de git entrecomilladas (no ASCII), sin prefijo y archivos nuevos de Subversion', () => {
+    const comillas = analizarDiff(
+      'diff --git "a/docs/a\\303\\261o.md" "b/docs/a\\303\\261o.md"\nindex 1..2 100644\n--- "a/docs/a\\303\\261o.md"\n+++ "b/docs/a\\303\\261o.md"\n@@ -1 +1 @@\n-a\n+b\n',
+    );
+    expect(comillas.archivos.map((a) => a.ruta)).toEqual(['docs/año.md']);
+    const sinPrefijo = analizarDiff(
+      'diff --git x.txt x.txt\nindex 1..2 100644\n--- x.txt\n+++ x.txt\n@@ -1 +1 @@\n-a\n+b\n',
+    );
+    expect(sinPrefijo.archivos.map((a) => a.ruta)).toEqual(['x.txt']);
+    const svn = analizarDiff(
+      'Index: nuevo.txt\n===================================================================\n--- nuevo.txt\t(nonexistent)\n+++ nuevo.txt\t(working copy)\n@@ -0,0 +1 @@\n+hola\n',
+    );
+    expect(svn.archivos.map((a) => [a.ruta, a.estado])).toEqual([['nuevo.txt', 'nuevo']]);
+  });
+
+  it('el asunto codificado (RFC 2047) se lee con sus acentos', () => {
+    const d = analizarDiff(
+      'From 2f6f3c1a9b8e7d6c5b4a39281706f5e4d3c2b1a0 Mon Sep 17 00:00:00 2001\nSubject: [PATCH] =?UTF-8?q?A=C3=B1ade=20reintentos?=\n =?UTF-8?q?_al_cliente?=\n---\ndiff --git a/a b/a\n--- a/a\n+++ b/a\n@@ -1 +1 @@\n-x\n+y\n',
+    );
+    expect(d.asunto).toBe('Añade reintentos al cliente');
+  });
+
+  it('una serie de parches cuenta los archivos una vez y se titula como serie', () => {
+    const parche = (n: number) =>
+      `From ${String(n).repeat(40)} Mon Sep 17 00:00:00 2001\nSubject: [PATCH ${n}/3] Cambio ${n}\n---\ndiff --git a/src/a.rs b/src/a.rs\n--- a/src/a.rs\n+++ b/src/a.rs\n@@ -${n} +${n} @@\n-x\n+y\n-- \n2.39.0\n`;
+    const d = analizarDiff([1, 2, 3].map(parche).join('\n'));
+    expect([d.parches, d.archivos.length, d.anadidas, d.quitadas]).toEqual([3, 1, 3, 3]);
+    expect(d.archivos[0]?.trozos).toHaveLength(3);
+    expect(tituloDeDiff(d)).toBe('Serie de 3 parches');
+  });
+
+  it('detecta git show, diff -ruN, Mercurial, un bloque ```diff y un parche binario de git', () => {
+    const git = 'diff --git a/a b/a\n--- a/a\n+++ b/a\n@@ -1 +1 @@\n-x\n+y\n';
+    expect(
+      puntuarDiff(`commit ${'a'.repeat(40)}\nAuthor: Ana <a@b.c>\nDate:   Fri Oct 17 2026\n\n    Cambia x\n\n${git}`),
+    ).toBe(0.95);
+    expect(
+      puntuarDiff('diff -ruN a/x.txt b/x.txt\n--- a/x.txt\t2026-10-17\n+++ b/x.txt\t2026-10-17\n@@ -1 +1 @@\n-x\n+y\n'),
+    ).toBe(0.95);
+    expect(puntuarDiff(`# HG changeset patch\n# User Ana\n# Node ID ${'b'.repeat(40)}\nCambia x\n\n${git}`)).toBe(0.95);
+    expect(puntuarDiff(`\`\`\`diff\n${git}\`\`\`\n`)).toBe(0.95);
+    expect(analizarDiff(`\`\`\`diff\n${git}\`\`\`\n`).archivos).toHaveLength(1);
+    const base85 = Array.from({ length: 30 }, () => 'zcmV-OEz$#5Jcf8%4qO}Pt2)V@Q1kAMy0').join('\n');
+    expect(
+      puntuarDiff(`diff --git a/x.png b/x.png\nindex 1..2 100644\nGIT binary patch\nliteral 1234\n${base85}\n\n`),
+    ).toBe(0.95);
+  });
+
+  it('cambios solo de modo y renombrados sin contenido: se detectan y se dicen', () => {
+    const modo = 'diff --git a/run.sh b/run.sh\nold mode 100644\nnew mode 100755\n';
+    expect(puntuarDiff(modo)).toBe(0.95);
+    expect(analizarDiff(modo).archivos[0]?.modo).toEqual({ antes: '100644', despues: '100755' });
+    const renombrado = 'diff --git a/x.md b/y.md\nsimilarity index 100%\nrename from x.md\nrename to y.md\n';
+    expect(puntuarDiff(renombrado)).toBe(0.95);
+    expect(analizarDiff(renombrado).archivos.map((a) => [a.ruta, a.antes, a.estado])).toEqual([
+      ['y.md', 'x.md', 'renombrado'],
+    ]);
+  });
+
+  it('un parche nunca se guarda como versión de otro (sus títulos se repiten)', async () => {
+    const repositorio = new Repositorio(new AlmacenMemoria());
+    await repositorio.cargar();
+    const base = fixture('git-varios.diff');
+    const otro = base.replace('reintentos: 3', 'reintentos: 5');
+    const r1 = await capturar({ texto: base, origen: 'pegado' }, { repositorio, registro: REGISTRO });
+    const r2 = await capturar({ texto: otro, origen: 'pegado' }, { repositorio, registro: REGISTRO });
+    expect([r1, r2].map((r) => (r.ok ? r.valor.tipo : r))).toEqual(['creado', 'creado']);
   });
 });

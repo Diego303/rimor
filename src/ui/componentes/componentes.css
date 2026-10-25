@@ -782,14 +782,19 @@ table.diff-lado {
 .diff-menos {
   color: var(--bad);
 }
+/* Una celda sin línea en su lado: el fondo de la tarjeta, para que se vea que ahí no hay nada. */
+.diff-celda.vacia {
+  background: var(--panel);
+}
+.diff-unificado {
+  display: none;
+}
 @container app (max-width: 720px) {
-  .diff-fila .diff-celda {
-    display: block;
-  }
-  .diff-lado .diff-titulos,
-  .diff-lado .diff-fila .vacia,
-  .diff-lado .diff-fila .s + .s {
+  .diff-lado {
     display: none;
+  }
+  .diff-unificado {
+    display: block;
   }
 }
 .tree {

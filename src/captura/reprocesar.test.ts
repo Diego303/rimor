@@ -2,7 +2,9 @@ import { type Elemento, hashOriginal } from '@rimor/formato';
 import { describe, expect, it } from 'vitest';
 import { AlmacenMemoria } from '../almacen/memoria';
 import { Repositorio } from '../almacen/repositorio';
+import { lectorCodigo } from '../lectores/codigo/lector';
 import type { Lector } from '../lectores/contrato';
+import { lectorDiff } from '../lectores/diff/lector';
 import { lectorEnlace } from '../lectores/enlace/lector';
 import { lectorIdea } from '../lectores/idea/lector';
 import { elementoFalso } from '../lectores/pruebas/falsos';
@@ -15,6 +17,24 @@ function texto(i: number, original: string): Elemento {
 }
 
 describe('cambiarTipo', () => {
+  it('entre lectores del mismo tipo (Código y Diff) la ref no cambia', async () => {
+    const repo = new Repositorio(new AlmacenMemoria());
+    const parche = 'diff --git a/a b/a\n--- a/a\n+++ b/a\n@@ -1 +1 @@\n-x\n+y\n';
+    const base = elementoFalso(3, parche, 'codigo');
+    await repo.guardarElemento({
+      ...base,
+      frontmatter: {
+        ...base.frontmatter,
+        tipo: 'codigo',
+        ref: 'COD-0003' as Elemento['frontmatter']['ref'],
+        hash: hashOriginal(parche),
+      },
+    });
+    expect(await cambiarTipo('COD-0003', lectorDiff, repo, { anterior: lectorCodigo })).toBe('COD-0003');
+    const fm = repo.frontmatter('COD-0003');
+    expect([fm?.lector.nombre, fm?.alias ?? []]).toEqual(['diff', []]);
+  });
+
   it('ref nueva, la vieja en alias: sigue llevando al elemento y no se vuelve a asignar', async () => {
     const repo = new Repositorio(new AlmacenMemoria());
     await repo.guardarElemento(texto(2, 'Exportar minipapers con Typst'));

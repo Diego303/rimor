@@ -94,7 +94,9 @@ export async function cambiarTipo(
   const r = await repositorio.actualizarElemento(el.frontmatter.id, (actual) => {
     // En turno: si el elemento cambió mientras se leía (otra edición), no se pisa.
     if (actual.frontmatter.hash !== el.frontmatter.hash || actual.frontmatter.ref !== el.frontmatter.ref) return null;
-    nueva = asignarRef(lector.tipo, repositorio.refs());
+    // Entre lectores del mismo tipo (Código y Diff) la ref no cambia: el prefijo es el mismo.
+    nueva =
+      actual.frontmatter.tipo === lector.tipo ? actual.frontmatter.ref : asignarRef(lector.tipo, repositorio.refs());
     return {
       ...actual,
       frontmatter: frontmatterConTipo(

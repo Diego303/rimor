@@ -8,6 +8,9 @@ export const textos = definirTextos(
     etiqueta: 'Diff o parche',
     tituloUno: 'Cambios en {ruta}',
     tituloVarios: 'Parche de {n} archivos',
+    tituloSerie: 'Serie de {n} parches',
+    linea: { anadida: 'añadida: ', quitada: 'quitada: ' },
+    modo: 'modo {antes} → {despues}',
     archivos: { one: '{n} archivo', other: '{n} archivos' },
     respuesta: {
       cambios: 'Parche de {archivos}: +{anadidas} −{quitadas}.',
@@ -35,6 +38,9 @@ export const textos = definirTextos(
     etiqueta: 'Diff or patch',
     tituloUno: 'Changes in {ruta}',
     tituloVarios: 'Patch of {n} files',
+    tituloSerie: 'Series of {n} patches',
+    linea: { anadida: 'added: ', quitada: 'removed: ' },
+    modo: 'mode {antes} → {despues}',
     archivos: { one: '{n} file', other: '{n} files' },
     respuesta: {
       cambios: 'Patch of {archivos}: +{anadidas} −{quitadas}.',
