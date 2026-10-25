@@ -13,8 +13,9 @@ import { useT } from '../../i18n/useT';
 import { Boton, Detalles, Tarjeta } from '../../ui/componentes';
 import { Senal } from '../../ui/marca/Senal';
 import { useEsperaVisible } from '../../ui/marca/useEsperaVisible';
-import { activarDominios, enriquecerElemento } from './enriquecer/aplicar';
+import { activarDominios, enriquecerElemento, falloAnterior } from './enriquecer/aplicar';
 import type { CamposFicha, CodigoFallo } from './enriquecer/contrato';
+import { leerTokenGithub } from './enriquecer/dominios';
 import { cambiosDeFicha, dominiosDe, sePuedeConsultar } from './enriquecer/enriquecer';
 import { fichaAnteriorDe, fichaDe } from './enriquecer/ficha';
 import type { DatosEnlace } from './lector';
@@ -47,7 +48,13 @@ export function FichaEnlace({ el, datos, editable }: { el: Elemento; datos: Dato
   // Los ajustes de red, al día (Ajustes, la otra pestaña).
   const [red, setRed] = useState(() => espacio?.ajustes().red);
   useEffect(() => (espacio ? espacio.alCambiar(() => setRed(espacio.ajustes().red)) : undefined), [espacio]);
-  const [estado, setEstado] = useState<Estado>({ fase: 'quieta' });
+  // Si ya falló en esta pestaña (también la consulta al capturar), se dice desde el principio.
+  const [estado, setEstado] = useState<Estado>(() => {
+    const previo = falloAnterior(el.frontmatter.id);
+    return previo
+      ? { fase: 'fallo', codigo: previo.codigo, ...(previo.hasta ? { hasta: previo.hasta } : {}) }
+      : { fase: 'quieta' };
+  });
   const consultando = useEsperaVisible(estado.fase === 'consultando');
   const dominios = dominiosDe(datos);
   if (!espacio || !red || !dominios.length) return null;
@@ -55,14 +62,17 @@ export function FichaEnlace({ el, datos, editable }: { el: Elemento; datos: Dato
   const ficha = fichaDe(el.frontmatter);
   const anterior = fichaAnteriorDe(el.frontmatter);
   const activos = dominiosActivos(espacio.ajustes());
-  const puede = editable && !soloLectura && estado.fase !== 'consultando' && !red.sinRed;
-  const lista = dominios.join(' · ');
+  const activado = sePuedeConsultar(datos, activos);
+  const activable = editable && !soloLectura && !red.sinRed;
+  // Los que se consultarán de verdad: los activados o, si hay que activar, todos los suyos.
+  const lista = (activado ? dominios.filter((d) => activos.has(d)) : dominios).join(' · ');
 
-  async function consultar(activar: boolean) {
+  /** Consulta; solo activa dominios si se pulsa «Activar y consultar» (nunca al volver a consultar). */
+  async function consultar() {
     if (!espacio) return;
     setEstado({ fase: 'consultando' });
     try {
-      if (activar) await activarDominios(espacio, dominios);
+      if (!activado) await activarDominios(espacio, dominios);
       const r = await enriquecerElemento(espacio, el.frontmatter.id);
       setEstado(
         r.estado === 'fallo'
@@ -74,45 +84,64 @@ export function FichaEnlace({ el, datos, editable }: { el: Elemento; datos: Dato
     }
   }
 
-  const reintentar = puede && (
-    <Boton pequeno onClick={() => void consultar(false)}>
-      {t('ficha.reintentar')}
-    </Boton>
-  );
+  const conToken = Boolean(leerTokenGithub());
+  const hora = estado.fase === 'fallo' && estado.hasta ? fmtHora(new Date(estado.hasta)) : undefined;
+  const textoFallo = (codigo: CodigoFallo): string => {
+    if (codigo === 'limite') {
+      if (conToken) return hora ? t('ficha.limiteToken', { hora }) : t('ficha.limiteTokenSinHora');
+      return hora ? t('ficha.limite', { hora }) : t('ficha.limiteSinHora');
+    }
+    if (codigo === 'token') return t('ficha.token');
+    return t(codigo === 'no-encontrado' ? 'ficha.noEncontrado' : 'ficha.fallo', { dominio: dominios[0] ?? '' });
+  };
+  // Lo que se anuncia, en una región viva que está siempre (una que aparece ya con su texto no siempre se anuncia).
   const aviso = red.sinRed ? (
-    <Senal estado="sin-conexion" etiqueta={t('ficha.modoSinRed')} />
+    <>
+      <Senal estado="sin-conexion" decorativa etiqueta="" />
+      {t('ficha.modoSinRed')}
+    </>
   ) : estado.fase === 'fallo' && estado.codigo === 'sin-red' ? (
-    <div className="row">
-      <Senal estado="sin-conexion" etiqueta={t('ficha.sinRed')} />
-      {reintentar}
-    </div>
+    <>
+      <Senal estado="sin-conexion" decorativa etiqueta="" />
+      {t('ficha.sinRed')}
+    </>
   ) : estado.fase === 'fallo' ? (
-    <div className="row">
-      <p className="sm" role="status">
-        {estado.codigo === 'limite'
-          ? estado.hasta
-            ? t('ficha.limite', { hora: fmtHora(new Date(estado.hasta)) })
-            : t('ficha.limiteSinHora')
-          : t(estado.codigo === 'no-encontrado' ? 'ficha.noEncontrado' : 'ficha.fallo', { dominio: dominios[0] ?? '' })}
-      </p>
-      {reintentar}
-    </div>
+    textoFallo(estado.codigo)
   ) : consultando ? (
-    <Senal estado="cargando" etiqueta={t('ficha.consultando', { dominios: lista })} />
+    <>
+      <Senal estado="cargando" decorativa etiqueta="" />
+      {t('ficha.consultando', { dominios: lista })}
+    </>
   ) : null;
+
+  // Un solo botón, que se queda (deshabilitado) mientras consulta: el foco no se pierde.
+  const etiqueta = !activado
+    ? t('ficha.activarYConsultar')
+    : estado.fase === 'fallo'
+      ? t('ficha.reintentar')
+      : ficha
+        ? t('ficha.volverAConsultar')
+        : t('ficha.consultar');
+  const acciones = (activable || red.sinRed || estado.fase !== 'quieta') && (
+    <div className="row">
+      {activable && (
+        <Boton pequeno disabled={estado.fase === 'consultando'} onClick={() => void consultar()}>
+          {etiqueta}
+        </Boton>
+      )}
+      <span className="sm row inline ficha-estado" role="status">
+        {aviso}
+      </span>
+    </div>
+  );
+  // Sin ficha, o con sus dominios apagados: qué se consultaría.
+  const sePuede = (!ficha || !activado) && <p className="sm">{t('ficha.sePuede', { dominios: lista })}</p>;
 
   if (!ficha)
     return (
       <Tarjeta titulo={t('ficha.titulo')} className="ficha-enlace">
-        <p className="sm">{t('ficha.sePuede', { dominios: lista })}</p>
-        {aviso}
-        {puede && estado.fase !== 'fallo' && (
-          <div className="row">
-            <Boton pequeno onClick={() => void consultar(!sePuedeConsultar(datos, activos))}>
-              {sePuedeConsultar(datos, activos) ? t('ficha.consultar') : t('ficha.activarYConsultar')}
-            </Boton>
-          </div>
-        )}
+        {sePuede}
+        {acciones}
       </Tarjeta>
     );
 
@@ -133,14 +162,8 @@ export function FichaEnlace({ el, datos, editable }: { el: Elemento; datos: Dato
           dominio: dominios[0] ?? '',
         })}
       </p>
-      {aviso}
-      {puede && estado.fase !== 'fallo' && (
-        <div className="row">
-          <Boton pequeno onClick={() => void consultar(!sePuedeConsultar(datos, activos))}>
-            {t('ficha.volverAConsultar')}
-          </Boton>
-        </div>
-      )}
+      {sePuede}
+      {acciones}
       {anterior && (
         <Detalles resumen={t('ficha.cambios', { fecha: fmtDia(new Date(anterior.consultada), new Date(), idioma) })}>
           {cambios.length ? (

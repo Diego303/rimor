@@ -43,6 +43,7 @@ export function Ajustes() {
   useEffect(() => (espacio ? espacio.alCambiar(() => setAjustes(espacio.ajustes())) : undefined), [espacio]);
   // El token de GitHub es de este navegador (no del espacio): se guarda al salir del campo.
   const [token, setToken] = useState(() => leerTokenGithub() ?? '');
+  const [tokenNoVale, setTokenNoVale] = useState(false);
   const [secretosAbiertos] = useState(() => ajustes.secretos.desactivadas.length > 0);
   const [duda, setDuda] = useState(Math.round(ajustes.deteccion.duda * 100));
   useEffect(() => setDuda(Math.round(ajustes.deteccion.duda * 100)), [ajustes.deteccion.duda]);
@@ -204,9 +205,13 @@ export function Ajustes() {
             spellCheck={false}
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            onBlur={() => guardarTokenGithub(token)}
+            aria-invalid={tokenNoVale || undefined}
+            onBlur={() => setTokenNoVale(!guardarTokenGithub(token))}
           />
           <span className="xs muted">{t('ajustes.tokenTexto')}</span>
+          <span className="xs warn-texto" role="status">
+            {tokenNoVale ? t('ajustes.tokenNoVale') : ''}
+          </span>
         </label>
       </Detalles>
     </Pantalla>

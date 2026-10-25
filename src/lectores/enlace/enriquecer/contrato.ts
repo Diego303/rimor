@@ -35,7 +35,8 @@ export interface Enriquecedor {
   consultar(d: DatosEnlace, c: Consulta): Promise<CamposFicha>;
 }
 
-export type CodigoFallo = 'sin-red' | 'limite' | 'no-encontrado' | 'fallo';
+/** `token`: GitHub no acepta el token de este navegador (caducado o revocado). */
+export type CodigoFallo = 'sin-red' | 'limite' | 'no-encontrado' | 'token' | 'fallo';
 
 /** Un fallo con nombre: la vista dice qué pasó y si se puede reintentar. */
 export class FalloConsulta extends Error {
@@ -52,8 +53,9 @@ export class FalloConsulta extends Error {
 const dominioDe = (url: string) => new URL(url).hostname;
 
 /**
- * Pide JSON a un dominio activado. Sin conexión o bloqueada (el navegador no distingue), `sin-red`; 404,
- * `no-encontrado`; el límite de GitHub, `limite`; cualquier otra respuesta mala, `fallo`.
+ * Pide JSON a un dominio activado. Sin conexión, bloqueada o sin respuesta en el plazo (el navegador no distingue),
+ * `sin-red`; 404, `no-encontrado`; 401, `token`; el límite de GitHub, `limite`; cualquier otra respuesta mala o una
+ * redirección a un dominio no activado, `fallo`.
  */
 export async function pedirJson(url: string, c: Consulta, init: RequestInit = {}): Promise<unknown> {
   if (!c.activos.has(dominioDe(url))) throw new FalloConsulta('fallo');
@@ -64,7 +66,10 @@ export async function pedirJson(url: string, c: Consulta, init: RequestInit = {}
     if (e instanceof DOMException && e.name === 'AbortError') throw e;
     throw new FalloConsulta('sin-red');
   }
+  // Una redirección acaba donde diga el servidor: lo que llegue de un dominio no activado no se lee.
+  if (r.url && !c.activos.has(dominioDe(r.url))) throw new FalloConsulta('fallo');
   if (r.status === 404) throw new FalloConsulta('no-encontrado');
+  if (r.status === 401) throw new FalloConsulta('token');
   if ((r.status === 403 || r.status === 429) && r.headers.get('x-ratelimit-remaining') === '0') {
     const reinicio = Number(r.headers.get('x-ratelimit-reset'));
     throw new FalloConsulta(

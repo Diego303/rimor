@@ -53,7 +53,26 @@ const SISTEMAS: Record<string, Sistema> = {
   'Maven Central': { depsDev: 'maven', osv: 'Maven' },
 };
 
-const sistemaDe = (d: DatosEnlace) => (d.clase === 'paquete' && d.nombre ? SISTEMAS[d.sitio] : undefined);
+/** La biblioteca estándar de Go (`pkg.go.dev/std`) no está en deps.dev. */
+const sistemaDe = (d: DatosEnlace) =>
+  d.clase === 'paquete' && d.nombre && !(d.sitio === 'pkg.go.dev' && d.nombre === 'std')
+    ? SISTEMAS[d.sitio]
+    : undefined;
+
+/**
+ * Los nombres que se prueban en deps.dev: tal cual o, en Go, sin la versión (`…/gin@v1.9.1`) y, si es un paquete de
+ * un módulo (`golang.org/x/net/http2`), recortando la ruta hasta el módulo (como mucho hasta `dominio/dueño/repo`).
+ */
+export function nombresParaDepsDev(sistema: string, nombre: string): string[] {
+  if (sistema !== 'go') return [nombre];
+  const partes = nombre
+    .replace(/@[^/]*/g, '')
+    .split('/')
+    .filter(Boolean);
+  const nombres: string[] = [];
+  for (let n = partes.length; n >= Math.min(3, partes.length); n--) nombres.push(partes.slice(0, n).join('/'));
+  return nombres;
+}
 
 export const paquete: Enriquecedor = {
   id: 'paquete',
@@ -64,10 +83,8 @@ export const paquete: Enriquecedor = {
   },
   async consultar(d, c) {
     const s = sistemaDe(d);
-    const nombre = d.nombre ?? '';
     if (!s) throw new FalloConsulta('fallo');
-    const base = `https://${DEPS_DEV}/v3/systems/${s.depsDev}/packages/${encodeURIComponent(nombre)}`;
-    const versiones = objeto(await pedirJson(base, c))?.versions;
+    const { nombre, base, versiones } = await paqueteEnDepsDev(s, d.nombre ?? '', c);
     const porDefecto = Array.isArray(versiones)
       ? (versiones.map(objeto).find((v) => v?.isDefault === true) ?? objeto(versiones.at(-1)))
       : undefined;
@@ -88,7 +105,24 @@ export const paquete: Enriquecedor = {
   },
 };
 
-/** Las vulnerabilidades conocidas de esa versión según OSV; sin OSV activado (o si falla), `undefined`. */
+/** El primero de sus nombres posibles que deps.dev conoce (o `no-encontrado`, si ninguno). */
+async function paqueteEnDepsDev(s: Sistema, nombreEnlace: string, c: Consulta) {
+  const nombres = nombresParaDepsDev(s.depsDev, nombreEnlace);
+  for (const [i, nombre] of nombres.entries()) {
+    const base = `https://${DEPS_DEV}/v3/systems/${s.depsDev}/packages/${encodeURIComponent(nombre)}`;
+    try {
+      return { nombre, base, versiones: objeto(await pedirJson(base, c))?.versions };
+    } catch (e) {
+      if (!(e instanceof FalloConsulta && e.codigo === 'no-encontrado') || i === nombres.length - 1) throw e;
+    }
+  }
+  throw new FalloConsulta('no-encontrado');
+}
+
+/**
+ * Las vulnerabilidades conocidas de esa versión según OSV; sin OSV activado, si falla, si responde algo que no se
+ * entiende o si hay más páginas (el recuento no sería exacto), `undefined` (y cuentan los avisos de deps.dev).
+ */
 async function vulnerabilidades(ecosistema: string, nombre: string, version: string, c: Consulta) {
   if (!c.activos.has(OSV)) return undefined;
   try {
@@ -99,7 +133,9 @@ async function vulnerabilidades(ecosistema: string, nombre: string, version: str
         body: JSON.stringify({ version, package: { name: nombre, ecosystem: ecosistema } }),
       }),
     );
-    return Array.isArray(r?.vulns) ? r.vulns.length : 0;
+    if (!r || r.next_page_token) return undefined;
+    if (r.vulns === undefined) return 0;
+    return Array.isArray(r.vulns) ? r.vulns.length : undefined;
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') throw e;
     return undefined;

@@ -118,8 +118,43 @@ describe('ficha de un enlace', () => {
     ) as HTMLElement;
     fireEvent.click(within(tarjeta).getByRole('button', { name: 'Consultar' }));
     const aviso = await within(tarjeta).findByText('Sin red: guardado sin enriquecer.', {}, ESCRITURA);
-    expect(aviso.closest('.senal')?.className).toContain('senal-sin-conexion');
+    expect(aviso.querySelector('.senal-sin-conexion')).toBeTruthy();
+    // En una región viva que ya estaba, junto al botón (que no se ha ido: el foco sigue en él).
+    expect(aviso.getAttribute('role')).toBe('status');
     expect(within(tarjeta).getByRole('button', { name: 'Reintentar' })).toBeTruthy();
+  }, 30_000);
+
+  it('con ficha pero su dominio apagado en Ajustes, no se vuelve a activar solo: lo dice y pide «Activar y consultar»', async () => {
+    const red = github({ estrellas: 5 });
+    vi.stubGlobal('fetch', red.pedir);
+    const conFicha = enlace(1, URL_REPO);
+    conFicha.frontmatter = {
+      ...conFicha.frontmatter,
+      ficha: { fuente: 'github', consultada: '2026-10-20T10:00:00+02:00', campos: { estrellas: 3 } },
+    } as Elemento['frontmatter'];
+    await montarApp('/e/URL-0001', [conFicha]);
+    const tarjeta = (await screen.findByRole('heading', { name: 'Ficha' }, PRIMERA_CARGA)).closest(
+      'section',
+    ) as HTMLElement;
+    expect(within(tarjeta).getByText('Se puede completar consultando api.github.com.')).toBeTruthy();
+    expect(within(tarjeta).queryByRole('button', { name: 'Volver a consultar' })).toBeNull();
+    expect(within(tarjeta).getByRole('button', { name: 'Activar y consultar' })).toBeTruthy();
+    expect(red.pedidas).toEqual([]);
+  }, 30_000);
+
+  it('un fallo de la consulta al capturar se ve al abrir el enlace', async () => {
+    vi.stubGlobal('fetch', github({ estrellas: 1, sinRed: true }).pedir);
+    const { espacio } = await montarApp('/e/URL-0003', [enlace(3, URL_REPO)], async (almacen) => {
+      await almacen.escribir(
+        RUTA_AJUSTES,
+        new TextEncoder().encode(JSON.stringify({ esquema: 1, red: { dominios: ['api.github.com'] } })),
+      );
+    });
+    const { enriquecerElemento } = await import('./enriquecer/aplicar');
+    await act(async () => void (await enriquecerElemento(espacio, 'URL-0003')));
+    cleanup();
+    await montarApp('/e/URL-0003', [enlace(3, URL_REPO)]);
+    expect(await screen.findByText('Sin red: guardado sin enriquecer.', {}, PRIMERA_CARGA)).toBeTruthy();
   }, 30_000);
 
   it('un enlace sin proveedor (una web cualquiera) no tiene ficha', async () => {
@@ -153,6 +188,11 @@ describe('ajustes de red', () => {
     fireEvent.blur(token);
     expect(localStorage.getItem('rimor:token-github')).toBe('ghp_secreto');
     expect(JSON.stringify(await ajustesDe(almacen))).not.toContain('ghp_secreto');
+    // Uno con un carácter invisible pegado no se guarda, y se dice.
+    fireEvent.change(token, { target: { value: 'ghp_\u200bmalo' } });
+    fireEvent.blur(token);
+    expect(localStorage.getItem('rimor:token-github')).toBe('ghp_secreto');
+    expect(screen.getByText(/^Ese token tiene caracteres que no valen/)).toBeTruthy();
   }, 30_000);
 });
 

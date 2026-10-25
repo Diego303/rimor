@@ -5,7 +5,7 @@ import { escribirTexto, leerTexto, listarTodo } from '../../almacen/contrato';
 import { AlmacenMemoria } from '../../almacen/memoria';
 import { elementoFalso } from '../../lectores/pruebas/falsos';
 import { exportarJson, exportarZip, MAX_ADJUNTO_JSON, sha256 } from '../exportar';
-import { enEspacioNuevo, fusionar, manifestNuevo, reemplazar } from './aplicar';
+import { enEspacioNuevo, fusionar, manifestNuevo, reemplazar, sinDominiosActivados } from './aplicar';
 import { importar } from './importacion';
 import { ErrorImportar, leerPaquete } from './paquete';
 import { type EspacioLocal, planear, reescribirRefs } from './plan';
@@ -458,5 +458,40 @@ describe('casos de la revisión', () => {
       'disco lleno',
     );
     expect(recargar).toHaveBeenCalledOnce();
+  });
+});
+
+describe('importar en un espacio nuevo: la red (IN-041)', () => {
+  it('trae los ajustes del otro sin sus dominios activados (lo demás se queda)', async () => {
+    const texto = (o: unknown) => new TextEncoder().encode(JSON.stringify(o));
+    expect(
+      JSON.parse(
+        new TextDecoder().decode(
+          sinDominiosActivados(
+            texto({ esquema: 1, tema: 'oscuro', red: { sinRed: true, dominios: ['api.github.com'] } }),
+          ),
+        ),
+      ),
+    ).toEqual({ esquema: 1, tema: 'oscuro', red: { sinRed: true, dominios: [] } });
+    // Sin `red`, o roto, tal cual.
+    const sinRed = texto({ esquema: 1 });
+    expect(sinDominiosActivados(sinRed)).toBe(sinRed);
+    const roto = new TextEncoder().encode('{ roto');
+    expect(sinDominiosActivados(roto)).toBe(roto);
+  });
+
+  it('enEspacioNuevo escribe los ajustes del paquete ya sin dominios', async () => {
+    const almacen = new AlmacenMemoria();
+    const ajustes = new TextEncoder().encode(JSON.stringify({ esquema: 1, red: { dominios: ['api.github.com'] } }));
+    const paquete = { archivos: new Map([['.rimor/ajustes.json', ajustes]]) } as unknown as Parameters<
+      typeof enEspacioNuevo
+    >[1];
+    await enEspacioNuevo(almacen, paquete, {
+      formato: 'rimor',
+      esquema: 1,
+      espacio: { id: '01JAB3K9Q2X8M5N7P0R4S6T8V0', nombre: 'Otro' },
+      app: { version: '0.1.0' },
+    } as Parameters<typeof enEspacioNuevo>[2]);
+    expect(JSON.parse((await leerTexto(almacen, '.rimor/ajustes.json')) ?? '{}').red.dominios).toEqual([]);
   });
 });

@@ -58,14 +58,17 @@ export const github: Enriquecedor = {
   },
 };
 
-/** El último lanzamiento, o nada si no tiene (404): no es un fallo de la ficha. */
+/**
+ * El último lanzamiento, o nada si no tiene (404) o si su consulta falla: no estropea la ficha del repositorio. Sin
+ * red o con el límite agotado sí se corta (el resto tampoco llegaría).
+ */
 async function ultimoLanzamiento(base: string, c: Consulta, init: RequestInit) {
   try {
     const l = objeto(await pedirJson(`${base}/releases/latest`, c, init)) ?? {};
     const version = texto(l.tag_name);
     return version ? { version, fecha: fecha(l.published_at) } : undefined;
   } catch (e) {
-    if (e instanceof FalloConsulta && e.codigo === 'no-encontrado') return undefined;
+    if (e instanceof FalloConsulta && (e.codigo === 'no-encontrado' || e.codigo === 'fallo')) return undefined;
     throw e;
   }
 }

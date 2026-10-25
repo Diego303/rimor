@@ -50,7 +50,7 @@ Solo los validados por F0-7:
 
 ### Cuándo se consulta
 
-- **Al capturar** un enlace, si todos los dominios de su proveedor están activados (y no hay modo sin red, IN-061): se consulta en segundo plano y se guarda la ficha. La respuesta de Rimor se recompone con ella.
+- **Al capturar** un enlace, si el dominio imprescindible de su proveedor está activado (y no hay modo sin red, IN-061): se consulta en segundo plano, con los secundarios que estén activados, y se guarda la ficha. La respuesta de Rimor se recompone con ella. (Cambiado al implementar: con «todos» un paquete sin OSV activado no se enriquecería nunca al capturar.)
 - **Desde la vista**, siempre a mano: «Consultar» (la primera vez) o «Volver a consultar».
 - **Antes de la primera consulta** la tarjeta dice qué dominios consultaría: «Se puede completar consultando api.github.com.» con «Activar y consultar» (activa esos dominios en los ajustes del espacio y consulta) o, si ya están activados, «Consultar».
 - **Sin red** o con la petición bloqueada: `<Senal estado="sin-conexion">` con «Sin red: guardado sin enriquecer.» y «Reintentar».
@@ -128,3 +128,39 @@ Cubre las cinco tareas con solo los proveedores de F0-7. Reutiliza el lector Enl
 | Sin BibTeX en la ficha | No lo pide la ficha de IN-041; `doi.org` queda en la CSP para la bibliografía (IN-086, BibTeX desde enlaces a papers y DOI). |
 | deps.dev es el dominio imprescindible de un paquete; OSV y el registro, secundarios | deps.dev da versión, fecha y licencias de los cinco ecosistemas (F0-7); sin OSV, sus avisos cuentan como vulnerabilidades. |
 | Las fechas de la ficha se enseñan como día («20 oct»); la consulta, con hora | Lo que importa de una actividad es el día; de la consulta, cuándo exactamente. |
+
+## Verificación
+
+**`pnpm verificar`**: en verde, 105 archivos y 1370 pruebas; carga inicial 249,1 KB de 300 (los proveedores se cargan con la vista del enlace o al capturar con algún dominio activado).
+
+**Criterios de aceptación:** sin red, el lector funciona como en v0.1 (sin dominios activados no se pide nada ni se carga el módulo: `FichaEnlace.test.tsx`); con red, solo se consultan dominios activados (`pedirJson` rechaza los demás y no lee lo que llega redirigido a ellos; `enriquecer.test.ts` registra cada URL).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| Proveedores con interfaz común, solo los de F0-7 | `enriquecer.test.ts` (GitHub, GitLab, deps.dev con OSV y el registro, Crossref y DataCite; dominios en la CSP) |
+| Ficha con fecha; «Volver a consultar» con los cambios | `FichaEnlace.test.tsx`, `enriquecer.test.ts` (cambios) |
+| Dominios visibles antes de la primera consulta; lista en Ajustes | `FichaEnlace.test.tsx` (tarjeta y Ajustes · Red) |
+| Sin red, `sin-conexion` con «Sin red: guardado sin enriquecer» | `FichaEnlace.test.tsx`; fidelidad de la señal con su SVG |
+| Respuestas enriquecidas | `enriquecer.test.ts` (frases y sus reglas de estilo), `FichaEnlace.test.tsx` (la respuesta del feed tras capturar) |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | «Volver a consultar» volvía a activar dominios apagados sin decirlo | Solo «Activar y consultar» activa, y con su texto de qué se consultaría. `FichaEnlace.test.tsx` |
+| 2 | El foco se perdía al consultar | Un solo botón que se queda deshabilitado mientras consulta |
+| 3 | Sin plazo, una petición colgada bloqueaba la tarjeta | 15 s (`PLAZO_CONSULTA_MS`), que cuentan como sin red. `enriquecer.test.ts` |
+| 4 | Los fallos de la consulta al capturar no se veían | El último fallo de cada elemento en la pestaña; la vista empieza por él. `FichaEnlace.test.tsx` |
+| 5 | Token caducado, con caracteres inválidos o límite con token, con textos engañosos | 401 es `token` con su texto; el token se valida al guardarlo; límite con token, otro texto. `enriquecer.test.ts`, `FichaEnlace.test.tsx` |
+| 6 | pkg.go.dev con versión, un paquete de un módulo o `std` daban «no lo encuentra» | Sin versión, recortando hasta el módulo, y `std` sin ficha. `enriquecer.test.ts` |
+| 7 | Los DOI de DataCite iban a Crossref | Los de arXiv, por DataCite; si Crossref no lo conoce y DataCite está activado, DataCite. `enriquecer.test.ts` |
+| 8 | Importar como espacio nuevo traía los dominios del otro activados | Se apagan al importar. `importar.test.ts` |
+| 9 | El token, al alcance de otras páginas del mismo dominio | El texto lo dice y recomienda un token fino sin permisos (riesgo registrado) |
+| 10 | «Issues abiertas» incluía los PR | «Issues y PR abiertos» |
+| 11 | Un fallo del último lanzamiento tiraba la ficha del repositorio | Se tolera. `enriquecer.test.ts` |
+| 12 | Una respuesta rara de OSV contaba como «sin vulnerabilidades» | No cuenta; con más páginas, tampoco (cuentan los avisos de deps.dev). `enriquecer.test.ts` |
+| 13 | Las redirecciones no pasaban por la comprobación de dominios | Lo que llega de un dominio no activado no se lee (la CSP limita la petición a los diez de F0-7). `enriquecer.test.ts` |
+| 14 | Los textos nombraban dominios que no se iban a consultar | Solo los activados, o todos si se van a activar; el diseño, alineado con lo hecho |
+| 15 | Los avisos podían no anunciarse | Región viva fija junto al botón. `FichaEnlace.test.tsx` |

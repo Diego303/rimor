@@ -6,6 +6,7 @@
  */
 import { isoConZona, type Manifest, ulid } from '@rimor/formato';
 import { type Almacen, escribirTexto, listarTodo } from '../../almacen/contrato';
+import { RUTA_AJUSTES } from '../../espacio/ajustes';
 import type { Paquete } from './paquete';
 import type { Plan } from './plan';
 
@@ -60,8 +61,32 @@ export function manifestNuevo(manifest: Manifest, nombre: string, ahora: Date, i
   return { ...resto, espacio: { id, nombre }, creado: isoConZona(ahora), adjuntos_excluidos: [] } as Manifest;
 }
 
-/** Espacio nuevo: todo lo del paquete (también su `.rimor/`) en un almacén vacío, con su manifest. */
+/**
+ * Los ajustes del paquete sin los dominios de red activados (IN-041): quien importa el espacio de otro no le da
+ * permiso a Rimor para consultar lo que el otro activó. Si no se entienden, tal cual (se leerán con sus valores por
+ * defecto).
+ */
+export function sinDominiosActivados(datos: Uint8Array): Uint8Array {
+  try {
+    const ajustes = JSON.parse(new TextDecoder().decode(datos)) as Record<string, unknown>;
+    const red = ajustes.red;
+    if (!red || typeof red !== 'object' || Array.isArray(red)) return datos;
+    return new TextEncoder().encode(`${JSON.stringify({ ...ajustes, red: { ...red, dominios: [] } }, null, 2)}\n`);
+  } catch {
+    return datos;
+  }
+}
+
+/**
+ * Espacio nuevo: todo lo del paquete (también su `.rimor/`, con los dominios de red apagados) en un almacén vacío, con
+ * su manifest.
+ */
 export async function enEspacioNuevo(almacen: Almacen, paquete: Paquete, manifest: Manifest): Promise<void> {
-  await escribirTodo(almacen, paquete.archivos);
+  await escribirTodo(
+    almacen,
+    [...paquete.archivos].map(([ruta, datos]): [string, Uint8Array] =>
+      ruta === RUTA_AJUSTES ? [ruta, sinDominiosActivados(datos)] : [ruta, datos],
+    ),
+  );
   await escribirTexto(almacen, 'manifest.json', `${JSON.stringify(manifest, null, 2)}\n`);
 }

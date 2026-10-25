@@ -1411,6 +1411,9 @@ pre.code.codigo .ln {
 .ficha-enlace dd {
   overflow-wrap: anywhere;
 }
+.ficha-estado {
+  gap: 8px;
+}
 .tarjeta-texto {
   white-space: pre-line;
   overflow: hidden;

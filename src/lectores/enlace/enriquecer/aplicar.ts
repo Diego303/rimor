@@ -25,6 +25,18 @@ export type ResultadoEnriquecer =
   | { estado: 'sin-proveedor' }
   | { estado: 'fallo'; codigo: CodigoFallo; hasta?: string };
 
+/** Sin respuesta en este plazo, la consulta se corta (y cuenta como sin red). */
+export const PLAZO_CONSULTA_MS = 15_000;
+
+export type FalloEnriquecer = Extract<ResultadoEnriquecer, { estado: 'fallo' }>;
+
+/**
+ * El último fallo de cada elemento en esta pestaña (también los de la consulta al capturar): la vista lo enseña al
+ * abrirlo («Sin red: guardado sin enriquecer.») en vez de ofrecer consultar como si nunca se hubiera intentado.
+ */
+const fallos = new Map<string, FalloEnriquecer>();
+export const falloAnterior = (id: string): FalloEnriquecer | undefined => fallos.get(id);
+
 export interface OpcionesEnriquecer {
   pedir?: (url: string, init?: RequestInit) => Promise<Response>;
   ahora?: () => string;
@@ -38,7 +50,20 @@ export async function enriquecerElemento(
 ): Promise<ResultadoEnriquecer> {
   const leido = await espacio.repositorio.leerElemento(refOId);
   if (!leido.ok) return { estado: 'fallo', codigo: 'fallo' };
-  const d = analizar(leido.valor.original ?? '');
+  const id = leido.valor.frontmatter.id;
+  const r = await consultarYGuardar(espacio, refOId, leido.valor.original ?? '', o);
+  if (r.estado === 'fallo') fallos.set(id, r);
+  else fallos.delete(id);
+  return r;
+}
+
+async function consultarYGuardar(
+  espacio: EspacioEnriquecible,
+  refOId: string,
+  original: string,
+  o: OpcionesEnriquecer,
+): Promise<ResultadoEnriquecer> {
+  const d = analizar(original);
   if (!d || !dominiosDe(d).length) return { estado: 'sin-proveedor' };
   const activos = dominiosActivos(espacio.ajustes());
   if (!sePuedeConsultar(d, activos)) return { estado: 'inactivo', dominios: dominiosDe(d) };
@@ -51,7 +76,7 @@ export async function enriquecerElemento(
         pedir: o.pedir ?? ((url, init) => fetch(url, init)),
         activos,
         ...(token ? { token } : {}),
-        ...(o.senal ? { senal: o.senal } : {}),
+        senal: o.senal ?? AbortSignal.timeout(PLAZO_CONSULTA_MS),
       },
       ahora,
     );

@@ -839,7 +839,8 @@
       "papers": "Papers"
     },
     "tokenGithub": "Token de GitHub (opcional)",
-    "tokenTexto": "Sube el límite de 60 a 5.000 consultas por hora. Se guarda solo en este navegador: no va en el espacio ni en el ZIP.",
+    "tokenTexto": "Sube el límite de 60 a 5.000 consultas por hora. Usa un token fino sin permisos (solo lee lo público): se guarda en este navegador, no en el espacio ni en el ZIP, y otras páginas publicadas en el mismo dominio podrían leerlo.",
+    "tokenNoVale": "Ese token tiene caracteres que no valen (¿un espacio invisible al pegarlo?): no se ha guardado.",
     "noGuardado": "No se pudo guardar el ajuste: vale ahora, pero no al volver a abrir."
   }
 }

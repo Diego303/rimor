@@ -3,9 +3,10 @@ import { DOMINIOS_ENRIQUECIMIENTO } from '../../../../scripts/csp.mjs';
 import { comprobarEstilo } from '../../../respuestas/reglas';
 import { analizar, type DatosEnlace } from '../lector';
 import { type Consulta, FalloConsulta } from './contrato';
-import { DOMINIOS } from './dominios';
+import { DOMINIOS, guardarTokenGithub, tokenValido } from './dominios';
 import { cambiosDeFicha, consultarFicha, dominiosDe, ENRIQUECEDORES, sePuedeConsultar } from './enriquecer';
 import { fraseDeFicha } from './frase';
+import { nombresParaDepsDev } from './paquetes';
 
 type Respuesta = { status?: number; json?: unknown; headers?: Record<string, string> } | 'sin-red';
 
@@ -50,7 +51,11 @@ describe('dominios', () => {
     expect(dominiosDe(enlace('https://gitlab.com/grupo/sub/proyecto'))).toEqual(['gitlab.com']);
     expect(dominiosDe(enlace('https://crates.io/crates/serde'))).toEqual(['api.deps.dev', 'api.osv.dev', 'crates.io']);
     expect(dominiosDe(enlace('https://pkg.go.dev/github.com/spf13/cobra'))).toEqual(['api.deps.dev', 'api.osv.dev']);
-    expect(dominiosDe(enlace('https://doi.org/10.1038/nature14539'))).toEqual(['api.crossref.org']);
+    expect(dominiosDe(enlace('https://doi.org/10.1038/nature14539'))).toEqual(['api.crossref.org', 'api.datacite.org']);
+    // Un DOI de arXiv va por DataCite, como su enlace.
+    expect(dominiosDe(enlace('https://doi.org/10.48550/arXiv.2301.00001'))).toEqual(['api.datacite.org']);
+    // La biblioteca estándar de Go no está en deps.dev.
+    expect(dominiosDe(enlace('https://pkg.go.dev/std'))).toEqual([]);
     expect(dominiosDe(enlace('https://arxiv.org/abs/1706.03762v5'))).toEqual(['api.datacite.org']);
     // Sin proveedor: ni Stack Overflow ni una web cualquiera.
     expect(dominiosDe(enlace('https://stackoverflow.com/questions/1/x'))).toEqual([]);
@@ -374,5 +379,95 @@ describe('frases con la ficha y las reglas de estilo', () => {
         expect(frase, url).toBeTruthy();
         expect(comprobarEstilo({ texto: [{ t: 'texto', v: frase ?? '' }] }), url).toEqual([]);
       }
+  });
+});
+
+describe('correcciones de la revisión', () => {
+  it('GitHub: un token rechazado (401) es «token»; el último lanzamiento que falla no estropea la ficha', async () => {
+    const d = enlace('https://github.com/a/b');
+    const rechazado = pedirFalso({ 'https://api.github.com/repos/a/b': { status: 401 } });
+    await expect(consultarFicha(d, consulta(rechazado.pedir, todos, 'ghp_viejo'), AHORA)).rejects.toMatchObject({
+      codigo: 'token',
+    });
+    const roto = pedirFalso({
+      'https://api.github.com/repos/a/b': { json: { stargazers_count: 2 } },
+      'https://api.github.com/repos/a/b/releases/latest': { status: 500 },
+    });
+    expect((await consultarFicha(d, consulta(roto.pedir), AHORA))?.campos).toEqual({ estrellas: 2 });
+  });
+
+  it('una redirección a un dominio no activado no se lee; sin respuesta en el plazo cuenta como sin red', async () => {
+    const d = enlace('https://github.com/a/b');
+    const redirigida = async () => {
+      const r = new Response(JSON.stringify({ stargazers_count: 1 }));
+      Object.defineProperty(r, 'url', { value: 'https://otro.example/repos/a/b' });
+      return r;
+    };
+    await expect(consultarFicha(d, consulta(redirigida), AHORA)).rejects.toMatchObject({ codigo: 'fallo' });
+    const lenta = async () => {
+      throw new DOMException('plazo', 'TimeoutError');
+    };
+    await expect(consultarFicha(d, consulta(lenta), AHORA)).rejects.toMatchObject({ codigo: 'sin-red' });
+  });
+
+  it('Go: sin la versión y recortando hasta el módulo si deps.dev no conoce el paquete', async () => {
+    expect(nombresParaDepsDev('go', 'golang.org/x/net/http2')).toEqual(['golang.org/x/net/http2', 'golang.org/x/net']);
+    expect(nombresParaDepsDev('go', 'github.com/gin-gonic/gin@v1.9.1')).toEqual(['github.com/gin-gonic/gin']);
+    expect(nombresParaDepsDev('npm', 'a/b/c')).toEqual(['a/b/c']);
+    const base = 'https://api.deps.dev/v3/systems/go/packages/golang.org%2Fx%2Fnet';
+    const { pedir, pedidas } = pedirFalso({
+      [base]: { json: { versions: [{ versionKey: { version: 'v0.30.0' }, isDefault: true }] } },
+      [`${base}/versions/v0.30.0`]: { json: { licenses: ['BSD-3-Clause'] } },
+      'https://api.osv.dev/v1/query': { json: {} },
+    });
+    const ficha = await consultarFicha(enlace('https://pkg.go.dev/golang.org/x/net/http2'), consulta(pedir), AHORA);
+    expect(ficha?.campos).toMatchObject({ version: 'v0.30.0', licencia: 'BSD-3-Clause', vulnerabilidades: 0 });
+    expect(JSON.parse(String(pedidas.find((p) => p.url.includes('osv'))?.init?.body)).package.name).toBe(
+      'golang.org/x/net',
+    );
+  });
+
+  it('OSV con una respuesta que no se entiende o con más páginas: cuentan los avisos de deps.dev', async () => {
+    const base = 'https://api.deps.dev/v3/systems/pypi/packages/requests';
+    for (const osv of [[], { vulns: [{}], next_page_token: 'x' }]) {
+      const { pedir } = pedirFalso({
+        [base]: { json: { versions: [{ versionKey: { version: '2.32.3' }, isDefault: true }] } },
+        [`${base}/versions/2.32.3`]: { json: { advisoryKeys: [{ id: 'A' }, { id: 'B' }] } },
+        'https://api.osv.dev/v1/query': { json: osv },
+      });
+      const ficha = await consultarFicha(
+        enlace('https://pypi.org/project/requests'),
+        consulta(pedir, new Set(['api.deps.dev', 'api.osv.dev'])),
+        AHORA,
+      );
+      expect(ficha?.campos.vulnerabilidades).toBe(2);
+    }
+  });
+
+  it('un DOI que Crossref no conoce (Zenodo) se busca en DataCite si está activado', async () => {
+    const { pedir } = pedirFalso({
+      'https://api.datacite.org/dois/10.5281/zenodo.123': {
+        json: {
+          data: {
+            attributes: { titles: [{ title: 'Datos del ensayo' }], publicationYear: '2024', publisher: 'Zenodo' },
+          },
+        },
+      },
+    });
+    const d = enlace('https://doi.org/10.5281/zenodo.123');
+    expect((await consultarFicha(d, consulta(pedir), AHORA))?.campos).toEqual({
+      titulo: 'Datos del ensayo',
+      anio: 2024,
+      revista: 'Zenodo',
+    });
+    await expect(consultarFicha(d, consulta(pedir, new Set(['api.crossref.org'])), AHORA)).rejects.toMatchObject({
+      codigo: 'no-encontrado',
+    });
+  });
+
+  it('el token solo se guarda si vale (ASCII visible)', () => {
+    expect(tokenValido('github_pat_11ABC')).toBe(true);
+    expect(tokenValido('ghp_\u200bx')).toBe(false);
+    expect(guardarTokenGithub('ghp_\u200bx')).toBe(false);
   });
 });

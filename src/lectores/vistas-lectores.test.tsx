@@ -10,6 +10,7 @@ import { ContextoComparar } from './ContextoComparar';
 import { ContextoHilo } from './ContextoHilo';
 import { analizarCodigo } from './codigo/analisis';
 import VistaCodigo from './codigo/Vista';
+import VistaEnlace from './enlace/Vista';
 import { analizarError } from './error/lector';
 import VistaError, { listaDeFechas } from './error/Vista';
 import { analizar } from './log/analisis';
@@ -137,8 +138,7 @@ describe('vista de Texto guardado aparte', () => {
 });
 
 describe('vista de Enlace', () => {
-  it('enlaza la dirección limpia aparte y enseña lo pegado si era distinto', async () => {
-    const { default: VistaEnlace } = await import('./enlace/Vista');
+  it('enlaza la dirección limpia aparte y enseña lo pegado si era distinto', () => {
     const el = elementoFalso(7, 'https://docs.rs/ureq?utm_source=hn', 'enlace');
     render(
       <VistaEnlace

@@ -24,11 +24,18 @@ export function leerTokenGithub(): string | undefined {
   }
 }
 
-export function guardarTokenGithub(token: string): void {
+/** Un token va en una cabecera: solo caracteres ASCII visibles (un espacio de ancho cero pegado la rompería). */
+export const tokenValido = (token: string): boolean => /^[\x21-\x7e]+$/.test(token.trim());
+
+/** Guarda el token (vacío, lo borra); `false` si no vale y no se guarda. */
+export function guardarTokenGithub(token: string): boolean {
+  const limpio = token.trim();
+  if (limpio && !tokenValido(limpio)) return false;
   try {
-    if (token.trim()) globalThis.localStorage?.setItem(CLAVE_TOKEN, token.trim());
+    if (limpio) globalThis.localStorage?.setItem(CLAVE_TOKEN, limpio);
     else globalThis.localStorage?.removeItem(CLAVE_TOKEN);
   } catch {
     // Sin almacenamiento del navegador: se consulta sin token.
   }
+  return true;
 }

@@ -839,7 +839,8 @@
       "papers": "Papers"
     },
     "tokenGithub": "GitHub token (optional)",
-    "tokenTexto": "Raises the limit from 60 to 5,000 checks per hour. Stored only in this browser: it is not in the space or the ZIP.",
+    "tokenTexto": "Raises the limit from 60 to 5,000 checks per hour. Use a fine-grained token with no permissions (it only reads public data): it is stored in this browser, not in the space or the ZIP, and other pages published on the same domain could read it.",
+    "tokenNoVale": "That token has invalid characters (an invisible space when pasting?): it was not saved.",
     "noGuardado": "The setting could not be saved: it applies now, but not after reopening."
   }
 }
