@@ -1,0 +1,1 @@
+tar -czf copia-$(date +%F).tar.gz ~/proyectos/rimor

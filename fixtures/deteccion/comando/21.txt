@@ -1,0 +1,1 @@
+duckdb -c "select * from read_csv_auto('latencias.csv') limit 5"

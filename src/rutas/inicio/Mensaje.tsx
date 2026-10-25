@@ -38,7 +38,9 @@ export function vistaPrevia(el: Pick<Elemento, 'original'> | null, titulo: strin
 }
 
 /** Las acciones de una respuesta que el feed sabe hacer: «No», añadir a una colección y llevar a un hilo. */
-export const accionSoportada = (id: string) => id === 'no' || id.startsWith('coleccion:') || id.startsWith('hilo:');
+/** Las acciones de una respuesta que el feed sabe hacer: «No», añadir a una colección o a un hilo, y abrir el elemento. */
+export const accionSoportada = (id: string) =>
+  id === 'no' || id === 'abrir' || id.startsWith('coleccion:') || id.startsWith('hilo:');
 
 export interface PropsMensaje {
   fm: FrontmatterComun;

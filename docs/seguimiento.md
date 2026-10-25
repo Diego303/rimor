@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-25 13:55
-**Ahora:** IN-043 · Comando con huecos · fase análisis y diseño
+**Última actualización:** 2026-10-25 14:16
+**Ahora:** IN-043 · Comando con huecos · fase implementación
 **Siguiente:** IN-044 · Datos tabulares con DuckDB
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 2/22 · v0.3 0/17 · v0.4 0/9 · total 53/99
 
@@ -62,7 +62,7 @@
 | IN-040 | Cierre de v0.1 | v0.1 | 7 | hecha | 6dcf500 8ccb01e | docs/features/IN-040-cierre-v0.1.md |
 | IN-041 | Enlace enriquecido | v0.2 | 8 | hecha | f2f85db 76c95a1 a78cdaf | docs/features/IN-041-enlace-enriquecido.md |
 | IN-042 | Diff y parche | v0.2 | 8 | hecha | d1d8e29 f901a5a b8ff910 | docs/features/IN-042-diff-parche.md |
-| IN-043 | Comando con huecos | v0.2 | 8 | en análisis y diseño | — | docs/features/IN-043-comando.md |
+| IN-043 | Comando con huecos | v0.2 | 8 | en implementación | 6073c48 | docs/features/IN-043-comando.md |
 | IN-044 | Datos tabulares con DuckDB | v0.2 | 8 | pendiente | — | — |
 | IN-045 | JSON, YAML y TOML con comparación estructural | v0.2 | 8 | pendiente | — | — |
 | IN-046 | Petición HTTP | v0.2 | 8 | pendiente | — | — |
@@ -175,7 +175,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-25 | IN-043 | análisis y diseño | lector comando (puesto 13), huecos {{x}}, chuleta con resaltado, Copiar con valores compartido con el Prompt, acción abrir en Inicio | … |
+| 2026-10-25 | IN-043 | implementación | lector comando (puesto 13) con huecos {{x}}, chuleta, Copiar con valores común con el Prompt y la acción abrir en Inicio; verificar en verde: 109 archivos, 1407 pruebas, 254,2 KB | … |
+| 2026-10-25 | IN-043 | análisis y diseño | lector comando (puesto 13), huecos {{x}}, chuleta con resaltado, Copiar con valores compartido con el Prompt, acción abrir en Inicio | 6073c48 |
 | 2026-10-25 | IN-042 | verificación | revisión independiente (12 hallazgos) corregida con pruebas: .patch soltado, unificado en estrecho, rutas de git y Subversion, RFC 2047, sin versiones, plegados perezosos, más formatos, series, ref al cambiar tipo, lector de pantalla, modos; verificar en verde: 107 archivos, 1394 pruebas, 252,6 KB | b8ff910 |
 | 2026-10-25 | IN-042 | implementación | lector diff (código) con análisis por cuentas, vista lado a lado en tabla, Registro.deTipo, etiqueta del lector, duda entre tipos distintos y versiones por lector; verificar en verde: 107 archivos, 1384 pruebas, 251,5 KB | f901a5a |
 | 2026-10-25 | IN-042 | análisis y diseño | lector diff de tipo código (puesto 10), lado a lado con el estilo .diff, Registro.deTipo, etiqueta del lector, duda entre tipos distintos y versiones del mismo lector | d1d8e29 |

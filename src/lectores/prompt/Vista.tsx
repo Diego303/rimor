@@ -4,7 +4,7 @@
  * no deja, el texto listo para seleccionarlo); los resultados plegados con su número y los detalles.
  */
 import { isoConZona } from '@rimor/formato';
-import { useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useId, useMemo, useState } from 'react';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { useEspacio } from '../../estado/espacio';
 import { fmtDia, fmtNumero } from '../../i18n/formatos';
@@ -12,6 +12,7 @@ import { useT } from '../../i18n/useT';
 import { Boton, Detalles, Hueco, Huecos, Tarjeta } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { ContextoVersionVista } from '../ContextoVersion';
+import { CopiarConValores } from '../CopiarConValores';
 import type { PropsVista } from '../contrato';
 import { cifrasDe, DetallesElemento } from '../DetallesElemento';
 import { analizarPrompt, escrituraDe, sustituir, trozosDe } from './analisis';
@@ -28,126 +29,6 @@ import {
 import { textos } from './textos';
 
 type T = (c: string, v?: Record<string, string | number>) => string;
-
-/** Clave de los valores recordados de un prompt: de este navegador y de este espacio. */
-const claveValores = (espacio: string, id: string) => `rimor:${espacio}:prompt:${id}`;
-
-function leerValores(clave: string): Record<string, string> {
-  try {
-    const guardado = JSON.parse(globalThis.localStorage?.getItem(clave) ?? '{}') as unknown;
-    if (!guardado || typeof guardado !== 'object' || Array.isArray(guardado)) return {};
-    return Object.fromEntries(Object.entries(guardado).filter(([, v]) => typeof v === 'string')) as Record<
-      string,
-      string
-    >;
-  } catch {
-    return {};
-  }
-}
-
-function guardarValores(clave: string, valores: Record<string, string>): void {
-  try {
-    const conAlgo = Object.fromEntries(Object.entries(valores).filter(([, v]) => v));
-    if (Object.keys(conAlgo).length) globalThis.localStorage?.setItem(clave, JSON.stringify(conAlgo));
-    else globalThis.localStorage?.removeItem(clave);
-  } catch {
-    // Sin almacenamiento del navegador (ventana privada estricta): los valores duran lo que la vista.
-  }
-}
-
-/** Copia al portapapeles; `false` si el navegador no deja (sin permiso, sin contexto seguro, sin API). */
-async function copiarAlPortapapeles(texto: string): Promise<boolean> {
-  try {
-    if (!globalThis.navigator?.clipboard?.writeText) return false;
-    await globalThis.navigator.clipboard.writeText(texto);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function CopiarConValores({
-  el,
-  datos,
-  resultados,
-  t,
-}: PropsVista<DatosPrompt> & { resultados: readonly ResultadoPrompt[]; t: T }) {
-  const espacio = useEspacioOpcional();
-  const avisos = useAvisosOpcional();
-  const clave = claveValores(espacio?.manifest.espacio.id ?? 'local', el.frontmatter.id);
-  const [valores, setValores] = useState<Record<string, string>>(() => leerValores(clave));
-  // `vez` cambia en cada intento: si vuelve a fallar con el mismo texto, se vuelve a seleccionar.
-  const [listo, setListo] = useState<{ texto: string; vez: number } | null>(null);
-  const areaLista = useRef<HTMLTextAreaElement>(null);
-  const id = useId();
-
-  useEffect(() => setValores(leerValores(clave)), [clave]);
-  // El texto listo para copiar a mano era el de otra versión: fuera.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: se descarta al cambiar el texto del prompt.
-  useEffect(() => setListo(null), [el.original]);
-  // Si el navegador no dejó copiar, el texto queda seleccionado para Ctrl+C.
-  useEffect(() => {
-    if (listo !== null) areaLista.current?.select();
-  }, [listo]);
-
-  function cambiar(variable: string, valor: string) {
-    const nuevos = { ...valores, [variable]: valor };
-    setValores(nuevos);
-    guardarValores(clave, nuevos);
-    setListo(null);
-  }
-
-  async function copiar() {
-    const texto = sustituir(el.original ?? '', valores);
-    void espacio?.contadores.contar('copiasConValores').catch(() => undefined);
-    if (await copiarAlPortapapeles(texto)) {
-      setListo(null);
-      avisos?.avisar(t('copiado'));
-    } else setListo((previo) => ({ texto, vez: (previo?.vez ?? 0) + 1 }));
-  }
-
-  const media = valoracionMedia(resultados);
-  const { idioma } = useT();
-
-  return (
-    <Tarjeta titulo={t('copiarConValores')}>
-      <div className="g3">
-        {datos.variables.map((v, i) => {
-          const escrita = escrituraDe(v);
-          return (
-            <label key={escrita} className="xs muted campo-variable" htmlFor={`${id}-${i}`}>
-              {escrita}
-              <input
-                id={`${id}-${i}`}
-                type="text"
-                value={valores[escrita] ?? ''}
-                onChange={(e) => cambiar(escrita, e.target.value)}
-              />
-            </label>
-          );
-        })}
-      </div>
-      <div className="row">
-        <Boton variante="primario" pequeno onClick={() => void copiar()}>
-          {t('copiar')}
-        </Boton>
-        {media !== null && (
-          <span className="xs muted">
-            {t('valoracionMedia', { media: fmtNumero(media, idioma, 1), n: resultados.length })}
-          </span>
-        )}
-      </div>
-      {listo !== null && (
-        <div className="copia-manual">
-          <p className="xs muted" role="status">
-            {t('noCopiado')}
-          </p>
-          <textarea ref={areaLista} readOnly rows={6} aria-label={t('textoListo')} value={listo.texto} />
-        </div>
-      )}
-    </Tarjeta>
-  );
-}
 
 interface PropsResultados {
   el: PropsVista<DatosPrompt>['el'];
@@ -289,6 +170,7 @@ export default function VistaPrompt({ el, datos: datosActuales, editable = true 
   useEffect(() => setResultados(resultadosDe(el.frontmatter)), [el.frontmatter]);
   // Las cifras citables son siempre las de la actual: es a lo que lleva citarlas (`{{PRM-0012.tokens}}`).
   const cifras = cifrasDe(lectorPrompt, datosActuales);
+  const media = valoracionMedia(resultados);
 
   return (
     <>
@@ -307,7 +189,29 @@ export default function VistaPrompt({ el, datos: datosActuales, editable = true 
         </pre>
       </Tarjeta>
 
-      {datos.variables.length > 0 && <CopiarConValores el={elVisto} datos={datos} resultados={resultados} t={t} />}
+      {datos.variables.length > 0 && (
+        <CopiarConValores
+          ambito="prompt"
+          idElemento={el.frontmatter.id}
+          texto={elVisto.original ?? ''}
+          huecos={datos.variables.map(escrituraDe)}
+          sustituir={sustituir}
+          textos={{
+            titulo: t('copiarConValores'),
+            copiar: t('copiar'),
+            copiado: t('copiado'),
+            noCopiado: t('noCopiado'),
+            textoListo: t('textoListo'),
+          }}
+          pie={
+            media !== null && (
+              <span className="xs muted">
+                {t('valoracionMedia', { media: fmtNumero(media, idioma, 1), n: resultados.length })}
+              </span>
+            )
+          }
+        />
+      )}
 
       <Resultados
         el={el}

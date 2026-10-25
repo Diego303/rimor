@@ -1230,6 +1230,18 @@ pre.code.prompt-texto {
   flex-direction: column;
   gap: 4px;
 }
+/* Comando (IN-043): la chuleta, con el `$` tenue (no se copia) y los comandos largos partidos. */
+pre.code.comando-texto {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.prompt-comando {
+  color: var(--faint);
+  user-select: none;
+}
+.comando-tarjeta {
+  overflow-wrap: anywhere;
+}
 .copia-manual,
 .nuevo-resultado {
   display: flex;

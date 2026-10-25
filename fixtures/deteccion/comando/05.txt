@@ -1,0 +1,1 @@
+kubectl logs -f deploy/gateway -n {{namespace}} --since=10m

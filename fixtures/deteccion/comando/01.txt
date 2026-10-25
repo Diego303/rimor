@@ -1,0 +1,1 @@
+cargo bench --bench http -- --save-baseline {{baseline}}

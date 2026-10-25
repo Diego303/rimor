@@ -1,0 +1,1 @@
+psql -h localhost -U {{usuario}} -d {{base}} -c 'select count(*) from eventos'

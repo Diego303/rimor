@@ -37,11 +37,11 @@ La acción `abrir` de una respuesta lleva al elemento (la usa «Copiar con valor
 
 ## Tareas
 
-- [ ] Detecta una línea con `$` o programa conocido.
-- [ ] Huecos `{{x}}`.
-- [ ] Tarjeta de chuleta.
-- [ ] Copiar con valores.
-- [ ] Respuesta «Comando con un hueco: {{baseline}}.».
+- [x] Detecta una línea con `$` o programa conocido.
+- [x] Huecos `{{x}}`.
+- [x] Tarjeta de chuleta.
+- [x] Copiar con valores.
+- [x] Respuesta «Comando con un hueco: {{baseline}}.».
 
 ## Pruebas previstas
 
@@ -68,3 +68,12 @@ La acción `abrir` de una respuesta lleva al elemento (la usa «Copiar con valor
 ## Autorrevisión
 
 Cubre las cinco tareas. Reutiliza «Copiar con valores» del Prompt (sacado a un componente común), el resaltado `.var`, las cifras citables y `DetallesElemento`.
+
+## Implementación
+
+- `src/lectores/comando/`: `analisis.ts` (`puntuarComando`, `comandosDe`, `programaDe`, `huecosDe`, `rellenar`, `trozosComando`; la lista de programas), `lector.ts` (`lectorComando`, con la acción `abrir` cuando hay huecos), `textos.ts`, `Vista.tsx` (la chuleta y «Copiar con valores» o «Copiar») y `Tarjeta.tsx`; registrado en el puesto 13.
+- `src/lectores/CopiarConValores.tsx`: el componente que era del Prompt, ahora común (los valores se recuerdan por lector y elemento: `rimor:<espacio>:prompt:<id>`, como antes, y `rimor:<espacio>:comando:<id>`). El Prompt lo usa sin cambiar nada de lo que hace.
+- Inicio: la acción `abrir` de una respuesta lleva al elemento (y se sigue ofreciendo).
+- CSS: `.comando-texto`, `.prompt-comando` (el `$`, tenue y sin copiar) y `.comando-tarjeta`.
+- Corpus de detección: `fixtures/deteccion/comando/` (26 ejemplos; la matriz sigue al 100 %).
+- Pruebas: `comando/comando.test.ts` (detección, continuaciones, programa, huecos, lo que no es comando, título, respuesta y estilo) y `comando/Vista.test.tsx` (chuleta, copiar con valores y recordarlos, «Copiar» sin huecos, la acción en Inicio). Las del Prompt pasan sin tocarlas.

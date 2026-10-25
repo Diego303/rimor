@@ -8,6 +8,7 @@
 import type { Elemento, TipoElemento } from '@rimor/formato';
 import { lectorArchivo } from './archivo/lector';
 import { lectorCodigo } from './codigo/lector';
+import { lectorComando } from './comando/lector';
 import type { Lector } from './contrato';
 import { lectorDiff } from './diff/lector';
 import { lectorEnlace } from './enlace/lector';
@@ -53,6 +54,7 @@ export const LECTORES: readonly Lector[] = [
   lectorDiff, // 10
   lectorPrompt, // 11
   lectorMarkdown, // 12
+  lectorComando, // 13
   lectorCodigo, // 15
   lectorIdea, // 16
   lectorTexto, // 17

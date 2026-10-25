@@ -193,6 +193,8 @@ export function Inicio() {
 
   const alAccion = useCallback(
     async (fm: FrontmatterComun, accion: Accion) => {
+      // «Copiar con valores» de un comando: lleva al elemento (no es una decisión: se sigue ofreciendo).
+      if (accion.id === 'abrir') return abrir(fm.ref);
       const resuelta = accion.id.startsWith('coleccion:')
         ? await anadirColeccion(fm, accion.id.slice('coleccion:'.length))
         : accion.id.startsWith('hilo:')
@@ -201,7 +203,7 @@ export function Inicio() {
       // Resuelta (también con «No»): no se vuelve a ofrecer en esta sesión. Si falló, sigue ahí para reintentarlo.
       if (resuelta) setSinAcciones((s) => new Set(s).add(fm.id));
     },
-    [anadirColeccion, alHiloDe],
+    [anadirColeccion, alHiloDe, abrir],
   );
   const alArchivar = useCallback((fm: FrontmatterComun) => void archivar(fm), [archivar]);
 

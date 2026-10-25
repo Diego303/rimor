@@ -38,6 +38,52 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
       ],
     },
   },
+  "comando": {
+    "en": {
+      "acciones": [
+        {
+          "etiqueta": "Copy with values",
+          "id": "abrir",
+        },
+      ],
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Command with one blank: ",
+        },
+        {
+          "t": "mono",
+          "v": "{{baseline}}",
+        },
+        {
+          "t": "texto",
+          "v": ".",
+        },
+      ],
+    },
+    "es": {
+      "acciones": [
+        {
+          "etiqueta": "Copiar con valores",
+          "id": "abrir",
+        },
+      ],
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Comando con un hueco: ",
+        },
+        {
+          "t": "mono",
+          "v": "{{baseline}}",
+        },
+        {
+          "t": "texto",
+          "v": ".",
+        },
+      ],
+    },
+  },
   "diff": {
     "en": {
       "texto": [
