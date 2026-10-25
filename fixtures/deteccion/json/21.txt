@@ -1,0 +1,7 @@
+[client]
+base_url = "https://api.example.org"
+timeout_s = 10
+
+[auth]
+kind = "token"
+header = "Authorization"

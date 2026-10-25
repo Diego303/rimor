@@ -125,6 +125,11 @@ export interface Lector<D = unknown> {
   resumenLegible?(r: ResumenLector, idioma: Idioma): string;
   /** La frase de Rimor en Inicio (CAP-14). */
   respuesta(el: Elemento, d: D, ctx: Contexto): Respuesta;
+  /**
+   * La frase al guardar lo pegado como versión nueva de `anterior` (el mensaje del feed, IN-029), si el lector sabe
+   * decir qué cambió (las claves de una configuración); si no, o devuelve `null`, la genérica.
+   */
+  respuestaVersion?(actual: Elemento, anterior: Elemento, idioma: Idioma, ahora?: Date): Promise<Respuesta | null>;
   acciones?: AccionLector<D>[];
   cifras?: Record<string, FuncionCifra<D>>;
   incrustaciones?: Record<string, Incrustacion<D>>;

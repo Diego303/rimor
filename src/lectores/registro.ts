@@ -15,6 +15,7 @@ import { lectorDiff } from './diff/lector';
 import { lectorEnlace } from './enlace/lector';
 import { lectorError } from './error/lector';
 import { lectorIdea } from './idea/lector';
+import { lectorJson } from './json/lector';
 import { lectorLog } from './log/lector';
 import { lectorMarkdown } from './markdown/lector';
 import { lectorMediciones } from './mediciones/lector';
@@ -52,6 +53,7 @@ export const LECTORES: readonly Lector[] = [
   lectorError, // 4
   lectorLog, // 5
   lectorMediciones, // 6
+  lectorJson, // 7
   lectorDatos, // 8
   lectorDiff, // 10
   lectorPrompt, // 11

@@ -1,0 +1,12 @@
+---
+openapi: 3.0.3
+info:
+  title: API de pagos
+  version: 1.2.0
+paths:
+  /pagos:
+    get:
+      summary: Lista los pagos
+      responses:
+        "200":
+          description: OK

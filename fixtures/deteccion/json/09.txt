@@ -1,0 +1,10 @@
+title = "Rimor"
+base_url = "https://example.org/rimor/"
+compile_sass = false
+
+[markdown]
+highlight_code = true
+highlight_theme = "base16-ocean-dark"
+
+[extra]
+autor = "equipo"

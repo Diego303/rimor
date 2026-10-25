@@ -7,6 +7,7 @@ import { fmtCifra, fmtNumero, fmtP, type Idioma } from '../i18n/formatos';
 import { decimalesPara } from '../lectores/mediciones/lector';
 import type { ClaseComparacion } from './clases';
 import type { ComparacionDatos } from './datos';
+import type { ComparacionJson } from './json';
 import type { ComparacionLogs } from './logs';
 import type { ComparacionMediciones } from './mediciones';
 
@@ -59,7 +60,14 @@ export interface ResultadoDatos extends Comun {
   cambian: number;
 }
 
-export type ResultadoComparacion = ResultadoMediciones | ResultadoLogs | ResultadoDatos;
+export interface ResultadoJson extends Comun {
+  clase: 'json';
+  anadidas: number;
+  quitadas: number;
+  cambiadas: number;
+}
+
+export type ResultadoComparacion = ResultadoMediciones | ResultadoLogs | ResultadoDatos | ResultadoJson;
 
 const finito = (x: number): number | null => (Number.isFinite(x) ? x : null);
 
@@ -117,6 +125,16 @@ export function resultadoDeDatos(c: ComparacionDatos, f: DeLasFuentes): Resultad
   };
 }
 
+export function resultadoDeJson(c: ComparacionJson, f: DeLasFuentes): ResultadoJson {
+  return {
+    ...comunDe(f),
+    clase: 'json',
+    anadidas: c.anadidas.length,
+    quitadas: c.quitadas.length,
+    cambiadas: c.cambiadas.length,
+  };
+}
+
 const esNumeroONulo = (x: unknown) => x === null || typeof x === 'number';
 
 /** El resultado guardado, si tiene la forma de esta versión; si no (otra versión, editado a mano), `null`. */
@@ -133,6 +151,10 @@ export function leerResultado(r: Record<string, unknown>): ResultadoComparacion 
       Number.isFinite(r[k]),
     )
       ? (r as unknown as ResultadoDatos)
+      : null;
+  if (r.clase === 'json')
+    return ['anadidas', 'quitadas', 'cambiadas'].every((k) => Number.isFinite(r[k]))
+      ? (r as unknown as ResultadoJson)
       : null;
   return null;
 }
@@ -164,6 +186,13 @@ export function cifrasDeResultado(r: ResultadoComparacion, idioma: Idioma): [nom
       ['mediana_b', mediana(r.mediana_b)],
     ];
   }
+  if (r.clase === 'json')
+    return [
+      ['cambian', fmtNumero(r.anadidas + r.quitadas + r.cambiadas, idioma)],
+      ['anadidas', fmtNumero(r.anadidas, idioma)],
+      ['quitadas', fmtNumero(r.quitadas, idioma)],
+      ['cambiadas', fmtNumero(r.cambiadas, idioma)],
+    ];
   if (r.clase === 'datos')
     return [
       ['filas_a', fmtNumero(r.filas_a, idioma)],

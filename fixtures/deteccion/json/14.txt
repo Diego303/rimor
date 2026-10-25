@@ -1,0 +1,13 @@
+server:
+  port: 8080
+  shutdown: graceful
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/app
+    username: app
+  jpa:
+    hibernate:
+      ddl-auto: validate
+logging:
+  level:
+    root: INFO

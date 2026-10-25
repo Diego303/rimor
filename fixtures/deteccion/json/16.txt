@@ -1,0 +1,6 @@
+{
+  "editor.fontSize": 14,
+  "editor.formatOnSave": true,
+  "files.exclude": { "**/node_modules": true, "dist": true },
+  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" }
+}

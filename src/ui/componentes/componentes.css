@@ -1916,6 +1916,103 @@ pre.code.codigo .ln {
   margin-left: 40px;
 }
 
+/* JSON, YAML y TOML (IN-045): el árbol en mono como `.tree` (11,5 px, interlineado 1,6), con cada nivel sangrado;
+   el botón de plegar es un triángulo que gira; la clave elegida, con el fondo suave del acento; los valores con los
+   colores del código (textos en `--ok`, números y sí o no en `--warn`, nulos en `--muted`). */
+.arbol-json,
+.arbol-json ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--f-m);
+  font-size: 0.71875rem;
+  line-height: 1.6;
+}
+.arbol-json ul {
+  padding-left: 16px;
+}
+.arbol-fila {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.arbol-plegar,
+.arbol-hueco {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  align-self: center;
+}
+.arbol-plegar {
+  position: relative;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.arbol-plegar::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  border-style: solid;
+  border-width: 4px 0 4px 6px;
+  border-color: transparent transparent transparent currentColor;
+  transition: transform 0.12s ease;
+}
+.arbol-plegar[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+.arbol-plegar:hover {
+  color: var(--ink);
+}
+.arbol-clave {
+  border: 0;
+  padding: 0 3px;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.arbol-clave.indice {
+  color: var(--muted);
+}
+.arbol-clave[aria-pressed="true"] {
+  background: var(--accent-soft);
+}
+.arbol-valor {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.v-texto {
+  color: var(--ok);
+}
+.v-numero,
+.v-logico {
+  color: var(--warn);
+}
+.v-nulo {
+  color: var(--muted);
+  font-style: italic;
+}
+.arbol-ruta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-2);
+}
+.tabla-cambios-json,
+.tabla-esquema-json {
+  min-width: 480px;
+}
+
 /* Datos tabulares (IN-044, como `SC.tabla`): la tabla de columnas con su mini-histograma, el gráfico rápido, la
    vista previa, el resultado de la consulta y su editor. */
 .histograma-datos {

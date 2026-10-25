@@ -1,0 +1,6 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    { "type": "Feature", "properties": { "nombre": "Madrid" }, "geometry": { "type": "Point", "coordinates": [-3.7038, 40.4168] } }
+  ]
+}

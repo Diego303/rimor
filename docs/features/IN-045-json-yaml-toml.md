@@ -46,12 +46,12 @@ Que una configuración o un documento de datos pegado o soltado en JSON, YAML o 
 
 ## Tareas
 
-- [ ] Analizadores de los tres formatos (con `leyendo-datos` si tarda más de 400 ms).
-- [ ] Árbol plegable.
-- [ ] Esquema inferido.
-- [ ] Ruta al valor.
-- [ ] Comparación estructural (claves añadidas, quitadas y cambiadas) como elemento Comparación.
-- [ ] Versión anterior detectada al pegar («Frente a la versión del 9 oct cambian 2 claves»).
+- [x] Analizadores de los tres formatos (con `leyendo-datos` si tarda más de 400 ms).
+- [x] Árbol plegable.
+- [x] Esquema inferido.
+- [x] Ruta al valor.
+- [x] Comparación estructural (claves añadidas, quitadas y cambiadas) como elemento Comparación.
+- [x] Versión anterior detectada al pegar («Frente a la versión del 9 oct cambian 2 claves»).
 
 ## Pruebas previstas
 
@@ -79,3 +79,24 @@ Que una configuración o un documento de datos pegado o soltado en JSON, YAML o 
 ## Autorrevisión
 
 Cubre las seis tareas. Reutiliza el contrato de lectores, las versiones de IN-029 (`TIPOS_CON_VERSIONES`, `ContextoVersion`), las comparaciones (la clase como `datos`), los plegables, las tablas y la `Senal`. Lo nuevo del contrato (`respuestaVersion`) es opcional y lo usa solo el mensaje de versión.
+
+## Implementación
+
+- Dependencias (exactas, publicadas hace más de dos semanas): `smol-toml` 1.9.1 y `yaml` 2.9.1 (ya estaba por `@rimor/formato`; ahora también directa).
+- `src/lectores/json/`: `formas.ts` (lo ligero, en la carga inicial: tipos, `normalizar`, `contarClaves`, `pareceConfiguracion`, JSON y YAML, la forma de un TOML sin analizarlo y `confianzaJson`), `analisis.ts` (diferido: `analizar` con `smol-toml`, `esquemaDe`, `rutaDe`, `compararValores`, `rutasCortas`), `lector.ts` (`lectorJson`, puesto 7, `senal: 'leyendo-datos'`, `respuestaVersion`), `textos.ts`, `Vista.tsx` (árbol, ruta con «Copiar», esquema, cambios frente a la versión anterior, original ilegible), `TablaCambios.tsx`, `valores.ts` y `Tarjeta.tsx`.
+- Contrato: `Lector.respuestaVersion` (opcional, asíncrona); `MensajeVersion` la usa con la copia del historial.
+- Versiones: `json` en `TIPOS_CON_VERSIONES`.
+- Comparaciones: la clase `json` (`comparaciones/json.ts`, `resultadoDeJson` validado al leer y sus cifras) y `rutas/comparacion/VistaJson.tsx`; «Comparar con otra configuración» en la vista.
+- Mediciones: el JSON de hyperfine sube de 0,9 a 0,97 para ganar al JSON genérico (0,95).
+- Pruebas: `json/json.test.ts` (análisis, forma de configuración, confianza, esquema, rutas, comparación, títulos, respuestas y respuesta de versión), `json/Vista.test.tsx` (árbol, tandas de 100, esquema, cambios de versión, ilegible, veredicto y la captura de una versión con su mensaje), `comparaciones/json.test.ts`. Corpus `fixtures/deteccion/json/` (25: JSON, YAML y TOML de configuraciones reales); el corpus entero, al 100 %.
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| La detección no usa `smol-toml`: mira la forma de las líneas del TOML (`formaToml`) | El detector es síncrono y va en la carga inicial; `smol-toml` añadía 5,5 KB. Al leer y derivar, el análisis completo decide (si no se puede, el elemento queda «ilegible» con su original a la vista). La carga inicial queda en 263,9 KB (+4,1). |
+| `respuestaVersion` es asíncrona | Para cargar el análisis bajo demanda; el mensaje del feed ya la esperaba en una promesa. |
+| Al derivar, el análisis no pide forma de configuración (`estricto: false`) | Lo ya guardado como configuración, o pedido con `/json`, se lee aunque sea una lista o un valor suelto; lo que no se analiza de ninguna forma queda «ilegible» en vez de romper la vista. |
+| Las listas de mapas con `id`, `name`, `nombre` o `key` se emparejan por esa clave, y la ruta lo dice (`servers[name="b"].ip`) | Por posición, quitar el primer servidor cambiaría todos los demás; con la clave, la posición puede ser otra en cada lado. |
+| El título sin nombre de archivo es su `name` («rimor · JSON») o el formato y sus primeras claves («TOML · gateway, servers») | Así la versión nueva tiene el mismo título y se reconoce como versión; dos `package.json` distintos tienen nombres distintos. |
+| Las fusiones de YAML (`<<: *base`) se resuelven | Son habituales en configuraciones (CI, docker-compose). |

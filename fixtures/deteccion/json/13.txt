@@ -1,0 +1,1 @@
+{"timeout": 30, "reintentos": 3, "endpoints": ["https://api.local/v1", "https://api.local/v2"], "debug": false}

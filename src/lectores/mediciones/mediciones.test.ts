@@ -151,8 +151,8 @@ describe('leerSeries', () => {
 });
 
 describe('detección', () => {
-  it('0,9 con hyperfine o go test -bench; 0,88 con una medida por línea', () => {
-    expect(confianzaMediciones(leer('hyperfine.json'))).toBe(0.9);
+  it('0,97 con hyperfine (por encima del JSON genérico), 0,9 con go test -bench; 0,88 con una medida por línea', () => {
+    expect(confianzaMediciones(leer('hyperfine.json'))).toBe(0.97);
     expect(confianzaMediciones(leer('go-bench.txt'))).toBe(0.9);
     expect(confianzaMediciones(leer('reqwest.txt'))).toBe(0.88);
   });

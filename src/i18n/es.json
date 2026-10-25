@@ -378,6 +378,19 @@
         "maximo": "Máximo",
         "unicos": "Únicos"
       },
+      "json": {
+        "cambian": {
+          "one": "{n} clave cambia",
+          "other": "{n} claves cambian"
+        },
+        "iguales": "Las dos tienen las mismas claves y valores",
+        "detalle": "{anadidas} añadidas · {quitadas} quitadas · {cambiadas} cambiadas",
+        "cambiosTitulo": "Cambios por ruta",
+        "sinCambios": "Ninguna clave cambia.",
+        "ruta": "Ruta",
+        "antes": "Antes",
+        "despues": "Después"
+      },
       "logs": {
         "linea": "línea {n}",
         "separan": "Aquí se separan",
@@ -413,6 +426,7 @@
         "conLog": "Comparar con otro log",
         "conMediciones": "Comparar con otras mediciones",
         "conDatos": "Comparar con otros datos",
+        "conJson": "Comparar con otra configuración",
         "comparar": "Comparar",
         "seleccionaDos": "Para comparar, selecciona dos con x.",
         "noSePuede": "No se pueden comparar. {motivo}",

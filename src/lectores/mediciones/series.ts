@@ -257,7 +257,8 @@ const FRACCION_MEDIDAS = 0.7;
 
 /** Confianza de que un texto es una serie de mediciones. */
 export function confianzaMediciones(texto: string): number {
-  if (deHyperfine(texto)) return 0.9;
+  // Por encima del JSON genérico (0,95): el formato concreto gana.
+  if (deHyperfine(texto)) return 0.97;
   const lineas = texto
     .split(/\r?\n/)
     .filter((l) => l.trim())

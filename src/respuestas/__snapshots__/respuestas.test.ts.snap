@@ -190,6 +190,24 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
       ],
     },
   },
+  "json": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "JSON with 11 keys.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "JSON con 11 claves.",
+        },
+      ],
+    },
+  },
   "log": {
     "en": {
       "texto": [

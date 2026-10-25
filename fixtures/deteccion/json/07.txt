@@ -1,0 +1,5 @@
+[
+  {"id": 1, "cliente": "ureq", "latencia_ms": 31, "estado": 200},
+  {"id": 2, "cliente": "reqwest", "latencia_ms": 30000, "estado": 504},
+  {"id": 3, "cliente": "ureq", "latencia_ms": 33, "estado": 200}
+]

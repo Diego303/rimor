@@ -1,0 +1,12 @@
+image: node:22
+cache:
+  paths:
+    - node_modules/
+stages:
+  - test
+  - build
+test:
+  stage: test
+  script:
+    - pnpm install
+    - pnpm test

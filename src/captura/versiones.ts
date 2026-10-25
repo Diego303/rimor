@@ -1,6 +1,6 @@
 /**
- * ¿Es lo que se captura la versión nueva de algo que ya estaba? (CMP-02): un prompt, un documento Markdown o un
- * código del mismo tipo con el mismo título o muy parecido (Jaccard de *shingles* > 0,6). Mira solo los del mismo
+ * ¿Es lo que se captura la versión nueva de algo que ya estaba? (CMP-02): un prompt, un documento Markdown, un
+ * código o una configuración (IN-045) del mismo tipo con el mismo título o muy parecido (Jaccard de *shingles* > 0,6). Mira solo los del mismo
  * tipo que no están en la papelera, el mismo título en memoria y el parecido en los 200 más recientes.
  */
 import type { FrontmatterComun, TipoElemento } from '@rimor/formato';
@@ -8,7 +8,7 @@ import type { Repositorio } from '../almacen/repositorio';
 import { parecido, shingles, tituloComparable, UMBRAL_PARECIDO } from '../versiones/parecido';
 
 /** Los tipos que guardan versiones. */
-export const TIPOS_CON_VERSIONES: ReadonlySet<TipoElemento> = new Set(['prompt', 'markdown', 'codigo']);
+export const TIPOS_CON_VERSIONES: ReadonlySet<TipoElemento> = new Set(['prompt', 'markdown', 'codigo', 'json']);
 /** Cuántos de su tipo (los modificados más recientemente) se leen para buscar el parecido. */
 export const CANDIDATOS = 200;
 /**

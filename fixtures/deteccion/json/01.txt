@@ -1,0 +1,15 @@
+{
+  "name": "rimor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "19.2.0",
+    "zustand": "5.0.8"
+  }
+}

@@ -1,0 +1,9 @@
+[gateway]
+client = "ureq"
+stream_timeout_ms = 30000
+connect_timeout_ms = 2000
+retries = 3
+
+[gateway.tls]
+verify = true
+ca_file = "/etc/ssl/certs/ca.pem"

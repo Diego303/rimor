@@ -16,21 +16,35 @@ import {
 import type { RepositorioEntidades } from '../almacen/entidades';
 import type { Repositorio } from '../almacen/repositorio';
 import type { DatosTabla } from '../lectores/datos/perfil';
+import type { DatosJson } from '../lectores/json/lector';
 import type { DatosLog } from '../lectores/log/analisis';
 import type { DatosMediciones } from '../lectores/mediciones/lector';
 import { type ClaseComparacion, comparables } from './clases';
 import { type ComparacionDatos, compararDatos } from './datos';
+import { type ComparacionJson, compararJson } from './json';
 import { type ComparacionLogs, compararLogs } from './logs';
 import { type ComparacionMediciones, compararMediciones } from './mediciones';
-import { type ResultadoComparacion, resultadoDeDatos, resultadoDeLogs, resultadoDeMediciones } from './resultado';
+import {
+  type ResultadoComparacion,
+  resultadoDeDatos,
+  resultadoDeJson,
+  resultadoDeLogs,
+  resultadoDeMediciones,
+} from './resultado';
 
 /** El lector que deriva los datos de cada clase: sus datos son los que se comparan. */
-const LECTOR: Record<ClaseComparacion, string> = { logs: 'log', mediciones: 'mediciones', datos: 'datos' };
+const LECTOR: Record<ClaseComparacion, string> = {
+  logs: 'log',
+  mediciones: 'mediciones',
+  datos: 'datos',
+  json: 'json',
+};
 
 export type Calculo =
   | { clase: 'logs'; logs: ComparacionLogs; datos: [DatosLog, DatosLog] }
   | { clase: 'mediciones'; mediciones: ComparacionMediciones }
-  | { clase: 'datos'; datos: ComparacionDatos };
+  | { clase: 'datos'; datos: ComparacionDatos }
+  | { clase: 'json'; json: ComparacionJson };
 
 /** Los derivados de un elemento (la cola de derivados de la app, que usa su caché). */
 export type Derivar = (el: Elemento) => Promise<unknown>;
@@ -49,6 +63,7 @@ export async function calcular(a: Elemento, b: Elemento, derivar: Derivar): Prom
     return ok({ clase: 'logs', logs: compararLogs(...datos), datos });
   }
   if (c.clase === 'datos') return ok({ clase: 'datos', datos: compararDatos(da as DatosTabla, db as DatosTabla) });
+  if (c.clase === 'json') return ok({ clase: 'json', json: compararJson(da as DatosJson, db as DatosJson) });
   const mediciones = compararMediciones(da as DatosMediciones, db as DatosMediciones);
   return mediciones ? ok({ clase: 'mediciones', mediciones }) : fallo('comparacion.sinValores');
 }
@@ -61,6 +76,7 @@ export function resultadoDe(calculo: Calculo, fuentes: readonly [Elemento, Eleme
     versiones: fuentes.map((f) => f.frontmatter.lector.version),
   };
   if (calculo.clase === 'datos') return resultadoDeDatos(calculo.datos, de);
+  if (calculo.clase === 'json') return resultadoDeJson(calculo.json, de);
   return calculo.clase === 'logs' ? resultadoDeLogs(calculo.logs, de) : resultadoDeMediciones(calculo.mediciones, de);
 }
 

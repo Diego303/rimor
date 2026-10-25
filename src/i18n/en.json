@@ -378,6 +378,19 @@
         "maximo": "Maximum",
         "unicos": "Distinct"
       },
+      "json": {
+        "cambian": {
+          "one": "{n} key changes",
+          "other": "{n} keys change"
+        },
+        "iguales": "Both have the same keys and values",
+        "detalle": "{anadidas} added · {quitadas} removed · {cambiadas} changed",
+        "cambiosTitulo": "Changes per path",
+        "sinCambios": "No key changes.",
+        "ruta": "Path",
+        "antes": "Before",
+        "despues": "After"
+      },
       "logs": {
         "linea": "line {n}",
         "separan": "This is where they part",
@@ -413,6 +426,7 @@
         "conLog": "Compare with another log",
         "conMediciones": "Compare with other measurements",
         "conDatos": "Compare with other data",
+        "conJson": "Compare with another configuration",
         "comparar": "Compare",
         "seleccionaDos": "To compare, select two with x.",
         "noSePuede": "They cannot be compared. {motivo}",

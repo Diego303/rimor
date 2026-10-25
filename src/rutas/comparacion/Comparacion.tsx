@@ -23,6 +23,7 @@ import { TituloElemento } from '../elemento/Cabecera';
 import { Pantalla } from '../Pantalla';
 import { useComparacion } from './useComparacion';
 import { VeredictoDatos, VistaComparacionDatos } from './VistaDatos';
+import { VeredictoJson, VistaComparacionJson } from './VistaJson';
 import { VistaComparacionLogs } from './VistaLogs';
 import { VeredictoMediciones, VistaComparacionMediciones } from './VistaMediciones';
 
@@ -49,6 +50,12 @@ function VeredictoGuardado({ r, nombre }: { r: ResultadoComparacion; nombre: str
     return (
       <Tarjeta>
         <VeredictoDatos r={r} />
+      </Tarjeta>
+    );
+  if (r.clase === 'json')
+    return (
+      <Tarjeta>
+        <VeredictoJson r={r} />
       </Tarjeta>
     );
   return (
@@ -241,5 +248,6 @@ function Cuerpo({ calculo, a, b, nombres, guardado }: PropsCuerpo) {
   if (calculo?.clase === 'mediciones') return <VistaComparacionMediciones c={calculo.mediciones} nombres={nombres} />;
   if (calculo?.clase === 'logs' && a && b) return <VistaComparacionLogs c={calculo.logs} buena={a} mala={b} />;
   if (calculo?.clase === 'datos') return <VistaComparacionDatos c={calculo.datos} />;
+  if (calculo?.clase === 'json') return <VistaComparacionJson c={calculo.json} />;
   return guardado ? <VeredictoGuardado r={guardado} nombre={nombres[1]} /> : null;
 }

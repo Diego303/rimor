@@ -1,0 +1,11 @@
+[tool.poetry]
+name = "analisis"
+version = "0.1.0"
+description = "Scripts de análisis"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pandas = "^2.2"
+
+[tool.ruff]
+line-length = 100
