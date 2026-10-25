@@ -25,13 +25,14 @@ export const PARECIDO_TITULO_DISTINTO = 0.8;
 const masReciente = (a: FrontmatterComun, b: FrontmatterComun) => Date.parse(b.modificado) - Date.parse(a.modificado);
 
 /**
- * El elemento del que `texto` es la versión nueva, o `null`. `generico` es el título que pone el lector cuando no
- * encuentra uno («Prompt», «Código»): ese no cuenta como mismo título.
+ * El elemento del que `texto` es la versión nueva, o `null`. Solo entre los del mismo tipo y del mismo lector (un
+ * parche no es versión de un código, aunque los dos sean código). `generico` es el título que pone el lector cuando
+ * no encuentra uno («Prompt», «Código»): ese no cuenta como mismo título.
  */
 export async function anteriorDe(
   texto: string,
   titulo: string,
-  tipo: TipoElemento,
+  { tipo, nombre }: { tipo: TipoElemento; nombre: string },
   repositorio: Pick<Repositorio, 'elementos' | 'leerElemento'>,
   generico?: string,
 ): Promise<FrontmatterComun | null> {
@@ -39,7 +40,7 @@ export async function anteriorDe(
   // Los guardados como adjunto (más de 2 MB) no tienen versiones.
   const mismos = repositorio
     .elementos()
-    .filter((fm) => fm.tipo === tipo && !fm.adjunto)
+    .filter((fm) => fm.tipo === tipo && fm.lector.nombre === nombre && !fm.adjunto)
     .sort(masReciente);
   if (!mismos.length) return null;
   const nuevos = shingles(texto);

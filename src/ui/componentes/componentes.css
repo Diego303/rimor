@@ -739,6 +739,59 @@ mark {
 .diff .s {
   color: var(--muted);
 }
+/* Diff lado a lado (IN-042): dos columnas, antes y después, con el estilo `.diff` de la referencia; el número de
+   línea en un bloque aparte (no se tacha con la línea quitada). Por debajo de 720 px, una columna. */
+table.diff-lado {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.diff-celda {
+  padding: 0 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  vertical-align: top;
+  text-align: left;
+}
+.diff-titulo {
+  color: var(--faint);
+  font-weight: 400;
+  font-size: 0.6875rem;
+  padding-block: 4px;
+}
+.diff-cabecera {
+  color: var(--faint);
+  padding-block: 2px;
+  border-block: 1px solid var(--line);
+}
+.diff-lado .ln {
+  display: inline-block;
+  min-width: 2.6em;
+  margin-right: 0.8em;
+  text-align: right;
+  color: var(--faint);
+  user-select: none;
+}
+.diff-archivo .diff-ruta {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.diff-mas {
+  color: var(--ok);
+}
+.diff-menos {
+  color: var(--bad);
+}
+@container app (max-width: 720px) {
+  .diff-fila .diff-celda {
+    display: block;
+  }
+  .diff-lado .diff-titulos,
+  .diff-lado .diff-fila .vacia,
+  .diff-lado .diff-fila .s + .s {
+    display: none;
+  }
+}
 .tree {
   font-family: var(--f-m);
   font-size: 0.71875rem;

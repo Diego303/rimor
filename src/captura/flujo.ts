@@ -120,10 +120,10 @@ function lectorPara(
   detectado: string | null,
   binario: boolean,
 ): Lector | undefined {
-  const delTipo = tipo ? registro.lectores.find((l) => l.tipo === tipo) : undefined;
+  const delTipo = tipo ? registro.deTipo(tipo) : undefined;
   const elegido = delTipo ?? (detectado && !tipo ? registro.porNombre(detectado) : undefined);
   // De reserva: el genérico para binarios y Texto para lo demás.
-  return elegido ?? registro.lectores.find((l) => l.tipo === (binario ? 'archivo' : 'texto'));
+  return elegido ?? registro.deTipo(binario ? 'archivo' : 'texto');
 }
 
 /**
@@ -232,7 +232,13 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     utf8(textoVersion).length <= LIMITE_ORIGINAL_EN_MD
   ) {
     const generico = (lector.textos.t as (i: 'es', c: string) => string)('es', 'titulo');
-    const anterior = await anteriorDe(textoVersion, borrador.titulo, tipo, repositorio, generico);
+    const anterior = await anteriorDe(
+      textoVersion,
+      borrador.titulo,
+      { tipo, nombre: lector.nombre },
+      repositorio,
+      generico,
+    );
     if (anterior) {
       const hilo =
         entrada.hilo && analizarRef(entrada.hilo)?.prefijo === PREFIJOS.hilo

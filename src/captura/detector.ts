@@ -101,7 +101,7 @@ function puntuar(fn: () => number): number {
 
 export function detectar(entrada: Entrada, registro: Registro, opciones: OpcionesDeteccion = {}): Deteccion {
   const { umbral = UMBRAL_DETECCION, margen = MARGEN_DUDA, cabecera } = opciones;
-  const lectorDe = (tipo: TipoElemento) => registro.lectores.find((l) => l.tipo === tipo)?.nombre ?? null;
+  const lectorDe = (tipo: TipoElemento) => registro.deTipo(tipo)?.nombre ?? null;
 
   const puntuaciones: Candidato[] = registro.lectores
     .map((l) => ({ tipo: l.tipo, lector: l.nombre, confianza: puntuar(() => l.detectar(entrada)) }))
@@ -121,7 +121,9 @@ export function detectar(entrada: Entrada, registro: Registro, opciones: Opcione
   const enlace = entrada.texto !== undefined && esEnlaceCompleto(entrada.texto) ? lectorDe('enlace') : null;
   if (enlace) return { tipo: 'enlace', lector: enlace, confianza: 1, via: 'atajo', puntuaciones };
 
-  const [primero, segundo] = puntuaciones;
+  // La duda es entre dos tipos: el segundo candidato es el primero de otro tipo (Diff y Código son los dos código).
+  const [primero] = puntuaciones;
+  const segundo = puntuaciones.find((c) => c.tipo !== primero?.tipo);
   if (primero && primero.confianza > umbral) {
     // Redondeada para que 0,70 − 0,55 cuente como 0,15 y no como 0,1499…
     const distancia = segundo ? Math.round((primero.confianza - segundo.confianza) * 1e9) / 1e9 : 1;

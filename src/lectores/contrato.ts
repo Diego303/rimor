@@ -94,6 +94,11 @@ export interface Lector<D = unknown> {
   /** Si cambia, se recalculan los derivados. */
   version: number;
   textos: TextosLector;
+  /**
+   * Cómo se llama si no basta con el nombre de su tipo (dos lectores del mismo tipo: «Diff o parche» y «Código»).
+   * Lo usan el diálogo «Cambiar tipo» y la vista previa del compositor.
+   */
+  etiqueta?(idioma: Idioma): string;
   /** Confianza entre 0 y 1; barata y síncrona. */
   detectar(e: Entrada): number;
   leer(e: Entrada): Promise<Borrador>;

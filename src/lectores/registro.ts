@@ -5,10 +5,11 @@
  * Añadir un lector: copiar `_plantilla/` a `src/lectores/<nombre>/`, rellenarla e importarla aquí, en su puesto
  * de `ORDEN_DETECCION` (si su nombre no está, se añade a su puesto).
  */
-import type { Elemento } from '@rimor/formato';
+import type { Elemento, TipoElemento } from '@rimor/formato';
 import { lectorArchivo } from './archivo/lector';
 import { lectorCodigo } from './codigo/lector';
 import type { Lector } from './contrato';
+import { lectorDiff } from './diff/lector';
 import { lectorEnlace } from './enlace/lector';
 import { lectorError } from './error/lector';
 import { lectorIdea } from './idea/lector';
@@ -49,6 +50,7 @@ export const LECTORES: readonly Lector[] = [
   lectorError, // 4
   lectorLog, // 5
   lectorMediciones, // 6
+  lectorDiff, // 10
   lectorPrompt, // 11
   lectorMarkdown, // 12
   lectorCodigo, // 15
@@ -62,6 +64,11 @@ export interface Registro {
   porNombre(nombre: string): Lector | undefined;
   /** El lector que escribió el elemento; si ya no existe, el de su tipo. */
   paraElemento(el: Pick<Elemento, 'frontmatter'>): Lector | undefined;
+  /**
+   * El lector de un tipo: el que se llama como él (`codigo`) y, si no hay, el primero de ese tipo. Con dos del mismo
+   * tipo (Diff y Código), `/codigo` es Código.
+   */
+  deTipo(tipo: TipoElemento): Lector | undefined;
 }
 
 const NOMBRE_VALIDO = /^[a-z][a-z0-9-]*$/;
@@ -80,11 +87,13 @@ export function crearRegistro(lectores: readonly Lector[]): Registro {
     if (porNombre.has(l.nombre)) throw new Error(`Lector repetido: «${l.nombre}»`);
     porNombre.set(l.nombre, l);
   }
+  const deTipo = (tipo: TipoElemento) =>
+    (porNombre.get(tipo)?.tipo === tipo ? porNombre.get(tipo) : undefined) ?? lectores.find((l) => l.tipo === tipo);
   return {
     lectores,
     porNombre: (nombre) => porNombre.get(nombre),
-    paraElemento: ({ frontmatter }) =>
-      porNombre.get(frontmatter.lector.nombre) ?? lectores.find((l) => l.tipo === frontmatter.tipo),
+    paraElemento: ({ frontmatter }) => porNombre.get(frontmatter.lector.nombre) ?? deTipo(frontmatter.tipo),
+    deTipo,
   };
 }
 

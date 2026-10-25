@@ -4,6 +4,7 @@ Todos los cambios visibles de Rimor. Formato [Keep a Changelog](https://keepacha
 
 ## [Sin publicar]
 ### Añadido
+- Lector Diff: un diff o un parche pegado (`git diff`, `git format-patch`, diff unificado) se guarda como código con su propio lector: qué archivos toca (modificados, nuevos, borrados, renombrados o binarios) y cuántas líneas añade y quita cada uno, «Parche de 4 archivos: +120 −37.», y la vista lo enseña lado a lado con los números de línea (en una columna en pantallas estrechas). El título es el asunto del parche, si lo trae. `/codigo` sigue guardando con el lector Código, y un parche nunca queda como versión de un código (IN-042).
 - Enlaces con ficha: un enlace a un repositorio de GitHub o GitLab, a un paquete (npm, PyPI, crates.io, Go o Maven) o a un paper (DOI o arXiv) puede completarse con lo que dicen sus APIs públicas: actividad, último lanzamiento, licencia, vulnerabilidades conocidas, autores y año, con la fecha de la consulta y «Volver a consultar», que enseña qué cambió. Antes de la primera consulta se dice qué sitio se consultaría; en Ajustes · Red se eligen los sitios (ninguno por defecto) y un token de GitHub opcional que se queda en este navegador. Con los sitios activados, la ficha llega sola al capturar y la respuesta de Rimor la usa («Repositorio activo: último lanzamiento hace 12 días, licencia MIT.»). Sin red, la señal «sin conexión» y «Sin red: guardado sin enriquecer.». Un espacio importado como nuevo llega con todos los sitios apagados (IN-041).
 
 ## [0.1.0] · 2026-10-25

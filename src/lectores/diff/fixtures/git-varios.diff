@@ -1,0 +1,46 @@
+diff --git a/src/cliente.rs b/src/cliente.rs
+index 3b18e51..a9c2f04 100644
+--- a/src/cliente.rs
++++ b/src/cliente.rs
+@@ -10,6 +10,8 @@ impl Cliente {
+     pub fn nuevo() -> Self {
+         Self {
+-            timeout: Duration::from_secs(30),
++            timeout: Duration::from_secs(60),
++            reintentos: 3,
+         }
+     }
+ 
+@@ -40,3 +42,2 @@ impl Cliente {
+     fn leer(&self) {
+-        // TODO
+         self.stream.next_chunk()
+diff --git a/src/nuevo.rs b/src/nuevo.rs
+new file mode 100644
+index 0000000..e69de29
+--- /dev/null
++++ b/src/nuevo.rs
+@@ -0,0 +1,2 @@
++pub mod nuevo;
++pub fn hola() {}
+diff --git a/src/viejo.rs b/src/viejo.rs
+deleted file mode 100644
+index 1111111..0000000
+--- a/src/viejo.rs
++++ /dev/null
+@@ -1 +0,0 @@
+-fn viejo() {}
+diff --git a/docs/a.md b/docs/b.md
+similarity index 90%
+rename from docs/a.md
+rename to docs/b.md
+index 2222222..3333333 100644
+--- a/docs/a.md
++++ b/docs/b.md
+@@ -1,2 +1,2 @@
+ # Título
+-Antes
++Después
+diff --git a/logo.png b/logo.png
+index 4444444..5555555 100644
+Binary files a/logo.png and b/logo.png differ

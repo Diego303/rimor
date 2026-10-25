@@ -1,0 +1,9 @@
+--- config/antes.toml	2026-10-17 10:00:00.000000000 +0200
++++ config/despues.toml	2026-10-17 11:00:00.000000000 +0200
+@@ -1,4 +1,4 @@
+ [servidor]
+-puerto = 8080
++puerto = 9090
+ host = "0.0.0.0"
+
+\ No newline at end of file

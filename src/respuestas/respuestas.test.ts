@@ -214,7 +214,11 @@ describe('respuestas de los lectores sobre el corpus', () => {
       } catch {
         propios = [];
       }
-      const primero = propios[0];
+      // El primero que el lector reconoce (dos lectores pueden compartir tipo: Diff y Código).
+      const primero =
+        propios.find(
+          (n) => n.endsWith('.txt') && lector.detectar({ texto: readFileSync(join(raiz, lector.tipo, n), 'utf8') }) > 0,
+        ) ?? propios[0];
       let el = con(elementoFalso(1, ejemplos[0] ?? ''), { tipo: lector.tipo });
       if (primero?.endsWith('.txt'))
         el = con(elementoFalso(1, readFileSync(join(raiz, lector.tipo, primero), 'utf8')), { tipo: lector.tipo });

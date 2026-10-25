@@ -421,6 +421,7 @@ function VistaPrevia({
   alQuitar: (i: number) => void;
 }) {
   const { t, idioma } = useT();
+  const lectores = useLectoresOpcional();
   const piezas = [];
   if (p?.indicaciones.busqueda !== undefined) {
     piezas.push(
@@ -436,7 +437,15 @@ function VistaPrevia({
       <span key="como" className="xs muted">
         {t('compositor.seGuardaraComo')}
       </span>,
-      <ChipTipo key="tipo" tipo={tipo} />,
+      <ChipTipo
+        key="tipo"
+        tipo={tipo}
+        etiqueta={
+          !p.indicaciones.tipo && p.deteccion?.lector
+            ? lectores?.registro.porNombre(p.deteccion.lector)?.etiqueta?.(idioma)
+            : undefined
+        }
+      />,
       p.indicaciones.tipo ? (
         <span key="conf" className="xs faint">
           {t('compositor.elegido')}

@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-25 13:10
-**Ahora:** IN-042 · Diff y parche · fase análisis y diseño
+**Última actualización:** 2026-10-25 13:33
+**Ahora:** IN-042 · Diff y parche · fase implementación
 **Siguiente:** IN-043 · Comando con huecos
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 1/22 · v0.3 0/17 · v0.4 0/9 · total 52/99
 
@@ -61,7 +61,7 @@
 | IN-039 | Primer uso y espacio de ejemplo | v0.1 | 6 | hecha | fec4ff4 4c0df39 86d1dda | docs/features/IN-039-primer-uso.md |
 | IN-040 | Cierre de v0.1 | v0.1 | 7 | hecha | 6dcf500 8ccb01e | docs/features/IN-040-cierre-v0.1.md |
 | IN-041 | Enlace enriquecido | v0.2 | 8 | hecha | f2f85db 76c95a1 a78cdaf | docs/features/IN-041-enlace-enriquecido.md |
-| IN-042 | Diff y parche | v0.2 | 8 | en análisis y diseño | — | docs/features/IN-042-diff-parche.md |
+| IN-042 | Diff y parche | v0.2 | 8 | en implementación | d1d8e29 | docs/features/IN-042-diff-parche.md |
 | IN-043 | Comando con huecos | v0.2 | 8 | pendiente | — | — |
 | IN-044 | Datos tabulares con DuckDB | v0.2 | 8 | pendiente | — | — |
 | IN-045 | JSON, YAML y TOML con comparación estructural | v0.2 | 8 | pendiente | — | — |
@@ -175,7 +175,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-25 | IN-042 | análisis y diseño | lector diff de tipo código (puesto 10), lado a lado con el estilo .diff, Registro.deTipo, etiqueta del lector, duda entre tipos distintos y versiones del mismo lector | … |
+| 2026-10-25 | IN-042 | implementación | lector diff (código) con análisis por cuentas, vista lado a lado en tabla, Registro.deTipo, etiqueta del lector, duda entre tipos distintos y versiones por lector; verificar en verde: 107 archivos, 1384 pruebas, 251,5 KB | … |
+| 2026-10-25 | IN-042 | análisis y diseño | lector diff de tipo código (puesto 10), lado a lado con el estilo .diff, Registro.deTipo, etiqueta del lector, duda entre tipos distintos y versiones del mismo lector | d1d8e29 |
 | 2026-10-25 | IN-041 | verificación | revisión independiente (15 hallazgos) corregida con pruebas: no reactivar dominios, foco, plazo de 15 s, fallos al capturar, token, Go, DOI de DataCite, importar sin dominios, redirecciones; verificar en verde: 105 archivos, 1370 pruebas, 249,1 KB | a78cdaf |
 | 2026-10-25 | IN-041 | implementación | proveedores (GitHub, GitLab, deps.dev con OSV, Crossref, DataCite), ficha con la anterior y sus cambios, Ajustes | 76c95a1 |
 | 2026-10-25 | IN-041 | análisis y diseño | proveedores de F0-7 (GitHub, GitLab, paquetes con OSV, Crossref, arXiv por DataCite), ficha en el frontmatter con la anterior, dominios en Ajustes, token solo en el navegador, sin-conexion en la señal | f2f85db |

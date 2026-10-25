@@ -38,6 +38,24 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
       ],
     },
   },
+  "diff": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Patch of 5 files: +5 −4.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "Parche de 5 archivos: +5 −4.",
+        },
+      ],
+    },
+  },
   "enlace": {
     "en": {
       "texto": [

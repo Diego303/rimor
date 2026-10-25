@@ -75,7 +75,7 @@ interface PropsTipo {
 }
 
 export function DialogoTipo({ refe, lectores, alElegir, alCerrar }: PropsTipo) {
-  const { t } = useT();
+  const { t, idioma } = useT();
   return (
     <Dialogo abierto={refe !== null} alCerrar={alCerrar} titulo={t('pantallas.inicio.tipoTitulo', { ref: refe ?? '' })}>
       {lectores.length ? (
@@ -83,7 +83,7 @@ export function DialogoTipo({ refe, lectores, alElegir, alCerrar }: PropsTipo) {
           {lectores.map((l) => (
             <button key={l.nombre} type="button" className="it" onClick={() => alElegir(l)}>
               <IconoTipo tipo={l.tipo} denso />
-              <span className="sm">{t(`tipos.${l.tipo}`)}</span>
+              <span className="sm">{l.etiqueta?.(idioma) ?? t(`tipos.${l.tipo}`)}</span>
             </button>
           ))}
         </div>

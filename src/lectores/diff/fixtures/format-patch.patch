@@ -1,0 +1,20 @@
+From 2f6f3c1a9b8e7d6c5b4a39281706f5e4d3c2b1a0 Mon Sep 17 00:00:00 2001
+From: Ana Pérez <ana@example.com>
+Date: Fri, 17 Oct 2026 17:40:00 +0200
+Subject: [PATCH 1/2] Sube el timeout de lectura a 60 s para el streaming
+ del gateway
+
+El cliente cortaba a los 30 s.
+---
+ src/cliente.rs | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/cliente.rs b/src/cliente.rs
+index 3b18e51..a9c2f04 100644
+--- a/src/cliente.rs
++++ b/src/cliente.rs
+@@ -12,1 +12,1 @@ impl Cliente {
+-            timeout: Duration::from_secs(30),
++            timeout: Duration::from_secs(60),
+-- 
+2.39.0

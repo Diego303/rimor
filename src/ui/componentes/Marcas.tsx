@@ -20,13 +20,14 @@ export function Filtro({
 }
 
 /** Chip de tipo: icono y nombre en neutro; solo Error lleva color (E7). */
-export function ChipTipo({ tipo }: { tipo: TipoVisual }) {
+/** `etiqueta`: el nombre del lector cuando no basta con el del tipo («Diff o parche», que es código). */
+export function ChipTipo({ tipo, etiqueta }: { tipo: TipoVisual; etiqueta?: string | undefined }) {
   const { t } = useT();
   const a = ASPECTO_TIPO[tipo];
   return (
     <span className={clases('kchip', a.clase)}>
       <Icono nombre={a.icono} tamano={13} />
-      {t(`tipos.${tipo}`)}
+      {etiqueta ?? t(`tipos.${tipo}`)}
     </span>
   );
 }

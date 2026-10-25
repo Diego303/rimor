@@ -41,10 +41,10 @@ Que un diff pegado (de `git diff`, `git format-patch` o un diff unificado) se en
 
 ## Tareas
 
-- [ ] Detecta `diff --git` y `@@`.
-- [ ] Deriva los archivos afectados y las líneas añadidas y quitadas por archivo.
-- [ ] Vista lado a lado con resaltado.
-- [ ] Respuesta «Parche de 4 archivos: +120 −37.».
+- [x] Detecta `diff --git` y `@@`.
+- [x] Deriva los archivos afectados y las líneas añadidas y quitadas por archivo.
+- [x] Vista lado a lado con resaltado.
+- [x] Respuesta «Parche de 4 archivos: +120 −37.».
 
 ## Pruebas previstas
 
@@ -72,3 +72,20 @@ Que un diff pegado (de `git diff`, `git format-patch` o un diff unificado) se en
 ## Autorrevisión
 
 Cubre las cuatro tareas. Reutiliza el contrato de lectores, el estilo `.diff` de la referencia, `stats`, `DetallesElemento` y las cifras citables; arregla de paso cómo se elige el lector de un tipo, que con dos lectores de código fallaría.
+
+## Implementación
+
+- `src/lectores/diff/`: `analisis.ts` (`puntuarDiff`, `analizarDiff`, `filasLadoALado`), `lector.ts` (`lectorDiff`, de tipo `codigo`, con su etiqueta «Diff o parche»), `textos.ts`, `Vista.tsx` (cifras, una tarjeta por archivo, lado a lado; 400 filas y 20 archivos abiertos) y `Tarjeta.tsx`; registrado en el puesto 10.
+- `Registro.deTipo` (el lector que se llama como el tipo y, si no, el primero de ese tipo): lo usan la captura, el detector y `paraElemento`.
+- `Lector.etiqueta`: el diálogo «Cambiar tipo» y el chip de la vista previa del compositor la usan.
+- El detector duda entre el primero y el primero de **otro** tipo.
+- `anteriorDe` (versiones) busca entre los del mismo tipo y del mismo lector.
+- CSS: `.diff-lado` (dos columnas con el estilo `.diff` de la referencia y una por debajo de 720 px).
+- Pruebas: `diff/diff.test.ts` (análisis de `git diff`, `format-patch` y unificado, filas lado a lado, títulos, detección y lo que no es diff, `/codigo` y `deTipo`, respuesta y estilo, cifras, versiones) y `diff/Vista.test.tsx` (cifras, tarjetas, filas con sus números, «Ver todo»). Los tres fixtures, también en el corpus de detección (`fixtures/deteccion/codigo/`).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| Los trozos se leen por sus cuentas (`@@ -a,b +c,d @@`) | Así la firma `-- ` de un `format-patch` o una línea de texto después del diff no se cuentan como quitadas. |
+| «Ver todo» cuenta líneas, no filas | Las cabeceras de los trozos son filas de la vista, no líneas del parche. |
