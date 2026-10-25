@@ -22,6 +22,7 @@ import { useEsperaVisible } from '../../ui/marca/useEsperaVisible';
 import { TituloElemento } from '../elemento/Cabecera';
 import { Pantalla } from '../Pantalla';
 import { useComparacion } from './useComparacion';
+import { VeredictoDatos, VistaComparacionDatos } from './VistaDatos';
 import { VistaComparacionLogs } from './VistaLogs';
 import { VeredictoMediciones, VistaComparacionMediciones } from './VistaMediciones';
 
@@ -42,6 +43,12 @@ function VeredictoGuardado({ r, nombre }: { r: ResultadoComparacion; nombre: str
     return (
       <Tarjeta>
         <VeredictoMediciones r={r} nombre={nombre} />
+      </Tarjeta>
+    );
+  if (r.clase === 'datos')
+    return (
+      <Tarjeta>
+        <VeredictoDatos r={r} />
       </Tarjeta>
     );
   return (
@@ -233,5 +240,6 @@ interface PropsCuerpo {
 function Cuerpo({ calculo, a, b, nombres, guardado }: PropsCuerpo) {
   if (calculo?.clase === 'mediciones') return <VistaComparacionMediciones c={calculo.mediciones} nombres={nombres} />;
   if (calculo?.clase === 'logs' && a && b) return <VistaComparacionLogs c={calculo.logs} buena={a} mala={b} />;
+  if (calculo?.clase === 'datos') return <VistaComparacionDatos c={calculo.datos} />;
   return guardado ? <VeredictoGuardado r={guardado} nombre={nombres[1]} /> : null;
 }

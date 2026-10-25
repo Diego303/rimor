@@ -6,6 +6,7 @@
 import { fmtCifra, fmtNumero, fmtP, type Idioma } from '../i18n/formatos';
 import { decimalesPara } from '../lectores/mediciones/lector';
 import type { ClaseComparacion } from './clases';
+import type { ComparacionDatos } from './datos';
 import type { ComparacionLogs } from './logs';
 import type { ComparacionMediciones } from './mediciones';
 
@@ -46,7 +47,17 @@ export interface ResultadoLogs extends Comun {
   cambian: number;
 }
 
-export type ResultadoComparacion = ResultadoMediciones | ResultadoLogs;
+export interface ResultadoDatos extends Comun {
+  clase: 'datos';
+  filas_a: number;
+  filas_b: number;
+  columnas_anadidas: number;
+  columnas_quitadas: number;
+  /** Columnas comunes que cambian de distribución. */
+  cambian: number;
+}
+
+export type ResultadoComparacion = ResultadoMediciones | ResultadoLogs | ResultadoDatos;
 
 const finito = (x: number): number | null => (Number.isFinite(x) ? x : null);
 
@@ -91,6 +102,18 @@ export function resultadoDeLogs(c: ComparacionLogs, f: DeLasFuentes): ResultadoL
   };
 }
 
+export function resultadoDeDatos(c: ComparacionDatos, f: DeLasFuentes): ResultadoDatos {
+  return {
+    ...comunDe(f),
+    clase: 'datos',
+    filas_a: c.filas[0],
+    filas_b: c.filas[1],
+    columnas_anadidas: c.anadidas.length,
+    columnas_quitadas: c.quitadas.length,
+    cambian: c.cambios.length,
+  };
+}
+
 const esNumeroONulo = (x: unknown) => x === null || typeof x === 'number';
 
 /** El resultado guardado, si tiene la forma de esta versión; si no (otra versión, editado a mano), `null`. */
@@ -102,6 +125,10 @@ export function leerResultado(r: Record<string, unknown>): ResultadoComparacion 
       : null;
   if (r.clase === 'logs')
     return esNumeroONulo(r.divergencia) && typeof r.nuevos === 'number' ? (r as unknown as ResultadoLogs) : null;
+  if (r.clase === 'datos')
+    return typeof r.filas_a === 'number' && typeof r.filas_b === 'number' && typeof r.cambian === 'number'
+      ? (r as unknown as ResultadoDatos)
+      : null;
   return null;
 }
 
@@ -132,6 +159,12 @@ export function cifrasDeResultado(r: ResultadoComparacion, idioma: Idioma): [nom
       ['mediana_b', mediana(r.mediana_b)],
     ];
   }
+  if (r.clase === 'datos')
+    return [
+      ['filas_a', fmtNumero(r.filas_a, idioma)],
+      ['filas_b', fmtNumero(r.filas_b, idioma)],
+      ['cambian', fmtNumero(r.cambian, idioma)],
+    ];
   return [
     ['divergencia', r.divergencia === null ? '—' : fmtNumero(r.divergencia, idioma)],
     ['nuevos', fmtNumero(r.nuevos, idioma)],

@@ -91,6 +91,7 @@ const ESTADOS: [EstadoSenal, string][] = [
   ['error', 'No se pudo leer el ZIP'],
   ['comparando', 'Comparando las dos series'],
   ['sin-conexion', 'Sin red: guardado sin enriquecer'],
+  ['leyendo-datos', 'Perfilando 2.400 filas'],
 ];
 
 /** Cada estado de «Señal», con botón para repetir y un interruptor de movimiento reducido (IN-090). */

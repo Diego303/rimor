@@ -355,6 +355,25 @@
         "mismaMaquina": "Si se midieron en la misma máquina, para generalizar repite en otra.",
         "antesDeMedir": "Decide el número de repeticiones antes de medir; repetir hasta que salga una diferencia aumenta los falsos positivos."
       },
+      "datos": {
+        "filas": "De {antes} filas a {despues}",
+        "cambian": {
+          "one": "{n} columna cambia de distribución",
+          "other": "{n} columnas cambian de distribución"
+        },
+        "columnas": "{anadidas} columnas añadidas y {quitadas} quitadas",
+        "anadidas": "Columnas añadidas",
+        "quitadas": "Columnas quitadas",
+        "tipo": "{columna}: tipo",
+        "cambiosTitulo": "Cambios por columna",
+        "sinCambios": "Las columnas comunes no cambian.",
+        "columna": "Columna",
+        "nulos": "Nulos",
+        "media": "Media",
+        "minimo": "Mínimo",
+        "maximo": "Máximo",
+        "unicos": "Únicos"
+      },
       "logs": {
         "linea": "línea {n}",
         "separan": "Aquí se separan",
@@ -389,6 +408,7 @@
         "sinCoincidencias": "Nada coincide con eso.",
         "conLog": "Comparar con otro log",
         "conMediciones": "Comparar con otras mediciones",
+        "conDatos": "Comparar con otros datos",
         "comparar": "Comparar",
         "seleccionaDos": "Para comparar, selecciona dos con x.",
         "noSePuede": "No se pueden comparar. {motivo}",

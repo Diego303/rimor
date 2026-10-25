@@ -18,6 +18,11 @@ export default defineConfig({
     plugins: [tailwindcss()],
     // Versión de la app para el manifest de cada espacio (plan Anexo A).
     define: { __VERSION_APP__: JSON.stringify(version) },
-    worker: { format: 'es' },
+    worker: {
+      format: 'es',
+      // Los recursos de los Workers con el mismo nombre que los del hilo principal: el `.wasm` de DuckDB (34 MB) que
+      // usan los dos es un solo archivo y se descarga una vez (IN-044).
+      rollupOptions: { output: { assetFileNames: '_astro/[name].[hash][extname]' } },
+    },
   },
 });

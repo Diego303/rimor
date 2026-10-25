@@ -13,6 +13,10 @@ describe('validarCsp', () => {
     expect(validarCsp(base("'self' *")).length).toBeGreaterThan(0);
     expect(validarCsp(base("'self' https: data:")).length).toBeGreaterThan(0);
     expect(validarCsp(base("'self' 'unsafe-hashes' 'sha256-a='")).length).toBeGreaterThan(0);
+    expect(validarCsp(base("'self' 'unsafe-eval'")).length).toBeGreaterThan(0);
+    expect(validarCsp(base("'self' 'unsafe-inline'")).length).toBeGreaterThan(0);
+    // Compilar WebAssembly (DuckDB, IN-044) sí.
+    expect(validarCsp(base("'self' 'wasm-unsafe-eval' 'sha256-abc='"))).toEqual([]);
     expect(validarCsp(base("'self'").replace("default-src 'self'", "default-src 'self' *")).length).toBeGreaterThan(0);
   });
 });

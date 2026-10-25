@@ -13,6 +13,8 @@ export type Ejecutor = (
   nombre: string,
   el: Elemento,
   alProgreso?: (hechas: number, total: number) => void,
+  /** Los bytes del adjunto, si el lector los necesita (`necesitaBytes`). */
+  bytes?: Uint8Array,
 ) => Promise<unknown>;
 
 export type Progreso = { hechas: number; total: number };
@@ -41,6 +43,8 @@ export interface OpcionesCola {
    * porque el Worker no tiene el almacén. `null` si no es texto (un binario); lanza si no se puede leer.
    */
   cargarOriginal?: (el: Elemento) => Promise<string | null>;
+  /** Los bytes del adjunto de un elemento, para los lectores que los piden (`necesitaBytes`); lanza si no está. */
+  cargarBytes?: (el: Elemento) => Promise<Uint8Array | null>;
 }
 
 /** Plazo por defecto de un cálculo: un log de 50.000 líneas debe tardar menos de 2 s (plan §14.7). */
@@ -172,7 +176,10 @@ export class ColaDerivados {
       // guarda en la caché un análisis de un texto vacío).
       const calcular = async () => {
         let el = t.el;
-        if (el.original === null && this.opciones.cargarOriginal) {
+        let bytes: Uint8Array | undefined;
+        if (t.lector.necesitaBytes && el.frontmatter.adjunto && this.opciones.cargarBytes)
+          bytes = (await this.opciones.cargarBytes(el)) ?? undefined;
+        else if (el.original === null && this.opciones.cargarOriginal) {
           const original = await this.opciones.cargarOriginal(el);
           if (original !== null) el = { ...el, original };
         }
@@ -183,7 +190,7 @@ export class ColaDerivados {
               for (const p of t.esperando) p.alProgreso?.(t.progreso);
             }
           : undefined;
-        return this.opciones.ejecutar(t.lector.nombre, el, avisar);
+        return this.opciones.ejecutar(t.lector.nombre, el, avisar, bytes);
       };
       const datos = await Promise.race([calcular(), plazo]);
       // Aunque ya nadie lo espere, el resultado vale para la próxima vez.

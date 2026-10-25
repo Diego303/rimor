@@ -10,8 +10,12 @@ import { REGISTRO } from '../lectores/registro';
 const derivar = ejecutorEnHilo(REGISTRO);
 
 const api = {
-  derivar: (nombre: string, el: Elemento, alProgreso?: (hechas: number, total: number) => void): Promise<unknown> =>
-    derivar(nombre, el, alProgreso),
+  derivar: (
+    nombre: string,
+    el: Elemento,
+    alProgreso?: (hechas: number, total: number) => void,
+    bytes?: Uint8Array,
+  ): Promise<unknown> => derivar(nombre, el, alProgreso, bytes),
   /** Vista previa del compositor para textos grandes (IN-015). */
   previsualizar: (texto: string, opciones?: OpcionesCaptura) => previsualizar(texto, REGISTRO, opciones),
 };

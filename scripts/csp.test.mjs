@@ -24,8 +24,9 @@ describe('csp.mjs', () => {
 
   it('la política es estricta para scripts y abre solo los dominios de enriquecimiento', () => {
     const p = politica(HTML);
-    expect(p).toContain(`script-src 'self' ${hash('var a=1;')}`);
-    expect(p).not.toMatch(/script-src[^;]*unsafe/);
+    expect(p).toContain(`script-src 'self' 'wasm-unsafe-eval' ${hash('var a=1;')}`);
+    // Solo compilar WebAssembly (DuckDB, IN-044): nada de `eval`, de scripts en línea sin hash ni de atributos.
+    expect(p).not.toMatch(/script-src[^;]*'unsafe-(?:inline|eval|hashes)'/);
     expect(p).toContain("object-src 'none'");
     expect(p).toContain("connect-src 'self' https://api.github.com");
   });

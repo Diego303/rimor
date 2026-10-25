@@ -10,6 +10,7 @@ import { lectorArchivo } from './archivo/lector';
 import { lectorCodigo } from './codigo/lector';
 import { lectorComando } from './comando/lector';
 import type { Lector } from './contrato';
+import { lectorDatos } from './datos/lector';
 import { lectorDiff } from './diff/lector';
 import { lectorEnlace } from './enlace/lector';
 import { lectorError } from './error/lector';
@@ -51,6 +52,7 @@ export const LECTORES: readonly Lector[] = [
   lectorError, // 4
   lectorLog, // 5
   lectorMediciones, // 6
+  lectorDatos, // 8
   lectorDiff, // 10
   lectorPrompt, // 11
   lectorMarkdown, // 12

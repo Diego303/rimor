@@ -1,0 +1,4 @@
+nombre,descripcion,precio
+"Teclado","Mecánico, con luz",59.90
+"Ratón","Inalámbrico, 3 botones",19.99
+"Monitor","27 pulgadas, 4K",299.00

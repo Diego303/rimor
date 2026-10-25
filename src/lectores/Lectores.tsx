@@ -15,7 +15,7 @@ import { clases } from '../ui/clases';
 import { ErrorTarjeta, IconoTipo } from '../ui/componentes';
 import { Senal } from '../ui/marca/Senal';
 import { useEsperaVisible } from '../ui/marca/useEsperaVisible';
-import { cargarTextoAdjunto } from './adjuntos';
+import { cargarBytesAdjunto, cargarTextoAdjunto } from './adjuntos';
 import type { Lector } from './contrato';
 import { AntesDeDetalles, DetallesElemento } from './DetallesElemento';
 import { ColaDerivados, type Ejecutor, esCancelado, type Progreso } from './derivados';
@@ -77,7 +77,13 @@ export function ProveedorLectores({ children, registro = REGISTRO, ejecutar }: P
       // Un Worker atascado se termina; lo siguiente abre otro.
       alAgotarPlazo: ejecutor.reiniciar,
       // Un texto de más de 2 MB va como adjunto: se lee del espacio para que el Worker lo analice.
-      ...(espacio ? { cargarOriginal: (el: Elemento) => cargarTextoAdjunto(espacio.repositorio, el) } : {}),
+      ...(espacio
+        ? {
+            cargarOriginal: (el: Elemento) => cargarTextoAdjunto(espacio.repositorio, el),
+            // Un binario que su lector analiza (un Parquet): sus bytes.
+            cargarBytes: (el: Elemento) => cargarBytesAdjunto(espacio.repositorio, el),
+          }
+        : {}),
     });
     setValor({ registro, cola: nueva, previsualizar: ejecutor.previsualizar });
     return () => ejecutor.cerrar();

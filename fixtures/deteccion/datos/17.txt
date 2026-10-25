@@ -1,0 +1,9 @@
+titulo,anio,citas
+"ResNet",2018,60717
+"Attention, all you need",2023,11140
+"ResNet",2014,22292
+"Deep learning",2012,19821
+"ResNet",2019,85974
+"Deep learning",2021,78111
+"Attention, all you need",2022,45938
+"Deep learning",2020,71874

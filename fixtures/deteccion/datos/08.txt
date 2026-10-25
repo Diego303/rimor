@@ -1,0 +1,9 @@
+modelo,tokens_entrada,tokens_salida,coste
+gemini,2968,1267,0.0993
+gpt,663,1770,0.0187
+gpt,3983,1477,0.1328
+claude,2636,1375,0.1156
+gemini,3750,632,0.1433
+gemini,2942,96,0.1881
+gpt,1476,1301,0.0234
+claude,1887,1623,0.0575

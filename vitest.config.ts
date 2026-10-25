@@ -7,7 +7,12 @@ export default getViteConfig({
     projects: [
       {
         extends: true,
-        test: { name: 'app', environment: 'node', include: ['src/**/*.test.ts', 'scripts/**/*.test.mjs'] },
+        test: {
+          name: 'app',
+          environment: 'node',
+          include: ['src/**/*.test.ts', 'scripts/**/*.test.mjs'],
+          setupFiles: ['./src/pruebas/preparar-motor.ts'],
+        },
       },
       {
         extends: true,
@@ -15,7 +20,7 @@ export default getViteConfig({
           name: 'app-dom',
           environment: 'happy-dom',
           include: ['src/**/*.test.tsx'],
-          setupFiles: ['./src/pruebas/preparar-dom.ts'],
+          setupFiles: ['./src/pruebas/preparar-dom.ts', './src/pruebas/preparar-motor.ts'],
         },
       },
       './paquetes/*/vitest.config.ts',

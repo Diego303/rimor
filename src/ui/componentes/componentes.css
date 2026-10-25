@@ -1915,3 +1915,49 @@ pre.code.codigo .ln {
 .nota-hilo {
   margin-left: 40px;
 }
+
+/* Datos tabulares (IN-044, como `SC.tabla`): la tabla de columnas con su mini-histograma, el gráfico rápido, la
+   vista previa, el resultado de la consulta y su editor. */
+.histograma-datos {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.histograma-datos rect {
+  fill: var(--k-dat);
+}
+.tabla-columnas {
+  min-width: 520px;
+}
+.tabla-vista-previa,
+.tabla-resultado,
+.tabla-cambios-datos {
+  min-width: 620px;
+}
+.grafico-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 480px;
+}
+.grafico-datos-ejes {
+  flex-wrap: nowrap;
+}
+.editor-sql,
+.editor-sql-reserva {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--panel-2);
+  font-family: var(--f-m);
+  font-size: 0.78125rem;
+}
+.editor-sql .cm-editor {
+  min-height: 4.5em;
+}
+.editor-sql .cm-editor.cm-focused {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+.editor-sql .cm-content {
+  padding: 8px 4px;
+}

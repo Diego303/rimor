@@ -1,0 +1,9 @@
+tarea|estado|horas
+T-0|abierta|2
+T-1|cerrada|14
+T-2|cerrada|33
+T-3|abierta|38
+T-4|cerrada|17
+T-5|cerrada|9
+T-6|abierta|23
+T-7|cerrada|38

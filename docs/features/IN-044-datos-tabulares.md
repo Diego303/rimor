@@ -47,15 +47,15 @@ El SVG 13 (onda punteada que avanza, 0,8 s, bucle). Se hace sitio en los 4 KB co
 
 ## Tareas
 
-- [ ] Carga diferida de DuckDB-WASM en un Worker, con `<Senal estado="cargando">` y «DuckDB, solo la primera vez».
-- [ ] El estado `leyendo-datos` en `senal.css`, usado al perfilar o consultar.
-- [ ] CSV, TSV y Parquet como adjuntos.
-- [ ] Perfil por columna: tipo, nulos, únicos, mínimo, máximo, media, histograma y atípicos.
-- [ ] Vista previa de 5 filas; consulta SQL plegada con un editor CodeMirror y el modo SQL.
-- [ ] Gráfico rápido (con IN-058).
-- [ ] Comparación de dos conjuntos: filas, columnas y cambios de distribución.
-- [ ] Límite: por encima de lo medido en F0-5, aviso y muestra.
-- [ ] Respuesta «2400 filas y 6 columnas. Hay 17 latencias de 30 s y 20 nulos en bytes.».
+- [x] Carga diferida de DuckDB-WASM en un Worker, con `<Senal estado="cargando">` y «DuckDB, solo la primera vez».
+- [x] El estado `leyendo-datos` en `senal.css`, usado al perfilar o consultar.
+- [x] CSV, TSV y Parquet como adjuntos.
+- [x] Perfil por columna: tipo, nulos, únicos, mínimo, máximo, media, histograma y atípicos.
+- [x] Vista previa de 5 filas; consulta SQL plegada con un editor CodeMirror y el modo SQL.
+- [x] Gráfico rápido (con IN-058).
+- [x] Comparación de dos conjuntos: filas, columnas y cambios de distribución.
+- [x] Límite: por encima de lo medido en F0-5, aviso y muestra.
+- [x] Respuesta «2400 filas y 6 columnas. Hay 17 latencias de 30 s y 20 nulos en bytes.».
 
 ## Pruebas previstas
 
@@ -84,3 +84,25 @@ El SVG 13 (onda punteada que avanza, 0,8 s, bucle). Se hace sitio en los 4 KB co
 ## Autorrevisión
 
 Cubre las nueve tareas. Reutiliza el contrato de lectores, los adjuntos, la cola de derivados, las comparaciones (CMP-01), `stats`, `tbl-wrap`, los plegados y la `Senal`. Lo pesado (DuckDB, CodeMirror) va en trozos diferidos.
+
+## Implementación
+
+- Dependencias (exactas, publicadas hace más de dos semanas): `@duckdb/duckdb-wasm` 1.33.1-dev57.0 y CodeMirror (`@codemirror/state` 6.7.6, `view` 6.43.14, `lang-sql` 6.10.0, `commands` 6.11.1, `language` 6.13.1); `@codemirror/autocomplete` (6.20.3) y `qs` (6.16.0) fijadas en `pnpm-workspace.yaml`.
+- `src/lectores/datos/`: `motor.ts` (`MotorSql`, `obtenerMotor`, `usarMotor`, Arrow a valores), `motorNavegador.ts` (DuckDB-WASM `eh`/`mvp` en su Worker, con los `.wasm` y el Worker como recursos `?url`), `csv.ts` (forma de un CSV o un TSV), `perfil.ts` (el perfil con SQL), `lector.ts` (`lectorDatos`, puesto 8, con `necesitaBytes`), `textos.ts`, `Vista.tsx` (columnas, aviso de muestra, «Comparar con otros datos», gráfico rápido, vista previa), `ConsultaSql.tsx`, `EditorSql.tsx` (CodeMirror, cargado al abrir la consulta) y `Tarjeta.tsx`.
+- Los bytes del adjunto llegan al derivado de los lectores que los piden (`Lector.necesitaBytes`, `OpcionesDerivar.bytes`, `cargarBytes` en la cola y en el Worker).
+- El detector manda los Parquet (firma `PAR1`, extensión o MIME) al tipo `datos`.
+- Comparaciones: la clase `datos` (`comparaciones/datos.ts`, su resultado con sus cifras y `rutas/comparacion/VistaDatos.tsx`).
+- `Senal`: el estado `leyendo-datos` (SVG 13); cabe en los 4 KB.
+- CSP: `'wasm-unsafe-eval'` en `script-src` (y las comprobaciones lo admiten a él solo, no `'unsafe-inline'` ni `'unsafe-eval'`).
+- Pruebas con DuckDB de verdad en Node (`src/pruebas/motor-datos.ts`, cargado en la preparación de las pruebas): `datos/datos.test.ts` (forma, detección, perfil de un CSV y de un Parquet, muestra, respuesta), `datos/Vista.test.tsx` (columnas, aviso, gráfico, consulta y su error, captura de un CSV), `comparaciones/datos.test.ts`, la señal y la CSP. Corpus `fixtures/deteccion/datos/` (25 CSV y TSV, y un Parquet de verdad generado con DuckDB).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| El Parquet del corpus pasa de `archivo` a `datos`, y es un Parquet de verdad (el anterior solo tenía la firma) | Ahora tiene lector; y el perfil necesita un archivo que se pueda leer. |
+| Las consultas del perfil agrupan por posición (`GROUP BY 1`) | Un alias como `b` chocaba con una columna que se llamara así. |
+| Para «lo raro» de la respuesta van antes las columnas con unidad en el nombre (`latencia_ms`) | Un código como `status` (504) también tiene «máximos atípicos», y la frase «4 latencias de 30 s» dice más. |
+| El gráfico rápido es un histograma propio en SVG | El de Observable Plot llega con IN-058, que depende de esta. |
+| Los nombres de las columnas van en mono en la respuesta | Son del usuario (una cabecera como `#!/usr/bin/env bash` no debe contar para las reglas de estilo). |
+| Los recursos de los Workers se llaman como los del hilo principal (`astro.config.mjs`) | El `.wasm` de DuckDB lo usan los dos: así es un solo archivo y se descarga una vez. |

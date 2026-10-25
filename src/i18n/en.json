@@ -355,6 +355,25 @@
         "mismaMaquina": "If they were measured on the same machine, repeat on another one to generalise.",
         "antesDeMedir": "Decide the number of repetitions before measuring; repeating until a difference shows up increases false positives."
       },
+      "datos": {
+        "filas": "From {antes} rows to {despues}",
+        "cambian": {
+          "one": "{n} column changes its distribution",
+          "other": "{n} columns change their distribution"
+        },
+        "columnas": "{anadidas} columns added and {quitadas} removed",
+        "anadidas": "Added columns",
+        "quitadas": "Removed columns",
+        "tipo": "{columna}: type",
+        "cambiosTitulo": "Changes per column",
+        "sinCambios": "The common columns do not change.",
+        "columna": "Column",
+        "nulos": "Nulls",
+        "media": "Mean",
+        "minimo": "Minimum",
+        "maximo": "Maximum",
+        "unicos": "Distinct"
+      },
       "logs": {
         "linea": "line {n}",
         "separan": "This is where they part",
@@ -389,6 +408,7 @@
         "sinCoincidencias": "Nothing matches that.",
         "conLog": "Compare with another log",
         "conMediciones": "Compare with other measurements",
+        "conDatos": "Compare with other data",
         "comparar": "Compare",
         "seleccionaDos": "To compare, select two with x.",
         "noSePuede": "They cannot be compared. {motivo}",

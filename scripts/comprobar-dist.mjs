@@ -8,7 +8,8 @@ import { hashesDeScripts } from './csp.mjs';
 
 /**
  * Problemas de una política CSP: directivas que deben ser exactas y un `script-src` solo con el propio
- * origen y hashes (ni comodines, ni esquemas, ni `'unsafe-*'`).
+ * origen, hashes y `'wasm-unsafe-eval'` (compilar WebAssembly, IN-044): ni comodines, ni esquemas, ni
+ * `'unsafe-inline'` ni `'unsafe-eval'`.
  * @param {string} politica
  * @returns {string[]}
  */
@@ -29,7 +30,8 @@ export function validarCsp(politica) {
   exacta('base-uri', "'self'");
   exacta('form-action', "'none'");
   for (const v of directivas['script-src'] ?? ['(falta)'])
-    if (v !== "'self'" && !/^'sha256-[A-Za-z0-9+/]+=*'$/.test(v)) fallos.push(`script-src no admite ${v}`);
+    if (v !== "'self'" && v !== "'wasm-unsafe-eval'" && !/^'sha256-[A-Za-z0-9+/]+=*'$/.test(v))
+      fallos.push(`script-src no admite ${v}`);
   return fallos;
 }
 

@@ -544,6 +544,22 @@
   }
 }
 
+/* 13 · leyendo datos (reposo: onda punteada) */
+.senal-leyendo-datos .onda {
+  stroke-dasharray: 0 5.5;
+  stroke-width: 3.4;
+  animation-name: senal-leyendo-datos-onda;
+  animation-timing-function: linear;
+}
+@keyframes senal-leyendo-datos-onda {
+  0% {
+    stroke-dashoffset: 5.5;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
 /* 16 · sin conexión (reposo: onda discontinua y punto hueco) */
 .senal-sin-conexion .tenue {
   opacity: 0.55;

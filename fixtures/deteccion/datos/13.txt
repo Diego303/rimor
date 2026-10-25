@@ -1,0 +1,9 @@
+usuario,evento,duracion_s
+u0,click,94
+u1,logout,268
+u2,logout,376
+u0,login,365
+u1,login,546
+u2,logout,515
+u0,click,229
+u1,logout,200

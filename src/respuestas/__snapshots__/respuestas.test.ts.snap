@@ -84,6 +84,40 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
       ],
     },
   },
+  "datos": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "8 rows and 6 columns. There are 2 ",
+        },
+        {
+          "t": "mono",
+          "v": "latencias",
+        },
+        {
+          "t": "texto",
+          "v": " of 30 s.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "8 filas y 6 columnas. Hay 2 ",
+        },
+        {
+          "t": "mono",
+          "v": "latencias",
+        },
+        {
+          "t": "texto",
+          "v": " de 30 s.",
+        },
+      ],
+    },
+  },
   "diff": {
     "en": {
       "texto": [

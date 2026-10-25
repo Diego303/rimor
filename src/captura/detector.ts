@@ -52,14 +52,15 @@ const EXTENSION_TEXTO =
   /\.(txt|log|md|markdown|csv|tsv|json|jsonl|ya?ml|toml|xml|html?|css|m?[jt]sx?|cjs|py|rs|go|java|kt|c|h|cpp|hpp|cs|rb|php|sh|bash|zsh|sql|ini|cfg|conf|env|diff|patch|tex|bib|r|swift|lua|pl)$/i;
 
 /**
- * Tipo binario de la entrada (`imagen`, `pdf` o `archivo`), o `null` si es texto. Manda la firma; después, el
- * MIME de imagen o PDF; un archivo cualquiera lo decide su contenido (la cabecera) y, sin ella, su MIME o su
- * extensión. Lo pegado como texto nunca es binario.
+ * Tipo binario de la entrada (`imagen`, `pdf`, `datos` para un Parquet, o `archivo`), o `null` si es texto. Manda
+ * la firma; después, el MIME de imagen o PDF; un archivo cualquiera lo decide su contenido (la cabecera) y, sin
+ * ella, su MIME o su extensión. Lo pegado como texto nunca es binario.
  */
 function tipoBinario(entrada: Entrada, cabecera: Uint8Array | undefined): TipoElemento | null {
   const firma = cabecera ? firmaDe(cabecera) : null;
   if (esImagen(firma)) return 'imagen';
   if (firma === 'pdf') return 'pdf';
+  if (firma === 'parquet') return 'datos';
   if (firma) return 'archivo';
   const archivo = entrada.archivos?.[0];
   const mime = (entrada.mime || archivo?.type || '').toLowerCase();
@@ -68,6 +69,7 @@ function tipoBinario(entrada: Entrada, cabecera: Uint8Array | undefined): TipoEl
   if (!archivo && !cabecera) return null;
   if (cabecera) return pareceTexto(cabecera) ? null : 'archivo';
   const nombre = entrada.nombre || archivo?.name || '';
+  if (/\.parquet$/i.test(nombre) || mime.includes('parquet')) return 'datos';
   return MIME_TEXTO.test(mime) || EXTENSION_TEXTO.test(nombre) ? null : 'archivo';
 }
 

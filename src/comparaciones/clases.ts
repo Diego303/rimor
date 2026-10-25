@@ -1,12 +1,16 @@
 /**
- * Qué se puede comparar con qué (CMP-01): dos logs o dos mediciones. TS puro: la interfaz traduce el motivo cuando
+ * Qué se puede comparar con qué (CMP-01): dos logs, dos mediciones o dos conjuntos de datos (IN-044). TS puro: la interfaz traduce el motivo cuando
  * no se puede.
  */
 import type { FrontmatterComun, TipoElemento } from '@rimor/formato';
 
-export type ClaseComparacion = 'logs' | 'mediciones';
+export type ClaseComparacion = 'logs' | 'mediciones' | 'datos';
 
-const CLASES: Partial<Record<TipoElemento, ClaseComparacion>> = { log: 'logs', mediciones: 'mediciones' };
+const CLASES: Partial<Record<TipoElemento, ClaseComparacion>> = {
+  log: 'logs',
+  mediciones: 'mediciones',
+  datos: 'datos',
+};
 
 /** La clase de comparación de un tipo, o `null` si ese tipo aún no se compara. */
 export const claseDe = (tipo: TipoElemento): ClaseComparacion | null => CLASES[tipo] ?? null;

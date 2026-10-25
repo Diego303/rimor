@@ -15,7 +15,8 @@ export type EstadoSenal =
   | 'guardado'
   | 'error'
   | 'comparando'
-  | 'sin-conexion';
+  | 'sin-conexion'
+  | 'leyendo-datos';
 
 export interface DefinicionEstado {
   /** Archivo SVG de rimor-animaciones que es su especificación. */
@@ -41,6 +42,7 @@ export const ESTADOS_SENAL: Record<EstadoSenal, DefinicionEstado> = {
   exportando: { svg: '19-exportando', duracionS: 2.4, bucle: true, reposo: 1, ancho: false },
   contestando: { svg: '20-rimor-contesta', duracionS: 2.4, bucle: true, reposo: 1, ancho: false },
   'sin-conexion': { svg: '16-sin-conexion', duracionS: 2.4, bucle: true, reposo: 1, ancho: false },
+  'leyendo-datos': { svg: '13-leyendo-datos', duracionS: 0.8, bucle: true, reposo: 1, ancho: false },
 };
 
 /** Tras este tiempo en bucle, la animación se detiene en su reposo y queda el texto. */

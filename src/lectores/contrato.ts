@@ -84,6 +84,8 @@ export type FuncionCifra<D> = { metodo(d: D, ctx?: Contexto, el?: Elemento): Cif
 export interface OpcionesDerivar {
   /** Cuánto lleva hecho de cuánto (en la unidad del lector: líneas, filas…). */
   alProgreso?: (hechas: number, total: number) => void;
+  /** Los bytes del adjunto, a los lectores que los piden (`necesitaBytes`): un Parquet no es texto. */
+  bytes?: Uint8Array;
 }
 
 export interface Lector<D = unknown> {
@@ -111,6 +113,8 @@ export interface Lector<D = unknown> {
   derivar(el: Elemento, opciones?: OpcionesDerivar): Promise<D>;
   /** Si `derivar` avisa del progreso: solo a estos se les pasa el aviso (cruza al Worker como proxy). */
   informaProgreso?: boolean;
+  /** Si `derivar` necesita los bytes del adjunto (un binario, como un Parquet): la cola los carga y se los pasa. */
+  necesitaBytes?: boolean;
   resumen(d: D): ResumenLector;
   /** Una línea con el resumen del frontmatter, para enseñar mientras se deriva o en la tarjeta. */
   resumenLegible?(r: ResumenLector, idioma: Idioma): string;

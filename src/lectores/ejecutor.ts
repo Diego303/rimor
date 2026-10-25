@@ -13,10 +13,10 @@ import type { Registro } from './registro';
 
 /** Deriva en este mismo hilo. */
 export function ejecutorEnHilo(registro: Registro): Ejecutor {
-  return async (nombre, el, alProgreso) => {
+  return async (nombre, el, alProgreso, bytes) => {
     const lector = registro.porNombre(nombre);
     if (!lector) throw new Error(`lector.desconocido: ${nombre}`);
-    return lector.derivar(el, alProgreso ? { alProgreso } : {});
+    return lector.derivar(el, { ...(alProgreso ? { alProgreso } : {}), ...(bytes ? { bytes } : {}) });
   };
 }
 
@@ -83,11 +83,16 @@ export function crearEjecutor(registro: Registro): EjecutorCerrable {
   }
 
   return {
-    ejecutar: (nombre: string, el: Elemento, alProgreso?: (hechas: number, total: number) => void) => {
+    ejecutar: (
+      nombre: string,
+      el: Elemento,
+      alProgreso?: (hechas: number, total: number) => void,
+      bytes?: Uint8Array,
+    ) => {
       if (cerrado) return Promise.reject(new Error('derivados.cerrado'));
-      if (averiado) return enHilo(nombre, el, alProgreso);
+      if (averiado) return enHilo(nombre, el, alProgreso, bytes);
       // El aviso de progreso cruza al Worker como proxy de Comlink (una función no se puede copiar).
-      return vigilada((api) => api.derivar(nombre, el, alProgreso ? proxy(alProgreso) : undefined));
+      return vigilada((api) => api.derivar(nombre, el, alProgreso ? proxy(alProgreso) : undefined, bytes));
     },
     previsualizar: (texto: string, opciones?: OpcionesCaptura) => {
       if (cerrado) return Promise.reject(new Error('derivados.cerrado'));

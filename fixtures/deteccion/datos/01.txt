@@ -1,0 +1,9 @@
+ts,endpoint,status,latencia_ms,bytes,cliente
+2026-10-17T17:40:00Z,/v1/stream,504,30000,5405,reqwest
+2026-10-17T17:41:00Z,/v1/stream,200,90,2571,ureq
+2026-10-17T17:42:00Z,/v1/stream,200,55,891,reqwest
+2026-10-17T17:43:00Z,/v1/stream,200,34,8879,ureq
+2026-10-17T17:44:00Z,/v1/stream,504,30000,1642,reqwest
+2026-10-17T17:45:00Z,/v1/stream,200,53,1050,ureq
+2026-10-17T17:46:00Z,/v1/stream,200,88,8413,reqwest
+2026-10-17T17:47:00Z,/v1/stream,200,43,714,ureq

@@ -35,7 +35,8 @@ export function politica(html) {
   const scripts = [...new Set(hashesDeScripts(html))];
   return [
     "default-src 'self'",
-    `script-src 'self' ${scripts.join(' ')}`.trim(),
+    // `'wasm-unsafe-eval'` solo deja compilar WebAssembly (DuckDB, IN-044), no `eval` de JavaScript.
+    `script-src 'self' 'wasm-unsafe-eval' ${scripts.join(' ')}`.trim(),
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data:",
     "font-src 'self'",
