@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-26 01:16
-**Ahora:** IN-046 · Petición HTTP · fase análisis y diseño
+**Última actualización:** 2026-10-26 01:19
+**Ahora:** IN-046 · Petición HTTP · fase implementación
 **Siguiente:** IN-047 · Mediciones: más formatos y Hodges-Lehmann
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 5/22 · v0.3 0/17 · v0.4 0/9 · total 56/99
 
@@ -64,8 +64,8 @@
 | IN-042 | Diff y parche | v0.2 | 8 | hecha | d1d8e29 f901a5a b8ff910 | docs/features/IN-042-diff-parche.md |
 | IN-043 | Comando con huecos | v0.2 | 8 | hecha | 6073c48 c6eb683 b9ca2c0 | docs/features/IN-043-comando.md |
 | IN-044 | Datos tabulares con DuckDB | v0.2 | 8 | hecha | 5e9f8b1 be063ce 42ea221 | docs/features/IN-044-datos-tabulares.md |
-| IN-045 | JSON, YAML y TOML con comparación estructural | v0.2 | 8 | hecha | 079d746 4176cd5 | docs/features/IN-045-json-yaml-toml.md |
-| IN-046 | Petición HTTP | v0.2 | 8 | pendiente | — | — |
+| IN-045 | JSON, YAML y TOML con comparación estructural | v0.2 | 8 | hecha | 079d746 4176cd5 9049c78 | docs/features/IN-045-json-yaml-toml.md |
+| IN-046 | Petición HTTP | v0.2 | 8 | en implementación | — | docs/features/IN-046-peticion-http.md |
 | IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | pendiente | — | — |
 | IN-048 | Logs: plantillas con Drain | v0.2 | 8 | pendiente | — | — |
 | IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | pendiente | — | — |
@@ -176,7 +176,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-26 | IN-045 | verificación | revisión independiente (17 hallazgos) corregida con pruebas: log grande como JSON, YAML cuadrático, notas Clave: valor, versiones por títulos generados (tituloGenerico), ilegibles en comparación, leer tolerante, TOML inválido y enteros grandes, esquema recortado, plurales, fechas TOML, etiquetas YAML, JSONC, árbol memorizado, vista previa del feed, rutas; verificar en verde: 117 archivos, 1501 pruebas, 265,1 KB | … |
+| 2026-10-26 | IN-046 | análisis y diseño | lector http (puesto 9) que analiza un único curl (bash y cmd) con tubería aparte, reglas de secretos nuevas (cookie, cabeceras de clave, claves en la URL, curl -u), vista en tablas, copiar como cURL y como fetch | … |
+| 2026-10-26 | IN-045 | verificación | revisión independiente (17 hallazgos) corregida con pruebas: log grande como JSON, YAML cuadrático, notas Clave: valor, versiones por títulos generados (tituloGenerico), ilegibles en comparación, leer tolerante, TOML inválido y enteros grandes, esquema recortado, plurales, fechas TOML, etiquetas YAML, JSONC, árbol memorizado, vista previa del feed, rutas; verificar en verde: 117 archivos, 1501 pruebas, 265,1 KB | 9049c78 |
 | 2026-10-26 | IN-045 | implementación | lector json (puesto 7) con detección ligera en la carga inicial y análisis diferido (smol-toml 1.9.1), árbol plegable con ruta, esquema, cambios frente a la versión anterior, respuestaVersion en el mensaje del feed, comparación estructural (clase json); verificar en verde: 116 archivos, 1487 pruebas, 263,9 KB | 4176cd5 |
 | 2026-10-25 | IN-045 | análisis y diseño | lector json (puesto 7) con JSON, YAML (yaml) y TOML (smol-toml 1.9.1), YAML/TOML solo con forma de configuración, árbol plegable con ruta, esquema inferido, versiones (TIPOS_CON_VERSIONES y respuestaVersion en el mensaje del feed), comparación estructural como clase json | 079d746 |
 | 2026-10-25 | IN-044 | verificación | revisión independiente (15 hallazgos) corregida con pruebas: bytes transferidos, extensión de Parquet servida por el sitio, valores de Arrow por tipo, muestra de Parquet, plazo propio y perfil en 7 consultas, consulta en su conexión y recortada, unidades, señal leyendo-datos, escalas de la muestra, CSV en Latin-1/UTF-16, detección (GFM corta, asctime, comillas multilínea), infinitos, resultado validado, releer pendientes y accesibilidad; pruebas de rendimiento en su proyecto; verificar en verde: 113 archivos, 1462 pruebas, 259,8 KB | 42ea221 |
