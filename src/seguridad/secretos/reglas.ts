@@ -66,6 +66,33 @@ function contrasenasEnUrl(texto: string): [number, number][] {
   return tramos;
 }
 
+/** La cabecera Cookie (no Set-Cookie) hasta el final de la línea o una comilla. */
+const COOKIE_CABECERA = /(?<![\w-])Cookie:[ \t]*([^\r\n'"]*)/gi;
+/** `curl -b` o `--cookie` con su valor (con `=`: `-b cookies.txt` es un archivo). */
+const COOKIE_CURL = /(?:^|\s)(?:-b|--cookie)(?:[ \t]+|=)['"]?([^\s'"]*=[^'"\r\n]*)/g;
+
+/**
+ * El valor de cada cookie (`sesion=VALOR; tema=VALOR`): los nombres se quedan. Así, si el valor es un JWT, se queda
+ * esa regla (empiezan a la vez y va antes en la lista). Un valor que es una variable (`$SESION`) no se oculta.
+ */
+function valoresDeCookies(texto: string, patron: RegExp): [number, number][] {
+  const tramos: [number, number][] = [];
+  for (const m of texto.matchAll(patron)) {
+    const valor = m[1] ?? '';
+    let inicio = (m.index ?? 0) + m[0].length - valor.length;
+    for (const par of valor.split(';')) {
+      const igual = par.indexOf('=');
+      const crudo = igual < 0 ? '' : par.slice(igual + 1);
+      const desde = inicio + igual + 1 + (crudo.length - crudo.trimStart().length);
+      const limpio = crudo.trim();
+      if (limpio && !limpio.startsWith(PREFIJO_MARCA) && !/^(?:\$|\{\{)/.test(limpio))
+        tramos.push([desde, desde + limpio.length]);
+      inicio += par.length + 1;
+    }
+  }
+  return tramos;
+}
+
 export const REGLAS_SECRETOS: readonly ReglaSecreto[] = [
   // Claves privadas: el bloque entero (PEM, PGP; también la de una cuenta de servicio de GCP dentro de su JSON)
   // y, si se pegó a medias sin la línea END, desde BEGIN hasta donde siguen las líneas en base64.
@@ -115,14 +142,40 @@ export const REGLAS_SECRETOS: readonly ReglaSecreto[] = [
   ),
   // JWT: cabecera y carga en base64url; la firma, también con el alfabeto estándar.
   r('jwt', 'jwt', String.raw`\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_+/-]{8,}=*`),
-  // Cabeceras Authorization (Bearer, Basic, Token, Bot), también en JSON escapado: se oculta el valor.
+  // Cabeceras Authorization (Bearer, Basic, Token, Bot), también en JSON escapado: se oculta el valor (no una
+  // variable, `$TOKEN` o `{{token}}`, que no es un secreto).
   r(
     'authorization',
     'authorization',
-    String.raw`\bAuthorization\\?["']?\s*[:=]\s*\\?["']?(?:Bearer|Basic|Token|Bot)\s+(?<secreto>${NO_OCULTO}[^\s"',;\\]+)`,
+    String.raw`\bAuthorization\\?["']?\s*[:=]\s*\\?["']?(?:Bearer|Basic|Token|Bot)\s+(?<secreto>${NO_OCULTO}(?![$]|\{\{)[^\s"',;\\]+)`,
     'gi',
   ),
   { id: 'contrasena-url', tipo: 'contrasena', buscar: contrasenasEnUrl },
+  // Lo que lleva una petición (IN-046). Un valor que es una variable (`$TOKEN`, `{{token}}`) no es un secreto.
+  // La cabecera Cookie de una petición (la Set-Cookie de una respuesta no: suele ser un ajuste) y `curl -b 'a=b'`.
+  { id: 'cookie', tipo: 'cookie', buscar: (texto) => valoresDeCookies(texto, COOKIE_CABECERA) },
+  { id: 'cookie-curl', tipo: 'cookie', buscar: (texto) => valoresDeCookies(texto, COOKIE_CURL) },
+  // Cabeceras de clave de API.
+  r(
+    'cabecera-clave',
+    'clave-api',
+    String.raw`\b(?:X-Api-Key|Api-Key|X-Api-Token|X-Auth-Token|X-Access-Token|Private-Token|X-Goog-Api-Key|Ocp-Apim-Subscription-Key)\\?["']?\s*:\s*\\?["']?(?<secreto>${NO_OCULTO}(?![$]|\{\{)[^\s'",;\\]+)`,
+    'gi',
+  ),
+  // Claves en la consulta de una URL (`?api_key=…`, la firma de una URL prefirmada de S3).
+  r(
+    'clave-url',
+    'clave-api',
+    String.raw`[?&](?:api[_-]?key|access[_-]?token|token|client[_-]?secret|secret|password|x-amz-signature|x-amz-security-token)=(?<secreto>${NO_OCULTO}(?![$]|\{\{)[^&\s'"#]+)`,
+    'gi',
+  ),
+  // La contraseña de `curl … -u usuario:contraseña` (no el usuario; solo en un curl: `docker -u 1000:1000` no lo es).
+  r(
+    'usuario-curl',
+    'contrasena',
+    String.raw`\bcurl\b(?:[^\n\\]|\\.|\\\n)*?\s(?:-u|--user)(?:[ \t]+|=)['"]?[^\s:'"]+:(?<secreto>${NO_OCULTO}(?![$]|\{\{)[^\s'"]+)`,
+    'g',
+  ),
   // Contraseñas en cadenas clave=valor (ADO.NET, JDBC); no «PWD=» en mayúsculas, que es el directorio actual.
   r(
     'contrasena-cadena',

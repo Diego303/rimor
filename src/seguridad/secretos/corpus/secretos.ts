@@ -130,4 +130,25 @@ anadir(
 anadir('slack', `xapp-1-${'A0123456789'}-${mezcla(30)}`, (s) => `SLACK_APP_TOKEN=${s}`);
 anadir('slack', `xoxe-1-${mezcla(40, 'My6Nu8Bi')}`, (s) => `refresh: ${s}`);
 
+// Lo que lleva una petición (IN-046).
+anadir(
+  'cookie',
+  `sesion=${mezcla(24)}; csrf=${mezcla(16, 'Ab3Cd5Ef')}`,
+  (s) => `curl https://x.example.org -H 'Cookie: ${s}'`,
+);
+anadir('cookie-curl', `sesion=${mezcla(24, 'Gh7Jk9Lm')}`, (s) => `curl -b '${s}' https://x.example.org/panel`);
+anadir('cabecera-clave', mezcla(32, 'Np2Qr4St'), (s) => `curl -H "X-Api-Key: ${s}" https://api.example.org/v1`);
+anadir('cabecera-clave', mezcla(20, 'Uv6Wx8Yz'), (s) => `Private-Token: ${s}`);
+anadir('clave-url', mezcla(32, 'Ab1Cd2Ef'), (s) => `GET https://api.example.org/v1/datos?api_key=${s}&page=2`);
+anadir(
+  'clave-url',
+  mezcla(40, 'Gh3Ij4Kl'),
+  (s) => `https://cubo.s3.amazonaws.com/a.txt?X-Amz-Expires=600&X-Amz-Signature=${s}`,
+);
+anadir(
+  'usuario-curl',
+  `S3cr3t-${mezcla(12, 'Mn5Op6Qr')}`,
+  (s) => `curl -sS -u admin:${s} https://jenkins.example.org/api/json`,
+);
+
 export const SECRETOS: CasoSecreto[] = casos.map(([regla, secreto, texto]) => ({ regla, secreto, texto }));

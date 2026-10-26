@@ -123,3 +123,17 @@ describe('ocultar', () => {
     expect(grande.length).toBeGreaterThan(500_000);
   });
 });
+
+describe('variables, no secretos (IN-046)', () => {
+  it('una cabecera o una cookie que es una variable se queda como está', () => {
+    for (const texto of [
+      'curl -H "Authorization: Bearer $TOKEN" https://x.org',
+      "curl -H 'Authorization: Bearer {{token}}' https://x.org",
+      'curl -H "X-Api-Key: $API_KEY" https://x.org',
+      "curl -H 'Cookie: sesion=$SESION' https://x.org",
+      'curl -u admin:$CLAVE https://x.org',
+      'https://x.org/a?api_key={{clave}}',
+    ])
+      expect(ocultar(texto).texto, texto).toBe(texto);
+  });
+});

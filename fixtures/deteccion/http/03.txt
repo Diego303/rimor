@@ -1,0 +1,3 @@
+curl -X POST https://api.example.org/v1/pagos \
+  -H "Content-Type: application/json" \
+  -d '{"importe": 1250, "moneda": "EUR", "cliente": "c_123"}'

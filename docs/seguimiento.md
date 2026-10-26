@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-26 01:19
-**Ahora:** IN-046 · Petición HTTP · fase implementación
+**Última actualización:** 2026-10-26 01:55
+**Ahora:** IN-046 · Petición HTTP · fase verificación
 **Siguiente:** IN-047 · Mediciones: más formatos y Hodges-Lehmann
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 5/22 · v0.3 0/17 · v0.4 0/9 · total 56/99
 
@@ -65,7 +65,7 @@
 | IN-043 | Comando con huecos | v0.2 | 8 | hecha | 6073c48 c6eb683 b9ca2c0 | docs/features/IN-043-comando.md |
 | IN-044 | Datos tabulares con DuckDB | v0.2 | 8 | hecha | 5e9f8b1 be063ce 42ea221 | docs/features/IN-044-datos-tabulares.md |
 | IN-045 | JSON, YAML y TOML con comparación estructural | v0.2 | 8 | hecha | 079d746 4176cd5 9049c78 | docs/features/IN-045-json-yaml-toml.md |
-| IN-046 | Petición HTTP | v0.2 | 8 | en implementación | — | docs/features/IN-046-peticion-http.md |
+| IN-046 | Petición HTTP | v0.2 | 8 | en verificación | ba600a9 | docs/features/IN-046-peticion-http.md |
 | IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | pendiente | — | — |
 | IN-048 | Logs: plantillas con Drain | v0.2 | 8 | pendiente | — | — |
 | IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | pendiente | — | — |
@@ -143,6 +143,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
 
 ## Notas para funcionalidades futuras
+- **Presupuesto de la carga inicial (IN-045, IN-046):** 268,6 KB de 300 con 53 IN por delante. Los lectores nuevos dejan en la carga inicial solo lo que necesita `detectar` (síncrono); lo demás (`leer`, `derivar`, respuestas de versión, exportaciones, vistas) se carga con `import()`, como `json/analisis.ts` y `http/exportar.ts`. Si no basta, separar la detección de cada lector en su propio módulo ligero y cargar el lector entero bajo demanda.
 - **Lectores de imagen y PDF (v0.3, IN-017):** `releerPendientes` (IN-044) ya relee al abrir el espacio los elementos con `pendiente_lector: true` que un lector de binarios nuevo reconoce (y les quita la marca); basta con registrar el lector y que su `leer` devuelva `original: null`.
 - **IN-026 e IN-049 (IN-016):** contar `respuestasDescartadas` («No» o archivar sin actuar) en el triaje y `correccionesDeTipo` cuando se corrija el tipo (también un `/tipo` que contradice al detector) con `espacio.contadores.contar(…)`. IN-021, IN-023 e IN-032 cuentan `erroresReconocidos`, `copiasConValores` y `busquedasConResultado`.
 - **IN-029 (IN-016):** rellenar `Contexto.versiones` desde `historial/` y `version`.
@@ -176,7 +177,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-26 | IN-046 | análisis y diseño | lector http (puesto 9) que analiza un único curl (bash y cmd) con tubería aparte, reglas de secretos nuevas (cookie, cabeceras de clave, claves en la URL, curl -u), vista en tablas, copiar como cURL y como fetch | … |
+| 2026-10-26 | IN-046 | implementación | lector http (puesto 9) con palabras de shell (bash y cmd), opciones de curl, tablas, copiar como cURL y fetch (exportar.ts diferido), reglas de secretos cookie, cabecera-clave, clave-url y usuario-curl, variables sin ocultar; verificar en verde: 119 archivos, 1524 pruebas, 268,6 KB | … |
+| 2026-10-26 | IN-046 | análisis y diseño | lector http (puesto 9) que analiza un único curl (bash y cmd) con tubería aparte, reglas de secretos nuevas (cookie, cabeceras de clave, claves en la URL, curl -u), vista en tablas, copiar como cURL y como fetch | ba600a9 |
 | 2026-10-26 | IN-045 | verificación | revisión independiente (17 hallazgos) corregida con pruebas: log grande como JSON, YAML cuadrático, notas Clave: valor, versiones por títulos generados (tituloGenerico), ilegibles en comparación, leer tolerante, TOML inválido y enteros grandes, esquema recortado, plurales, fechas TOML, etiquetas YAML, JSONC, árbol memorizado, vista previa del feed, rutas; verificar en verde: 117 archivos, 1501 pruebas, 265,1 KB | 9049c78 |
 | 2026-10-26 | IN-045 | implementación | lector json (puesto 7) con detección ligera en la carga inicial y análisis diferido (smol-toml 1.9.1), árbol plegable con ruta, esquema, cambios frente a la versión anterior, respuestaVersion en el mensaje del feed, comparación estructural (clase json); verificar en verde: 116 archivos, 1487 pruebas, 263,9 KB | 4176cd5 |
 | 2026-10-25 | IN-045 | análisis y diseño | lector json (puesto 7) con JSON, YAML (yaml) y TOML (smol-toml 1.9.1), YAML/TOML solo con forma de configuración, árbol plegable con ruta, esquema inferido, versiones (TIPOS_CON_VERSIONES y respuestaVersion en el mensaje del feed), comparación estructural como clase json | 079d746 |

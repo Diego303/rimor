@@ -172,6 +172,40 @@ exports[`respuestas de los lectores sobre el corpus > instantánea de la respues
       ],
     },
   },
+  "http": {
+    "en": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "GET to ",
+        },
+        {
+          "t": "mono",
+          "v": "api.github.com/repos/algesten/ureq",
+        },
+        {
+          "t": "texto",
+          "v": " with 1 header.",
+        },
+      ],
+    },
+    "es": {
+      "texto": [
+        {
+          "t": "texto",
+          "v": "GET a ",
+        },
+        {
+          "t": "mono",
+          "v": "api.github.com/repos/algesten/ureq",
+        },
+        {
+          "t": "texto",
+          "v": " con 1 cabecera.",
+        },
+      ],
+    },
+  },
   "idea": {
     "en": {
       "texto": [

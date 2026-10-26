@@ -1,0 +1,1 @@
+curl 'https://registry.npmjs.org/ureq' -H 'Accept: application/vnd.npm.install-v1+json'

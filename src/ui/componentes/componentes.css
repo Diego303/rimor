@@ -1916,6 +1916,21 @@ pre.code.codigo .ln {
   margin-left: 40px;
 }
 
+/* Petición HTTP (IN-046): el método en su píldora y la URL, que se parte donde haga falta; los valores de las
+   cabeceras, también (un token largo no ensancha la tabla). */
+.peticion-http {
+  flex-wrap: nowrap;
+  align-items: baseline;
+}
+.url-http,
+.valor-http {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+.tabla-http {
+  min-width: 420px;
+}
+
 /* JSON, YAML y TOML (IN-045): el árbol en mono como `.tree` (11,5 px, interlineado 1,6), con cada nivel sangrado;
    el botón de plegar es un triángulo que gira; la clave elegida, con el fondo suave del acento; los valores con los
    colores del código (textos en `--ok`, números y sí o no en `--warn`, nulos en `--muted`). */

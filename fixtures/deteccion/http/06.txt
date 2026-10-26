@@ -1,0 +1,1 @@
+curl -G https://api.example.org/buscar --data-urlencode 'q=latencia gateway' -d limit=20

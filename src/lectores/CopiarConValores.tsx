@@ -111,14 +111,32 @@ function TextoListo({
 
 /** «Copiar» a secas (un comando sin huecos), con el mismo respaldo si el navegador no deja copiar. */
 export function CopiarTexto({ texto, textos }: { texto: string; textos: TextosCopiar }) {
+  return (
+    <div className="row">
+      <BotonCopiar texto={texto} textos={textos} variante="primario" />
+    </div>
+  );
+}
+
+/**
+ * El botón de copiar un texto, sin fila (para poner varios juntos: «Copiar como cURL» y «como fetch»), con el mismo
+ * respaldo si el navegador no deja copiar.
+ */
+export function BotonCopiar({
+  texto,
+  textos,
+  variante,
+}: {
+  texto: string;
+  textos: TextosCopiar;
+  variante?: 'primario';
+}) {
   const { listo, areaLista, copiar } = useCopiar(texto, textos.copiado);
   return (
     <>
-      <div className="row">
-        <Boton variante="primario" pequeno onClick={() => void copiar(texto)}>
-          {textos.copiar}
-        </Boton>
-      </div>
+      <Boton {...(variante ? { variante } : {})} pequeno onClick={() => void copiar(texto)}>
+        {textos.copiar}
+      </Boton>
       <TextoListo listo={listo} areaLista={areaLista} textos={textos} />
     </>
   );

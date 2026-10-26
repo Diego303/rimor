@@ -877,7 +877,9 @@
       "slack": "Slack (tokens and webhooks)",
       "jwt": "JWT",
       "authorization": "Authorization headers",
-      "contrasena": "Passwords in URLs and connection strings"
+      "contrasena": "Passwords in URLs, connection strings and curl -u",
+      "cookie": "Request cookies",
+      "clave-api": "API keys in headers and URLs"
     },
     "respuestas": "Rimor’s replies",
     "respuestasTexto": "Which types Rimor replies to when capturing.",

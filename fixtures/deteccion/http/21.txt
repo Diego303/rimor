@@ -1,0 +1,4 @@
+curl --location 'https://api.example.org/oauth/token' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--data-urlencode 'grant_type=client_credentials' \
+--data-urlencode 'scope=lectura'

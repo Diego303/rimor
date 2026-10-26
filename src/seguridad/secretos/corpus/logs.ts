@@ -3,6 +3,13 @@
  * rutas, versiones e IP. Ninguna debe ocultarse; se admite menos del 2 % de falsos positivos.
  */
 const base = [
+  // Lo que parece de una petición y no es un secreto (IN-046): variables, archivos de cookies, usuarios de Docker.
+  'docker run --rm -u 1000:1000 -v "$PWD":/app node:22 npm test',
+  'curl -b cookies.txt -c cookies.txt https://example.org/entrar',
+  'curl -H "X-Api-Key: $API_KEY" https://api.example.org/v1/informes',
+  'curl -u admin:$CLAVE https://jenkins.example.org/api/json',
+  'GET https://www.example.org/buscar?key=valor&q=rimor 200 34ms',
+  'Cookie policy updated, see /privacidad',
   '2026-10-16T18:40:51.007Z INFO  gateway: request id=c19e0b77-2a41-4f6c-8d3e-5b9a7e214f08 model=llama3.1:8b',
   '2026-10-16T18:40:51.013Z WARN  http: response has no content-length, reading body to end',
   '2026-10-16T18:41:21.014Z ERROR stream: read timeout after 30000ms',

@@ -1,0 +1,1 @@
+curl -d 'usuario=ana&recordar=1' -b cookies.txt -c cookies.txt https://login.example.org/entrar

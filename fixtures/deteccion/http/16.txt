@@ -1,0 +1,1 @@
+curl 'http://localhost:8080/api/metricas?desde=2026-10-17T00:00:00Z' -H 'Accept: application/json' | jq '.latencias.p99'

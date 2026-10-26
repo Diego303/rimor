@@ -1,0 +1,1 @@
+curl -u admin:$CLAVE https://jenkins.example.org/api/json?pretty=true

@@ -40,9 +40,9 @@ Que un `curl` pegado (el «Copiar como cURL» del navegador, el de una documenta
 
 ## Tareas
 
-- [ ] Analiza cURL: método, URL, cabeceras y cuerpo, con secretos ocultos.
-- [ ] Vista en tabla.
-- [ ] Copiar como cURL o como `fetch`.
+- [x] Analiza cURL: método, URL, cabeceras y cuerpo, con secretos ocultos.
+- [x] Vista en tabla.
+- [x] Copiar como cURL o como `fetch`.
 
 ## Pruebas previstas
 
@@ -68,3 +68,20 @@ Que un `curl` pegado (el «Copiar como cURL» del navegador, el de una documenta
 ## Autorrevisión
 
 Cubre las tres tareas. Reutiliza el contrato de lectores, la ocultación de IN-010 (con reglas nuevas, también útiles fuera de las peticiones), la frase común de secretos, las tablas y el copiar con respaldo de IN-023.
+
+## Implementación
+
+- `src/lectores/http/`: `analisis.ts` (palabras de shell en bash y en `cmd`, opciones de curl, consulta, cuerpo; `urlCorta`, `hostDe`), `exportar.ts` (`aCurl`, `aFetch`; solo lo carga la vista), `lector.ts` (`lectorHttp`, puesto 9, con «ilegible» si el original ya no es un curl), `textos.ts`, `Vista.tsx` y `Tarjeta.tsx`.
+- `BotonCopiar` (en `CopiarConValores.tsx`): el botón de copiar sin fila, con el respaldo de copiar a mano; `CopiarTexto` lo usa.
+- Secretos (`seguridad/secretos/reglas.ts`): `cookie` y `cookie-curl` (el valor de cada cookie, con su nombre a la vista), `cabecera-clave`, `clave-url` y `usuario-curl`; en Ajustes, los tipos `cookie` y `clave-api` (y `contrasena` nombra `curl -u`). Ni ellas ni la de `Authorization` ocultan una variable (`$TOKEN`, `{{token}}`).
+- Corpus: `fixtures/deteccion/http/` (25; el `curl … | jq` de `comando/08` pasa a `http/01`); casos nuevos en el de secretos y negativos en el de líneas limpias. El corpus entero, al 100 %.
+- Pruebas: `http/http.test.ts` (palabras, opciones, ida y vuelta de `aCurl`, `aFetch`, detección, secretos, respuestas) y `http/Vista.test.tsx` (tablas, copiar como cURL y como fetch, ilegible y la captura con el token oculto y la frase de secretos).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| La regla de cookies oculta el valor de cada una, no la cabecera entera | Los nombres dicen algo (`sesion`, `tema`) y, si un valor es un JWT, se queda esa regla, más precisa. |
+| Las reglas no ocultan variables (`$TOKEN`, `{{token}}`), tampoco la de `Authorization` | No son secretos: ocultarlas quitaba información (y una petición de una documentación dejaba de leerse igual). |
+| `aCurl` escribe `-I` para HEAD | Con `-X HEAD`, curl espera un cuerpo que no llega. |
+| `aCurl` y `aFetch` van en un módulo que solo carga la vista | La carga inicial lleva solo lo que necesita la detección (268,6 KB de 300). |

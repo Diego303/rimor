@@ -1,0 +1,7 @@
+curl --request POST \
+  --url https://api.example.org/v2/mensajes \
+  --header 'content-type: application/json' \
+  --data '{
+  "para": "+34600000000",
+  "texto": "Hola"
+}'
