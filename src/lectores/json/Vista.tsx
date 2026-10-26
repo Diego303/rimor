@@ -3,7 +3,7 @@
  * del valor elegido y «Copiar»; el esquema inferido y, en la pantalla del elemento, los cambios frente a su versión
  * anterior. La referencia no dibuja esta pantalla: se compone con sus piezas (tarjetas, plegables, tablas).
  */
-import { useContext, useMemo, useState } from 'react';
+import { memo, useContext, useMemo, useState } from 'react';
 import { useT } from '../../i18n/useT';
 import { clases } from '../../ui/clases';
 import { Banner, Boton, Detalles, Tarjeta } from '../../ui/componentes';
@@ -19,7 +19,6 @@ import {
   esMapa,
   MAX_ESQUEMA,
   rutaDe,
-  type Segmento,
   tipoDe,
   totalCambios,
   type ValorJson,
@@ -27,112 +26,134 @@ import {
 import { type DatosJson, lectorJson, nombreFormato } from './lector';
 import { TablaCambiosJson } from './TablaCambios';
 import { textos } from './textos';
+import { valorCorto } from './valores';
 
 type T = (c: string, v?: Record<string, string | number>) => string;
 
 /** Los hijos de una lista o un mapa se pintan de tantos en tantos. */
 export const POR_TANDA = 100;
+/** Largo máximo de una hoja en el árbol (un texto en base64 de varios MB no va entero al DOM). */
+const LARGO_HOJA = 200;
 
-/** Los hijos de un valor (`null` si es una hoja): de una lista, por su posición; de un mapa, por su clave. */
-const hijosDe = (v: ValorJson): [Segmento, ValorJson][] | null =>
-  Array.isArray(v) ? v.map((x, i) => [i, x]) : esMapa(v) ? Object.entries(v) : null;
+/** Un paso del árbol: la clave de un mapa o la posición en una lista. */
+type Paso = string | number;
+
+/** Cuántos hijos tiene un valor (`null` si es una hoja). */
+const cuantosHijos = (v: ValorJson): number | null =>
+  Array.isArray(v) ? v.length : esMapa(v) ? Object.keys(v).length : null;
+
+/** Los hijos que se pintan: los primeros `n`, sin recorrer el resto. */
+function primerosHijos(v: ValorJson, n: number): [Paso, ValorJson][] {
+  if (Array.isArray(v)) return v.slice(0, n).map((x, i) => [i, x]);
+  return esMapa(v)
+    ? Object.keys(v)
+        .slice(0, n)
+        .map((k) => [k, v[k] ?? null])
+    : [];
+}
+
+/** ¿Cambia algo de este nodo (o de los de dentro) si la elegida es `e`? */
+const afecta = (e: string | null, ruta: string) =>
+  e !== null && (e === ruta || e.startsWith(`${ruta}.`) || e.startsWith(`${ruta}[`));
 
 interface PropsNodo {
-  segmento: Segmento;
+  paso: Paso;
   valor: ValorJson;
-  segmentos: Segmento[];
+  pasos: Paso[];
+  ruta: string;
   elegida: string | null;
   alElegir: (ruta: string) => void;
   t: T;
 }
 
-function Nodo({ segmento, valor, segmentos, elegida, alElegir, t }: PropsNodo) {
-  const [abierto, setAbierto] = useState(false);
-  const [mostrados, setMostrados] = useState(POR_TANDA);
-  const hijos = hijosDe(valor);
-  const ruta = rutaDe(segmentos);
-  const etiqueta = String(segmento);
-  return (
-    <li>
-      <div className="arbol-fila">
-        {hijos ? (
+/**
+ * Un nodo del árbol. Memorizado: al elegir una clave solo se vuelven a pintar los nodos de la elegida de antes y de
+ * la de ahora (con un JSON grande abierto, no todos).
+ */
+const Nodo = memo(
+  function Nodo({ paso, valor, pasos, ruta, elegida, alElegir, t }: PropsNodo) {
+    const [abierto, setAbierto] = useState(false);
+    const n = cuantosHijos(valor);
+    const etiqueta = String(paso);
+    return (
+      <li>
+        <div className="arbol-fila">
+          {n !== null ? (
+            <button
+              type="button"
+              className="arbol-plegar"
+              aria-expanded={abierto}
+              aria-label={t(abierto ? 'cerrar' : 'abrir', { clave: etiqueta })}
+              onClick={() => setAbierto((a) => !a)}
+            />
+          ) : (
+            <span className="arbol-hueco" />
+          )}
           <button
             type="button"
-            className="arbol-plegar"
-            aria-expanded={abierto}
-            aria-label={t(abierto ? 'cerrar' : 'abrir', { clave: etiqueta })}
-            onClick={() => setAbierto((a) => !a)}
-          />
-        ) : (
-          <span className="arbol-hueco" />
-        )}
-        <button
-          type="button"
-          className={clases('arbol-clave', typeof segmento === 'number' && 'indice')}
-          aria-pressed={elegida === ruta}
-          onClick={() => alElegir(ruta)}
-        >
-          {etiqueta}
-        </button>
-        {hijos ? (
-          <span className="faint">
-            {Array.isArray(valor) ? t('elementos', { n: hijos.length }) : t('clavesHijas', { n: hijos.length })}
-          </span>
-        ) : (
-          <span className={`arbol-valor v-${tipoDe(valor)}`}>{JSON.stringify(valor)}</span>
-        )}
-      </div>
-      {hijos && abierto && (
-        <Hijos
-          hijos={hijos}
-          segmentos={segmentos}
-          mostrados={mostrados}
-          alMostrarMas={() => setMostrados((m) => m + POR_TANDA)}
-          elegida={elegida}
-          alElegir={alElegir}
-          t={t}
-        />
-      )}
-    </li>
-  );
-}
+            className={clases('arbol-clave', typeof paso === 'number' && 'indice')}
+            aria-pressed={elegida === ruta}
+            onClick={() => alElegir(ruta)}
+          >
+            {etiqueta}
+          </button>
+          {n !== null ? (
+            <span className="faint">{Array.isArray(valor) ? t('elementos', { n }) : t('clavesHijas', { n })}</span>
+          ) : (
+            <span className={`arbol-valor v-${tipoDe(valor)}`}>{valorCorto(valor, LARGO_HOJA)}</span>
+          )}
+        </div>
+        {n !== null && abierto && <Hijos valor={valor} pasos={pasos} elegida={elegida} alElegir={alElegir} t={t} />}
+      </li>
+    );
+  },
+  (a, b) =>
+    a.valor === b.valor &&
+    a.ruta === b.ruta &&
+    a.t === b.t &&
+    a.alElegir === b.alElegir &&
+    !afecta(a.elegida, a.ruta) &&
+    !afecta(b.elegida, b.ruta),
+);
 
 function Hijos({
-  hijos,
-  segmentos,
-  mostrados,
-  alMostrarMas,
+  valor,
+  pasos,
   elegida,
   alElegir,
   t,
   raiz = false,
 }: {
-  hijos: [Segmento, ValorJson][];
-  segmentos: Segmento[];
-  mostrados: number;
-  alMostrarMas: () => void;
+  valor: ValorJson;
+  pasos: Paso[];
   elegida: string | null;
   alElegir: (ruta: string) => void;
   t: T;
   raiz?: boolean;
 }) {
-  const resto = hijos.length - mostrados;
+  const [mostrados, setMostrados] = useState(POR_TANDA);
+  const hijos = useMemo(() => primerosHijos(valor, mostrados), [valor, mostrados]);
+  const resto = (cuantosHijos(valor) ?? 0) - hijos.length;
   return (
     <ul className={raiz ? 'arbol-json' : undefined}>
-      {hijos.slice(0, mostrados).map(([s, v]) => (
-        <Nodo
-          key={String(s)}
-          segmento={s}
-          valor={v}
-          segmentos={[...segmentos, s]}
-          elegida={elegida}
-          alElegir={alElegir}
-          t={t}
-        />
-      ))}
+      {hijos.map(([p, v]) => {
+        const camino = [...pasos, p];
+        return (
+          <Nodo
+            key={String(p)}
+            paso={p}
+            valor={v}
+            pasos={camino}
+            ruta={rutaDe(camino)}
+            elegida={elegida}
+            alElegir={alElegir}
+            t={t}
+          />
+        );
+      })}
       {resto > 0 && (
         <li>
-          <Boton pequeno onClick={alMostrarMas}>
+          <Boton pequeno onClick={() => setMostrados((m) => m + POR_TANDA)}>
             {t('mostrarMas', { n: Math.min(resto, POR_TANDA) })}
           </Boton>
         </li>
@@ -144,23 +165,12 @@ function Hijos({
 /** El árbol y, debajo, la ruta del valor elegido con «Copiar». */
 function Arbol({ valor, t }: { valor: ValorJson; t: T }) {
   const [elegida, setElegida] = useState<string | null>(null);
-  const [mostrados, setMostrados] = useState(POR_TANDA);
-  const hijos = hijosDe(valor);
   return (
     <Tarjeta titulo={t('arbol')}>
-      {hijos ? (
-        <Hijos
-          hijos={hijos}
-          segmentos={[]}
-          mostrados={mostrados}
-          alMostrarMas={() => setMostrados((m) => m + POR_TANDA)}
-          elegida={elegida}
-          alElegir={setElegida}
-          t={t}
-          raiz
-        />
+      {cuantosHijos(valor) !== null ? (
+        <Hijos valor={valor} pasos={[]} elegida={elegida} alElegir={setElegida} t={t} raiz />
       ) : (
-        <p className={`mono sm arbol-valor v-${tipoDe(valor)}`}>{JSON.stringify(valor)}</p>
+        <p className={`mono sm arbol-valor v-${tipoDe(valor)}`}>{valorCorto(valor, LARGO_HOJA)}</p>
       )}
       <div className="arbol-ruta">
         <span className="xs muted">{t('ruta')}</span>
@@ -226,12 +236,14 @@ function CambiosVersion({ datos, nombre, t }: { datos: DatosJson; nombre: string
   const { idioma } = useT();
   const cambios = useMemo(() => {
     if (!anterior) return null;
-    const a = analizar(anterior.original, nombre);
+    // Como al derivar: lo que ya se guardó como configuración se lee aunque no tenga su forma.
+    const a = analizar(anterior.original, nombre, { estricto: false });
     return a ? compararValores(a.valor, datos.valor) : undefined;
   }, [anterior, nombre, datos.valor]);
   if (!anterior) return null;
   return (
-    <Detalles resumen={t('cambiosVersion', { n: anterior.version })}>
+    // Abierto: es a lo que lleva «Ver cambios» desde el mensaje de la versión.
+    <Detalles resumen={t('cambiosVersion', { n: anterior.version })} abierto>
       {cambios === undefined || cambios === null ? (
         <p className="sm muted">
           {t('versionIlegible', { n: anterior.version, formato: nombreFormato(datos.formato, idioma) })}
@@ -247,7 +259,8 @@ function CambiosVersion({ datos, nombre, t }: { datos: DatosJson; nombre: string
 
 export default function VistaJson({ el, datos }: PropsVista<DatosJson>) {
   const { idioma, t: tg } = useT();
-  const t = textos.t.bind(textos, idioma) as unknown as T;
+  // Estable mientras no cambie el idioma: los nodos del árbol están memorizados.
+  const t = useMemo(() => textos.t.bind(textos, idioma) as unknown as T, [idioma]);
   const comparar = useContext(ContextoComparar);
   const nombre = el.frontmatter.adjunto?.nombre ?? el.frontmatter.titulo;
   if (datos.ilegible)
@@ -260,6 +273,7 @@ export default function VistaJson({ el, datos }: PropsVista<DatosJson>) {
     );
   return (
     <>
+      <CambiosVersion datos={datos} nombre={nombre} t={t} />
       <Arbol valor={datos.valor} t={t} />
       {comparar && (
         <div className="row">
@@ -269,7 +283,6 @@ export default function VistaJson({ el, datos }: PropsVista<DatosJson>) {
         </div>
       )}
       <Esquema esquema={datos.esquema} t={t} />
-      <CambiosVersion datos={datos} nombre={nombre} t={t} />
       <DetallesElemento refe={el.frontmatter.ref} cifras={cifrasDe(lectorJson, datos)} />
     </>
   );

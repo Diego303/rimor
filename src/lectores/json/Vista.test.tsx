@@ -118,7 +118,26 @@ describe('capturar una configuración otra vez', () => {
     useCompositor.setState({ versiones: [], busquedas: [] });
   });
 
+  /** Una configuración de verdad (con el título que le pondría el lector): cambiar dos valores la deja muy parecida. */
+  const GATEWAY = `[gateway]
+client = "ureq"
+stream_timeout_ms = 30000
+connect_timeout_ms = 2000
+retries = 3
+backoff_ms = 250
+user_agent = "rimor-gateway/0.4"
+
+[gateway.tls]
+verify = true
+ca_file = "/etc/ssl/certs/ca.pem"
+
+[gateway.pool]
+max_idle = 16
+idle_timeout_s = 90
+`;
+
   it('se guarda como versión y el mensaje dice las claves que cambian', async () => {
+    const TOML = GATEWAY;
     const a = analizar(TOML);
     const creado = isoConZona(haceMinutos(60 * 24 * 3));
     const anterior = json(7, TOML, {
@@ -126,7 +145,7 @@ describe('capturar una configuración otra vez', () => {
       creado,
       modificado: creado,
       hash: hashOriginal(TOML),
-      lector: { nombre: 'json', version: 1, resumen: { formato: 'toml', claves: 6 } },
+      lector: { nombre: 'json', version: 1, resumen: { formato: 'toml', claves: 13 } },
     });
     const { espacio } = await montarApp('/', [anterior]);
     await screen.findByRole('button', { name: anterior.frontmatter.titulo }, PRIMERA_CARGA);
@@ -137,7 +156,7 @@ describe('capturar una configuración otra vez', () => {
       if (!r.ok || r.valor.tipo !== 'version') throw new Error('esperaba una versión');
       useCompositor.getState().anotarVersion({ ...r.valor, en: isoConZona(new Date()) });
     });
-    const frase = await screen.findByText(/^TOML con 6 claves\. Frente a la versión del /, {}, ESCRITURA);
+    const frase = await screen.findByText(/^TOML con 13 claves\. Frente a la versión del /, {}, ESCRITURA);
     expect(frase.textContent).toMatch(/cambian 2: client y stream_timeout_ms\.$/);
     expect(screen.getByRole('button', { name: 'Ver cambios' })).toBeTruthy();
   }, 60_000);
@@ -151,10 +170,36 @@ describe('veredicto de la comparación', () => {
     const { container } = render(<VeredictoJson r={{ anadidas: 1, quitadas: 0, cambiadas: 2 }} />);
     expect(container.querySelector('.verdict')?.className).toContain('warn');
     expect(container.textContent).toContain('3 claves cambian');
-    expect(container.textContent).toContain('1 añadidas · 0 quitadas · 2 cambiadas');
+    expect(container.textContent).toContain('1 añadida · 0 quitadas · 2 cambiadas');
     cleanup();
     const iguales = render(<VeredictoJson r={{ anadidas: 0, quitadas: 0, cambiadas: 0 }} />);
     expect(iguales.container.querySelector('.verdict')?.className).toContain('ok');
     expect(iguales.container.textContent).toContain('Las dos tienen las mismas claves y valores');
+  });
+});
+
+describe('revisión de IN-045: la vista', () => {
+  afterEach(() => cleanup());
+
+  it('los cambios de versión, primero y abiertos, aunque la anterior no tenga forma de configuración', async () => {
+    const { container } = await montar(json(20, '- uno\n- tres\n'), { version: 1, original: '- uno\n- dos\n' });
+    const plegable = screen.getByText('Cambios frente a la versión 1').closest('details');
+    expect(plegable?.open).toBe(true);
+    expect(container.firstElementChild).toBe(plegable);
+    expect([...container.querySelectorAll('.tabla-cambios-json tbody td')].map((c) => c.textContent)).toEqual([
+      '[1]',
+      '"dos"',
+      '"tres"',
+    ]);
+  });
+
+  it('una hoja enorme se recorta en el árbol; el esquema recortado lo dice', async () => {
+    const largo = JSON.stringify({ blob: 'x'.repeat(5000), n: 1 });
+    const { container } = await montar(json(21, largo));
+    const hoja = container.querySelector('.arbol-valor.v-texto') as HTMLElement;
+    expect(hoja.textContent?.length).toBe(200);
+    cleanup();
+    await montar(json(22, JSON.stringify(Object.fromEntries(Array.from({ length: 600 }, (_, i) => [`k${i}`, i])))));
+    expect(screen.getByText('Se enseñan las primeras 500 rutas.')).toBeTruthy();
   });
 });

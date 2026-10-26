@@ -28,7 +28,7 @@ import { VistaComparacionLogs } from './VistaLogs';
 import { VeredictoMediciones, VistaComparacionMediciones } from './VistaMediciones';
 
 /** Los motivos que se nombran con su frase (el de tipos distintos lleva además los dos tipos). */
-const MOTIVOS = ['mismo', 'sinComparacion', 'sinValores', 'otroLector', 'demasiadas'] as const;
+const MOTIVOS = ['mismo', 'sinComparacion', 'sinValores', 'otroLector', 'demasiadas', 'ilegible'] as const;
 type Motivo = (typeof MOTIVOS)[number];
 
 /** «Ayer, 18:21»: la fecha relativa con mayúscula, como la cabecera de la referencia. */

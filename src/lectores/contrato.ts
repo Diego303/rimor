@@ -104,6 +104,11 @@ export interface Lector<D = unknown> {
   etiqueta?(idioma: Idioma): string;
   /** Sus elementos no guardan versiones aunque su tipo sí (CMP-02): un parche nuevo es otro parche. */
   sinVersiones?: boolean;
+  /**
+   * Si un título que puso el lector es genérico para las versiones (además del suyo, `titulo`): con uno genérico, para
+   * ser versión de otro hace falta parecerse mucho, no solo llamarse igual (IN-045: «TOML · gateway»).
+   */
+  tituloGenerico?(titulo: string): boolean;
   /** Confianza entre 0 y 1; barata y síncrona. */
   detectar(e: Entrada): number;
   leer(e: Entrada): Promise<Borrador>;

@@ -63,7 +63,12 @@ export async function calcular(a: Elemento, b: Elemento, derivar: Derivar): Prom
     return ok({ clase: 'logs', logs: compararLogs(...datos), datos });
   }
   if (c.clase === 'datos') return ok({ clase: 'datos', datos: compararDatos(da as DatosTabla, db as DatosTabla) });
-  if (c.clase === 'json') return ok({ clase: 'json', json: compararJson(da as DatosJson, db as DatosJson) });
+  if (c.clase === 'json') {
+    // Uno que ya no se lee como configuración no tiene claves que comparar (no son «iguales»).
+    const [ja, jb] = [da as DatosJson, db as DatosJson];
+    if (ja.ilegible || jb.ilegible) return fallo('comparacion.ilegible');
+    return ok({ clase: 'json', json: compararJson(ja, jb) });
+  }
   const mediciones = compararMediciones(da as DatosMediciones, db as DatosMediciones);
   return mediciones ? ok({ clase: 'mediciones', mediciones }) : fallo('comparacion.sinValores');
 }

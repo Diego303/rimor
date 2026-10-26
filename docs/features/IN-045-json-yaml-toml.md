@@ -100,3 +100,49 @@ Cubre las seis tareas. Reutiliza el contrato de lectores, las versiones de IN-02
 | Las listas de mapas con `id`, `name`, `nombre` o `key` se emparejan por esa clave, y la ruta lo dice (`servers[name="b"].ip`) | Por posición, quitar el primer servidor cambiaría todos los demás; con la clave, la posición puede ser otra en cada lado. |
 | El título sin nombre de archivo es su `name` («rimor · JSON») o el formato y sus primeras claves («TOML · gateway, servers») | Así la versión nueva tiene el mismo título y se reconoce como versión; dos `package.json` distintos tienen nombres distintos. |
 | Las fusiones de YAML (`<<: *base`) se resuelven | Son habituales en configuraciones (CI, docker-compose). |
+
+## Verificación
+
+**`pnpm verificar`**: en verde, 117 archivos y 1500 pruebas, más la de rendimiento aparte; carga inicial 265,1 KB de 300 (+5,3 KB por el lector entero; el análisis completo y `smol-toml` van diferidos).
+
+**Criterios de aceptación:** un JSON, un YAML y un TOML pegados o soltados se guardan con el lector `json`, con su árbol, su esquema y su respuesta (`json.test.ts`, `Vista.test.tsx`; corpus al 100 % en todos los tipos); pegar la versión nueva lo dice con las claves que cambian (`Vista.test.tsx`, captura de una versión con su mensaje); dos se comparan como elemento Comparación (`comparaciones/json.test.ts`).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| Analizadores de los tres formatos, con `leyendo-datos` | `json.test.ts` (formatos, fusiones y etiquetas de YAML, JSONC, enteros grandes, fechas), `Lectores.test.tsx` (señal del lector) |
+| Árbol plegable | `Vista.test.tsx` (plegar, abrir, tandas de 100, hojas recortadas) |
+| Esquema inferido | `json.test.ts`, `Vista.test.tsx` (tabla y aviso de recorte) |
+| Ruta al valor | `json.test.ts` (`rutaDe`), `Vista.test.tsx` (elegir y copiar) |
+| Comparación estructural como elemento Comparación | `comparaciones/json.test.ts` (cálculo, resultado validado, ilegibles), `Vista.test.tsx` (veredicto) |
+| Versión anterior detectada al pegar | `Vista.test.tsx` (mensaje del feed), `json.test.ts` (respuesta de versión; dos workflows «CI» distintos no son versiones) |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | Un log de más de 200 KB que empezaba por `[` (o un JSON por línea) se tomaba por JSON y `leer` lo analizaba entero en el hilo principal (13,7 s con 3 MB) | Por encima del límite se comprueba que su principio sea un único JSON (`principioDeJson`); `leer` no analiza lo grande (las claves llegan al derivar). `json.test.ts` |
+| 2 | YAML cuadrático con miles de claves y análisis doble en el hilo principal | `uniqueKeys: false`, detección sobre 64 KB y `leer` como arriba. `json.test.ts` |
+| 3 | Notas «Clave: valor» (días, cabeceras de correo, prompts con valores cortos, logs `user_1: …`) pasaban por YAML | Un YAML plano pide 3 claves, sin claves de prompt ni palabras con mayúscula, y valores de menos de 3 palabras. `json.test.ts` |
+| 4 | Títulos generados iguales en configuraciones distintas («CI · YAML») las hacían versiones (umbral 0,2) | `Lector.tituloGenerico`: con un título generado hace falta parecerse mucho. `json.test.ts` |
+| 5 | Comparar ilegibles daba «iguales» | `comparacion.ilegible`, con su motivo. `comparaciones/json.test.ts` |
+| 6 | `leer` estricto no coincidía con la detección de TOML (resumen vacío) | `leer` en modo tolerante. `json.test.ts` |
+| 7 | Un TOML inválido acababa como «YAML con un valor suelto»; enteros grandes rechazados | Con forma de TOML, TOML o ilegible (con formato `toml`); `integersAsBigInt: 'asNeeded'`. `json.test.ts` |
+| 8 | «Cambios frente a la versión» en modo estricto | Tolerante, como al derivar. `Vista.test.tsx` |
+| 9 | El aviso de esquema recortado no salía nunca | La raíz no cuenta. `json.test.ts`, `Vista.test.tsx` |
+| 10 | «1 añadidas» | Plurales por cifra. `Vista.test.tsx` |
+| 11 | Horas y fechas de TOML con `.000` | Sin la fracción que no tenían. `json.test.ts` |
+| 12 | Etiquetas de YAML (`!Ref`) perdidas | Se conservan en el valor. `json.test.ts` |
+| 13 | JSONC no se reconocía ni con nombre `.json` | Con la pista del nombre, sin comentarios ni comas finales. `json.test.ts` |
+| 14 | Árbol: todo se repintaba al elegir; hijos recorridos enteros; hojas enormes en el DOM | Nodos memorizados (solo se repintan los afectados), hijos por tandas sin recorrer el resto y hojas de 200 caracteres. `Vista.test.tsx` |
+| 15 | La vista previa del feed solo enseñaba `[gateway]`; «Ver cambios» llevaba a un plegable cerrado al final | La vista previa une las líneas tras una que solo abre algo (como `JSN-0006`); los cambios de versión, primero y abiertos. `Mensaje.test.ts`, `Vista.test.tsx` |
+| 16 | `rutasCortas` dejaba `[0]` y `[1]`; las marcas de ruta eran textos que chocaban con claves | Al menos una clave con nombre; las marcas son objetos (`{ elementos }`, `{ clave, valor }`). `json.test.ts` |
+| 17 | Enteros de JSON más allá de 2^53 redondeados | Se guardan como texto con el original (`JSON.parse` con la fuente, donde el navegador la da). `json.test.ts` |
+
+### Decisiones de la verificación
+
+| Decisión | Por qué |
+|---|---|
+| El texto del motivo `sinComparacion` dice todos los tipos que se comparan | Decía «solo logs y mediciones» desde IN-028; ya son logs, mediciones, datos y configuraciones. |
+| Los enteros grandes de JSON se conservan solo donde el navegador da la fuente al analizar | Es la API estándar (`JSON.parse` con contexto); donde no está, se queda el número redondeado, como hasta ahora. |

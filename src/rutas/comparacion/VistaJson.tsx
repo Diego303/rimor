@@ -21,11 +21,11 @@ export function VeredictoJson({ r }: { r: Pick<ResultadoJson, 'anadidas' | 'quit
       tono="warn"
       cifra={fmtNumero(total, idioma)}
       frase={t('pantallas.comparacion.json.cambian', { n: total })}
-      explicacion={t('pantallas.comparacion.json.detalle', {
-        anadidas: r.anadidas,
-        quitadas: r.quitadas,
-        cambiadas: r.cambiadas,
-      })}
+      explicacion={[
+        t('pantallas.comparacion.json.anadidas', { n: r.anadidas }),
+        t('pantallas.comparacion.json.quitadas', { n: r.quitadas }),
+        t('pantallas.comparacion.json.cambiadas', { n: r.cambiadas }),
+      ].join(' · ')}
     />
   );
 }

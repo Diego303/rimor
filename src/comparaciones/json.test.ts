@@ -48,3 +48,12 @@ describe('comparar dos configuraciones', () => {
     expect(resultadoDe(r.valor, [a, b])).toMatchObject({ clase: 'json', cambiadas: 1, anadidas: 0, quitadas: 0 });
   });
 });
+
+describe('revisión de IN-045', () => {
+  it('uno ilegible no se compara (no son «iguales»)', async () => {
+    const a = el(1, 'clave: [sin cerrar');
+    const b = el(2, '{"a": 1}');
+    const r = await calcular(a, b, (e) => lectorJson.derivar(e));
+    expect(r.ok ? r.valor : r.error.codigo).toBe('comparacion.ilegible');
+  });
+});

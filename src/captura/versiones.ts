@@ -27,14 +27,14 @@ const masReciente = (a: FrontmatterComun, b: FrontmatterComun) => Date.parse(b.m
 /**
  * El elemento del que `texto` es la versión nueva, o `null`. Solo entre los del mismo tipo y del mismo lector (un
  * parche no es versión de un código, aunque los dos sean código). `generico` es el título que pone el lector cuando
- * no encuentra uno («Prompt», «Código»): ese no cuenta como mismo título.
+ * no encuentra uno («Prompt», «Código»), o cómo saber si uno lo es: ese no cuenta como mismo título.
  */
 export async function anteriorDe(
   texto: string,
   titulo: string,
   { tipo, mismoLector }: { tipo: TipoElemento; mismoLector: (fm: FrontmatterComun) => boolean },
   repositorio: Pick<Repositorio, 'elementos' | 'leerElemento'>,
-  generico?: string,
+  generico?: string | ((titulo: string) => boolean),
 ): Promise<FrontmatterComun | null> {
   if (!TIPOS_CON_VERSIONES.has(tipo)) return null;
   // Los guardados como adjunto (más de 2 MB) no tienen versiones.
@@ -48,13 +48,14 @@ export async function anteriorDe(
     const leido = await repositorio.leerElemento(fm.id).catch(() => null);
     return leido?.ok && leido.valor.original !== null ? parecido(nuevos, shingles(leido.valor.original)) : 0;
   };
+  const esGenerico = (x: string) =>
+    typeof generico === 'function' ? generico(x) : tituloComparable(x) === tituloComparable(generico ?? '');
   const t = tituloComparable(titulo);
-  if (t && t !== tituloComparable(generico ?? '')) {
+  if (t && !esGenerico(titulo)) {
     for (const fm of mismos.filter((o) => tituloComparable(o.titulo) === t))
       if ((await parecidoA(fm)) >= PARECIDO_CON_TITULO) return fm;
   }
-  const esPropio = (x: string) =>
-    Boolean(tituloComparable(x)) && tituloComparable(x) !== tituloComparable(generico ?? '');
+  const esPropio = (x: string) => Boolean(tituloComparable(x)) && !esGenerico(x);
   let mejor: FrontmatterComun | null = null;
   let maximo = UMBRAL_PARECIDO;
   for (const fm of mismos.slice(0, CANDIDATOS)) {

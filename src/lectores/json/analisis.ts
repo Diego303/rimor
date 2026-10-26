@@ -22,7 +22,8 @@ export * from './formas';
 
 function comoToml(texto: string): ValorJson | undefined {
   try {
-    return normalizar(analizarToml(texto));
+    // Los enteros que no caben en un número, como `bigint` (y `normalizar` los pasa a texto).
+    return normalizar(analizarToml(texto, { integersAsBigInt: 'asNeeded' }));
   } catch {
     return undefined;
   }
@@ -35,12 +36,13 @@ function comoToml(texto: string): ValorJson | undefined {
  */
 export function analizar(texto: string, nombre?: string, { estricto = true } = {}): Analizado | null {
   const p = pista(nombre);
-  const json = comoJson(texto, !estricto);
+  const json = comoJson(texto, { cualquiera: !estricto, jsonc: p === 'json' });
   if (json !== undefined) return { formato: 'json', valor: json };
   const vale = (formato: FormatoJson, valor: ValorJson) => !estricto || p === formato || pareceConfiguracion(valor);
+  // Con la forma de un TOML, es TOML o no se lee (una clave repetida): como YAML sería un texto suelto.
   if (p === 'toml' || formaToml(texto)) {
     const valor = comoToml(texto);
-    if (valor !== undefined && vale('toml', valor)) return { formato: 'toml', valor };
+    return valor !== undefined && vale('toml', valor) ? { formato: 'toml', valor } : null;
   }
   const yaml = comoYaml(texto);
   if (yaml !== undefined && vale('yaml', yaml)) return { formato: 'yaml', valor: yaml };
@@ -49,15 +51,18 @@ export function analizar(texto: string, nombre?: string, { estricto = true } = {
 
 // ---------- Rutas ----------
 
-export type Segmento = string | number;
+/**
+ * Un trozo de ruta: una clave, una posición, los elementos de una lista (en el esquema, `[]`) o uno de una lista de
+ * mapas por su clave (`[name="b"]`). Las marcas no son textos: una clave que se llame `[0]` no se confunde con ellas.
+ */
+export type Segmento = string | number | { elementos: true } | { clave: string; valor: string | number };
 
-/** `gateway.stream_timeout_ms`, `servers[0].host`, `["clave con espacios"]`. */
+/** `gateway.stream_timeout_ms`, `servers[0].host`, `["clave con espacios"]`, `servers[]`, `servers[name="b"]`. */
 export function rutaDe(segmentos: readonly Segmento[]): string {
   let r = '';
   for (const s of segmentos) {
     if (typeof s === 'number') r += `[${s}]`;
-    // `[]` (los elementos de una lista, en el esquema) y `[name="b"]` (uno de una lista de mapas, por su clave).
-    else if (s.startsWith('[') && s.endsWith(']')) r += s;
+    else if (typeof s === 'object') r += 'elementos' in s ? '[]' : `[${s.clave}=${JSON.stringify(s.valor)}]`;
     else if (/^[\p{L}_$][\p{L}\p{N}_$-]*$/u.test(s)) r += r ? `.${s}` : s;
     else r += `[${JSON.stringify(s)}]`;
   }
@@ -96,7 +101,14 @@ export const MAX_ESQUEMA = 500;
 /** El esquema inferido: cada ruta con sus tipos; las listas funden sus elementos en `ruta[]`. */
 export function esquemaDe(v: ValorJson): EntradaEsquema[] {
   const porRuta = new Map<string, EntradaEsquema>();
+  const ELEMENTOS = { elementos: true } as const;
   const visitar = (x: ValorJson, segmentos: Segmento[]) => {
+    const hijos = () => {
+      if (Array.isArray(x)) for (const y of x) visitar(y, [...segmentos, ELEMENTOS]);
+      else if (esMapa(x)) for (const [k, y] of Object.entries(x)) visitar(y, [...segmentos, k]);
+    };
+    // La raíz solo dice algo si es un valor suelto (y no cuenta para el máximo).
+    if (!segmentos.length && (Array.isArray(x) || esMapa(x))) return hijos();
     const ruta = rutaDe(segmentos);
     let e = porRuta.get(ruta);
     if (!e) {
@@ -107,14 +119,11 @@ export function esquemaDe(v: ValorJson): EntradaEsquema[] {
     e.veces++;
     const tipo = tipoDe(x);
     if (!e.tipos.includes(tipo)) e.tipos.push(tipo);
-    if (Array.isArray(x)) {
-      e.elementos = Math.max(e.elementos ?? 0, x.length);
-      for (const y of x) visitar(y, [...segmentos, '[]']);
-    } else if (esMapa(x)) for (const [k, y] of Object.entries(x)) visitar(y, [...segmentos, k]);
+    if (Array.isArray(x)) e.elementos = Math.max(e.elementos ?? 0, x.length);
+    hijos();
   };
   visitar(v, []);
-  // La raíz solo dice algo si es un valor suelto.
-  return [...porRuta.values()].filter((e) => e.ruta !== '$' || !['objeto', 'lista'].includes(e.tipos[0] ?? ''));
+  return [...porRuta.values()];
 }
 
 // ---------- Comparación estructural ----------
@@ -171,7 +180,7 @@ export function compararValores(a: ValorJson, b: ValorJson): DiferenciasJson {
       if (clave) {
         const idDe = (m: ValorJson) => (m as MapaJson)[clave] as string | number;
         // Cada elemento se nombra por su clave: su posición puede ser otra en cada lado.
-        const nombre = (m: ValorJson) => `[${clave}=${JSON.stringify(idDe(m))}]`;
+        const nombre = (m: ValorJson): Segmento => ({ clave, valor: idDe(m) });
         const enX = new Map(x.map((m) => [idDe(m), m]));
         const enY = new Set(y.map(idDe));
         for (const my of y) {
@@ -221,5 +230,10 @@ export function rutasCortas(rutas: readonly string[]): string[] {
   const primero = partes[0]?.slice(0, -1) ?? [];
   let comun = 0;
   while (comun < primero.length && partes.every((p) => p.length - 1 > comun && p[comun] === primero[comun])) comun++;
-  return partes.map((p) => unirTrozos(p.slice(comun)));
+  return partes.map((p) => {
+    // Al menos una clave con nombre: `[0]` y `[1]` solos no dicen qué cambia (`hosts[0]`, sí).
+    let desde = comun;
+    while (desde > 0 && p.slice(desde).every((t) => t.startsWith('['))) desde--;
+    return unirTrozos(p.slice(desde));
+  });
 }

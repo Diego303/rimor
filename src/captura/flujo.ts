@@ -25,6 +25,7 @@ import type { Borrador, Entrada, Lector } from '../lectores/contrato';
 import type { ColaDerivados } from '../lectores/derivados';
 import type { Registro } from '../lectores/registro';
 import { type OpcionesOcultar, ocultar } from '../seguridad/secretos/ocultar';
+import { tituloComparable } from '../versiones/parecido';
 import { type Candidato, detectar, entradaDeArchivo } from './detector';
 import { etiquetasInferidas } from './etiquetas';
 import { opcionesDetectar, opcionesOcultar } from './opciones';
@@ -231,7 +232,9 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     textoVersion &&
     utf8(textoVersion).length <= LIMITE_ORIGINAL_EN_MD
   ) {
-    const generico = (lector.textos.t as (i: 'es', c: string) => string)('es', 'titulo');
+    const propio = tituloComparable((lector.textos.t as (i: 'es', c: string) => string)('es', 'titulo'));
+    const generico = (titulo: string) =>
+      tituloComparable(titulo) === propio || (lector.tituloGenerico?.(titulo) ?? false);
     // Del mismo lector: el que lo leería hoy (un elemento cuyo lector ya no existe, el de su tipo).
     const mismoLector = (fm: FrontmatterComun) => registro.paraElemento({ frontmatter: fm })?.nombre === lector.nombre;
     const anterior = lector.sinVersiones

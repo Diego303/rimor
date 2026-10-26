@@ -43,7 +43,7 @@ describe('analizar JSON, YAML y TOML', () => {
       formato: 'toml',
       valor: {
         gateway: { client: 'ureq', stream_timeout_ms: 30000, retries: 3 },
-        servers: [{ name: 'alpha', since: '2026-10-09T08:00:00.000Z' }],
+        servers: [{ name: 'alpha', since: '2026-10-09T08:00:00Z' }],
       },
     });
     expect(analizar('server:\n  port: 8080\n  host: localhost\nfecha: 2026-10-09\n')).toEqual({
@@ -89,7 +89,7 @@ describe('analizar JSON, YAML y TOML', () => {
     expect(confianzaJson(TOML)).toBe(0.92);
     expect(confianzaJson('a = 1\nb = "x"\n')).toBe(0.85);
     expect(confianzaJson('server:\n  port: 8080\n')).toBe(0.9);
-    expect(confianzaJson('port: 8080\nhost: localhost\n')).toBe(0.85);
+    expect(confianzaJson('port: 8080\nhost: localhost\nworkers: 4\n')).toBe(0.85);
     const enorme = `[${Array.from({ length: 20_000 }, (_, i) => `{"id": ${i}, "nombre": "x${i}"}`).join(',\n')}]`;
     expect(enorme.length).toBeGreaterThan(LIMITE_DETECCION);
     expect(confianzaJson(enorme)).toBe(0.9);
@@ -245,5 +245,107 @@ describe('lector json', () => {
     const d = await lectorJson.derivar(json(1, TOML));
     expect(d).toMatchObject({ formato: 'toml', claves: 7, primerNivel: ['gateway', 'servers'], profundidad: 3 });
     expect(lectorJson.textoIndexable?.(d)).toContain('gateway.stream_timeout_ms');
+  });
+});
+
+describe('revisión de IN-045', () => {
+  it('un log grande que empieza por «[» o un JSON por línea grande no son JSON; un JSON grande sí', () => {
+    const log = Array.from(
+      { length: 9000 },
+      (_, i) => `[2026-10-17 10:00:${String(i % 60).padStart(2, '0')}] INFO petición ${i} servida`,
+    ).join('\n');
+    expect(log.length).toBeGreaterThan(LIMITE_DETECCION);
+    expect(confianzaJson(log, 'app.log')).toBe(0);
+    expect(confianzaJson(log.replace(/\[2026[^\]]*\]/g, '[INFO]'))).toBe(0);
+    const jsonl = Array.from({ length: 6000 }, (_, i) => JSON.stringify({ level: 'info', i, msg: 'ok' })).join('\n');
+    expect(confianzaJson(jsonl)).toBe(0);
+    expect(detectar({ texto: log, nombre: 'app.log' }, REGISTRO).lector).toBe('log');
+    const grande = JSON.stringify(
+      Array.from({ length: 9000 }, (_, i) => ({ id: i, nombre: `x${i}` })),
+      null,
+      2,
+    );
+    expect(confianzaJson(grande)).toBe(0.9);
+  });
+
+  it('leer un texto grande no lo analiza en el hilo principal: el formato por su principio', async () => {
+    const grande = JSON.stringify(Array.from({ length: 40_000 }, (_, i) => ({ id: i, nombre: `x${i}` })));
+    const inicio = performance.now();
+    const b = await lectorJson.leer({ texto: grande });
+    expect(performance.now() - inicio).toBeLessThan(100);
+    expect(b.resumen).toEqual({ formato: 'json' });
+  });
+
+  it('notas con forma «Clave: valor» no son configuración: días, cabeceras de correo, prompts, logs', () => {
+    const notas = [
+      'Lunes: gimnasio\nMartes: piscina\nMiércoles: yoga',
+      'From: ana@example.org\nTo: luis@example.org\nSubject: reunión',
+      'Rol: revisor de código\nTarea: revisa el diff\nFormato: lista breve',
+      '---\ntitle: Nota\ndate: 2026-10-17\n---\nAutor: Diego\nEstado: borrador\n',
+      Array.from({ length: 50 }, (_, i) => `user_${i}: logged in from 10.0.0.${i}`).join('\n'),
+      'port: 8080\nhost: localhost',
+    ];
+    for (const n of notas) expect(confianzaJson(n), n).toBe(0);
+    expect(detectar({ texto: 'Lunes: gimnasio\nMartes: piscina' }, REGISTRO).lector).not.toBe('json');
+    // Una configuración plana de verdad sí.
+    expect(confianzaJson('port: 8080\nhost: localhost\nworkers: 4\n')).toBe(0.85);
+  });
+
+  it('TOML: claves repetidas, ilegible y como TOML (no como un texto YAML); enteros grandes; horas como se escriben', async () => {
+    const repetida = await lectorJson.derivar(json(1, 'name = "a"\nname = "b"\n'));
+    expect(repetida).toMatchObject({ ilegible: true, formato: 'toml' });
+    expect(analizar('n = 9007199254740993\nm = 1\n', 'a.toml')?.valor).toEqual({ n: '9007199254740993', m: 1 });
+    expect(analizar('[t]\nh = 07:32:00\nd = 1979-05-27\n')?.valor).toEqual({ t: { h: '07:32:00', d: '1979-05-27' } });
+  });
+
+  it('leer un TOML con textos de comillas triples: su resumen y su título', async () => {
+    const texto = "[t]\nre = '''I [dw]on't need \\d{2} apples, nor any of the others today'''\nb = 1\n";
+    expect(confianzaJson(texto)).toBe(0.92);
+    const b = await lectorJson.leer({ texto });
+    expect(b.resumen).toEqual({ formato: 'toml', claves: 3 });
+    expect(b.titulo).toBe('TOML · t');
+  });
+
+  it('YAML: claves repetidas (la última gana) y etiquetas propias conservadas', () => {
+    expect(analizar('a: 1\na: 2\nb: 3\nc: 4\n')?.valor).toEqual({ a: 2, b: 3, c: 4 });
+    expect(analizar('Resources:\n  B:\n    Type: AWS::S3::Bucket\n    Name: !Ref Mio\n')?.valor).toEqual({
+      Resources: { B: { Type: 'AWS::S3::Bucket', Name: '!Ref Mio' } },
+    });
+  });
+
+  it('JSONC con el nombre de un .json: comentarios y comas al final; enteros de JSON más allá de 2^53', () => {
+    const tsconfig = '{\n  // opciones\n  "compilerOptions": { "strict": true, /* sí */ "target": "ES2022", },\n}\n';
+    expect(confianzaJson(tsconfig, 'tsconfig.json')).toBe(0.95);
+    expect(analizar(tsconfig, 'tsconfig.json')?.valor).toEqual({ compilerOptions: { strict: true, target: 'ES2022' } });
+    expect(analizar('{"id": 9007199254740993, "n": 1}')?.valor).toEqual({ id: '9007199254740993', n: 1 });
+  });
+
+  it('esquema: hasta 500 rutas sin contar la raíz; rutas: las marcas no chocan con claves que se escriben igual', () => {
+    const muchas = Object.fromEntries(Array.from({ length: 600 }, (_, i) => [`k${i}`, i]));
+    expect(esquemaDe(muchas)).toHaveLength(500);
+    expect(rutaDe(['[0]', 'x'])).toBe('["[0]"].x');
+    expect(rutaDe(['a', { elementos: true }, 'b'])).toBe('a[].b');
+    expect(rutasCortas(['hosts[0]', 'hosts[1]'])).toEqual(['hosts[0]', 'hosts[1]']);
+    expect(rutasCortas(['a.hosts[3]'])).toEqual(['hosts[3]']);
+  });
+});
+
+describe('versiones de configuraciones', () => {
+  it('dos workflows distintos que se llaman igual («CI») no son versiones; el mismo con un cambio, sí', async () => {
+    const { Repositorio } = await import('../../almacen/repositorio');
+    const { AlmacenMemoria } = await import('../../almacen/memoria');
+    const { capturar } = await import('../../captura/flujo');
+    const repositorio = new Repositorio(new AlmacenMemoria());
+    const efectos = { repositorio, registro: REGISTRO };
+    const uno =
+      'name: CI\non:\n  push:\n    branches: [main]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: pnpm test\n';
+    const otro =
+      'name: CI\non:\n  pull_request:\njobs:\n  lint:\n    runs-on: macos-latest\n    steps:\n      - run: cargo clippy\n      - run: cargo fmt --check\n';
+    const r1 = await capturar({ texto: uno, origen: 'pegado' }, efectos);
+    expect(r1.ok && r1.valor.tipo).toBe('creado');
+    const r2 = await capturar({ texto: otro, origen: 'pegado' }, efectos);
+    expect(r2.ok && r2.valor.tipo).toBe('creado');
+    const r3 = await capturar({ texto: uno.replace('pnpm test', 'pnpm verificar'), origen: 'pegado' }, efectos);
+    expect(r3.ok && r3.valor.tipo).toBe('version');
   });
 });

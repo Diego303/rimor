@@ -49,7 +49,7 @@ export function useComparar(): { comparar: (refA: string, refB: string) => Promi
       if (!r?.ok) {
         const clave = r?.error.codigo.slice('comparacion.'.length);
         const motivo =
-          clave === 'sinValores' || clave === 'otroLector' || clave === 'sinComparacion'
+          clave === 'sinValores' || clave === 'otroLector' || clave === 'sinComparacion' || clave === 'ilegible'
             ? t(`pantallas.comparacion.motivos.${clave}`)
             : null;
         return void avisos?.avisar(

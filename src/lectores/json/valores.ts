@@ -4,7 +4,7 @@ import type { ValorJson } from './analisis';
 /** Largo máximo de un valor en una línea. */
 export const LARGO_VALOR = 80;
 
-export function valorCorto(v: ValorJson): string {
+export function valorCorto(v: ValorJson, largo = LARGO_VALOR): string {
   const texto = Array.isArray(v)
     ? v.length
       ? '[…]'
@@ -14,5 +14,5 @@ export function valorCorto(v: ValorJson): string {
         ? '{…}'
         : '{}'
       : JSON.stringify(v);
-  return texto.length > LARGO_VALOR ? `${texto.slice(0, LARGO_VALOR - 1)}…` : texto;
+  return texto.length > largo ? `${texto.slice(0, largo - 1)}…` : texto;
 }

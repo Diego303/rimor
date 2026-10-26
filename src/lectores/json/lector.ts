@@ -8,7 +8,17 @@ import { fmtDia, fmtNumero, type Idioma } from '../../i18n/formatos';
 import type { Fragmento, Respuesta } from '../../respuestas/tipos';
 import type { Borrador, Entrada, Lector } from '../contrato';
 import type { EntradaEsquema } from './analisis';
-import { confianzaJson, esMapa, type FormatoJson, type ValorJson } from './formas';
+import {
+  confianzaJson,
+  esMapa,
+  type FormatoJson,
+  formaToml,
+  formatoProbable,
+  LIMITE_DETECCION,
+  MUESTRA_DETECCION,
+  principio,
+  type ValorJson,
+} from './formas';
 import { textos } from './textos';
 
 export interface DatosJson {
@@ -29,6 +39,8 @@ const t = textos.t as unknown as T;
 
 /** Claves de primer nivel que dan nombre a lo pegado (`"name": "rimor"` de un `package.json`). */
 const CLAVES_NOMBRE = ['name', 'nombre', 'title', 'titulo', 'título'];
+/** Un título puesto por `tituloDe`: «TOML · …» o «… · JSON». */
+const TITULO_GENERADO = /^(?:JSON|YAML|TOML) · | · (?:JSON|YAML|TOML)$/;
 /** Cuántas claves de primer nivel van en el título. */
 const CLAVES_EN_TITULO = 3;
 /** Cuántas claves que cambian se nombran en la respuesta de una versión (las demás, «y N más»). */
@@ -98,9 +110,18 @@ export const lectorJson: Lector<DatosJson> = {
 
   async leer(e: Entrada): Promise<Borrador> {
     const texto = e.texto ?? '';
-    const { analizar, contarClaves } = await import('./analisis');
-    const a = analizar(texto, e.nombre);
     const nombre = e.nombre ?? e.archivos?.[0]?.name ?? '';
+    // Lo grande no se analiza en el hilo principal: el formato por su principio, y las claves al derivar (en el
+    // Worker), que pone al día el resumen.
+    if (texto.length > LIMITE_DETECCION) {
+      const formato = /^\s*[[{]/.test(texto)
+        ? 'json'
+        : (formatoProbable(principio(texto, MUESTRA_DETECCION), nombre)?.formato ?? 'json');
+      return { titulo: nombre || t('es', 'titulo'), original: texto, resumen: { formato } };
+    }
+    // Ya detectado (o pedido con `/json`): se lee aunque no tenga forma de configuración.
+    const { analizar, contarClaves } = await import('./analisis');
+    const a = analizar(texto, nombre, { estricto: false });
     return {
       titulo: nombre || (a ? tituloDe(a.formato, a.valor) : t('es', 'titulo')),
       original: texto,
@@ -108,13 +129,17 @@ export const lectorJson: Lector<DatosJson> = {
     };
   },
 
+  // Los títulos que pone `tituloDe` («TOML · gateway», «CI · YAML») se repiten entre configuraciones distintas: para
+  // las versiones cuentan como genéricos (hace falta parecerse mucho, no solo llamarse igual).
+  tituloGenerico: (titulo) => TITULO_GENERADO.test(titulo),
+
   async derivar(el) {
     // El análisis (con `smol-toml`), solo al derivar: no va en la carga inicial.
     const { analizar, contarClaves, esquemaDe, profundidad } = await import('./analisis');
     const a = analizar(el.original ?? '', nombreArchivo(el), { estricto: false });
     if (!a) {
       const r = el.frontmatter.lector.resumen.formato;
-      const formato = r === 'yaml' || r === 'toml' ? r : 'json';
+      const formato = r === 'yaml' || r === 'toml' ? r : formaToml(el.original ?? '') ? 'toml' : 'json';
       return { formato, claves: 0, primerNivel: [], profundidad: 0, esquema: [], valor: null, ilegible: true };
     }
     return {

@@ -332,10 +332,11 @@
       "motivos": {
         "mismo": "It is the same item.",
         "distintoTipo": "Only two of the same type can be compared: {a} and {b} are not.",
-        "sinComparacion": "For now only logs with logs and measurements with measurements are compared.",
+        "sinComparacion": "This type cannot be compared yet: for now, logs, measurements, data and configurations.",
         "sinValores": "One of the measurements has no values.",
         "otroLector": "One of them was not read by the reader of its type (it was saved as a file), so it lacks what is needed to compare it.",
-        "demasiadas": "For now two sources are compared, no more."
+        "demasiadas": "For now two sources are compared, no more.",
+        "ilegible": "One of them no longer reads as JSON, YAML or TOML."
       },
       "mediciones": {
         "masRapido": "{nombre} is {cambio} faster",
@@ -384,7 +385,18 @@
           "other": "{n} keys change"
         },
         "iguales": "Both have the same keys and values",
-        "detalle": "{anadidas} added · {quitadas} removed · {cambiadas} changed",
+        "anadidas": {
+          "one": "{n} added",
+          "other": "{n} added"
+        },
+        "quitadas": {
+          "one": "{n} removed",
+          "other": "{n} removed"
+        },
+        "cambiadas": {
+          "one": "{n} changed",
+          "other": "{n} changed"
+        },
         "cambiosTitulo": "Changes per path",
         "sinCambios": "No key changes.",
         "ruta": "Path",

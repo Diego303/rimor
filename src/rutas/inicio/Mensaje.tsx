@@ -27,14 +27,24 @@ import { Icono } from '../../ui/iconos/Icono';
 /** Largo de la vista previa (la línea se corta con puntos suspensivos por CSS). */
 const LARGO_PREVIA = 160;
 
-/** La primera línea con contenido del original, para la vista previa en mono. */
+/** Una línea que solo abre algo (`{`, `[`, `[gateway]`, `---`): sola no dice nada del contenido. */
+const SOLO_APERTURA = /^(?:[{[(]|\[[^\]]+\]|---)$/;
+
+/**
+ * La primera línea con contenido del original, para la vista previa en mono. Si solo abre algo (una tabla de TOML,
+ * un JSON), las siguientes van detrás, separadas por dos espacios (como `JSN-0006` de la referencia:
+ * `[gateway]  client = "ureq"  stream_timeout_ms = 30000`).
+ */
 export function vistaPrevia(el: Pick<Elemento, 'original'> | null, titulo: string): string | null {
   if (!el?.original) return null;
-  const linea = el.original
+  const lineas = el.original
+    .slice(0, LARGO_PREVIA * 4)
     .split(/\r?\n/)
     .map((l) => l.trim())
-    .find((l) => l && l !== titulo.trim());
-  return linea ? linea.slice(0, LARGO_PREVIA) : null;
+    .filter((l) => l && l !== titulo.trim());
+  const [primera] = lineas;
+  if (!primera) return null;
+  return (SOLO_APERTURA.test(primera) ? lineas.join('  ') : primera).slice(0, LARGO_PREVIA);
 }
 
 /** Las acciones de una respuesta que el feed sabe hacer: «No», añadir a una colección y llevar a un hilo. */

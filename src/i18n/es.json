@@ -332,10 +332,11 @@
       "motivos": {
         "mismo": "Es el mismo elemento.",
         "distintoTipo": "Solo se comparan dos del mismo tipo: {a} y {b} no lo son.",
-        "sinComparacion": "De momento solo se comparan logs con logs y mediciones con mediciones.",
+        "sinComparacion": "Este tipo aún no se compara: de momento, logs, mediciones, datos y configuraciones.",
         "sinValores": "Una de las mediciones no tiene valores.",
         "otroLector": "Uno de los dos no lo leyó el lector de su tipo (se guardó como archivo) y no trae lo que hace falta para compararlo.",
-        "demasiadas": "De momento se comparan dos fuentes, no más."
+        "demasiadas": "De momento se comparan dos fuentes, no más.",
+        "ilegible": "Una de las dos ya no se lee como JSON, YAML ni TOML."
       },
       "mediciones": {
         "masRapido": "{nombre} es un {cambio} más rápido",
@@ -384,7 +385,18 @@
           "other": "{n} claves cambian"
         },
         "iguales": "Las dos tienen las mismas claves y valores",
-        "detalle": "{anadidas} añadidas · {quitadas} quitadas · {cambiadas} cambiadas",
+        "anadidas": {
+          "one": "{n} añadida",
+          "other": "{n} añadidas"
+        },
+        "quitadas": {
+          "one": "{n} quitada",
+          "other": "{n} quitadas"
+        },
+        "cambiadas": {
+          "one": "{n} cambiada",
+          "other": "{n} cambiadas"
+        },
         "cambiosTitulo": "Cambios por ruta",
         "sinCambios": "Ninguna clave cambia.",
         "ruta": "Ruta",
