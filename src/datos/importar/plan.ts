@@ -17,6 +17,7 @@ import {
   rutaHistorial,
   type TipoEntidad,
 } from '@rimor/formato';
+import { reescribirRefs } from '../../almacen/menciones';
 import { CARPETA_PAPELERA } from '../../almacen/repositorio';
 import { juntarSesiones, RUTA_SESIONES } from '../../espacio/sesiones';
 import { ErrorImportar } from './paquete';
@@ -78,15 +79,7 @@ const bytes = (s: string) => new TextEncoder().encode(s);
 const iguales = (a: Uint8Array, b: Uint8Array) => a.length === b.length && a.every((x, i) => x === b[i]);
 const instante = (iso: string | undefined) => (iso ? Date.parse(iso) : Number.NaN);
 
-/** Reescribe las refs que cambian, como palabras enteras y de una pasada (sin encadenar un cambio en otro). */
-export function reescribirRefs(contenido: string, cambios: ReadonlyMap<string, string>): string {
-  if (!cambios.size) return contenido;
-  const patron = new RegExp(
-    `(?<![\\p{L}\\p{N}-])(${[...cambios.keys()].map((r) => r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})(?![\\p{L}\\p{N}-])`,
-    'gu',
-  );
-  return contenido.replace(patron, (r) => cambios.get(r) ?? r);
-}
+export { reescribirRefs } from '../../almacen/menciones';
 
 const enPapelera = (ruta: string) => ruta.startsWith(`${CARPETA_PAPELERA}/`);
 const esElemento = (r: string) => /^(papelera\/)?elementos\/.+\.md$/.test(r);

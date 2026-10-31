@@ -299,7 +299,9 @@
         "compartido": "Versión {n}, compartida {cuando}",
         "terminal": "Versión {n}, enviada desde la terminal {cuando}",
         "importado": "Versión {n}, importada {cuando}"
-      }
+      },
+      "mencionadoPor": "Mencionado por",
+      "nadie": "Nadie todavía"
     },
     "papelera": {
       "titulo": "Papelera",

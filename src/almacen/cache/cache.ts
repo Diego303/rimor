@@ -5,7 +5,8 @@
 import type { FrontmatterComun } from '@rimor/formato';
 import { type DBSchema, type IDBPDatabase, wrap } from 'idb';
 
-export const VERSION_CACHE = 1;
+/** 2: con las menciones de cada elemento (IN-053). Al subirla, la caché se vacía y se rehace leyendo los archivos. */
+export const VERSION_CACHE = 2;
 
 export interface EntradaFrontmatter {
   id: string;
@@ -14,6 +15,8 @@ export interface EntradaFrontmatter {
   tam: number;
   modificado: number;
   frontmatter: FrontmatterComun;
+  /** Lo que menciona (refs y paquetes, IN-053): sale de sus notas y su original, que el frontmatter no lleva. */
+  menciones?: string[];
 }
 
 interface EntradaDerivado {

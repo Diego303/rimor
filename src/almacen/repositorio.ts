@@ -18,6 +18,7 @@ import {
 } from '@rimor/formato';
 import type { EntradaFrontmatter } from './cache/cache';
 import { type Almacen, escribirTexto, leerTexto, listarTodo, validarRuta } from './contrato';
+import { paqueteDe, terminoPaquete, terminosDe } from './menciones';
 import { conDiario, Turnos, terminarDiario } from './turnos';
 
 export const CARPETA_PAPELERA = 'papelera';
@@ -99,6 +100,9 @@ export class Repositorio {
   private readonly idPorRef = new Map<string, string>();
   /** Frontmatter de cada elemento conocido: lo que hace falta para listas y recuentos sin abrir archivos. */
   private readonly fms = new Map<string, FrontmatterComun>();
+  /** Lo que menciona cada elemento (IN-053) y, al revés, quién menciona cada término (el índice inverso). */
+  private readonly terminos = new Map<string, readonly string[]>();
+  private readonly mencionadoEn = new Map<string, Set<string>>();
 
   constructor(
     private readonly almacen: Almacen,
@@ -142,7 +146,15 @@ export class Repositorio {
       if (e.ruta !== ruta) continue;
       const { id, ref } = el.frontmatter;
       await this.cache.guardarFrontmatters([
-        { id, ref, ruta, tam: e.tam, modificado: e.modificado, frontmatter: el.frontmatter },
+        {
+          id,
+          ref,
+          ruta,
+          tam: e.tam,
+          modificado: e.modificado,
+          frontmatter: el.frontmatter,
+          menciones: [...(this.terminos.get(id) ?? [])],
+        },
       ]);
     }
   }
@@ -152,6 +164,8 @@ export class Repositorio {
     await this.recuperar();
     this.porId.clear();
     this.idPorRef.clear();
+    this.terminos.clear();
+    this.mencionadoEn.clear();
     const fallidos: { ruta: string; codigo: string }[] = [];
     for (const prefijo of ['elementos/', `${CARPETA_PAPELERA}/elementos/`]) {
       for (const e of await listarTodo(this.almacen, prefijo)) {
@@ -176,14 +190,25 @@ export class Repositorio {
   }
 
   /** Arma el índice desde la caché (IN-006), sin abrir archivos. */
-  cargarDesde(entradas: Iterable<{ id: string; ref: string; ruta: string; frontmatter?: FrontmatterComun }>): void {
+  cargarDesde(
+    entradas: Iterable<{
+      id: string;
+      ref: string;
+      ruta: string;
+      frontmatter?: FrontmatterComun;
+      menciones?: readonly string[];
+    }>,
+  ): void {
     this.porId.clear();
     this.idPorRef.clear();
     this.fms.clear();
-    for (const { id, ref, ruta, frontmatter } of entradas) {
+    this.terminos.clear();
+    this.mencionadoEn.clear();
+    for (const { id, ref, ruta, frontmatter, menciones } of entradas) {
       this.porId.set(id, { id, ref, ruta, enPapelera: ruta.startsWith(`${CARPETA_PAPELERA}/`) });
       this.idPorRef.set(ref, id);
       if (frontmatter) this.fms.set(id, frontmatter);
+      this.anotarTerminos(id, menciones ?? []);
     }
     // Los alias, después de todas las refs vigentes: una ref vigente siempre gana a un alias.
     for (const { id, frontmatter } of entradas) this.indexarAlias(id, frontmatter?.alias);
@@ -221,6 +246,46 @@ export class Repositorio {
     this.idPorRef.set(ref, id);
     this.indexarAlias(id, alias);
     this.fms.set(id, el.frontmatter);
+    this.anotarTerminos(id, terminosDe(el));
+  }
+
+  /** Lo que menciona un elemento, en los dos sentidos del índice (los términos de antes, fuera). */
+  private anotarTerminos(id: string, terminos: readonly string[]): void {
+    for (const t of this.terminos.get(id) ?? []) this.mencionadoEn.get(t)?.delete(id);
+    if (terminos.length) this.terminos.set(id, terminos);
+    else this.terminos.delete(id);
+    for (const t of terminos) {
+      const ids = this.mencionadoEn.get(t);
+      if (ids) ids.add(id);
+      else this.mencionadoEn.set(t, new Set([id]));
+    }
+  }
+
+  /**
+   * Quién menciona un elemento (IN-053): los que nombran su ref o un alias suyo y, si es un enlace a un paquete, los
+   * que enlazan ese paquete. Sin él mismo ni lo de la papelera; de lo más reciente a lo más antiguo.
+   */
+  mencionadoPor(refOId: string): FrontmatterComun[] {
+    const fm = this.frontmatter(refOId);
+    if (!fm) return [];
+    const claves: string[] = [fm.ref, ...(fm.alias ?? [])];
+    const url = fm.tipo === 'enlace' ? fm.lector.resumen.url : undefined;
+    const paquete = typeof url === 'string' ? paqueteDe(url) : undefined;
+    if (paquete) claves.push(terminoPaquete(paquete));
+    const ids = new Set<string>();
+    for (const c of claves) for (const id of this.mencionadoEn.get(c) ?? []) if (id !== fm.id) ids.add(id);
+    return [...ids]
+      .filter((id) => !this.porId.get(id)?.enPapelera)
+      .flatMap((id) => {
+        const otro = this.fms.get(id);
+        return otro ? [otro] : [];
+      })
+      .sort((a, b) => Date.parse(b.creado) - Date.parse(a.creado));
+  }
+
+  /** Los que mencionan una ref en sus términos (para reescribirlos al renombrarla). */
+  mencionanRef(ref: string): string[] {
+    return [...(this.mencionadoEn.get(ref) ?? [])];
   }
 
   /**
@@ -372,6 +437,7 @@ export class Repositorio {
       await this.almacen.borrar(e.ruta);
       this.porId.delete(id);
       this.fms.delete(id);
+      this.anotarTerminos(id, []);
       this.olvidarRefs(id);
       await this.cache?.borrarElementos([id]);
       this.cambio();
@@ -440,6 +506,7 @@ export class Repositorio {
           await this.almacen.borrar(e.ruta);
           this.porId.delete(id);
           this.fms.delete(id);
+          this.anotarTerminos(id, []);
           this.olvidarRefs(id);
           await this.cache?.borrarElementos([id]);
           return true;

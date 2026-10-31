@@ -2,7 +2,9 @@
  * Lector Texto (LEC-01): la red de seguridad. Guarda cualquier texto, lo pinta como Markdown saneado y saca sus
  * enlaces y las refs de Rimor que menciona. Nunca gana la detección por sí mismo: llega por defecto (IN-013).
  */
-import { analizarRef, type Elemento } from '@rimor/formato';
+
+import type { Elemento } from '@rimor/formato';
+import { refsEn } from '../../almacen/menciones';
 import type { Fragmento } from '../../respuestas/tipos';
 import type { Borrador, Entrada, Lector } from '../contrato';
 import { textos } from './textos';
@@ -61,11 +63,7 @@ export function enlacesDe(texto: string): string[] {
 }
 
 /** Refs de Rimor que aparecen en el texto (`LOG-0042`, `DOC-MD-0004`), sin repetir. */
-export function mencionesDe(texto: string): string[] {
-  const vistas = new Set<string>();
-  for (const m of texto.matchAll(/\b[A-Z]{2,3}(?:-MD)?-\d{4,}\b/g)) if (analizarRef(m[0])) vistas.add(m[0]);
-  return [...vistas];
-}
+export const mencionesDe = refsEn;
 
 export const lectorTexto: Lector<DatosTexto> = {
   nombre: 'texto',

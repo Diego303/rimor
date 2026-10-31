@@ -3,7 +3,9 @@
  * lector y se guarda con el tipo, la ref (el prefijo va con el tipo; la vieja queda en `alias` y sigue llevando a
  * él) y el resumen nuevos. El `id` no cambia: las menciones por id siguen valiendo y el archivo se renombra solo.
  */
+
 import { asignarRef, type Elemento, type FrontmatterComun, isoConZona } from '@rimor/formato';
+import { reescribirRefs } from '../almacen/menciones';
 import type { Repositorio } from '../almacen/repositorio';
 import { esEstadoComun } from '../espacio/estados';
 import { MARCA_PENDIENTE } from '../lectores/archivo/lector';
@@ -110,7 +112,36 @@ export async function cambiarTipo(
       ),
     };
   });
-  return r.ok && r.valor ? nueva : null;
+  if (!r.ok || !r.valor || !nueva) return null;
+  // Con otra ref, las notas que mencionaban la vieja pasan a la nueva (IN-053). El original capturado no se toca: la
+  // vieja sigue llevando aquí como alias.
+  const vieja = el.frontmatter.ref;
+  if (nueva !== vieja) await renombrarMenciones(vieja, nueva, repositorio, reloj);
+  return nueva;
+}
+
+/** Reescribe la ref `vieja` como `nueva` en las notas de los que la mencionan (cada uno en su turno). */
+export async function renombrarMenciones(
+  vieja: string,
+  nueva: string,
+  repositorio: Repositorio,
+  reloj: () => Date = () => new Date(),
+): Promise<number> {
+  const cambios = new Map([[vieja, nueva]]);
+  let hechos = 0;
+  for (const id of repositorio.mencionanRef(vieja)) {
+    const r = await repositorio
+      .actualizarElemento(id, (actual) => {
+        const notas = reescribirRefs(actual.notas, cambios);
+        // Con su fecha de cambio: al importar, un cambio sin ella se tomaría por no hecho.
+        return notas === actual.notas
+          ? null
+          : { ...actual, notas, frontmatter: { ...actual.frontmatter, modificado: isoConZona(reloj()) } };
+      })
+      .catch(() => null);
+    if (r?.ok && r.valor) hechos++;
+  }
+  return hechos;
 }
 
 /**

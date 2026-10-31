@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-31 21:09
-**Ahora:** IN-053 · Enlaces automáticos · fase implementación
+**Última actualización:** 2026-10-31 21:21
+**Ahora:** IN-053 · Enlaces automáticos · fase verificación
 **Siguiente:** IN-054 · Vistas guardadas
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 12/22 · v0.3 0/17 · v0.4 0/9 · total 63/99
 
@@ -72,7 +72,7 @@
 | IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | hecha | 38cddd1 2878cbd 49b8a4f | docs/features/IN-050-pwa.md |
 | IN-051 | Sesiones automáticas | v0.2 | 9 | hecha | 662ad48 4f20afc 5ce0130 | docs/features/IN-051-sesiones.md |
 | IN-052 | Grupos automáticos y pantalla de colección | v0.2 | 9 | hecha | 24b5d12 e2ba02e 97c1c15 | docs/features/IN-052-grupos.md |
-| IN-053 | Enlaces automáticos | v0.2 | 9 | en implementación | — | docs/features/IN-053-menciones.md |
+| IN-053 | Enlaces automáticos | v0.2 | 9 | en verificación | 2feedcf | docs/features/IN-053-menciones.md |
 | IN-054 | Vistas guardadas | v0.2 | 9 | pendiente | — | — |
 | IN-055 | Inicio con memoria | v0.2 | 9 | pendiente | — | — |
 | IN-056 | Búsqueda: facetas, contenido derivado y parecidos | v0.2 | 9 | pendiente | — | — |
@@ -142,6 +142,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **Botón «Ajustes» en el raíl**, que las pantallas no dibujan, para que la ruta de la ficha se alcance sin teclado (IN-008).
 - **Referencias estadísticas solo de NumPy y SciPy**, sin benchstat (no hay Go en el entorno y su prueba usa la distribución exacta de U con muestras pequeñas) (IN-011).
 - **Versiones:** se mantiene Astro 5 (Vite 6) con Vitest 3.2 y TypeScript 5.9, aunque ya existen Astro 7, Vitest 5 y TypeScript 7 (IN-001).
+- **IN-053 (2026-10-31):** la ficha de diseño se escribió después del código (en la misma sesión) y se commiteó sola, antes que él. Recoge lo implementado; la verificación (revisión independiente) es la de siempre.
 
 ## Notas para funcionalidades futuras
 - **Presupuesto de la carga inicial (IN-045, IN-046):** 268,6 KB de 300 con 53 IN por delante. Los lectores nuevos dejan en la carga inicial solo lo que necesita `detectar` (síncrono); lo demás (`leer`, `derivar`, respuestas de versión, exportaciones, vistas) se carga con `import()`, como `json/analisis.ts` y `http/exportar.ts`. Si no basta, separar la detección de cada lector en su propio módulo ligero y cargar el lector entero bajo demanda.
@@ -179,7 +180,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-053 | análisis y diseño | términos (refs de notas y original, paquetes de sus enlaces) en la caché junto al frontmatter (versión 2), índice inverso en el repositorio, mencionadoPor por ref, alias y paquete, renombrar reescribe las notas (no el original), fila Mencionado por; las huellas conectan por su hilo y su grupo | … |
+| 2026-10-31 | IN-053 | implementación | menciones.ts (términos: refs y paquetes), menciones en la caché (versión 2), índice inverso en el repositorio, mencionadoPor por ref, alias y paquete, renombrarMenciones al cambiar de tipo (notas con su modificado), fila Mencionado por; verificar en verde: 132 archivos, 1677 pruebas + 6 de rendimiento, 282,5 KB | … |
+| 2026-10-31 | IN-053 | análisis y diseño | términos (refs de notas y original, paquetes de sus enlaces) en la caché junto al frontmatter (versión 2), índice inverso en el repositorio, mencionadoPor por ref, alias y paquete, renombrar reescribe las notas (no el original), fila Mencionado por; las huellas conectan por su hilo y su grupo | 2feedcf |
 | 2026-10-31 | IN-052 | verificación | revisión independiente (14 hallazgos) corregida con pruebas: el ZIP de grupo lleva sus hilos, alias y registros y va marcado parcial (Reemplazar deshabilitado), mes del pico, selección por grupo, Comparar con motivo y sin solo lectura, coste lineal y 8 más Ver los N, fechas por instante, claves normalizadas, sin parpadeo, rutas y textos, accesibilidad del gráfico; verificar en verde: 131 archivos, 1671 pruebas + 6 de rendimiento, 281,7 KB | 97c1c15 |
 | 2026-10-31 | IN-052 | implementación | grupos.ts (claves, elementos y panel), PanelGrupo como SC.coleccion, /g/$clase/$valor, la colección con el panel, exportar solo el grupo (hilo y Worker) sin apuntar copia, comparar dos marcados, Grupos en los detalles; verificar en verde: 131 archivos, 1666 pruebas + 6 de rendimiento, 281,5 KB | e2ba02e |
 | 2026-10-31 | IN-052 | análisis y diseño | claves de grupo (colección, sesión, huella, dominio, repositorio, paquete, etiqueta, tipo, mes) desde el frontmatter, panel común como SC.coleccion (qué hay, cuándo, se repite, elementos), /g/$clase/$valor, exportar ZIP de solo el grupo sin apuntar copia, comparar seleccionados, enlaces desde los detalles del elemento | 24b5d12 |

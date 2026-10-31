@@ -3,8 +3,10 @@
  * ya no existe. Con la caché vacía, es la reconstrucción completa. Antes, termina la operación del diario
  * que se cortara (IN-005).
  */
+
 import { leerElemento, rutaElemento } from '@rimor/formato';
 import { type Almacen, type EntradaAlmacen, leerTexto, listarTodo } from '../contrato';
+import { terminosDe } from '../menciones';
 import { CARPETA_PAPELERA, recuperarOperacion } from '../repositorio';
 import type { CacheEspacio, EntradaFrontmatter } from './cache';
 
@@ -89,7 +91,11 @@ export async function reconciliar(
     if (!r.ok) resultado.fallidos.push({ ruta: a.ruta, codigo: r.error.codigo });
     else {
       const fm = r.valor.frontmatter;
-      anotar({ id: fm.id, ref: fm.ref, ruta: a.ruta, tam: a.tam, modificado: a.modificado, frontmatter: fm }, true);
+      const menciones = terminosDe(r.valor);
+      anotar(
+        { id: fm.id, ref: fm.ref, ruta: a.ruta, tam: a.tam, modificado: a.modificado, frontmatter: fm, menciones },
+        true,
+      );
     }
     if ((i + 1) % LOTE === 0 || i === pendientes.length - 1) alProgreso?.({ hechos: i + 1, total: pendientes.length });
   }

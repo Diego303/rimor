@@ -205,6 +205,23 @@ describe('Elemento', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/e/IDE-0001'), ESCRITURA);
   }, 40_000);
 
+  it('Detalles: «Mencionado por» con las refs de quien lo menciona, que llevan a ellos (IN-053)', async () => {
+    const { router } = await montar('/e/TXT-0001', [
+      capturado(1, 'Probar ureq con respuestas de 64 KB', 'texto', 'Probar ureq'),
+      { ...capturado(2, 'Seguimos con TXT-0001 mañana', 'texto', 'Seguimiento'), notas: '' },
+      capturado(3, 'Otra cosa sin menciones', 'texto', 'Otra'),
+    ]);
+    await screen.findByRole('button', { name: 'Probar ureq' }, PRIMERA_CARGA);
+    const detalles = await screen.findByText('Detalles', { selector: 'summary' }, PRIMERA_CARGA);
+    const plegado = within(detalles.closest('details') as HTMLElement);
+    expect(plegado.getByText('Mencionado por')).toBeTruthy();
+    fireEvent.click(plegado.getByRole('button', { name: 'TXT-0002' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/e/TXT-0002'), ESCRITURA);
+    // Al que nadie menciona: «Nadie todavía».
+    const otra = await screen.findByText('Detalles', { selector: 'summary' }, PRIMERA_CARGA);
+    expect(within(otra.closest('details') as HTMLElement).getByText('Nadie todavía')).toBeTruthy();
+  }, 30_000);
+
   it('notas: añadir con Ctrl+Intro, Esc deja la nota y salir del campo guarda', async () => {
     const { repo } = await montar('/e/TXT-0001', [capturado(1, 'Medir con 1 MB')]);
     fireEvent.click(await screen.findByRole('button', { name: 'Añadir una nota' }, PRIMERA_CARGA));

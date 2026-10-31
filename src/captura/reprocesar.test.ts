@@ -21,6 +21,21 @@ function texto(i: number, original: string): Elemento {
 }
 
 describe('cambiarTipo', () => {
+  it('con otra ref, las notas que mencionaban la vieja pasan a la nueva (el original, no) (IN-053)', async () => {
+    const repo = new Repositorio(new AlmacenMemoria());
+    await repo.guardarElemento(texto(1, 'Probar ureq con un timeout más largo'));
+    const quien = { ...texto(2, 'Ver TXT-0001 en el original'), notas: 'Sigue en TXT-0001.' };
+    await repo.guardarElemento(quien);
+    const nueva = await cambiarTipo('TXT-0001', lectorIdea, repo, { reloj: () => new Date('2026-10-31T10:00:00Z') });
+    expect(nueva).toBe('IDE-0001');
+    const leido = await repo.leerElemento('TXT-0002');
+    expect(leido.ok && leido.valor.notas).toBe('Sigue en IDE-0001.');
+    expect(leido.ok && leido.valor.original).toBe('Ver TXT-0001 en el original');
+    expect(leido.ok && leido.valor.frontmatter.modificado).not.toBe(quien.frontmatter.modificado);
+    // Las dos (la de las notas, la del original por su alias) siguen llevando a él.
+    expect(repo.mencionadoPor('IDE-0001').map((f) => f.ref)).toEqual(['TXT-0002']);
+  });
+
   it('entre lectores del mismo tipo (Código y Diff) la ref no cambia', async () => {
     const repo = new Repositorio(new AlmacenMemoria());
     const parche = 'diff --git a/a b/a\n--- a/a\n+++ b/a\n@@ -1 +1 @@\n-x\n+y\n';

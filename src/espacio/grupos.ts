@@ -5,6 +5,7 @@
  * sale del frontmatter (la huella y la URL van en el resumen del lector).
  */
 import type { FrontmatterComun, TipoElemento } from '@rimor/formato';
+import { nombreComparable, paqueteDe } from '../almacen/menciones';
 import { clasificar, hostLegible } from '../lectores/enlace/urls';
 
 export const CLASES_GRUPO = [
@@ -57,10 +58,6 @@ export function dominioDe(urlOHost: string): string | undefined {
   }
 }
 
-/** Un nombre de repositorio o de paquete comparable: sin `.git`, y en minúsculas donde no distinguen. */
-const nombreComparable = (sitio: string, nombre: string) =>
-  (['GitHub', 'GitLab', 'Codeberg', 'PyPI'].includes(sitio) ? nombre.toLowerCase() : nombre).replace(/\.git$/i, '');
-
 /** Lo que dice un enlace de su destino: dominio y, si es de un repositorio o un paquete, cuál. */
 function delEnlace(url: string): ClaveGrupo[] {
   const claves: ClaveGrupo[] = [];
@@ -69,8 +66,8 @@ function delEnlace(url: string): ClaveGrupo[] {
   const d = clasificar(url);
   if ((d.clase === 'repositorio' || d.clase === 'issue' || d.clase === 'pr') && d.nombre)
     claves.push({ clase: 'repositorio', valor: `${d.sitio}/${nombreComparable(d.sitio, d.nombre)}` });
-  if (d.clase === 'paquete' && d.nombre)
-    claves.push({ clase: 'paquete', valor: `${d.sitio}/${nombreComparable(d.sitio, d.nombre)}` });
+  const paquete = paqueteDe(url);
+  if (paquete) claves.push({ clase: 'paquete', valor: paquete });
   return claves;
 }
 

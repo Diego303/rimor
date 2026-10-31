@@ -299,7 +299,9 @@
         "compartido": "Version {n}, shared {cuando}",
         "terminal": "Version {n}, sent from the terminal {cuando}",
         "importado": "Version {n}, imported {cuando}"
-      }
+      },
+      "mencionadoPor": "Mentioned by",
+      "nadie": "Nobody yet"
     },
     "papelera": {
       "titulo": "Bin",

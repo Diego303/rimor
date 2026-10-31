@@ -43,9 +43,9 @@ Que lo que un elemento menciona lo conecte con otros: una ref (`LOG-0042`) en un
 
 ## Tareas
 
-- [ ] Índice inverso de menciones (refs, paquetes y huellas) actualizado al guardar.
-- [ ] «Mencionado por» en los detalles del elemento.
-- [ ] Renombrar una ref actualiza sus menciones.
+- [x] Índice inverso de menciones (refs, paquetes y huellas) actualizado al guardar.
+- [x] «Mencionado por» en los detalles del elemento.
+- [x] Renombrar una ref actualiza sus menciones.
 
 ## Pruebas previstas
 
@@ -85,3 +85,14 @@ Cubre las tres tareas; las huellas, con lo que ya hay (hilo y grupo). Reutiliza:
 - la clasificación de URL de los grupos;
 - la caché y su reconciliación;
 - `alias`.
+
+## Implementación
+
+- `src/almacen/menciones.ts`: `refsEn`, `paqueteDe`, `nombreComparable`, `terminoPaquete`, `terminosDe` y `reescribirRefs`. La importación, los grupos y el lector Texto los usan de aquí.
+- Caché: `EntradaFrontmatter.menciones` y `VERSION_CACHE` 2. `reconciliar` y `refrescarCache` guardan los términos.
+- `Repositorio`: `terminos` y `mencionadoEn` (el índice inverso), `anotarTerminos`, `mencionadoPor` y `mencionanRef`.
+- `reprocesar.ts`: `renombrarMenciones` desde `cambiarTipo`.
+- `Comunes.tsx`: la fila «Mencionado por».
+- Pruebas: `menciones.test.ts` (términos, índice y caché), `reprocesar.test.ts` (renombrar) y `Elemento.test.tsx` (la fila).
+
+Nota de proceso: el código se escribió antes que esta ficha, que se commiteó sola antes que él (2feedcf) y recoge lo decidido. Queda registrado en «Desviaciones».

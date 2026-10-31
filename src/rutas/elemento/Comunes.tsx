@@ -4,8 +4,9 @@
  * y la referencia con sus alias.
  */
 import type { FrontmatterComun, TipoElemento } from '@rimor/formato';
-import { Link } from '@tanstack/react-router';
-import { useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEspacioOpcional } from '../../espacio/Espacio';
 import { limpiarColeccion, limpiarEtiqueta } from '../../espacio/ediciones';
 import { type ClaveGrupo, clavesDe } from '../../espacio/grupos';
 import { fmtBytes, fmtFecha } from '../../i18n/formatos';
@@ -181,6 +182,10 @@ export function FilasComunes({
           </>
         )}
       </dd>
+      <dt>{t('pantallas.elemento.mencionadoPor')}</dt>
+      <dd>
+        <MencionadoPor fm={fm} />
+      </dd>
       <dt>{t('pantallas.grupo.grupos')}</dt>
       <dd>
         <GruposDe fm={fm} />
@@ -236,6 +241,33 @@ function GruposDe({ fm }: { fm: FrontmatterComun }) {
       ))}
       {claves.length > MAX_GRUPOS && (
         <span className="xs muted">{t('pantallas.grupo.yMas', { n: claves.length - MAX_GRUPOS })}</span>
+      )}
+    </span>
+  );
+}
+
+/** Refs que se enseñan como mucho en «Mencionado por»; el resto, «y N más». */
+const MAX_MENCIONES = 6;
+
+/** Quién menciona este elemento (IN-053): su ref o un alias en sus notas o su original, o el paquete de su enlace. */
+function MencionadoPor({ fm }: { fm: FrontmatterComun }) {
+  const { t } = useT();
+  const espacio = useEspacioOpcional();
+  const navegar = useNavigate();
+  const [version, setVersion] = useState(0);
+  useEffect(() => (espacio ? espacio.alCambiar(() => setVersion((v) => v + 1)) : undefined), [espacio]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `version` cambia con cada cambio del espacio.
+  const quienes = useMemo(() => espacio?.repositorio.mencionadoPor(fm.id) ?? [], [espacio, fm.id, fm.ref, version]);
+  if (!quienes.length) return <span className="muted">{t('pantallas.elemento.nadie')}</span>;
+  return (
+    <span className="grupos-elemento">
+      {quienes.slice(0, MAX_MENCIONES).map((otro) => (
+        <span key={otro.id} title={otro.titulo}>
+          <Ref refe={otro.ref} alPulsar={(ref) => void navegar({ to: '/e/$ref', params: { ref } })} />
+        </span>
+      ))}
+      {quienes.length > MAX_MENCIONES && (
+        <span className="xs muted">{t('pantallas.grupo.yMas', { n: quienes.length - MAX_MENCIONES })}</span>
       )}
     </span>
   );
