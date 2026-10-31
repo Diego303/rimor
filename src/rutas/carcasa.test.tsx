@@ -1,8 +1,9 @@
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { useCompositor } from '../captura/compositor';
 import { useEspacio } from '../estado/espacio';
-import { useActualizacion } from '../pwa/registrar';
+import { ESTADO_INICIAL, useActualizacion } from '../pwa/registrar';
 import { textoUltimaCopia } from './Rail';
 import { crearRouter } from './rutas';
 
@@ -60,8 +61,16 @@ describe('Carcasa', () => {
       expect(screen.queryByText('Sin conexión')).toBeNull();
       red = false;
       act(() => void window.dispatchEvent(new Event('offline')));
-      const aviso = await screen.findByText('Sin conexión');
-      expect(aviso.closest('.space')?.querySelector('.senal-sin-conexion')).toBeTruthy();
+      const avisos = await screen.findAllByText('Sin conexión');
+      expect(
+        avisos
+          .find((a) => a.closest('.space'))
+          ?.closest('.space')
+          ?.querySelector('.senal-sin-conexion'),
+      ).toBeTruthy();
+      // En el móvil no se ve el pie del raíl: su banner (que el CSS solo enseña en estrecho), y el anuncio.
+      expect(document.querySelector('.aviso-sin-red')?.textContent).toBe('Sin conexión');
+      expect(document.querySelector('.amain > [role="status"].solo-lector')?.textContent).toBe('Sin conexión');
       red = true;
       act(() => void window.dispatchEvent(new Event('online')));
       expect(screen.queryByText('Sin conexión')).toBeNull();
@@ -81,10 +90,23 @@ describe('Carcasa', () => {
         esperando: { state: 'installed', postMessage, addEventListener: () => undefined },
       }),
     );
-    expect(screen.getByText('Hay una versión nueva.')).toBeTruthy();
+    expect(screen.getAllByText('Hay una versión nueva.').length).toBeGreaterThan(0);
+    // La región viva siempre montada lo anuncia.
+    expect(document.querySelector('.amain > [role="status"].solo-lector')?.textContent).toBe('Hay una versión nueva.');
+    // Con adjuntos sin guardar en el compositor, se espera (recargar los perdería).
+    act(() => useCompositor.setState({ archivos: [new File(['x'], 'a.txt')] }));
+    const boton = screen.getByRole('button', { name: 'Actualizar' }) as HTMLButtonElement;
+    expect(boton.disabled).toBe(true);
+    expect(screen.getByText(/Antes, guarda o quita los adjuntos del compositor\./)).toBeTruthy();
+    act(() => useCompositor.setState({ archivos: [] }));
     fireEvent.click(screen.getByRole('button', { name: 'Actualizar' }));
     expect(postMessage).toHaveBeenCalledWith({ tipo: 'SALTAR_ESPERA' });
-    expect(screen.queryByText('Hay una versión nueva.')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Actualizar' })).toBeNull();
+    // Si entra desde otra pestaña: «recarga para usarla» y «Recargar».
+    act(() => useActualizacion.setState({ esperando: null, cambiada: true, pedida: false }));
+    expect(screen.getAllByText('Hay una versión nueva: recarga para usarla.').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Recargar' })).toBeTruthy();
+    act(() => useActualizacion.setState(ESTADO_INICIAL));
   });
 
   it('navega desde el raíl y con los atajos «/» y «g h»', async () => {

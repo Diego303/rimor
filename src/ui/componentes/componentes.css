@@ -1581,6 +1581,13 @@ pre.code.codigo .ln {
 .warn-texto {
   color: var(--warn);
 }
+/* Instalar Rimor desde Ajustes (IN-050): la frase y el botón en una fila. */
+.ajustes-instalar {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 8px;
+}
 /* El aviso de versión nueva (IN-050): la frase y «Actualizar» en una fila. */
 .aviso-version {
   justify-content: space-between;

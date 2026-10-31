@@ -1,10 +1,14 @@
 /** Avisos del almacenamiento (IN-007): sin guardar, ventana privada, solo lectura y protección de los datos. */
 import { type ReactNode, useEffect, useState } from 'react';
+import { useCompositor } from '../captura/compositor';
+import { useExportacion } from '../datos/exportacion';
 import { useEspacio } from '../estado/espacio';
 import { fmtBytes, fmtFechaRelativa } from '../i18n/formatos';
 import { useT } from '../i18n/useT';
+import { useEnLinea } from '../pwa/enLinea';
 import { actualizar, useActualizacion } from '../pwa/registrar';
 import { Banner, Boton, Tarjeta } from '../ui/componentes';
+import { Senal } from '../ui/marca/Senal';
 import { ahoraIso } from './abrir';
 import { useEspacioOpcional } from './Espacio';
 import { conPersistencia } from './estado';
@@ -30,22 +34,68 @@ export function AvisoAlmacenamiento() {
   ) : null;
 }
 
-/** Banner de la carcasa cuando hay una versión nueva de Rimor esperando (IN-050): entra cuando se pide. */
+/**
+ * Banner de la carcasa cuando hay una versión nueva de Rimor (IN-050): esperando (entra cuando se pide) o ya entrada
+ * desde otra pestaña (solo falta recargar). Con adjuntos sin guardar en el compositor o una exportación en marcha, se
+ * espera: recargar los perdería.
+ */
 export function AvisoVersion() {
   const { t } = useT();
-  const esperando = useActualizacion((s) => s.esperando);
-  return esperando ? (
+  const { esperando, cambiada } = useActualizacion();
+  const adjuntos = useCompositor((s) => s.archivos.length > 0);
+  const exportando = useExportacion((s) => s.tipo !== null);
+  if (!esperando && !cambiada) return null;
+  const espera = adjuntos ? t('espacio.aviso.versionAdjuntos') : exportando ? t('espacio.aviso.versionExportando') : '';
+  return (
     <div className="aviso-espacio">
       <Banner>
         <span className="row aviso-version">
-          {t('espacio.aviso.version')}
-          <Boton pequeno onClick={actualizar}>
-            {t('espacio.aviso.actualizar')}
+          <span>
+            {t(cambiada ? 'espacio.aviso.versionEntrada' : 'espacio.aviso.version')}
+            {espera ? ` ${espera}` : ''}
+          </span>
+          <Boton pequeno disabled={Boolean(espera)} onClick={actualizar}>
+            {t(cambiada ? 'espacio.aviso.recargar' : 'espacio.aviso.actualizar')}
           </Boton>
         </span>
       </Banner>
     </div>
-  ) : null;
+  );
+}
+
+/** Sin red (IN-050), en el móvil: allí no se ve el pie del raíl, que lo dice en el escritorio. */
+export function AvisoSinConexion() {
+  const { t } = useT();
+  const enLinea = useEnLinea();
+  return enLinea ? null : (
+    <div className="aviso-espacio aviso-sin-red">
+      <Banner>
+        <span className="row">
+          <Senal estado="sin-conexion" decorativa etiqueta="" tamano={12} prioridad="secundaria" />
+          {t('rail.sinConexion')}
+        </span>
+      </Banner>
+    </div>
+  );
+}
+
+/**
+ * Lo que dicen los avisos de la carcasa, para los lectores de pantalla: una región viva siempre montada (un banner que
+ * aparece ya lleno no siempre se anuncia).
+ */
+export function AnuncioAvisos() {
+  const { t } = useT();
+  const { esperando, cambiada } = useActualizacion();
+  const enLinea = useEnLinea();
+  const frases = [
+    ...(esperando || cambiada ? [t(cambiada ? 'espacio.aviso.versionEntrada' : 'espacio.aviso.version')] : []),
+    ...(enLinea ? [] : [t('rail.sinConexion')]),
+  ];
+  return (
+    <div className="solo-lector" role="status" aria-live="polite">
+      {frases.join(' ')}
+    </div>
+  );
 }
 
 /** Tarjeta de Inicio que explica y pide el almacenamiento persistente; desaparece cuando ya se pidió. */

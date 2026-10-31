@@ -27,8 +27,12 @@ const pwa = AstroPWA({
     description: 'Rimor: del rumor a la conclusión.',
     lang: 'es',
     display: 'standalone',
+    // La identidad de la instalación: no cambia aunque cambie `start_url`.
+    id: './',
     start_url: './',
     scope: './',
+    // Compartir con Rimor ya abierta la usa (no abre otra ventana, que solo podría leer).
+    launch_handler: { client_mode: ['navigate-existing', 'auto'] },
     // El manifest no admite variables CSS: son --app y --bg en claro (tokens.css).
     theme_color: '#E8E6E1', // rimor-permitir-color
     background_color: '#F6F5F1', // rimor-permitir-color
@@ -41,10 +45,9 @@ const pwa = AstroPWA({
     },
   },
   injectManifest: {
-    globPatterns: ['**/*.{html,js,css,woff2,svg,png,json,webmanifest}'],
+    // El manifest no: lo añade el propio plugin (dos entradas con revisiones distintas impedirían instalarlo).
+    globPatterns: ['**/*.{html,js,css,woff2,svg,png,json}'],
     globIgnores: ['**/*.wasm', '**/duckdb/**', '**/duckdb-browser-*.worker*.js'],
-    // El chunk principal pasa de los 2 MB por defecto de Workbox.
-    maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
   },
   devOptions: { enabled: false },
 });

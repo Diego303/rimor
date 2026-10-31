@@ -7,12 +7,15 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { ProveedorCaptura } from '../captura/Captura';
 import { useCompositor } from '../captura/compositor';
 import { useExportar } from '../datos/useExportar';
-import { AvisoAlmacenamiento, AvisoVersion } from '../espacio/Avisos';
+import { AnuncioAvisos, AvisoAlmacenamiento, AvisoSinConexion, AvisoVersion } from '../espacio/Avisos';
+import { useEspacioOpcional } from '../espacio/Espacio';
+import { useEspacio } from '../estado/espacio';
 import { useT } from '../i18n/useT';
+import { recibirCompartido } from '../pwa/recibir';
 import { AyudaAtajos } from '../ui/atajos/AyudaAtajos';
 import { type Atajo, describir, esCampoDeTexto, GestorAtajos } from '../ui/atajos/atajos';
 import { ContextoAtajos, useAtajos } from '../ui/atajos/useAtajos';
-import { Espera, ProveedorAvisos, ProveedorEsperas } from '../ui/componentes';
+import { Espera, ProveedorAvisos, ProveedorEsperas, useAvisos } from '../ui/componentes';
 import { Paleta } from '../ui/paleta/Paleta';
 import { LimiteErrores } from './LimiteErrores';
 import { Rail } from './Rail';
@@ -28,6 +31,27 @@ function AtajosConAvisos() {
     [exportar],
   );
   useAtajos('global-exportar', atajos);
+  return null;
+}
+
+/**
+ * Abierta desde «Compartir» en otra app (IN-050): lo compartido, al compositor, con el espacio ya abierto y sabiendo si
+ * esta pestaña puede guardar (si no, espera a poder).
+ */
+function RecibirCompartido() {
+  const { t } = useT();
+  const { avisar } = useAvisos();
+  const espacio = useEspacioOpcional();
+  const soloLectura = useEspacio((s) => s.soloLectura);
+  useEffect(() => {
+    if (!espacio) return;
+    void recibirCompartido(import.meta.env.BASE_URL.replace(/\/?$/, '/'), { soloLectura })
+      .catch(() => 'error' as const)
+      .then((r) => {
+        if (r === 'error') avisar(t('captura.compartidoError'));
+        else if (r === 'soloLectura') avisar(t('captura.compartidoSoloLectura'));
+      });
+  }, [espacio, soloLectura, avisar, t]);
   return null;
 }
 
@@ -110,12 +134,15 @@ export function Carcasa() {
     <ContextoAtajos.Provider value={gestor}>
       <ProveedorAvisos>
         <AtajosConAvisos />
+        <RecibirCompartido />
         <ProveedorCaptura alRecibir={irAInicio} alAbrir={abrirElemento}>
           <div className="marco">
             <div className="shell">
               <Rail />
               <main className="amain" id="principal">
+                <AnuncioAvisos />
                 <AvisoVersion />
+                <AvisoSinConexion />
                 <AvisoAlmacenamiento />
                 <ProveedorEsperas>
                   <LimiteErrores clave={ruta}>

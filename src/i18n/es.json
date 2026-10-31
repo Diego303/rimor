@@ -606,7 +606,11 @@
       "privada": "Parece una ventana privada: todo se borrará al cerrarla.",
       "soloLectura": "Rimor está abierto en otra pestaña: aquí solo puedes leer.",
       "version": "Hay una versión nueva.",
-      "actualizar": "Actualizar"
+      "actualizar": "Actualizar",
+      "versionEntrada": "Hay una versión nueva: recarga para usarla.",
+      "recargar": "Recargar",
+      "versionAdjuntos": "Antes, guarda o quita los adjuntos del compositor.",
+      "versionExportando": "Espera a que termine la exportación."
     },
     "cuidado": {
       "usado": {
@@ -650,7 +654,9 @@
     "soltar": "Suelta para guardar",
     "ver": "Ver",
     "noDeshecho": "Algo no se deshizo: ya se había editado o movido.",
-    "version": "Guardado como versión {n} de {ref}"
+    "version": "Guardado como versión {n} de {ref}",
+    "compartidoError": "No se pudo recibir lo compartido.",
+    "compartidoSoloLectura": "Lo compartido llegará cuando esta pestaña pueda guardar (ahora guarda la otra)."
   },
   "compositor": {
     "placeholder": "Pega, escribe o suelta algo…",
@@ -918,6 +924,7 @@
     "reglaBorrar": "Borrar la regla {prefijo}",
     "reglaNoVale": "Ese prefijo no vale: vacío, con espacios al principio, de más de 64 caracteres, con saltos de línea o ya en otra regla.",
     "reglasIlegibles": "El archivo .rimor/reglas-deteccion.json no se entiende (¿editado a mano o de una versión más nueva?): no se usa ni se toca. Arréglalo o bórralo para volver a aprender reglas.",
-    "reglasNoGuardadas": "No se pudieron guardar las reglas: el archivo no se entiende."
+    "reglasNoGuardadas": "No se pudieron guardar las reglas: el archivo no se entiende.",
+    "instalarTexto": "Instalada, Rimor abre sin conexión, aparece en «Compartir» y el navegador conserva mejor lo guardado."
   }
 }

@@ -9,13 +9,14 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { AjustesRecordatorio } from '../../datos/AjustesRecordatorio';
 import { AJUSTES_INICIALES, type Ajustes as AjustesEspacio, LIMITES_DETECCION } from '../../espacio/ajustes';
 import { useEspacioOpcional } from '../../espacio/Espacio';
+import { instalar, useInstalacion } from '../../espacio/instalar';
 import { useEspacio } from '../../estado/espacio';
 import type { Idioma } from '../../i18n/formatos';
 import { elegirIdioma } from '../../i18n/iniciar';
 import { useT } from '../../i18n/useT';
 import { GRUPOS_DOMINIOS, guardarTokenGithub, leerTokenGithub } from '../../lectores/enlace/enriquecer/dominios';
 import { REGLAS_SECRETOS } from '../../seguridad/secretos/reglas';
-import { Detalles, Segmentado, SelectorTema } from '../../ui/componentes';
+import { Boton, Detalles, Segmentado, SelectorTema } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { leerPreferencia } from '../../ui/tema/tema';
 import { Pantalla } from '../Pantalla';
@@ -39,6 +40,7 @@ export function Ajustes() {
   const espacio = useEspacioOpcional();
   const avisos = useAvisosOpcional();
   const soloLectura = useEspacio((s) => s.soloLectura);
+  const avisoInstalar = useInstalacion((s) => s.aviso !== null);
   const [ajustes, setAjustes] = useState<AjustesEspacio>(() => espacio?.ajustes() ?? AJUSTES_INICIALES);
   // Al día con los ajustes de ahora (también lo que cambia la otra pestaña).
   useEffect(() => (espacio ? espacio.alCambiar(() => setAjustes(espacio.ajustes())) : undefined), [espacio]);
@@ -69,6 +71,15 @@ export function Ajustes() {
   return (
     <Pantalla titulo={t('pantallas.ajustes.titulo')} meta={soloLectura ? t('ajustes.soloLectura') : t('ajustes.meta')}>
       <Seccion titulo={t('ajustes.apariencia')}>
+        {/* Si el navegador lo permite (IN-050): la bienvenida se va con la primera captura, esto no. */}
+        {avisoInstalar && (
+          <p className="row ajustes-instalar">
+            <span className="sm">{t('ajustes.instalarTexto')}</span>
+            <Boton pequeno onClick={() => void instalar()}>
+              {t('pantallas.inicio.instalar')}
+            </Boton>
+          </p>
+        )}
         <div className="kv ajustes-kv">
           <span className="sm">{t('tema.etiqueta')}</span>
           <SelectorTema

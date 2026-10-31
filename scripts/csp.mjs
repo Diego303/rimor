@@ -3,7 +3,7 @@
 // <meta http-equiv="Content-Security-Policy"> con los hashes SHA-256 de sus scripts en línea.
 // GitHub Pages no permite cabeceras propias: la <meta> es la única vía.
 import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -58,6 +58,20 @@ export function conCsp(html) {
   return sinPrevia.replace(/<head[^>]*>/i, (m) => `${m}${meta}`);
 }
 
+/**
+ * La revisión de la portada en la precarga del service worker (IN-050), con el HTML ya con su CSP: Workbox la calculó
+ * antes (sin ella), y un cambio solo de la política no llegaría nunca a una app instalada. La portada se precarga con
+ * la URL de la `BASE` (`{"revision":"…","url":"/rimor/"}`).
+ */
+export function conRevisionPortada(sw, base, html) {
+  const revision = createHash('md5').update(html, 'utf8').digest('hex');
+  const fin = `,"url":${JSON.stringify(base)}}`;
+  const i = sw.indexOf(fin);
+  const inicio = i < 0 ? -1 : sw.lastIndexOf('{"revision":', i);
+  if (inicio < 0) return sw;
+  return `${sw.slice(0, inicio)}{"revision":"${revision}"${sw.slice(i)}`;
+}
+
 function* htmls(dir) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const ruta = join(dir, e.name);
@@ -72,6 +86,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   for (const ruta of htmls(dist)) {
     writeFileSync(ruta, conCsp(readFileSync(ruta, 'utf8')));
     n++;
+  }
+  const sw = join(dist, 'sw.js');
+  if (existsSync(sw)) {
+    const base = (process.env.BASE ?? '/').replace(/\/?$/, '/');
+    const antes = readFileSync(sw, 'utf8');
+    const despues = conRevisionPortada(antes, base, readFileSync(join(dist, 'index.html'), 'utf8'));
+    if (!antes.includes(`,"url":${JSON.stringify(base)}}`)) throw new Error(`sw.js no precarga la portada (${base})`);
+    writeFileSync(sw, despues);
   }
   console.log(`CSP: ${n} página(s).`);
 }

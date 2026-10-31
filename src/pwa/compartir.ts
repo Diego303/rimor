@@ -8,8 +8,9 @@
 export const CACHE_COMPARTIDO = 'rimor-compartido';
 /** Ruta (bajo la `BASE`) a la que el sistema manda lo compartido: la `action` del `share_target` del manifest. */
 export const RUTA_COMPARTIR = 'compartir';
-/** Lo que lleva la URL a la que se vuelve: la app sabe que tiene algo que recoger. */
+/** Lo que lleva la URL a la que se vuelve: la app sabe que tiene algo que recoger (o, con `=error`, que falló). */
 export const MARCA_COMPARTIDO = 'compartido';
+export const VALOR_ERROR = 'error';
 
 /** Lo mínimo de una `Cache` que se usa (así se prueba sin navegador). */
 export interface CacheMinima {
@@ -74,7 +75,11 @@ export async function recogerCompartido(
   base: string,
 ): Promise<{ texto: string; archivos: File[] } | null> {
   const respuesta = await cache.match(claveDatos(base));
-  if (!respuesta) return null;
+  if (!respuesta) {
+    // Restos de un compartir que no llegó a guardar sus datos (falló a medias): fuera.
+    await vaciar(cache);
+    return null;
+  }
   let datos: Partial<Datos>;
   try {
     datos = (await respuesta.json()) as Partial<Datos>;
@@ -94,6 +99,30 @@ export async function recogerCompartido(
     url: String(datos.url ?? ''),
   });
   return t || archivos.length ? { texto: t, archivos } : null;
+}
+
+/**
+ * Atiende el POST de «Compartir» (en el service worker): guarda lo compartido y lleva a la app con `?compartido`. Si
+ * no se puede leer o guardar (sin cuota, un formulario roto), vacía lo que quedara a medias y lleva a la app con
+ * `?compartido=error`, que lo dice.
+ */
+export async function atenderCompartir(
+  peticion: Request,
+  abrir: () => Promise<CacheMinima>,
+  base: string,
+  origen: string,
+): Promise<Response> {
+  const volver = (error: boolean) =>
+    Response.redirect(`${origen}${base}?${MARCA_COMPARTIDO}${error ? `=${VALOR_ERROR}` : ''}`, 303);
+  let cache: CacheMinima | null = null;
+  try {
+    cache = await abrir();
+    await guardarCompartido(await peticion.formData(), cache, base);
+    return volver(false);
+  } catch {
+    await (cache ? vaciar(cache) : Promise.resolve()).catch(() => undefined);
+    return volver(true);
+  }
 }
 
 /** ¿Es de DuckDB (sus `.wasm`, sus workers, sus extensiones)? No se precarga: se guarda la primera vez que se usa. */

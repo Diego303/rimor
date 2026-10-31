@@ -102,6 +102,10 @@
   align-items: center;
   gap: 7px;
 }
+/* Sin red en el móvil (IN-050): el pie del raíl no se ve; el aviso, solo allí. */
+.aviso-sin-red {
+  display: none;
+}
 /* Sin red (IN-050): la señal «sin-conexion» y su texto, bajo la copia. */
 .rail .space .sin-red {
   display: flex;
@@ -132,6 +136,9 @@
   max-width: none;
 }
 @container app (max-width: 720px) {
+  .aviso-sin-red {
+    display: block;
+  }
   .shell {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto;

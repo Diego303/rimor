@@ -606,7 +606,11 @@
       "privada": "This looks like a private window: everything will be deleted when you close it.",
       "soloLectura": "Rimor is open in another tab: here you can only read.",
       "version": "There is a new version.",
-      "actualizar": "Update"
+      "actualizar": "Update",
+      "versionEntrada": "There is a new version: reload to use it.",
+      "recargar": "Reload",
+      "versionAdjuntos": "First, save or remove the attachments in the composer.",
+      "versionExportando": "Wait for the export to finish."
     },
     "cuidado": {
       "usado": {
@@ -650,7 +654,9 @@
     "soltar": "Drop to save",
     "ver": "Open",
     "noDeshecho": "Something was not undone: it had already been edited or moved.",
-    "version": "Saved as version {n} of {ref}"
+    "version": "Saved as version {n} of {ref}",
+    "compartidoError": "What was shared could not be received.",
+    "compartidoSoloLectura": "What was shared will arrive when this tab can save (the other one saves now)."
   },
   "compositor": {
     "placeholder": "Paste, type or drop something…",
@@ -918,6 +924,7 @@
     "reglaBorrar": "Delete the rule {prefijo}",
     "reglaNoVale": "That prefix is not valid: empty, starting with spaces, longer than 64 characters, with line breaks or already in another rule.",
     "reglasIlegibles": "The file .rimor/reglas-deteccion.json cannot be read (edited by hand or from a newer version?): it is neither used nor touched. Fix or delete it to learn rules again.",
-    "reglasNoGuardadas": "The rules could not be saved: the file cannot be read."
+    "reglasNoGuardadas": "The rules could not be saved: the file cannot be read.",
+    "instalarTexto": "Installed, Rimor opens offline, shows up in «Share» and the browser keeps your data more reliably."
   }
 }

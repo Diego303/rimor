@@ -136,3 +136,27 @@ Cubre las seis tareas. Reutiliza los iconos y el `theme-color` de IN-089, la se�
 | La CSP se añade después de generar el service worker | La revisión de la portada es un dato para saber si cambió: lo que se precarga es el archivo publicado (con su CSP). Si cambian los scripts en línea, cambia también la construcción de Astro. |
 | Sin `workbox-window` | El registro y el aviso son unas 40 líneas propias, probadas con un contenedor falso. |
 | Tipos del ámbito del worker declarados a mano en `sw.ts` | La `lib` de WebWorker choca con la del DOM del resto del proyecto. Los tipos de Workbox no se escribieron con `exactOptionalPropertyTypes`: una conversión en el plugin de caducidad. |
+
+## Verificación
+
+- `pnpm verificar` en verde (ver `docs/seguimiento.md`).
+- Revisión independiente (19 hallazgos), atendidos con pruebas salvo donde se dice:
+  1. **La revisión de la portada en la precarga era la del HTML sin la CSP**: un cambio solo de la política no llegaba nunca a una app instalada. Ahora `csp.mjs` la recalcula con el archivo final (`conRevisionPortada`) y `validarPwa` comprueba que coincide.
+  2. **Varias pestañas**: si una pulsaba «Actualizar», las demás se quedaban con el código viejo bajo el service worker nuevo. Ahora lo saben («Hay una versión nueva: recarga para usarla.» y «Recargar»), y «Actualizar» con una versión ya activada solo recarga. El estado (`pedida`) está en el almacén, no en el módulo.
+  3. **«Sin conexión» no se veía en el móvil** (el pie del raíl está oculto): un aviso arriba, que el CSS solo enseña en estrecho.
+  4. **Lo compartido entraba en una pestaña de solo lectura** (y se perdía): se recoge desde la carcasa con el espacio abierto. En solo lectura espera, con un aviso; además, `launch_handler: navigate-existing`.
+  5. **Un compartir que fallaba** dejaba restos sin avisar: `atenderCompartir` vacía la caché y vuelve con `?compartido=error`, y la app dice «No se pudo recibir lo compartido.». Al recoger, los restos sin datos se borran.
+  6. La señal del raíl pedía el turno de animación como principal: ahora como secundaria.
+  7. **Nadie buscaba versiones nuevas** con la app abierta: `update()` al volver a la pestaña y cada hora. Una versión que ya se instalaba al registrar también avisa.
+  8. **La caché de DuckDB** va por su versión (`rimor-wasm-v1.5.4`): las de otras versiones se borran al activarse, solo atiende el propio origen y se purga si falta cuota.
+  9. Parquet sin red (la extensión se carga con una petición síncrona desde el worker de DuckDB): queda en «Pendientes de validación humana».
+  10. El manifest se precargaba dos veces: fuera del glob; `validarPwa` comprueba que no hay entradas repetidas. También fuera el límite de 5 MB, que no hacía falta.
+  11. `replaceState` borraba el estado del enrutado por hash: ahora lo conserva.
+  12. **Pruebas que faltaban**: el POST y el 303 (`atenderCompartir`), el camino de fallo, «en desarrollo no registra», la revisión de la portada, la búsqueda de versiones y el estado entre pruebas.
+  13. **Accesibilidad**: una región viva siempre montada en la carcasa anuncia «Hay una versión nueva.» y «Sin conexión».
+  14. «Actualizar» se deshabilita con adjuntos sin guardar en el compositor o con una exportación en marcha, y dice por qué.
+  15. El manifest lleva `id: './'`. Sigue con `lang: 'es'`: la app es bilingüe, pero el nombre y la descripción no cambian.
+  16. La navegación a un archivo (`sw.js`, el manifest, los iconos, DuckDB) ya no devuelve la app (`denylist`).
+  17. **El `apple-touch-icon` de 180 tenía esquinas transparentes**, que iOS rellena de negro: `rimor-apple-touch-180.png`, opaco con el fondo `#F6F5F1` (generado del de IN-089 y guardado en el repositorio).
+  18. **«Instalar Rimor» también en Ajustes**, y `appinstalled` quita el aviso caducado.
+  19. **No se atiende**: lo compartido no es de ningún espacio, y no hay un «borrado total». La caché se vacía al recogerlo o con el siguiente compartir.

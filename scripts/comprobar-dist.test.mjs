@@ -1,5 +1,7 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { validarCsp, validarPwa } from './comprobar-dist.mjs';
+import { conRevisionPortada } from './csp.mjs';
 
 const base = (scriptSrc) =>
   `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'none'`;
@@ -39,6 +41,18 @@ describe('validarPwa (IN-050)', () => {
   it('acepta el manifest y la precarga de Rimor', () => {
     expect(validarPwa(manifest, iconos, sw)).toEqual([]);
     expect(validarPwa(manifest, iconos, sw, '/rimor/')).toEqual(['el service worker no precarga la portada (/rimor/)']);
+    // La revisión de la portada tiene que ser la del archivo publicado (con su CSP).
+    const portada = '<html>con CSP</html>';
+    const md5 = createHash('md5').update(portada, 'utf8').digest('hex');
+    expect(validarPwa(manifest, iconos, sw, '/', portada)).toEqual([
+      'la revisión de la portada en la precarga no es la del index.html publicado (¿sin la CSP?)',
+    ]);
+    expect(validarPwa(manifest, iconos, conRevisionPortada(sw, '/', portada), '/', portada)).toEqual([]);
+    expect(conRevisionPortada(sw, '/', portada)).toContain(`{"revision":"${md5}","url":"/"}`);
+    // Una entrada dos veces impediría instalarlo.
+    expect(validarPwa(manifest, iconos, `${sw},{"revision":null,"url":"_astro/App.x.js"}`)).toContain(
+      'el service worker precarga una entrada dos veces',
+    );
   });
 
   it('rechaza otros colores, iconos que faltan, otro destino de compartir y DuckDB en la precarga', () => {

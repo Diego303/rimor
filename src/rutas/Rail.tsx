@@ -131,7 +131,7 @@ export function Rail() {
         {/* Sin red (IN-050): la señal y el texto, bajo la copia. */}
         {!enLinea && (
           <span className="sin-red">
-            <Senal estado="sin-conexion" decorativa etiqueta="" tamano={12} />
+            <Senal estado="sin-conexion" decorativa etiqueta="" tamano={12} prioridad="secundaria" />
             {t('rail.sinConexion')}
           </span>
         )}

@@ -26,23 +26,32 @@ describe('abrir la app desde «Compartir»', () => {
     f.append('archivos', new File(['a,b\n1,2\n'], 'datos.csv', { type: 'text/csv' }));
     await guardarCompartido(f, cache, '/rimor/');
     const replaceState = vi.fn();
-    const hay = await recibirCompartido('/rimor/', {
+    const estado = { __TSR_index: 0 };
+    const entorno = {
       location: { search: '?compartido&otra=1', pathname: '/rimor/', hash: '#/' },
-      history: { replaceState },
+      history: { replaceState, state: estado },
       caches: { open: async () => cache },
-    });
-    expect(hay).toBe(true);
-    expect(replaceState).toHaveBeenCalledWith(null, '', '/rimor/?otra=1#/');
+    };
+    // En una pestaña que solo lee no se recoge: se queda para cuando pueda guardar.
+    expect(await recibirCompartido('/rimor/', { soloLectura: true }, entorno)).toBe('soloLectura');
+    expect(replaceState).not.toHaveBeenCalled();
+    expect(await recibirCompartido('/rimor/', {}, entorno)).toBe('recogido');
+    // Sin perder el estado del historial (el del enrutado por hash).
+    expect(replaceState).toHaveBeenCalledWith(estado, '', '/rimor/?otra=1#/');
     expect(useCompositor.getState().texto).toBe('Mira esto');
     expect(useCompositor.getState().archivos.map((a) => a.name)).toEqual(['datos.csv']);
   });
 
-  it('sin ?compartido no toca nada; sin caches, limpia la URL y ya', async () => {
+  it('sin ?compartido no toca nada; sin caches, limpia la URL; con ?compartido=error, lo dice', async () => {
     const replaceState = vi.fn();
-    const sin = { location: { search: '', pathname: '/', hash: '' }, history: { replaceState } };
-    expect(await recibirCompartido('/', sin)).toBe(false);
+    const sin = { location: { search: '', pathname: '/', hash: '' }, history: { replaceState, state: null } };
+    expect(await recibirCompartido('/', {}, sin)).toBe('nada');
     expect(replaceState).not.toHaveBeenCalled();
-    expect(await recibirCompartido('/', { ...sin, location: { ...sin.location, search: '?compartido' } })).toBe(false);
-    expect(replaceState).toHaveBeenCalledWith(null, '', '/');
+    expect(await recibirCompartido('/', {}, { ...sin, location: { ...sin.location, search: '?compartido' } })).toBe(
+      'vacio',
+    );
+    expect(replaceState).toHaveBeenLastCalledWith(null, '', '/');
+    const conError = { ...sin, location: { ...sin.location, search: '?compartido=error' } };
+    expect(await recibirCompartido('/', { soloLectura: true }, conError)).toBe('error');
   });
 });

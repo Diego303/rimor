@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { type CacheMinima, esDuckdb, guardarCompartido, recogerCompartido, textoCompartido } from './compartir';
+import {
+  atenderCompartir,
+  type CacheMinima,
+  esDuckdb,
+  guardarCompartido,
+  recogerCompartido,
+  textoCompartido,
+} from './compartir';
 
 /** Una `Cache` en memoria (en Node no hay `caches`). */
 const absoluta = (k: string) => new URL(k, 'https://rimor.local').href;
@@ -52,6 +59,49 @@ describe('lo compartido desde otra app', () => {
     await guardarCompartido(formulario({}), cache, '/');
     expect(await recogerCompartido(cache, '/')).toBeNull();
     await cache.put('/compartido/datos', new Response('{roto'));
+    expect(await recogerCompartido(cache, '/')).toBeNull();
+    expect(cache.claves()).toEqual([]);
+  });
+
+  it('el POST de compartir guarda y vuelve a la app con un 303 a ?compartido (con la BASE)', async () => {
+    const cache = cacheFalsa();
+    const peticion = new Request('https://x.github.io/rimor/compartir', {
+      method: 'POST',
+      body: formulario({ texto: 'hola' }),
+    });
+    const r = await atenderCompartir(peticion, async () => cache, '/rimor/', 'https://x.github.io');
+    expect(r.status).toBe(303);
+    expect(r.headers.get('location')).toBe('https://x.github.io/rimor/?compartido');
+    expect((await recogerCompartido(cache, '/rimor/'))?.texto).toBe('hola');
+  });
+
+  it('si no se puede guardar (sin cuota), vacía lo que quedó a medias y vuelve con ?compartido=error', async () => {
+    const cache = cacheFalsa();
+    let puestos = 0;
+    const llena: CacheMinima = {
+      ...cache,
+      put: async (k, r) => {
+        if (++puestos > 1) throw new DOMException('sin cuota', 'QuotaExceededError');
+        await cache.put(k, r);
+      },
+    };
+    const peticion = new Request('https://x.es/compartir', {
+      method: 'POST',
+      body: formulario({}, [new File(['a'], 'a.txt'), new File(['b'], 'b.txt')]),
+    });
+    const r = await atenderCompartir(peticion, async () => llena, '/', 'https://x.es');
+    expect(r.headers.get('location')).toBe('https://x.es/?compartido=error');
+    expect(cache.claves()).toEqual([]);
+    // Un formulario que no se puede leer, igual.
+    const rota = new Request('https://x.es/compartir', { method: 'POST', body: 'no es un formulario' });
+    expect((await atenderCompartir(rota, async () => cache, '/', 'https://x.es')).headers.get('location')).toContain(
+      '=error',
+    );
+  });
+
+  it('restos sin datos (un compartir que falló a medias) se borran al recoger', async () => {
+    const cache = cacheFalsa();
+    await cache.put('/compartido/archivo-0', new Response('x'));
     expect(await recogerCompartido(cache, '/')).toBeNull();
     expect(cache.claves()).toEqual([]);
   });

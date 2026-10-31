@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Comprueba la construcción: el HTML enlaza los iconos de marca con la BASE correcta, los archivos existen
 // y la CSP (ADR-0005) va antes de cualquier script, autoriza cada script en línea por su hash y es estricta.
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,9 +43,10 @@ export function validarCsp(politica) {
  * @param {{ src: string }[]} iconos los de `manifest-iconos.json`
  * @param {string} sw el `sw.js` construido
  * @param {string} base la `BASE`, con su barra final: la portada se precarga con ella
+ * @param {string} [portada] el `index.html` publicado: su revisión en la precarga tiene que ser la suya (con la CSP)
  * @returns {string[]}
  */
-export function validarPwa(manifest, iconos, sw, base = '/') {
+export function validarPwa(manifest, iconos, sw, base = '/', portada) {
   const fallos = [];
   if (manifest.theme_color !== '#E8E6E1') fallos.push('el manifest debe llevar theme_color #E8E6E1'); // rimor-permitir-color
   if (manifest.background_color !== '#F6F5F1') fallos.push('el manifest debe llevar background_color #F6F5F1'); // rimor-permitir-color
@@ -61,6 +63,12 @@ export function validarPwa(manifest, iconos, sw, base = '/') {
   for (const u of precarga)
     if (/\.wasm$|duckdb/.test(u)) fallos.push(`el service worker precarga ${u} (DuckDB va bajo demanda)`);
   if (!precarga.includes(base)) fallos.push(`el service worker no precarga la portada (${base})`);
+  if (new Set(precarga).size !== precarga.length) fallos.push('el service worker precarga una entrada dos veces');
+  if (portada !== undefined) {
+    const md5 = createHash('md5').update(portada, 'utf8').digest('hex');
+    if (!sw.includes(`{"revision":"${md5}","url":${JSON.stringify(base)}}`))
+      fallos.push('la revisión de la portada en la precarga no es la del index.html publicado (¿sin la CSP?)');
+  }
   return fallos;
 }
 
@@ -73,7 +81,7 @@ function principal() {
   const enlaces = [
     ['icon', 'marca/favicon.svg'],
     ['icon', 'marca/rimor-app-claro-32.png'],
-    ['apple-touch-icon', 'marca/rimor-app-claro-180.png'],
+    ['apple-touch-icon', 'marca/rimor-apple-touch-180.png'],
   ];
   for (const [rel, ruta] of enlaces) {
     if (!html.includes(`rel="${rel}" href="${base}${ruta}"`))
@@ -96,6 +104,7 @@ function principal() {
         JSON.parse(readFileSync(join(dist, 'marca/manifest-iconos.json'), 'utf8')).icons,
         readFileSync(join(dist, 'sw.js'), 'utf8'),
         base,
+        html,
       ),
     );
 

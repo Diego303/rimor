@@ -19,7 +19,8 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
     <title>{titulo}</title>
     <link rel="icon" href={`${base}marca/favicon.svg`} type="image/svg+xml" />
     <link rel="icon" href={`${base}marca/rimor-app-claro-32.png`} sizes="32x32" type="image/png" />
-    <link rel="apple-touch-icon" href={`${base}marca/rimor-app-claro-180.png`} />
+    <!-- iOS rellena la transparencia de negro y redondea él: el de 180, cuadrado y opaco (IN-050). -->
+    <link rel="apple-touch-icon" href={`${base}marca/rimor-apple-touch-180.png`} />
     <!-- PWA (IN-050): el manifest lo genera vite-plugin-pwa en la raíz de la BASE. -->
     <link rel="manifest" href={`${base}manifest.webmanifest`} />
     <!-- theme-color no admite variables CSS: son --app en claro y en oscuro (tokens.css). rimor-permitir-color -->

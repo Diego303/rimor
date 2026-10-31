@@ -3,6 +3,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { escribirTexto, leerTexto } from '../../almacen/contrato';
 import { previsualizar } from '../../captura/previa';
 import { opcionesCaptura } from '../../espacio/ajustes';
+import { useInstalacion } from '../../espacio/instalar';
 import { useEspacio } from '../../estado/espacio';
 import { elegirIdioma } from '../../i18n/iniciar';
 import { REGISTRO } from '../../lectores/registro';
@@ -189,5 +190,19 @@ describe('Ajustes: casos de la revisión', () => {
     expect(await screen.findByText(/no se entiende/, {}, PRIMERA_CARGA)).toBeTruthy();
     expect(screen.queryByText(/Ninguna todavía/)).toBeNull();
     expect(await leerTexto(almacen, '.rimor/reglas-deteccion.json')).toBe(roto);
+  }, 30_000);
+
+  it('«Instalar Rimor» si el navegador lo permite; instalada (también desde su menú), ya no (IN-050)', async () => {
+    await montarApp('/ajustes');
+    await screen.findByRole('heading', { name: 'Ajustes' }, PRIMERA_CARGA);
+    expect(screen.queryByRole('button', { name: 'Instalar Rimor' })).toBeNull();
+    const prompt = vi.fn(async () => undefined);
+    act(() => useInstalacion.setState({ aviso: Object.assign(new Event('beforeinstallprompt'), { prompt }) }));
+    fireEvent.click(screen.getByRole('button', { name: 'Instalar Rimor' }));
+    expect(prompt).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Instalar Rimor' })).toBeNull();
+    act(() => useInstalacion.setState({ aviso: Object.assign(new Event('beforeinstallprompt'), { prompt }) }));
+    act(() => void window.dispatchEvent(new Event('appinstalled')));
+    expect(screen.queryByRole('button', { name: 'Instalar Rimor' })).toBeNull();
   }, 30_000);
 });
