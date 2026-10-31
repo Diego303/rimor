@@ -14,7 +14,7 @@ import {
   migrar,
   unir,
 } from '@rimor/formato';
-import { leerSesiones, RUTA_SESIONES } from '../../espacio/sesiones';
+import { esquemaNuevoSesiones, leerSesiones, RUTA_SESIONES } from '../../espacio/sesiones';
 import { fueraDeLaExportacion, RUTA_MANIFEST_EXPORTADO, sha256 } from '../exportar';
 import { ErrorZip, entradasZip, LIMITES_ZIP, type LimitesZip, leerEntrada, rutaSegura, trozosDe } from '../leerZip';
 
@@ -170,7 +170,7 @@ function comprobarEsquemas(archivos: Map<string, Uint8Array>) {
     if (ruta === 'colecciones.json' && leerColecciones(texto(datos)) === null)
       throw new ErrorImportar('importar.colecciones', ruta);
     if (ruta === RUTA_SESIONES && leerSesiones(texto(datos)) === null)
-      throw new ErrorImportar('importar.sesiones', ruta);
+      throw new ErrorImportar(esquemaNuevoSesiones(texto(datos)) ? 'importar.esquemaNuevo' : 'importar.sesiones', ruta);
   }
 }
 

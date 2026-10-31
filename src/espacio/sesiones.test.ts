@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { elementoFalso } from '../lectores/pruebas/falsos';
 import {
   escribirSesiones,
+  esquemaNuevoSesiones,
   franjaDe,
   franjaDeId,
   juntarSesiones,
@@ -32,26 +33,30 @@ describe('franjas', () => {
       'noche',
       'noche',
     ]);
-    expect(franjaDeId('2026-10-16-tarde-2')).toBe('tarde');
+    expect(franjaDeId('2026-10-16-tarde-1630-2')).toBe('tarde');
+    expect(franjaDeId('2026-10-16-tarde')).toBe('tarde');
     expect(franjaDeId('otra cosa')).toBeNull();
   });
 });
 
 describe('la sesión de una captura', () => {
-  it('sigue la del más reciente si es de hace menos de 45 minutos; si no, una nueva por día y franja', () => {
-    const antes = [fm(1, 16, 0, { sesion: '2026-10-16-tarde' }), fm(2, 15, 0, { sesion: 'vieja' })];
-    expect(sesionPara(antes, a(16, 44))).toBe('2026-10-16-tarde');
+  it('sigue la del más reciente si es de hace menos de 45 minutos; si no, una nueva por día, franja y hora', () => {
+    const antes = [fm(1, 16, 0, { sesion: '2026-10-16-tarde-1550' }), fm(2, 15, 0, { sesion: 'vieja' })];
+    expect(sesionPara(antes, a(16, 44))).toBe('2026-10-16-tarde-1550');
     expect(UMBRAL_SESION_MS).toBe(45 * 60_000);
-    // A 46 minutos: otra, con sufijo porque ese id ya se usa.
-    expect(sesionPara(antes, a(16, 46))).toBe('2026-10-16-tarde-2');
-    expect(sesionPara([...antes, fm(3, 10, 0, { sesion: '2026-10-16-tarde-2' })], a(16, 46))).toBe(
-      '2026-10-16-tarde-3',
+    // A 46 minutos: otra, con la hora de ahora.
+    expect(sesionPara(antes, a(16, 46))).toBe('2026-10-16-tarde-1646');
+    // Si ese id ya lo tiene alguien (también en la papelera, que puede volver), con sufijo.
+    expect(sesionPara(antes, a(16, 46), [fm(9, 9, 0, { sesion: '2026-10-16-tarde-1646' })])).toBe(
+      '2026-10-16-tarde-1646-2',
     );
     // El más reciente sin sesión (de antes de las sesiones): una nueva.
-    expect(sesionPara([fm(4, 16, 30)], a(16, 40))).toBe('2026-10-16-tarde');
+    expect(sesionPara([fm(4, 16, 30)], a(16, 40))).toBe('2026-10-16-tarde-1640');
     // Nada antes, o solo cosas «del futuro»: una nueva.
-    expect(sesionPara([], a(9, 0))).toBe('2026-10-16-manana');
-    expect(sesionPara([fm(5, 18, 0, { sesion: 'futura' })], a(17, 50))).toBe('2026-10-16-tarde');
+    expect(sesionPara([], a(9, 5))).toBe('2026-10-16-manana-0905');
+    expect(sesionPara([fm(5, 18, 0, { sesion: 'futura' })], a(17, 50))).toBe('2026-10-16-tarde-1750');
+    // Lo de la papelera no continúa una sesión (no está en el feed).
+    expect(sesionPara([], a(16, 10), [fm(6, 16, 0, { sesion: 'en-papelera' })])).toBe('2026-10-16-tarde-1610');
   });
 });
 
@@ -83,6 +88,8 @@ describe('sesiones.json', () => {
     expect(leerSesiones(escribirSesiones(d))).toEqual(d);
     expect(renombrar(d, '2026-10-16-tarde', '   ').nombres).toEqual({});
     expect(renombrar(d, 'x', 'y'.repeat(200)).nombres.x).toHaveLength(80);
+    // Igual que el propuesto: vuelve al propuesto (y sigue a su colección si cambia).
+    expect(renombrar(d, '2026-10-16-tarde', 'gateway', 'gateway').nombres).toEqual({});
   });
 
   it('tolerante; roto o de un esquema más nuevo, null', () => {
@@ -105,5 +112,9 @@ describe('sesiones.json', () => {
     });
     expect(JSON.parse(juntarSesiones(null, paquete) ?? '{}').nombres).toEqual({ a: 'Del paquete', c: 'Nuevo' });
     expect(juntarSesiones(aqui, '{roto')).toBeNull();
+    // Uno de aquí que no se entiende no se sobrescribe.
+    expect(juntarSesiones('{roto', paquete)).toBeNull();
+    expect(esquemaNuevoSesiones(JSON.stringify({ esquema: 2 }))).toBe(true);
+    expect(esquemaNuevoSesiones('{roto')).toBe(false);
   });
 });

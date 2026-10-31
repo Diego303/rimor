@@ -25,7 +25,7 @@ Que las capturas hechas en el mismo rato de trabajo formen una **sesión**, con 
 - Al crear un elemento:
   - si el capturado más reciente (por `creado`, fuera de la papelera) es de hace menos de 45 minutos y tiene `sesion`, va a la suya;
   - si no, a una nueva.
-- **El id** es `AAAA-MM-DD-franja`, con el día y la franja de la hora local de su primera captura: madrugada antes de las 6, mañana hasta las 14, tarde hasta las 21 y noche después. Si ya existe, se añade `-2`, `-3`… (`2026-10-16-tarde-2`).
+- **El id** es `AAAA-MM-DD-franja-HHMM`, con el día, la franja y la hora local de su primera captura: madrugada antes de las 6, mañana hasta las 14, tarde hasta las 21 y noche después. Si ya existe (también en la papelera), se añade `-2`, `-3`… (`2026-10-16-tarde-1630-2`). Cambiado en la verificación: el plan pone como ejemplo `2026-10-16-tarde`.
 - Una versión nueva de un elemento conserva su sesión (no es otra captura). Lo importado trae la suya.
 - Los elementos de antes de esta IN no tienen sesión. No se reescriben: un archivo cambiado solo para esto sería una edición más, y la copia lo tendría por cambiado.
 
@@ -94,3 +94,30 @@ Cubre las tres tareas. Reutiliza el campo del esquema, el reloj de la captura, e
 - `rutas/inicio/filas.ts`: `sesionesDelFeed` y la fila `sesion`.
 - `rutas/inicio/TarjetaSesion.tsx`: la tarjeta `.sess` con «Renombrar» y su diálogo.
 - Pruebas: `sesiones.test.ts`, el flujo, las filas, el espacio e Inicio (tarjeta y renombrar).
+
+## Verificación
+
+- `pnpm verificar` en verde (ver `docs/seguimiento.md`).
+- Revisión independiente (15 hallazgos), atendidos con pruebas salvo donde se dice:
+  1. y 4. **El id (día y franja) era previsible.** Se reutilizaba tras la papelera (heredando el nombre y juntando elementos al restaurar) y se juntaban sesiones de dos dispositivos al importar. Ahora lleva la hora de su primera captura (`2026-10-16-tarde-1630`) y también cuentan los de la papelera.
+  2. y 3. **Un `sesiones.json` que no se entiende se sobrescribía** (al importar y al pasar a escribir), y un fallo de E/S al abrir bloqueaba «Renombrar». Ahora se distinguen los dos casos, como con las reglas (IN-049): el que no se entiende no se toca nunca, y el que no se pudo leer se vuelve a leer antes de escribir.
+  5. **«Sesión «Sesión de la tarde»»**: la franja ya es el título.
+  6. **Coste**: el feed solo agrupa las sesiones con algo en los días cargados (no todo el historial a cada minuto).
+  7. La tarjeta es un `<article>` con su nombre, y su botón dice de qué sesión es («Renombrar: Sesión «gateway»»).
+  8. En inglés, comillas “ ”.
+  9. La sesión y `creado` usan el mismo instante.
+  10. Una sesión que empezó un día que no está cargado tiene su tarjeta en el primero que sí. Si cruza la medianoche, el resumen dice los dos días.
+  11. Un `sesiones.json` de un esquema más nuevo se rechaza con `importar.esquemaNuevo`.
+  12. El diálogo de renombrar vive en Inicio, fuera de la lista virtual.
+  13. `LARGO_NOMBRE` en el campo. Guardar el mismo nombre que el propuesto vuelve al propuesto (sigue a su colección). **Sin cambio:** los campos desconocidos del archivo no se conservan; un esquema más nuevo ya no se toca.
+  14. **Sin cambio:** una versión nueva no cuenta como actividad de la sesión de ahora (es del elemento viejo). Queda para IN-057, que puede sombrear la actividad por horas.
+  15. **Pruebas añadidas:**
+      - papelera;
+      - una versión conserva su sesión;
+      - importación (juntar, no tocar un archivo ilegible, rechazar uno roto o de un esquema más nuevo);
+      - E/S al abrir;
+      - pestaña que solo lee y relectura;
+      - espacio de ejemplo con su sesión;
+      - franja en la interfaz;
+      - posición de la tarjeta;
+      - esperar a la escritura.

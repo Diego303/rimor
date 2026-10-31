@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-31 19:28
-**Ahora:** IN-051 · Sesiones automáticas · fase verificación
-**Siguiente:** IN-052 · Grupos automáticos y pantalla de colección
-**Progreso:** F0 9/9 · v0.1 42/42 · v0.2 10/22 · v0.3 0/17 · v0.4 0/9 · total 61/99
+**Última actualización:** 2026-10-31 19:51
+**Ahora:** IN-052 · Grupos automáticos y pantalla de colección · fase análisis y diseño
+**Siguiente:** IN-053 · Enlaces automáticos
+**Progreso:** F0 9/9 · v0.1 42/42 · v0.2 11/22 · v0.3 0/17 · v0.4 0/9 · total 62/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -70,7 +70,7 @@
 | IN-048 | Logs: plantillas con Drain | v0.2 | 8 | hecha | 7cfc86d 212c98c 8f51fbb | docs/features/IN-048-logs-drain.md |
 | IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | hecha | f5deee9 3fae762 1112b71 | docs/features/IN-049-reglas-captura-multiple.md |
 | IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | hecha | 38cddd1 2878cbd 49b8a4f | docs/features/IN-050-pwa.md |
-| IN-051 | Sesiones automáticas | v0.2 | 9 | en verificación | 662ad48 | docs/features/IN-051-sesiones.md |
+| IN-051 | Sesiones automáticas | v0.2 | 9 | hecha | 662ad48 4f20afc | docs/features/IN-051-sesiones.md |
 | IN-052 | Grupos automáticos y pantalla de colección | v0.2 | 9 | pendiente | — | — |
 | IN-053 | Enlaces automáticos | v0.2 | 9 | pendiente | — | — |
 | IN-054 | Vistas guardadas | v0.2 | 9 | pendiente | — | — |
@@ -179,7 +179,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-051 | implementación | sesionPara al capturar (45 min, día y franja con sufijo), sesiones.json con nombres editados (combinado al importar), nombre propuesto por colección, etiquetas o franja, tarjeta .sess con Renombrar; verificar en verde: 129 archivos, 1650 pruebas + 6 de rendimiento, 280,5 KB | … |
+| 2026-10-31 | IN-051 | verificación | revisión independiente (15 hallazgos; 13 corregidos con pruebas, 2 decididos): id con la hora de inicio (sin reutilizar tras la papelera ni chocar entre dispositivos), sesiones.json ilegible intacto y sin leer releído, título por franja, solo los días cargados, article con nombre, comillas en inglés, mismo instante, tarjeta en el primer día cargado, esquema nuevo al importar, diálogo en Inicio; verificar en verde: 129 archivos, 1656 pruebas + 6 de rendimiento, 280,7 KB | … |
+| 2026-10-31 | IN-051 | implementación | sesionPara al capturar (45 min, día y franja con sufijo), sesiones.json con nombres editados (combinado al importar), nombre propuesto por colección, etiquetas o franja, tarjeta .sess con Renombrar; verificar en verde: 129 archivos, 1650 pruebas + 6 de rendimiento, 280,5 KB | 4f20afc |
 | 2026-10-31 | IN-051 | análisis y diseño | sesion asignada al capturar (umbral de 45 min, id AAAA-MM-DD-franja con sufijo), nombres editados en sesiones.json en la raíz (combinados al importar), propuesto por colección, etiquetas o franja, tarjeta .sess en el feed con Renombrar | 662ad48 |
 | 2026-10-31 | IN-050 | verificación | revisión independiente (19 hallazgos; 18 corregidos con pruebas): revisión de la portada con la CSP, varias pestañas al actualizar, sin conexión en el móvil, compartir en solo lectura y con fallo, update() periódico, caché de DuckDB por versión, sin entradas repetidas, denylist, apple-touch-icon opaco, instalar en Ajustes, región viva de avisos; verificar en verde: 128 archivos, 1640 pruebas + 6 de rendimiento, 279,5 KB | 49b8a4f |
 | 2026-10-31 | IN-050 | implementación | @vite-pwa/astro 1.2.0 + vite-plugin-pwa 1.3.0 (injectManifest, workbox 7.4.1): precarga de 127 entradas sin DuckDB, rimor-wasm bajo demanda, manifest con iconos y share_target, compartir por caché al compositor, aviso de versión con Actualizar, sin conexión en el pie del raíl, validarPwa en comprobar-dist; verificar en verde: 128 archivos, 1632 pruebas + 6 de rendimiento, 278,6 KB | 2878cbd |

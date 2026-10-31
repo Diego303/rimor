@@ -1,32 +1,34 @@
 /**
  * Tarjeta de una sesión en el feed (IN-051, ORG-08), como `.sess` en la portada de referencia: «Sesión «nombre»», sus
  * elementos de cuándo a cuándo y sus tipos más frecuentes, y «Renombrar». El nombre es el editado (`sesiones.json`) o
- * el propuesto (colección o etiquetas dominantes, o la franja).
+ * el propuesto (colección o etiquetas dominantes, o la franja: «Sesión de la tarde»). El diálogo de renombrar vive en
+ * Inicio, fuera de la lista virtual (que puede desmontar la fila con él abierto).
  */
 import { useEffect, useState } from 'react';
 import { useEspacioOpcional } from '../../espacio/Espacio';
-import { limpiarNombre, nombrePropuesto, renombrar } from '../../espacio/sesiones';
+import { LARGO_NOMBRE, limpiarNombre, nombrePropuesto } from '../../espacio/sesiones';
 import { useEspacio } from '../../estado/espacio';
-import { fmtHora } from '../../i18n/formatos';
+import { fmtDia, fmtHora } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { Boton, Dialogo } from '../../ui/componentes';
-import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { Icono } from '../../ui/iconos/Icono';
-import type { ResumenSesion } from './filas';
+import { claveDia, type ResumenSesion } from './filas';
 
 /** «Log, Error y Código» en el idioma de la interfaz. */
 const lista = (partes: readonly string[], idioma: string) =>
   new Intl.ListFormat(idioma, { style: 'long', type: 'conjunction' }).format(partes);
 
-interface Props {
-  sesion: ResumenSesion;
-  soloLectura: boolean;
+/** Lo que se renombra: la sesión, su nombre editado (si lo tiene) y el propuesto. */
+export interface ARenombrar {
+  id: string;
+  editado: string | undefined;
+  propuesto: string;
 }
 
-export function TarjetaSesion({ sesion: s, soloLectura }: Props) {
+/** El título de una sesión, su nombre editado y el propuesto (en el idioma de la interfaz). */
+function useNombre(s: ResumenSesion) {
   const { t, idioma } = useT();
   const espacio = useEspacioOpcional();
-  const avisos = useAvisosOpcional();
   const colecciones = useEspacio((e) => e.colecciones);
   const [editado, setEditado] = useState(() => espacio?.sesiones().nombres[s.id]);
   // Al día con lo que se edite aquí o en la otra pestaña.
@@ -34,83 +36,100 @@ export function TarjetaSesion({ sesion: s, soloLectura }: Props) {
     () => (espacio ? espacio.alCambiar(() => setEditado(espacio.sesiones().nombres[s.id])) : undefined),
     [espacio, s.id],
   );
-  const [renombrando, setRenombrando] = useState(false);
+  const p = nombrePropuesto(s.id, s.elementos);
+  const propuesto =
+    p.t === 'coleccion'
+      ? (colecciones.find((c) => c.id === p.coleccion)?.nombre ?? p.coleccion)
+      : p.t === 'etiquetas'
+        ? lista(p.etiquetas, idioma)
+        : t(`pantallas.inicio.sesionFranja.${p.franja}`);
+  // La franja ya es «Sesión de la tarde»: no «Sesión «Sesión de la tarde»».
+  const titulo =
+    editado || p.t !== 'franja' ? t('pantallas.inicio.sesion', { nombre: editado ?? propuesto }) : propuesto;
+  return { titulo, editado, propuesto };
+}
 
-  const propuesto = nombrePropuesto(s.id, s.elementos);
-  const nombre =
-    editado ??
-    (propuesto.t === 'coleccion'
-      ? (colecciones.find((c) => c.id === propuesto.coleccion)?.nombre ?? propuesto.coleccion)
-      : propuesto.t === 'etiquetas'
-        ? lista(propuesto.etiquetas, idioma)
-        : t(`pantallas.inicio.sesionFranja.${propuesto.franja}`));
-  const resumen = [
-    t('pantallas.inicio.sesionResumen', {
-      n: s.elementos.length,
-      desde: fmtHora(new Date(s.desde)),
-      hasta: fmtHora(new Date(s.hasta)),
-    }),
-    lista(
-      s.tipos.map((tipo) => t(`tipos.${tipo}`)),
-      idioma,
-    ),
-  ].join(' · ');
+interface Props {
+  sesion: ResumenSesion;
+  soloLectura: boolean;
+  alRenombrar: (r: ARenombrar) => void;
+}
 
-  function guardar(nuevo: string) {
-    setRenombrando(false);
-    if (!espacio) return;
-    void espacio
-      .guardarSesiones((d) => renombrar(d, s.id, nuevo))
-      .catch(() => avisos?.avisar(t('pantallas.inicio.sesionNoGuardada')));
-    setEditado(espacio.sesiones().nombres[s.id]);
-  }
-
+export function TarjetaSesion({ sesion: s, soloLectura, alRenombrar }: Props) {
+  const { t, idioma } = useT();
+  const { titulo, editado, propuesto } = useNombre(s);
+  const desde = new Date(s.desde);
+  const hasta = new Date(s.hasta);
+  // De un día a otro (pasada la medianoche), con el día de cada extremo.
+  const cuando =
+    claveDia(desde) === claveDia(hasta)
+      ? t('pantallas.inicio.sesionResumen', { n: s.elementos.length, desde: fmtHora(desde), hasta: fmtHora(hasta) })
+      : t('pantallas.inicio.sesionResumenDias', {
+          n: s.elementos.length,
+          desde: `${fmtDia(desde, new Date(), idioma)} ${fmtHora(desde)}`,
+          hasta: `${fmtDia(hasta, new Date(), idioma)} ${fmtHora(hasta)}`,
+        });
+  const resumen = `${cuando} · ${lista(
+    s.tipos.map((tipo) => t(`tipos.${tipo}`)),
+    idioma,
+  )}`;
   return (
-    <div className="sess">
+    <article className="sess" aria-label={titulo}>
       <Icono nombre="tiempo" tamano={16} />
       <div className="sess-cuerpo">
-        <b className="sm">{t('pantallas.inicio.sesion', { nombre })}</b>
+        <b className="sm">{titulo}</b>
         <p className="xs muted">{resumen}</p>
       </div>
       {!soloLectura && (
-        <Boton pequeno onClick={() => setRenombrando(true)}>
+        <Boton
+          pequeno
+          aria-label={t('pantallas.inicio.sesionRenombrarDe', { nombre: titulo })}
+          onClick={() => alRenombrar({ id: s.id, editado, propuesto })}
+        >
           {t('pantallas.inicio.sesionRenombrar')}
         </Boton>
       )}
-      <Dialogo abierto={renombrando} alCerrar={() => setRenombrando(false)} titulo={t('pantallas.inicio.sesionTitulo')}>
-        {renombrando && (
-          <FormularioNombre
-            inicial={editado ?? ''}
-            propuesto={nombre}
-            alGuardar={guardar}
-            alCerrar={() => setRenombrando(false)}
-          />
-        )}
-      </Dialogo>
-    </div>
+    </article>
+  );
+}
+
+/** El diálogo de renombrar una sesión (vacío, o igual que el propuesto, vuelve al propuesto). */
+export function DialogoSesion({
+  sesion,
+  alGuardar,
+  alCerrar,
+}: {
+  sesion: ARenombrar | null;
+  alGuardar: (r: ARenombrar, nombre: string) => void;
+  alCerrar: () => void;
+}) {
+  const { t } = useT();
+  return (
+    <Dialogo abierto={sesion !== null} alCerrar={alCerrar} titulo={t('pantallas.inicio.sesionTitulo')}>
+      {/* Dentro del diálogo: se monta en cada apertura, con el nombre de esa sesión. */}
+      {sesion && <FormularioNombre sesion={sesion} alGuardar={alGuardar} alCerrar={alCerrar} />}
+    </Dialogo>
   );
 }
 
 function FormularioNombre({
-  inicial,
-  propuesto,
+  sesion,
   alGuardar,
   alCerrar,
 }: {
-  inicial: string;
-  propuesto: string;
-  alGuardar: (nombre: string) => void;
+  sesion: ARenombrar;
+  alGuardar: (r: ARenombrar, nombre: string) => void;
   alCerrar: () => void;
 }) {
   const { t } = useT();
-  const [valor, setValor] = useState(inicial);
+  const [valor, setValor] = useState(sesion.editado ?? '');
   return (
     <form
       method="dialog"
       className="formulario-dialogo"
       onSubmit={(e) => {
         e.preventDefault();
-        alGuardar(limpiarNombre(valor));
+        alGuardar(sesion, limpiarNombre(valor));
       }}
     >
       <label className="xs muted">
@@ -118,8 +137,8 @@ function FormularioNombre({
         <input
           type="text"
           value={valor}
-          placeholder={propuesto}
-          maxLength={80}
+          placeholder={sesion.propuesto}
+          maxLength={LARGO_NOMBRE}
           onChange={(e) => setValor(e.target.value)}
           // biome-ignore lint/a11y/noAutofocus: el diálogo se abre para escribir el nombre.
           autoFocus

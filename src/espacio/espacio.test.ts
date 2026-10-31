@@ -525,3 +525,52 @@ describe('nombres de las sesiones del espacio (IN-051)', () => {
     await c.valor.cerrar();
   });
 });
+
+describe('nombres de las sesiones: lectura y pestañas (IN-051)', () => {
+  it('si no se pudieron leer al abrir (E/S), se vuelven a leer antes de escribir: no se pierden', async () => {
+    const almacen = new AlmacenMemoria();
+    await escribirTexto(almacen, 'sesiones.json', JSON.stringify({ esquema: 1, nombres: { a: 'Uno' } }));
+    let fallar = true;
+    const leer = almacen.leer.bind(almacen);
+    almacen.leer = async (ruta) => {
+      if (ruta === 'sesiones.json' && fallar) {
+        fallar = false;
+        throw new Error('E/S');
+      }
+      return leer(ruta);
+    };
+    const a = await abrirEspacio({
+      espacioId: 's2',
+      almacen,
+      fabricaIndexedDb: new IDBFactory(),
+      cerrojos: cerrojosFalsos(),
+      canal: canal(),
+    });
+    if (!a.ok) throw new Error('no abre');
+    await a.valor.guardarSesiones((d) => ({ ...d, nombres: { ...d.nombres, b: 'Dos' } }));
+    expect(JSON.parse((await leerTexto(almacen, 'sesiones.json')) ?? '{}').nombres).toEqual({ a: 'Uno', b: 'Dos' });
+    await a.valor.cerrar();
+  });
+
+  it('la pestaña que solo lee no escribe; la que lee y relee no se queda con lo viejo', async () => {
+    const almacen = new AlmacenMemoria();
+    const cerrojos = cerrojosFalsos();
+    const fabrica = new IDBFactory();
+    const abrir = () => abrirEspacio({ espacioId: 's3', almacen, fabricaIndexedDb: fabrica, cerrojos, canal: canal() });
+    const a = await abrir();
+    const b = await abrir();
+    if (!a.ok || !b.ok) throw new Error('no abre');
+    await b.valor.guardarSesiones((d) => ({ ...d, nombres: { x: 'De la lectora' } }));
+    expect(await leerTexto(almacen, 'sesiones.json')).toBeNull();
+    await a.valor.guardarSesiones((d) => ({ ...d, nombres: { y: 'De la que escribe' } }));
+    await b.valor.recargar();
+    expect(b.valor.sesiones().nombres).toEqual({ y: 'De la que escribe' });
+    // Si se rompe y la lectora relee, no lo sobrescribe al pasar a escribir.
+    await escribirTexto(almacen, 'sesiones.json', '{roto');
+    await b.valor.recargar();
+    await expect(b.valor.guardarSesiones((d) => d)).rejects.toThrow();
+    expect(await leerTexto(almacen, 'sesiones.json')).toBe('{roto');
+    await a.valor.cerrar();
+    await b.valor.cerrar();
+  });
+});

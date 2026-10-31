@@ -218,26 +218,39 @@ export async function abrirEspacio(
         .then(() => coordinacion.avisarCambio([]));
       return reglasPendientes;
     };
-    // Los nombres de las sesiones, como los ajustes (pero en la raíz: son del espacio, viajan en el ZIP). Un archivo
-    // que existe pero no se entiende no se sobrescribe.
-    const leerSesionesSeguro = async () => {
+    // Los nombres de las sesiones, como las reglas (pero en la raíz: son del espacio, viajan en el ZIP): un archivo que
+    // existe pero no se entiende no se sobrescribe; uno que no se pudo leer (E/S) se vuelve a leer antes de escribir.
+    type EstadoSesiones = { datos: DatosSesiones; estado: 'leidas' | 'ilegibles' | 'sinLeer' };
+    const leerSesionesSeguro = async (): Promise<EstadoSesiones> => {
       try {
-        return leerSesiones(await leerTexto(dep.almacen, RUTA_SESIONES));
+        const datos = leerSesiones(await leerTexto(dep.almacen, RUTA_SESIONES));
+        return datos ? { datos, estado: 'leidas' } : { datos: SESIONES_INICIALES, estado: 'ilegibles' };
       } catch {
-        return null;
+        return { datos: SESIONES_INICIALES, estado: 'sinLeer' };
       }
     };
     let sesiones = await leerSesionesSeguro();
     let sesionesPendientes: Promise<void> = Promise.resolve();
     const guardarSesiones = (cambio: (s: DatosSesiones) => DatosSesiones): Promise<void> => {
-      if (!sesiones) return Promise.reject(new Error('sesiones.json no se entiende: no se sobrescribe'));
-      sesiones = cambio(sesiones);
-      const copia = sesiones;
-      avisar();
+      const aplicar = () => {
+        if (sesiones.estado !== 'leidas') throw new Error('sesiones.json no se entiende: no se sobrescribe');
+        sesiones = { datos: cambio(sesiones.datos), estado: 'leidas' };
+        avisar();
+        return sesiones.datos;
+      };
+      const copia = sesiones.estado === 'leidas' ? aplicar() : null;
       sesionesPendientes = sesionesPendientes
         .catch(() => undefined)
-        .then(() =>
-          escribe() && !cerrado ? escribirTexto(dep.almacen, RUTA_SESIONES, escribirSesiones(copia)) : undefined,
+        .then(async () => {
+          if (copia) return copia;
+          if (sesiones.estado === 'sinLeer') {
+            const otra = await leerSesionesSeguro();
+            if (sesiones.estado === 'sinLeer') sesiones = otra;
+          }
+          return aplicar();
+        })
+        .then((d) =>
+          escribe() && !cerrado ? escribirTexto(dep.almacen, RUTA_SESIONES, escribirSesiones(d)) : undefined,
         )
         .then(() => coordinacion.avisarCambio([]));
       return sesionesPendientes;
@@ -306,7 +319,9 @@ export async function abrirEspacio(
         await gestor.cargar().catch(() => undefined);
         estado = leerEstado(await leerTexto(dep.almacen, RUTA_ESTADO));
         ajustes = (await leerAjustesSeguro()) ?? ajustes;
-        sesiones = (await leerSesionesSeguro()) ?? sesiones;
+        const sesionesReleidas = await leerSesionesSeguro();
+        // Una lectura que falla deja lo que había (si ya estaba leído); una que no se entiende, no se toca.
+        if (sesionesReleidas.estado !== 'sinLeer' || sesiones.estado === 'sinLeer') sesiones = sesionesReleidas;
         const releidas = await leerReglasSeguro();
         // Una lectura que falla deja lo que había (si ya estaba leído).
         if (releidas.estado !== 'sinLeer' || reglas.estado === 'sinLeer') reglas = releidas;
@@ -375,7 +390,7 @@ export async function abrirEspacio(
       reglas: () => reglas.datos,
       reglasLegibles: () => reglas.estado !== 'ilegibles',
       guardarReglas,
-      sesiones: () => sesiones ?? SESIONES_INICIALES,
+      sesiones: () => sesiones.datos,
       guardarSesiones,
       contadores,
       alCambiar: (fn) => {

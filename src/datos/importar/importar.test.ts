@@ -158,6 +158,11 @@ describe('leer un paquete: lo malicioso se rechaza con su regla y su archivo', (
     expect(await rechazo(await zipConManifest({ 'colecciones.json': enc('{') }))).toBe(
       'importar.colecciones colecciones.json',
     );
+    // Los nombres de las sesiones (IN-051): rotos, o de un esquema más nuevo.
+    expect(await rechazo(await zipConManifest({ 'sesiones.json': enc('{') }))).toBe('importar.sesiones sesiones.json');
+    expect(await rechazo(await zipConManifest({ 'sesiones.json': enc('{"esquema":2,"nombres":{}}') }))).toBe(
+      'importar.esquemaNuevo sesiones.json',
+    );
     // Ni un ZIP ni un JSON.
     expect(await rechazo(enc('hola'), 'x.zip')).toBe('zip.noEsZip');
     expect(await rechazo(enc('{roto'), 'x.json')).toBe('importar.jsonRoto');
@@ -274,6 +279,24 @@ describe('plan', () => {
     ]);
     expect(despues['.rimor/ajustes.json']).toBe('{"aqui":true}');
     expect(despues['manifest.json']).toBe(JSON.stringify(MANIFEST));
+  });
+});
+
+describe('nombres de las sesiones (IN-051)', () => {
+  it('se juntan (ante el mismo id, el de aquí); uno de aquí que no se entiende no se toca', async () => {
+    const nombres = (n: Record<string, string>) => JSON.stringify({ esquema: 1, nombres: n });
+    const paquete = await espacio([el(1)], { 'sesiones.json': nombres({ a: 'Del paquete', c: 'Nuevo' }) });
+    const p = await leerPaquete(await zipDe(paquete), 'x.zip');
+    const local = await espacio([el(1)], { 'sesiones.json': nombres({ a: 'Aquí', b: 'Solo aquí' }) });
+    await fusionar(local, await planear(p.archivos, p.manifest, await localDe(local)));
+    expect(JSON.parse((await volcado(local))['sesiones.json'] ?? '{}').nombres).toEqual({
+      a: 'Aquí',
+      b: 'Solo aquí',
+      c: 'Nuevo',
+    });
+    const roto = await espacio([el(1)], { 'sesiones.json': '{roto' });
+    await fusionar(roto, await planear(p.archivos, p.manifest, await localDe(roto)));
+    expect((await volcado(roto))['sesiones.json']).toBe('{roto');
   });
 });
 

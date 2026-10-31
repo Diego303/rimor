@@ -236,7 +236,10 @@ describe('Inicio', () => {
     });
     expect(await screen.findByText('Sesión «gateway»', {}, PRIMERA_CARGA)).toBeTruthy();
     expect(screen.getByText(/^2 elementos de \d\d:\d\d a \d\d:\d\d · Texto$/)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Renombrar' }));
+    // Una tarjeta del feed, con su nombre (y el de su botón), antes de su primer elemento.
+    const tarjeta = screen.getByRole('article', { name: 'Sesión «gateway»' });
+    expect(tarjeta.closest('[data-index]')?.nextElementSibling?.textContent).toContain('Prueba 1 del cliente');
+    fireEvent.click(screen.getByRole('button', { name: 'Renombrar: Sesión «gateway»' }));
     fireEvent.change(await screen.findByLabelText('Nombre (vacío: el propuesto)'), {
       target: { value: 'Clientes HTTP' },
     });
@@ -245,13 +248,39 @@ describe('Inicio', () => {
     );
     expect(await screen.findByText('Sesión «Clientes HTTP»')).toBeTruthy();
     await waitFor(() => expect(e.sesiones().nombres).toEqual({ '2026-10-16-tarde': 'Clientes HTTP' }), ESCRITURA);
-    fireEvent.click(screen.getByRole('button', { name: 'Renombrar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Renombrar: Sesión «Clientes HTTP»' }));
     fireEvent.change(await screen.findByLabelText('Nombre (vacío: el propuesto)'), { target: { value: '  ' } });
     fireEvent.click(
       within(document.querySelector('dialog[open]') as HTMLElement).getByRole('button', { name: 'Guardar' }),
     );
     expect(await screen.findByText('Sesión «gateway»')).toBeTruthy();
-    expect(e.sesiones().nombres).toEqual({});
+    await waitFor(
+      async () =>
+        expect(
+          JSON.parse(
+            (await e.almacen.leer('sesiones.json').then((d) => new TextDecoder().decode(d ?? new Uint8Array()))) ||
+              '{}',
+          ).nombres,
+        ).toEqual({}),
+      ESCRITURA,
+    );
+  }, 30_000);
+
+  it('sin colección ni etiquetas repetidas, la sesión se llama por su franja (sin repetir «Sesión»)', async () => {
+    const { abierto } = montar();
+    await waitFor(() => expect(abierto.e).toBeTruthy(), PRIMERA_CARGA);
+    const e = abierto.e;
+    if (!e) throw new Error('sin espacio');
+    await act(async () => {
+      for (const i of [1, 2]) {
+        const el = capturado(i, `Nota ${i}`, 30 - i * 10);
+        await e.repositorio.guardarElemento({
+          ...el,
+          frontmatter: { ...el.frontmatter, sesion: '2026-10-16-noche-2230' },
+        });
+      }
+    });
+    expect(await screen.findByRole('article', { name: 'Sesión de la noche' }, PRIMERA_CARGA)).toBeTruthy();
   }, 30_000);
 
   it('una propuesta rechazada con «No» se va y no se vuelve a ofrecer', async () => {

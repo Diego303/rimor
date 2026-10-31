@@ -1,5 +1,6 @@
 import { leerElemento } from '@rimor/formato';
 import { describe, expect, it, vi } from 'vitest';
+import { nombrePropuesto } from '../../espacio/sesiones';
 import { REGISTRO } from '../../lectores/registro';
 import { leerPaquete } from '../importar/paquete';
 import { NOMBRE_EJEMPLO, zipDeEjemplo } from './ejemplo';
@@ -23,6 +24,10 @@ describe('espacio de ejemplo', () => {
     expect(elementos.every((fm) => fm.colecciones?.includes('gateway'))).toBe(true);
     expect(new Set(elementos.map((fm) => fm.ref)).size).toBe(8);
     expect(JSON.parse(new TextDecoder().decode(p.archivos.get('colecciones.json'))).colecciones[0].id).toBe('gateway');
+    // Una sola sesión (IN-051), que se llama como su colección.
+    const sesiones = new Set(elementos.map((fm) => fm.sesion));
+    expect(sesiones.size).toBe(1);
+    expect(nombrePropuesto([...sesiones][0] ?? '', elementos)).toEqual({ t: 'coleccion', coleccion: 'gateway' });
   });
 
   it('dos generaciones con el mismo reloj dan los mismos archivos', async () => {

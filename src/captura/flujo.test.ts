@@ -123,14 +123,43 @@ describe('capturar', () => {
 
   it('las capturas a menos de 45 minutos son de la misma sesión; más lejos, otra (IN-051)', async () => {
     let ahora = new Date(2026, 9, 16, 16, 10);
-    const { efectos: ef } = efectos({ reloj: () => ahora });
-    const sesion = async (texto: string) =>
-      creado(await capturar({ texto, origen: 'pegado' }, ef)).elemento.frontmatter.sesion;
-    expect(await sesion('uno')).toBe('2026-10-16-tarde');
+    const { efectos: ef, repositorio } = efectos({ reloj: () => ahora });
+    const capturado = async (texto: string) => creado(await capturar({ texto, origen: 'pegado' }, ef)).elemento;
+    const uno = await capturado('uno');
+    expect(uno.frontmatter.sesion).toBe('2026-10-16-tarde-1610');
     ahora = new Date(2026, 9, 16, 16, 40);
-    expect(await sesion('dos')).toBe('2026-10-16-tarde');
+    expect((await capturado('dos')).frontmatter.sesion).toBe('2026-10-16-tarde-1610');
     ahora = new Date(2026, 9, 16, 18, 0);
-    expect(await sesion('tres')).toBe('2026-10-16-tarde-2');
+    expect((await capturado('tres')).frontmatter.sesion).toBe('2026-10-16-tarde-1800');
+    // Con la sesión entera en la papelera, una nueva que empezara a la misma hora no reutiliza su id (volvería al
+    // restaurarlos, con su nombre).
+    const dos = repositorio
+      .elementos()
+      .find((fm) => fm.sesion === '2026-10-16-tarde-1610' && fm.id !== uno.frontmatter.id);
+    await repositorio.moverAPapelera(uno.frontmatter.id);
+    await repositorio.moverAPapelera(dos?.id ?? '');
+    ahora = new Date(2026, 9, 16, 16, 10);
+    expect((await capturado('cuatro')).frontmatter.sesion).toBe('2026-10-16-tarde-1610-2');
+  });
+
+  it('una versión nueva de un elemento conserva su sesión (IN-051)', async () => {
+    let ahora = new Date(2026, 9, 16, 10, 0);
+    const registro = crearRegistro([
+      lectorFalso({
+        nombre: 'prompt',
+        tipo: 'prompt',
+        detectar: () => 0.9,
+        leer: async (e) => ({ titulo: 'Revisor', original: e.texto ?? '' }),
+      }),
+    ]);
+    const { efectos: ef } = efectos({ registro, reloj: () => ahora });
+    const texto = 'Eres un revisor de código. Revisa los cambios y di qué falla, con ejemplos concretos y propuestas.';
+    const primero = creado(await capturar({ texto, origen: 'pegado' }, ef)).elemento;
+    ahora = new Date(2026, 9, 16, 17, 0);
+    const r = await capturar({ texto: `${texto} Sé breve.`, origen: 'pegado' }, ef);
+    expect(r.ok && r.valor.tipo).toBe('version');
+    if (r.ok && r.valor.tipo === 'version')
+      expect(r.valor.capturado.elemento.frontmatter.sesion).toBe(primero.frontmatter.sesion);
   });
 
   it('sin ningún lector, falla con captura.sinLector; vacío, con captura.vacia', async () => {

@@ -230,7 +230,9 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     titulo: '',
     original: bytes ? null : (texto ?? null),
   }));
-  const ahora = isoConZona(reloj());
+  // El mismo instante para `creado`, `modificado` y la sesión (entre dos lecturas del reloj se guarda un adjunto).
+  const instante = reloj();
+  const ahora = isoConZona(instante);
   const tipo = entrada.tipo ?? lector.tipo;
   // Las manuales (`#` del compositor) y las que Rimor infiere (hashtags, dominios, paquetes, lenguaje, niveles).
   const conInferidas = unicasSinMayusculas([
@@ -349,7 +351,7 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     ...(colecciones.length ? { colecciones } : {}),
     ...(conInferidas.length ? { etiquetas: conInferidas } : {}),
     // La del capturado más reciente si es de hace menos de 45 minutos; si no, una nueva (IN-051).
-    sesion: sesionPara(repositorio.elementos(), reloj()),
+    sesion: sesionPara(repositorio.elementos(), instante, repositorio.enPapelera()),
     // Solo una ref de hilo válida: otra cosa dejaría el archivo ilegible al releerlo.
     ...(entrada.hilo && analizarRef(entrada.hilo)?.prefijo === PREFIJOS.hilo
       ? { hilo: entrada.hilo as FrontmatterComun['ref'] }

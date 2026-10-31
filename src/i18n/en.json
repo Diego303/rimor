@@ -183,7 +183,7 @@
       "reglaNo": "No",
       "reglaGuardada": "Rule saved",
       "reglaPropuesta": "Rimor suggests a detection rule in Home",
-      "sesion": "Session «{nombre}»",
+      "sesion": "Session “{nombre}”",
       "sesionResumen": "{n} items from {desde} to {hasta}",
       "sesionRenombrar": "Rename",
       "sesionTitulo": "Session name",
@@ -195,7 +195,9 @@
         "manana": "Morning session",
         "tarde": "Afternoon session",
         "noche": "Evening session"
-      }
+      },
+      "sesionResumenDias": "{n} items from {desde} to {hasta}",
+      "sesionRenombrarDe": "Rename: {nombre}"
     },
     "elemento": {
       "titulo": "Item",

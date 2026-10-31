@@ -162,17 +162,30 @@ export function filasDelFeed(elementos: readonly FrontmatterComun[], o: Opciones
     const dia = claveDia(p.en);
     if (dia) anotar(dia, Date.parse(p.en), { t: 'propuesta', clave: `propuesta:${p.tipo}:${p.firma}`, propuesta: p });
   }
-  // Las sesiones (IN-051), en «Todo»: su tarjeta, justo antes de su primer elemento.
-  if (o.filtro === 'todo')
-    for (const sesion of sesionesDelFeed(elementos.filter((fm) => visibleCon(fm, 'todo')))) {
-      const dia = claveDia(sesion.desde);
-      if (dia) anotar(dia, Date.parse(sesion.desde) - 0.5, { t: 'sesion', clave: `sesion:${sesion.id}`, sesion });
-    }
   if (o.conIdeas && o.filtro === 'todo') anotar(hoy, Number.NEGATIVE_INFINITY, { t: 'ideas', clave: 'ideas' });
 
   // Los días cargados se cuentan por sus mensajes (como `diasConMensajes`); el de una búsqueda o el de las ideas
   // (hoy) se añade siempre, sin quitarle el sitio a otro.
   const cargados = new Set([...conMensajes].sort((a, b) => (a < b ? 1 : -1)).slice(0, Math.max(1, o.dias)));
+  // Las sesiones (IN-051), en «Todo»: solo las que tienen algo en los días cargados (no todo el historial a cada
+  // minuto), con su tarjeta justo antes de su primer elemento de un día cargado (la que empezó la víspera, también).
+  if (o.filtro === 'todo') {
+    const conCargados = new Set<string>();
+    for (const fm of elementos)
+      if (fm.sesion && visibleCon(fm, 'todo') && cargados.has(claveDia(fm.creado))) conCargados.add(fm.sesion);
+    if (conCargados.size)
+      for (const sesion of sesionesDelFeed(
+        elementos.filter((fm) => fm.sesion && conCargados.has(fm.sesion) && visibleCon(fm, 'todo')),
+      )) {
+        const primero = sesion.elementos.find((fm) => cargados.has(claveDia(fm.creado)));
+        if (primero)
+          anotar(claveDia(primero.creado), Date.parse(primero.creado) - 0.5, {
+            t: 'sesion',
+            clave: `sesion:${sesion.id}`,
+            sesion,
+          });
+      }
+  }
   const dias = [...delDia.keys()].filter((d) => cargados.has(d) || !conMensajes.has(d)).sort();
   const filas: FilaFeed[] = [];
   for (const dia of dias) {

@@ -103,6 +103,29 @@ describe('filasDelFeed', () => {
     expect(filasDelFeed(archivados, opciones()).some((f) => f.t === 'sesion')).toBe(false);
   });
 
+  it('una sesión que empezó un día no cargado tiene su tarjeta en el primero cargado que la tiene (IN-051)', () => {
+    const elementos = [
+      fm(1, 16, 23, { sesion: 's' }),
+      fm(2, 17, 0, { sesion: 's' }),
+      fm(3, 17, 1, { sesion: 's' }),
+      ...Array.from({ length: 3 }, (_, i) => fm(10 + i, 18, i)),
+    ];
+    // Cargados: el 18 y el 17 (no el 16, donde empezó).
+    const filas = filasDelFeed(elementos, opciones({ dias: 2 }));
+    const i = filas.findIndex((f) => f.clave === 'sesion:s');
+    expect(filas[i - 1]?.clave).toBe('dia:2026-10-17');
+    expect(filas[i + 1]?.clave).toBe(elementos[1]?.id);
+    // Con sus tres elementos, también el del día que no se ve.
+    const s = filas[i];
+    expect(s?.t === 'sesion' && s.sesion.elementos.length).toBe(3);
+    // Solo días sin cargar: sin tarjeta.
+    expect(
+      filasDelFeed(elementos.slice(0, 1).concat(elementos.slice(3)), opciones({ dias: 1 })).some(
+        (f) => f.t === 'sesion',
+      ),
+    ).toBe(false);
+  });
+
   it('una regla propuesta, en su momento (IN-049)', () => {
     const elementos = [fm(1, 18, 10), fm(2, 18, 14)];
     const propuesta = { firma: '[app]', tipo: 'log' as const, en: new Date(2026, 9, 18, 12, 0, 0).toISOString() };

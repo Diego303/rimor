@@ -13,6 +13,7 @@ import { RecordatorioCopia } from '../../datos/RecordatorioCopia';
 import { TarjetaPersistencia } from '../../espacio/Avisos';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { anadirColeccion as conColeccion, conEstado, conFijado } from '../../espacio/ediciones';
+import { renombrar } from '../../espacio/sesiones';
 import { useEdicion } from '../../espacio/useEdicion';
 import { useEspacio } from '../../estado/espacio';
 import { esFresco, useFrescos } from '../../estado/frescos';
@@ -47,7 +48,7 @@ import { MensajeBusqueda } from './MensajeBusqueda';
 import { MensajePropuesta } from './MensajePropuesta';
 import { MensajeVersion } from './MensajeVersion';
 import { PrimerUso } from './PrimerUso';
-import { TarjetaSesion } from './TarjetaSesion';
+import { type ARenombrar, DialogoSesion, TarjetaSesion } from './TarjetaSesion';
 
 /** Los elementos del repositorio, al día con cada cambio (también los de otra pestaña). */
 function useElementos(): readonly FrontmatterComun[] {
@@ -89,6 +90,7 @@ export function Inicio() {
   const [sinAcciones, setSinAcciones] = useState<ReadonlySet<string>>(new Set());
   const [coleccionPara, setColeccionPara] = useState<string | null>(null);
   const [tipoPara, setTipoPara] = useState<string | null>(null);
+  const [renombrando, setRenombrando] = useState<ARenombrar | null>(null);
   // Un reloj que avanza cada minuto: «Hoy» cambia a medianoche y lo fresco deja de serlo.
   const [ahora, setAhora] = useState(() => new Date());
   useEffect(() => {
@@ -403,7 +405,7 @@ export function Inicio() {
         case 'propuesta':
           return <MensajePropuesta propuesta={fila.propuesta} soloLectura={soloLectura} />;
         case 'sesion':
-          return <TarjetaSesion sesion={fila.sesion} soloLectura={soloLectura} />;
+          return <TarjetaSesion sesion={fila.sesion} soloLectura={soloLectura} alRenombrar={setRenombrando} />;
         case 'busqueda':
           return (
             <MensajeBusqueda
@@ -518,6 +520,16 @@ export function Inicio() {
         )}
         <Compositor alAbrir={abrir} />
       </div>
+      <DialogoSesion
+        sesion={renombrando}
+        alCerrar={() => setRenombrando(null)}
+        alGuardar={(r, nombre) => {
+          setRenombrando(null);
+          void espacio
+            ?.guardarSesiones((d) => renombrar(d, r.id, nombre, r.propuesto))
+            .catch(() => avisos?.avisar(t('pantallas.inicio.sesionNoGuardada')));
+        }}
+      />
       <DialogoColeccion
         refe={coleccionPara}
         existentes={existentes}

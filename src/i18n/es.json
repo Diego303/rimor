@@ -195,7 +195,9 @@
         "manana": "Sesión de la mañana",
         "tarde": "Sesión de la tarde",
         "noche": "Sesión de la noche"
-      }
+      },
+      "sesionResumenDias": "{n} elementos del {desde} al {hasta}",
+      "sesionRenombrarDe": "Renombrar: {nombre}"
     },
     "elemento": {
       "titulo": "Elemento",
