@@ -2,7 +2,7 @@
 
 **Estado global:** EN CURSO
 **Última actualización:** 2026-10-31 21:53
-**Ahora:** IN-054 · Vistas guardadas · fase análisis y diseño
+**Ahora:** IN-054 · Vistas guardadas · fase implementación
 **Siguiente:** IN-055 · Inicio con memoria
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 13/22 · v0.3 0/17 · v0.4 0/9 · total 64/99
 
@@ -72,8 +72,8 @@
 | IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | hecha | 38cddd1 2878cbd 49b8a4f | docs/features/IN-050-pwa.md |
 | IN-051 | Sesiones automáticas | v0.2 | 9 | hecha | 662ad48 4f20afc 5ce0130 | docs/features/IN-051-sesiones.md |
 | IN-052 | Grupos automáticos y pantalla de colección | v0.2 | 9 | hecha | 24b5d12 e2ba02e 97c1c15 | docs/features/IN-052-grupos.md |
-| IN-053 | Enlaces automáticos | v0.2 | 9 | hecha | 2feedcf 126c39a | docs/features/IN-053-menciones.md |
-| IN-054 | Vistas guardadas | v0.2 | 9 | pendiente | — | — |
+| IN-053 | Enlaces automáticos | v0.2 | 9 | hecha | 2feedcf 126c39a 0a56543 | docs/features/IN-053-menciones.md |
+| IN-054 | Vistas guardadas | v0.2 | 9 | en implementación | — | docs/features/IN-054-vistas.md |
 | IN-055 | Inicio con memoria | v0.2 | 9 | pendiente | — | — |
 | IN-056 | Búsqueda: facetas, contenido derivado y parecidos | v0.2 | 9 | pendiente | — | — |
 | IN-057 | Línea de tiempo y calendario | v0.2 | 10 | pendiente | — | — |
@@ -181,7 +181,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-053 | verificación | revisión independiente (15 hallazgos; 13 corregidos con pruebas, 2 decididos): renombrar solo texto corriente, con historial, sin papelera, en segundo plano y con aviso; alias que chocan; caché sin subir versión (entradas sin menciones se releen); releerPendientes renombra; huellas en el índice; misma frontera; sin URLs, código, entidades ni originales que no son prosa; límites aparte; enlaces accesibles; refs retiradas y entidades, anotadas; verificar en verde: 132 archivos, 1681 pruebas + 6 de rendimiento, 283,0 KB | … |
+| 2026-10-31 | IN-054 | análisis y diseño | vistas.json en la raíz (id por nombre, juntado al importar), guardar desde Buscar, pantalla /v/$vista con el panel común de grupo, renombrar y borrar, en el raíl bajo Colecciones con el recuento vivo de useBuscar | … |
+| 2026-10-31 | IN-053 | verificación | revisión independiente (15 hallazgos; 13 corregidos con pruebas, 2 decididos): renombrar solo texto corriente, con historial, sin papelera, en segundo plano y con aviso; alias que chocan; caché sin subir versión (entradas sin menciones se releen); releerPendientes renombra; huellas en el índice; misma frontera; sin URLs, código, entidades ni originales que no son prosa; límites aparte; enlaces accesibles; refs retiradas y entidades, anotadas; verificar en verde: 132 archivos, 1681 pruebas + 6 de rendimiento, 283,0 KB | 0a56543 |
 | 2026-10-31 | IN-053 | implementación | menciones.ts (términos: refs y paquetes), menciones en la caché (versión 2), índice inverso en el repositorio, mencionadoPor por ref, alias y paquete, renombrarMenciones al cambiar de tipo (notas con su modificado), fila Mencionado por; verificar en verde: 132 archivos, 1677 pruebas + 6 de rendimiento, 282,5 KB | 126c39a |
 | 2026-10-31 | IN-053 | análisis y diseño | términos (refs de notas y original, paquetes de sus enlaces) en la caché junto al frontmatter (versión 2), índice inverso en el repositorio, mencionadoPor por ref, alias y paquete, renombrar reescribe las notas (no el original), fila Mencionado por; las huellas conectan por su hilo y su grupo | 2feedcf |
 | 2026-10-31 | IN-052 | verificación | revisión independiente (14 hallazgos) corregida con pruebas: el ZIP de grupo lleva sus hilos, alias y registros y va marcado parcial (Reemplazar deshabilitado), mes del pico, selección por grupo, Comparar con motivo y sin solo lectura, coste lineal y 8 más Ver los N, fechas por instante, claves normalizadas, sin parpadeo, rutas y textos, accesibilidad del gráfico; verificar en verde: 131 archivos, 1671 pruebas + 6 de rendimiento, 281,7 KB | 97c1c15 |
