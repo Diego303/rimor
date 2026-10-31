@@ -182,7 +182,20 @@
       "reglaSi": "Sí, recuérdalo",
       "reglaNo": "No",
       "reglaGuardada": "Regla guardada",
-      "reglaPropuesta": "Rimor propone una regla de detección en Inicio"
+      "reglaPropuesta": "Rimor propone una regla de detección en Inicio",
+      "sesion": "Sesión «{nombre}»",
+      "sesionResumen": "{n} elementos de {desde} a {hasta}",
+      "sesionRenombrar": "Renombrar",
+      "sesionTitulo": "Nombre de la sesión",
+      "sesionCampo": "Nombre (vacío: el propuesto)",
+      "sesionGuardar": "Guardar",
+      "sesionNoGuardada": "No se pudo guardar el nombre de la sesión.",
+      "sesionFranja": {
+        "madrugada": "Sesión de la madrugada",
+        "manana": "Sesión de la mañana",
+        "tarde": "Sesión de la tarde",
+        "noche": "Sesión de la noche"
+      }
     },
     "elemento": {
       "titulo": "Elemento",
@@ -852,7 +865,8 @@
         "idRepetido": "repite el id de otro elemento del archivo",
         "refRepetida": "repite la ref de otro elemento del archivo",
         "rutaChoca": "choca con una carpeta o un archivo (está donde hace falta una carpeta, o al revés)",
-        "rutaOcupada": "iría donde ya hay otro elemento"
+        "rutaOcupada": "iría donde ya hay otro elemento",
+        "sesiones": "no se entiende"
       }
     },
     "noRecargado": "Se importó, pero no se pudo releer el espacio: recarga la página.",

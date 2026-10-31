@@ -1581,6 +1581,20 @@ pre.code.codigo .ln {
 .warn-texto {
   color: var(--warn);
 }
+/* Tarjeta de sesión del feed (IN-051), como `.sess` de la portada de referencia. */
+.sess {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px dashed var(--line);
+  flex-wrap: wrap;
+}
+.sess-cuerpo {
+  flex: 1;
+  min-width: 200px;
+}
 /* Instalar Rimor desde Ajustes (IN-050): la frase y el botón en una fila. */
 .ajustes-instalar {
   justify-content: space-between;

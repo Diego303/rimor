@@ -18,6 +18,7 @@ import { type Ajustes, leerAjustes, RUTA_AJUSTES } from './ajustes';
 import { GestorColecciones } from './colecciones';
 import { conCambios, type EstadoCuidado, leerEstado, RUTA_ESTADO } from './estado';
 import { crearManifest, NOMBRE_ESPACIO_INICIAL, RUTA_MANIFEST } from './manifest';
+import { type DatosSesiones, escribirSesiones, leerSesiones, RUTA_SESIONES, SESIONES_INICIALES } from './sesiones';
 
 /** Los tipos de entidad que ya tienen funcionalidad (sus carpetas se leen al abrir). */
 const TIPOS_ENTIDAD_LEIDOS = ['comparacion', 'hilo'] as const;
@@ -76,6 +77,10 @@ export interface EspacioAbierto {
    * cambio se aplica al momento; si aún no se pudieron leer, después de leerlas.
    */
   guardarReglas(cambio: (r: DatosReglas) => DatosReglas): Promise<void>;
+  /** Los nombres editados de las sesiones (IN-051, `sesiones.json`). */
+  sesiones(): DatosSesiones;
+  /** Guarda un cambio de los nombres de las sesiones (en orden; solo escribe la pestaña que escribe) y avisa. */
+  guardarSesiones(cambio: (s: DatosSesiones) => DatosSesiones): Promise<void>;
   /** Contadores locales de lo ahorrado (IN-016). */
   contadores: Contadores;
   /** Escribe lo pendiente y suelta el cerrojo y la caché. */
@@ -213,6 +218,30 @@ export async function abrirEspacio(
         .then(() => coordinacion.avisarCambio([]));
       return reglasPendientes;
     };
+    // Los nombres de las sesiones, como los ajustes (pero en la raíz: son del espacio, viajan en el ZIP). Un archivo
+    // que existe pero no se entiende no se sobrescribe.
+    const leerSesionesSeguro = async () => {
+      try {
+        return leerSesiones(await leerTexto(dep.almacen, RUTA_SESIONES));
+      } catch {
+        return null;
+      }
+    };
+    let sesiones = await leerSesionesSeguro();
+    let sesionesPendientes: Promise<void> = Promise.resolve();
+    const guardarSesiones = (cambio: (s: DatosSesiones) => DatosSesiones): Promise<void> => {
+      if (!sesiones) return Promise.reject(new Error('sesiones.json no se entiende: no se sobrescribe'));
+      sesiones = cambio(sesiones);
+      const copia = sesiones;
+      avisar();
+      sesionesPendientes = sesionesPendientes
+        .catch(() => undefined)
+        .then(() =>
+          escribe() && !cerrado ? escribirTexto(dep.almacen, RUTA_SESIONES, escribirSesiones(copia)) : undefined,
+        )
+        .then(() => coordinacion.avisarCambio([]));
+      return sesionesPendientes;
+    };
     const contadores = await abrirContadores(dep.almacen, () => escribe() && alDia && !cerrado, reloj);
 
     const abierta = await abrirCache(dep);
@@ -277,6 +306,7 @@ export async function abrirEspacio(
         await gestor.cargar().catch(() => undefined);
         estado = leerEstado(await leerTexto(dep.almacen, RUTA_ESTADO));
         ajustes = (await leerAjustesSeguro()) ?? ajustes;
+        sesiones = (await leerSesionesSeguro()) ?? sesiones;
         const releidas = await leerReglasSeguro();
         // Una lectura que falla deja lo que había (si ya estaba leído).
         if (releidas.estado !== 'sinLeer' || reglas.estado === 'sinLeer') reglas = releidas;
@@ -321,6 +351,7 @@ export async function abrirEspacio(
         await pendiente.catch(() => undefined);
         await ajustesPendientes.catch(() => undefined);
         await reglasPendientes.catch(() => undefined);
+        await sesionesPendientes.catch(() => undefined);
         await contadores.esperar().catch(() => undefined);
         await gestor.escrito();
         await dep.almacen.esperar?.().catch(() => undefined);
@@ -344,6 +375,8 @@ export async function abrirEspacio(
       reglas: () => reglas.datos,
       reglasLegibles: () => reglas.estado !== 'ilegibles',
       guardarReglas,
+      sesiones: () => sesiones ?? SESIONES_INICIALES,
+      guardarSesiones,
       contadores,
       alCambiar: (fn) => {
         oyentes.add(fn);
@@ -355,6 +388,7 @@ export async function abrirEspacio(
         await pendiente.catch(() => undefined);
         await ajustesPendientes.catch(() => undefined);
         await reglasPendientes.catch(() => undefined);
+        await sesionesPendientes.catch(() => undefined);
         await contadores.esperar();
         await dep.almacen.esperar?.().catch(() => undefined);
         cerrado = true;

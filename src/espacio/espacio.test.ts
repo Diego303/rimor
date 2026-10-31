@@ -494,3 +494,34 @@ describe('reglas de detección del espacio (IN-049)', () => {
     await b.valor.cerrar();
   });
 });
+
+describe('nombres de las sesiones del espacio (IN-051)', () => {
+  it('se guardan en sesiones.json (en la raíz) y se leen al volver a abrir; uno que no se entiende no se toca', async () => {
+    const almacen = new AlmacenMemoria();
+    const abrir = () =>
+      abrirEspacio({
+        espacioId: 's1',
+        almacen,
+        fabricaIndexedDb: new IDBFactory(),
+        cerrojos: cerrojosFalsos(),
+        canal: canal(),
+      });
+    const a = await abrir();
+    if (!a.ok) throw new Error('no abre');
+    await a.valor.guardarSesiones((d) => ({ ...d, nombres: { '2026-10-16-tarde': 'Clientes HTTP' } }));
+    expect(JSON.parse((await leerTexto(almacen, 'sesiones.json')) ?? '{}').nombres).toEqual({
+      '2026-10-16-tarde': 'Clientes HTTP',
+    });
+    await a.valor.cerrar();
+    const b = await abrir();
+    if (!b.ok) throw new Error('no abre');
+    expect(b.valor.sesiones().nombres).toEqual({ '2026-10-16-tarde': 'Clientes HTTP' });
+    await b.valor.cerrar();
+    await escribirTexto(almacen, 'sesiones.json', '{roto');
+    const c = await abrir();
+    if (!c.ok) throw new Error('no abre');
+    await expect(c.valor.guardarSesiones((d) => d)).rejects.toThrow();
+    expect(await leerTexto(almacen, 'sesiones.json')).toBe('{roto');
+    await c.valor.cerrar();
+  });
+});

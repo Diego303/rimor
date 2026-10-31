@@ -47,6 +47,7 @@ import { MensajeBusqueda } from './MensajeBusqueda';
 import { MensajePropuesta } from './MensajePropuesta';
 import { MensajeVersion } from './MensajeVersion';
 import { PrimerUso } from './PrimerUso';
+import { TarjetaSesion } from './TarjetaSesion';
 
 /** Los elementos del repositorio, al día con cada cambio (también los de otra pestaña). */
 function useElementos(): readonly FrontmatterComun[] {
@@ -401,6 +402,8 @@ export function Inicio() {
           return <MensajeVersion version={fila.version} soloLectura={soloLectura} alAbrir={abrir} />;
         case 'propuesta':
           return <MensajePropuesta propuesta={fila.propuesta} soloLectura={soloLectura} />;
+        case 'sesion':
+          return <TarjetaSesion sesion={fila.sesion} soloLectura={soloLectura} />;
         case 'busqueda':
           return (
             <MensajeBusqueda

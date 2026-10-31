@@ -18,6 +18,7 @@ import {
   type TipoEntidad,
 } from '@rimor/formato';
 import { CARPETA_PAPELERA } from '../../almacen/repositorio';
+import { juntarSesiones, RUTA_SESIONES } from '../../espacio/sesiones';
 import { ErrorImportar } from './paquete';
 
 export type Categoria = 'nuevo' | 'identico' | 'actualizado' | 'conflicto';
@@ -259,6 +260,12 @@ export async function planear(
     if (ruta === 'colecciones.json') {
       const juntas = juntarColecciones(suyo === null ? null : texto(suyo), texto(datos));
       if (juntas) plan.escrituras.set(ruta, bytes(juntas));
+      continue;
+    }
+    // Los nombres de las sesiones (IN-051): se juntan; ante el mismo id, el de aquí.
+    if (ruta === RUTA_SESIONES) {
+      const juntos = juntarSesiones(suyo === null ? null : texto(suyo), texto(datos));
+      if (juntos && (suyo === null || juntos !== texto(suyo))) plan.escrituras.set(ruta, bytes(juntos));
       continue;
     }
     if (esEntidad(ruta)) {

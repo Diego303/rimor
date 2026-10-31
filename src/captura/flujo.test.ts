@@ -121,6 +121,18 @@ describe('capturar', () => {
     );
   });
 
+  it('las capturas a menos de 45 minutos son de la misma sesión; más lejos, otra (IN-051)', async () => {
+    let ahora = new Date(2026, 9, 16, 16, 10);
+    const { efectos: ef } = efectos({ reloj: () => ahora });
+    const sesion = async (texto: string) =>
+      creado(await capturar({ texto, origen: 'pegado' }, ef)).elemento.frontmatter.sesion;
+    expect(await sesion('uno')).toBe('2026-10-16-tarde');
+    ahora = new Date(2026, 9, 16, 16, 40);
+    expect(await sesion('dos')).toBe('2026-10-16-tarde');
+    ahora = new Date(2026, 9, 16, 18, 0);
+    expect(await sesion('tres')).toBe('2026-10-16-tarde-2');
+  });
+
   it('sin ningún lector, falla con captura.sinLector; vacío, con captura.vacia', async () => {
     const { repositorio } = efectos();
     const vacio = crearRegistro([]);

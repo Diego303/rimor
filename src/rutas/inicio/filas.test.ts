@@ -77,6 +77,32 @@ describe('filasDelFeed', () => {
     ).toBe(false);
   });
 
+  it('las sesiones de dos o más elementos, en «Todo», justo antes de su primer elemento (IN-051)', () => {
+    const elementos = [
+      fm(1, 18, 9, { sesion: 's1', tipo: 'log' }),
+      fm(2, 18, 10, { sesion: 's1', tipo: 'error' }),
+      fm(3, 18, 11, { sesion: 's1', tipo: 'log' }),
+      fm(4, 18, 14, { sesion: 's2' }),
+      fm(5, 18, 15),
+    ];
+    const filas = filasDelFeed(elementos, opciones());
+    expect(filas.map((f) => f.clave)).toEqual([
+      'dia:2026-10-18',
+      'sesion:s1',
+      elementos[0]?.id,
+      elementos[1]?.id,
+      elementos[2]?.id,
+      elementos[3]?.id,
+      elementos[4]?.id,
+    ]);
+    const s1 = filas[1];
+    expect(s1?.t === 'sesion' && [s1.sesion.elementos.length, s1.sesion.tipos]).toEqual([3, ['log', 'error']]);
+    expect(filasDelFeed(elementos, opciones({ filtro: 'sinClasificar' })).some((f) => f.t === 'sesion')).toBe(false);
+    // Un archivado no cuenta: con uno solo visible, sin tarjeta.
+    const archivados = elementos.map((e, i) => (i ? { ...e, estado: 'archivado' as const } : e));
+    expect(filasDelFeed(archivados, opciones()).some((f) => f.t === 'sesion')).toBe(false);
+  });
+
   it('una regla propuesta, en su momento (IN-049)', () => {
     const elementos = [fm(1, 18, 10), fm(2, 18, 14)];
     const propuesta = { firma: '[app]', tipo: 'log' as const, en: new Date(2026, 9, 18, 12, 0, 0).toISOString() };

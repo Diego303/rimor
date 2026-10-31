@@ -182,7 +182,20 @@
       "reglaSi": "Yes, remember it",
       "reglaNo": "No",
       "reglaGuardada": "Rule saved",
-      "reglaPropuesta": "Rimor suggests a detection rule in Home"
+      "reglaPropuesta": "Rimor suggests a detection rule in Home",
+      "sesion": "Session «{nombre}»",
+      "sesionResumen": "{n} items from {desde} to {hasta}",
+      "sesionRenombrar": "Rename",
+      "sesionTitulo": "Session name",
+      "sesionCampo": "Name (empty: the suggested one)",
+      "sesionGuardar": "Save",
+      "sesionNoGuardada": "The session name could not be saved.",
+      "sesionFranja": {
+        "madrugada": "Early morning session",
+        "manana": "Morning session",
+        "tarde": "Afternoon session",
+        "noche": "Evening session"
+      }
     },
     "elemento": {
       "titulo": "Item",
@@ -852,7 +865,8 @@
         "idRepetido": "repeats the id of another item in the file",
         "refRepetida": "repeats the ref of another item in the file",
         "rutaChoca": "clashes with a folder or a file (it is where a folder is needed, or the other way round)",
-        "rutaOcupada": "would go where another item already is"
+        "rutaOcupada": "would go where another item already is",
+        "sesiones": "cannot be understood"
       }
     },
     "noRecargado": "It was imported, but the space could not be reread: reload the page.",

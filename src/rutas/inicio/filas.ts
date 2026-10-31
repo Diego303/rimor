@@ -3,7 +3,7 @@
  * abajo, junto al compositor, como en un chat), con las búsquedas del compositor y las ideas que vuelven
  * intercaladas en «Hoy». Puro: la vista solo pinta lo que sale de aquí.
  */
-import type { FrontmatterComun } from '@rimor/formato';
+import type { FrontmatterComun, TipoElemento } from '@rimor/formato';
 import type { BusquedaPendiente, PropuestaEnFeed, VersionEnFeed } from '../../captura/compositor';
 import { sinClasificar } from '../../espacio/resumen';
 import { fmtDia, type Idioma } from '../../i18n/formatos';
@@ -16,7 +16,51 @@ export type FilaFeed =
   | { t: 'busqueda'; clave: string; busqueda: BusquedaPendiente }
   | { t: 'version'; clave: string; version: VersionEnFeed }
   | { t: 'propuesta'; clave: string; propuesta: PropuestaEnFeed }
+  | { t: 'sesion'; clave: string; sesion: ResumenSesion }
   | { t: 'ideas'; clave: string };
+
+/** Una sesión del feed (IN-051): sus elementos visibles, de cuándo a cuándo y sus tipos más frecuentes. */
+export interface ResumenSesion {
+  id: string;
+  elementos: FrontmatterComun[];
+  desde: string;
+  hasta: string;
+  /** Los tres tipos más frecuentes, de más a menos. */
+  tipos: TipoElemento[];
+}
+
+/** Elementos mínimos para que una sesión tenga tarjeta. */
+export const MINIMO_SESION = 2;
+
+/** Las sesiones con al menos {@link MINIMO_SESION} elementos visibles. */
+export function sesionesDelFeed(elementos: readonly FrontmatterComun[]): ResumenSesion[] {
+  const porSesion = new Map<string, FrontmatterComun[]>();
+  for (const fm of elementos) {
+    if (!fm.sesion) continue;
+    const lista = porSesion.get(fm.sesion) ?? [];
+    lista.push(fm);
+    porSesion.set(fm.sesion, lista);
+  }
+  const resumenes: ResumenSesion[] = [];
+  for (const [id, lista] of porSesion) {
+    if (lista.length < MINIMO_SESION) continue;
+    const ordenados = [...lista].sort((a, b) => Date.parse(a.creado) - Date.parse(b.creado));
+    const veces = new Map<TipoElemento, number>();
+    for (const fm of ordenados) veces.set(fm.tipo, (veces.get(fm.tipo) ?? 0) + 1);
+    const tipos = [...veces]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([t]) => t);
+    resumenes.push({
+      id,
+      elementos: ordenados,
+      desde: ordenados[0]?.creado ?? '',
+      hasta: ordenados[ordenados.length - 1]?.creado ?? '',
+      tipos,
+    });
+  }
+  return resumenes;
+}
 
 /** El día civil (`AAAA-MM-DD`) de un instante, en la zona del equipo. */
 export function claveDia(instante: string | Date): string {
@@ -118,6 +162,12 @@ export function filasDelFeed(elementos: readonly FrontmatterComun[], o: Opciones
     const dia = claveDia(p.en);
     if (dia) anotar(dia, Date.parse(p.en), { t: 'propuesta', clave: `propuesta:${p.tipo}:${p.firma}`, propuesta: p });
   }
+  // Las sesiones (IN-051), en «Todo»: su tarjeta, justo antes de su primer elemento.
+  if (o.filtro === 'todo')
+    for (const sesion of sesionesDelFeed(elementos.filter((fm) => visibleCon(fm, 'todo')))) {
+      const dia = claveDia(sesion.desde);
+      if (dia) anotar(dia, Date.parse(sesion.desde) - 0.5, { t: 'sesion', clave: `sesion:${sesion.id}`, sesion });
+    }
   if (o.conIdeas && o.filtro === 'todo') anotar(hoy, Number.NEGATIVE_INFINITY, { t: 'ideas', clave: 'ideas' });
 
   // Los días cargados se cuentan por sus mensajes (como `diasConMensajes`); el de una búsqueda o el de las ideas

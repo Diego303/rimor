@@ -21,6 +21,7 @@ import {
 } from '@rimor/formato';
 import { ErrorSoloLectura, type Repositorio } from '../almacen/repositorio';
 import type { OpcionesCaptura } from '../espacio/ajustes';
+import { sesionPara } from '../espacio/sesiones';
 import type { Borrador, Entrada, Lector } from '../lectores/contrato';
 import type { ColaDerivados } from '../lectores/derivados';
 import type { Registro } from '../lectores/registro';
@@ -347,6 +348,8 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     lector: { nombre: lector.nombre, version: lector.version, resumen: borrador.resumen ?? {} },
     ...(colecciones.length ? { colecciones } : {}),
     ...(conInferidas.length ? { etiquetas: conInferidas } : {}),
+    // La del capturado más reciente si es de hace menos de 45 minutos; si no, una nueva (IN-051).
+    sesion: sesionPara(repositorio.elementos(), reloj()),
     // Solo una ref de hilo válida: otra cosa dejaría el archivo ilegible al releerlo.
     ...(entrada.hilo && analizarRef(entrada.hilo)?.prefijo === PREFIJOS.hilo
       ? { hilo: entrada.hilo as FrontmatterComun['ref'] }

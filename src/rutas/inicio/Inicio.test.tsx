@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { type Elemento, hashOriginal, isoConZona } from '@rimor/formato';
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { IDBFactory } from 'fake-indexeddb';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { AlmacenMemoria } from '../../almacen/memoria';
@@ -219,6 +219,40 @@ describe('Inicio', () => {
     fireEvent.keyDown(caja, { key: 'Enter' });
     await waitFor(() => expect(e.repositorio.frontmatter('LOG-0004')?.titulo).toBeTruthy(), ESCRITURA);
   }, 40_000);
+
+  it('la tarjeta de una sesión con su nombre propuesto; «Renombrar» lo guarda y vacío vuelve al propuesto (IN-051)', async () => {
+    const { abierto } = montar();
+    await waitFor(() => expect(abierto.e).toBeTruthy(), PRIMERA_CARGA);
+    const e = abierto.e;
+    if (!e) throw new Error('sin espacio');
+    await act(async () => {
+      for (const i of [1, 2]) {
+        const el = capturado(i, `Prueba ${i} del cliente`, 50 - i * 10);
+        await e.repositorio.guardarElemento({
+          ...el,
+          frontmatter: { ...el.frontmatter, sesion: '2026-10-16-tarde', colecciones: ['gateway'] },
+        });
+      }
+    });
+    expect(await screen.findByText('Sesión «gateway»', {}, PRIMERA_CARGA)).toBeTruthy();
+    expect(screen.getByText(/^2 elementos de \d\d:\d\d a \d\d:\d\d · Texto$/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Renombrar' }));
+    fireEvent.change(await screen.findByLabelText('Nombre (vacío: el propuesto)'), {
+      target: { value: 'Clientes HTTP' },
+    });
+    fireEvent.click(
+      within(document.querySelector('dialog[open]') as HTMLElement).getByRole('button', { name: 'Guardar' }),
+    );
+    expect(await screen.findByText('Sesión «Clientes HTTP»')).toBeTruthy();
+    await waitFor(() => expect(e.sesiones().nombres).toEqual({ '2026-10-16-tarde': 'Clientes HTTP' }), ESCRITURA);
+    fireEvent.click(screen.getByRole('button', { name: 'Renombrar' }));
+    fireEvent.change(await screen.findByLabelText('Nombre (vacío: el propuesto)'), { target: { value: '  ' } });
+    fireEvent.click(
+      within(document.querySelector('dialog[open]') as HTMLElement).getByRole('button', { name: 'Guardar' }),
+    );
+    expect(await screen.findByText('Sesión «gateway»')).toBeTruthy();
+    expect(e.sesiones().nombres).toEqual({});
+  }, 30_000);
 
   it('una propuesta rechazada con «No» se va y no se vuelve a ofrecer', async () => {
     const { abierto } = montar();

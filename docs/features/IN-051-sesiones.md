@@ -51,9 +51,9 @@ Que las capturas hechas en el mismo rato de trabajo formen una **sesión**, con 
 
 ## Tareas
 
-- [ ] Capturas separadas por menos de 45 minutos forman una sesión (`sesion` en el frontmatter).
-- [ ] Nombre propuesto desde la colección o las etiquetas dominantes, editable.
-- [ ] Tarjeta de sesión en el feed.
+- [x] Capturas separadas por menos de 45 minutos forman una sesión (`sesion` en el frontmatter).
+- [x] Nombre propuesto desde la colección o las etiquetas dominantes, editable.
+- [x] Tarjeta de sesión en el feed.
 
 ## Pruebas previstas
 
@@ -84,3 +84,13 @@ Que las capturas hechas en el mismo rato de trabajo formen una **sesión**, con 
 ## Autorrevisión
 
 Cubre las tres tareas. Reutiliza el campo del esquema, el reloj de la captura, el patrón de los ajustes del espacio, las filas en su momento del feed, el diálogo de las colecciones y la regla `.sess` de la referencia.
+
+## Implementación
+
+- `src/espacio/sesiones.ts`: `sesionPara`, franjas, nombre propuesto, `sesiones.json` (leer, escribir, renombrar, juntar).
+- `flujo.ts`: el elemento nuevo lleva su `sesion`; una versión conserva la suya.
+- `espacio/abrir.ts`: `sesiones()` y `guardarSesiones()`.
+- Importar: los nombres se combinan en `plan.ts` y se validan en `paquete.ts` (`importar.sesiones`).
+- `rutas/inicio/filas.ts`: `sesionesDelFeed` y la fila `sesion`.
+- `rutas/inicio/TarjetaSesion.tsx`: la tarjeta `.sess` con «Renombrar» y su diálogo.
+- Pruebas: `sesiones.test.ts`, el flujo, las filas, el espacio e Inicio (tarjeta y renombrar).
