@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-31 16:35
-**Ahora:** IN-048 · Logs: plantillas con Drain · fase análisis y diseño
+**Última actualización:** 2026-10-31 16:36
+**Ahora:** IN-048 · Logs: plantillas con Drain · fase implementación
 **Siguiente:** IN-049 · Reglas aprendidas y captura múltiple
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 7/22 · v0.3 0/17 · v0.4 0/9 · total 58/99
 
@@ -66,8 +66,8 @@
 | IN-044 | Datos tabulares con DuckDB | v0.2 | 8 | hecha | 5e9f8b1 be063ce 42ea221 | docs/features/IN-044-datos-tabulares.md |
 | IN-045 | JSON, YAML y TOML con comparación estructural | v0.2 | 8 | hecha | 079d746 4176cd5 9049c78 | docs/features/IN-045-json-yaml-toml.md |
 | IN-046 | Petición HTTP | v0.2 | 8 | hecha | ba600a9 7660ed5 48b78e9 | docs/features/IN-046-peticion-http.md |
-| IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | hecha | c10e372 e49767e | docs/features/IN-047-mediciones-formatos-hodges-lehmann.md |
-| IN-048 | Logs: plantillas con Drain | v0.2 | 8 | pendiente | — | — |
+| IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | hecha | c10e372 e49767e e7ea869 | docs/features/IN-047-mediciones-formatos-hodges-lehmann.md |
+| IN-048 | Logs: plantillas con Drain | v0.2 | 8 | en implementación | — | docs/features/IN-048-logs-drain.md |
 | IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | pendiente | — | — |
 | IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | pendiente | — | — |
 | IN-051 | Sesiones automáticas | v0.2 | 9 | pendiente | — | — |
@@ -178,7 +178,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-047 | verificación | revisión independiente (12 hallazgos) corregida con pruebas: Hodges-Lehmann sin materializar las m·n diferencias (10.000×10.000 en <2 s), corrección de continuidad, criterion change y sample sin sampling_mode fuera, JMH sample como resumen, CSV de una columna y sufijos con enteros, cifras en ns y extremos citables, versión 2 del lector, serie principal, frase B frente a A; verificar en verde: 120 archivos, 1566 pruebas, 273,2 KB | … |
+| 2026-10-31 | IN-048 | análisis y diseño | Drain sobre las plantillas normalizadas (raíz por nivel y largo, 2 palabras de prefijo, umbral 0,5, comodín <*>), versión 2 del lector log, comparación con las plantillas nuevas | … |
+| 2026-10-31 | IN-047 | verificación | revisión independiente (12 hallazgos) corregida con pruebas: Hodges-Lehmann sin materializar las m·n diferencias (10.000×10.000 en <2 s), corrección de continuidad, criterion change y sample sin sampling_mode fuera, JMH sample como resumen, CSV de una columna y sufijos con enteros, cifras en ns y extremos citables, versión 2 del lector, serie principal, frase B frente a A; verificar en verde: 120 archivos, 1566 pruebas, 273,2 KB | e7ea869 |
 | 2026-10-31 | IN-047 | implementación | pytest-benchmark, JMH, criterion (sample y estimates como resumen) y columnas CSV con unidad; Hodges-Lehmann exacto o normal contra referencias de Python (33 casos), en comparar, la vista y el resultado guardado; testTimeout de 15 s por las pausas del entorno; verificar en verde: 120 archivos, 1558 pruebas, 272,9 KB | e49767e |
 | 2026-10-31 | IN-047 | análisis y diseño | pytest-benchmark (data o resumen), JMH (rawData, solo tiempos), criterion (sample.json y estimates.json como resumen), columnas CSV con unidad; Hodges-Lehmann con intervalo de Moses exacto o normal, referencias en Python por otro camino; en la comparación y su resultado | c10e372 |
 | 2026-10-31 | IN-046 | verificación | revisión independiente (22 hallazgos) corregida con pruebas: usuario-curl lineal, cmd real de Windows en dos capas, cookies con comillas, secretos del cuerpo y en JSON, varias órdenes tras tubería, opciones con valor y URL con forma de URL, fetch con GET, @archivo, cabeceras repetidas, más cabeceras y esquemas, Set-Cookie de sesión, | 2026-10-26 | IN-046 | implementación | lector http (puesto 9) con palabras de shell (bash y cmd), opciones de curl, tablas, copiar como cURL y fetch (exportar.ts diferido), reglas de secretos cookie, cabecera-clave, clave-url y usuario-curl, variables sin ocultar; verificar en verde: 119 archivos, 1524 pruebas, 268,6 KB | … |
