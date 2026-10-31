@@ -3,6 +3,8 @@
  * error e histograma, por bloques de 50.000 líneas. TS puro: se ejecuta en el Worker de derivados.
  */
 
+import { agrupar } from './drain';
+
 export type Nivel = 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'FATAL';
 export type Formato = 'texto' | 'json' | 'logfmt' | 'syslog' | 'apache';
 
@@ -533,6 +535,27 @@ function crearAjuste(referencia: Date | null) {
   };
 }
 
+/**
+ * Las plantillas (agrupadas ya por su texto normalizado) pasadas por Drain: cada grupo con la suma de sus líneas, el
+ * nivel de su primera plantilla y `<*>` donde varía; y el grupo de cada plantilla de entrada.
+ */
+function juntarConDrain(plantillas: readonly Plantilla[]): { grupoDe: number[]; plantillas: Plantilla[] } {
+  const { grupoDe, plantillas: textos } = agrupar(
+    plantillas.map((p) => p.plantilla),
+    (i) => plantillas[i]?.nivel ?? '',
+  );
+  const grupos: Plantilla[] = textos.map((plantilla) => ({ plantilla, n: 0, nivel: 'INFO' }));
+  const vistos = new Set<number>();
+  for (const [i, p] of plantillas.entries()) {
+    const g = grupos[grupoDe[i] ?? 0];
+    if (!g) continue;
+    g.n += p.n;
+    if (!vistos.has(grupoDe[i] ?? 0)) g.nivel = p.nivel;
+    vistos.add(grupoDe[i] ?? 0);
+  }
+  return { grupoDe, plantillas: grupos };
+}
+
 /** Analiza un log entero, por bloques de 50.000 líneas que se suman. */
 /** Las líneas de un log como las cuenta el análisis (`lineaPlantilla` va alineado con ellas). */
 export const partirLineas = (texto: string): string[] => texto.replace(/\r\n?/g, '\n').replace(/\n$/, '').split('\n');
@@ -590,6 +613,15 @@ export function analizar(texto: string, { alProgreso, referencia, anio }: Opcion
     }
     alProgreso?.(fin, lineas.length);
   }
+
+  // Drain (IN-048): las plantillas que solo difieren en campos variables sin forma conocida se juntan (por nivel).
+  const drenadas = juntarConDrain(plantillas);
+  for (let i = 0; i < lineaPlantilla.length; i++) {
+    const v = lineaPlantilla[i] ?? -1;
+    if (v >= 0) lineaPlantilla[i] = drenadas.grupoDe[v] ?? -1;
+  }
+  plantillas.length = 0;
+  plantillas.push(...drenadas.plantillas);
 
   // Orden por frecuencia; los índices de cada línea se reasignan al nuevo orden.
   const orden = plantillas.map((_, i) => i).sort((a, b) => (plantillas[b]?.n ?? 0) - (plantillas[a]?.n ?? 0) || a - b);

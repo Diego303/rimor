@@ -8,7 +8,8 @@ export function PlantillaPintada({ plantilla }: { plantilla: string }) {
   let k = 0;
   // Como en la pantalla de referencia: todos los marcadores y solo el primer nivel.
   let nivelPintado = false;
-  const patron = /<(N|ID|IP|HEX)>|\b(ERROR|WARN)\b/;
+  // `<*>`: el campo variable que encuentra Drain (IN-048).
+  const patron = /<(N|ID|IP|HEX|\*)>|\b(ERROR|WARN)\b/;
   for (let m = patron.exec(resto); m; m = patron.exec(resto)) {
     if (m[2] && nivelPintado) {
       piezas.push(resto.slice(0, m.index + m[0].length));

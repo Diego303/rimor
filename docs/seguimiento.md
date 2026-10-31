@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-31 16:36
-**Ahora:** IN-048 · Logs: plantillas con Drain · fase implementación
+**Última actualización:** 2026-10-31 16:48
+**Ahora:** IN-048 · Logs: plantillas con Drain · fase verificación
 **Siguiente:** IN-049 · Reglas aprendidas y captura múltiple
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 7/22 · v0.3 0/17 · v0.4 0/9 · total 58/99
 
@@ -67,7 +67,7 @@
 | IN-045 | JSON, YAML y TOML con comparación estructural | v0.2 | 8 | hecha | 079d746 4176cd5 9049c78 | docs/features/IN-045-json-yaml-toml.md |
 | IN-046 | Petición HTTP | v0.2 | 8 | hecha | ba600a9 7660ed5 48b78e9 | docs/features/IN-046-peticion-http.md |
 | IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | hecha | c10e372 e49767e e7ea869 | docs/features/IN-047-mediciones-formatos-hodges-lehmann.md |
-| IN-048 | Logs: plantillas con Drain | v0.2 | 8 | en implementación | — | docs/features/IN-048-logs-drain.md |
+| IN-048 | Logs: plantillas con Drain | v0.2 | 8 | en verificación | 7cfc86d | docs/features/IN-048-logs-drain.md |
 | IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | pendiente | — | — |
 | IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | pendiente | — | — |
 | IN-051 | Sesiones automáticas | v0.2 | 9 | pendiente | — | — |
@@ -178,7 +178,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-048 | análisis y diseño | Drain sobre las plantillas normalizadas (raíz por nivel y largo, 2 palabras de prefijo, umbral 0,5, comodín <*>), versión 2 del lector log, comparación con las plantillas nuevas | … |
+| 2026-10-31 | IN-048 | implementación | Drain sobre las plantillas normalizadas (nivel y largo en la raíz, primera palabra sin el nivel, umbral 0,6, rutas que no se juntan), versión 2 del lector log, <*> pintado; verificar en verde: 122 archivos, 1573 pruebas, 273,8 KB | … |
+| 2026-10-31 | IN-048 | análisis y diseño | Drain sobre las plantillas normalizadas (raíz por nivel y largo, 2 palabras de prefijo, umbral 0,5, comodín <*>), versión 2 del lector log, comparación con las plantillas nuevas | 7cfc86d |
 | 2026-10-31 | IN-047 | verificación | revisión independiente (12 hallazgos) corregida con pruebas: Hodges-Lehmann sin materializar las m·n diferencias (10.000×10.000 en <2 s), corrección de continuidad, criterion change y sample sin sampling_mode fuera, JMH sample como resumen, CSV de una columna y sufijos con enteros, cifras en ns y extremos citables, versión 2 del lector, serie principal, frase B frente a A; verificar en verde: 120 archivos, 1566 pruebas, 273,2 KB | e7ea869 |
 | 2026-10-31 | IN-047 | implementación | pytest-benchmark, JMH, criterion (sample y estimates como resumen) y columnas CSV con unidad; Hodges-Lehmann exacto o normal contra referencias de Python (33 casos), en comparar, la vista y el resultado guardado; testTimeout de 15 s por las pausas del entorno; verificar en verde: 120 archivos, 1558 pruebas, 272,9 KB | e49767e |
 | 2026-10-31 | IN-047 | análisis y diseño | pytest-benchmark (data o resumen), JMH (rawData, solo tiempos), criterion (sample.json y estimates.json como resumen), columnas CSV con unidad; Hodges-Lehmann con intervalo de Moses exacto o normal, referencias en Python por otro camino; en la comparación y su resultado | c10e372 |

@@ -16,8 +16,8 @@ Que las plantillas de un log agrupen también las líneas que solo se distinguen
 ### Drain (`src/lectores/log/drain.ts`, TS puro)
 
 - Sobre las plantillas normalizadas (no sobre las líneas: miles de líneas comparten la misma), cada una con su recuento y su nivel, en el orden en que aparecen.
-- Árbol de Drain (He et al., 2017; los parámetros de Drain3): raíz por **nivel y número de palabras** (no se juntan un ERROR y un INFO, ni dos de distinto largo); después, **las 2 primeras palabras** como nodos (una palabra con un marcador o un dígito va por el nodo comodín `<*>`; como mucho 100 hijos por nodo, el resto por el comodín); en la hoja, los grupos.
-- Una plantilla entra en el grupo de su hoja **más parecido**, si se parece lo bastante: la fracción de palabras iguales (las `<*>` del grupo no cuentan como iguales) ≥ **0,5**; con empate, el de más comodines. Al entrar, las palabras que difieren pasan a `<*>`. Si no se parece a ninguno, abre un grupo.
+- Árbol de Drain (He et al., 2017): raíz por **nivel y número de palabras** (no se juntan un ERROR y un INFO, ni dos de distinto largo); después, **la primera palabra que no es el nivel** como nodo (una palabra con un marcador o un dígito va por el nodo comodín `<*>`; como mucho 100 hijos por nodo, el resto por el comodín); en la hoja, los grupos.
+- Una plantilla entra en el grupo de su hoja **más parecido**, si se parece lo bastante: la fracción de palabras iguales sin contar el nivel (las `<*>` del grupo no cuentan como iguales) ≥ **0,6**; con empate, el de más comodines; una **ruta** (`/api/items`) distinta no se junta nunca. Al entrar, las palabras que difieren pasan a `<*>`. Si no se parece a ninguno, abre un grupo.
 - Los marcadores conocidos (`<N>`, `<ID>`…) son palabras como las demás: dos plantillas que solo difieren en uno ya eran la misma.
 - Resultado: cada plantilla normalizada → su grupo; la plantilla del grupo es la que se enseña. Lineal en las plantillas distintas (como mucho una hoja por plantilla y unos pocos grupos por hoja).
 
@@ -29,9 +29,9 @@ Que las plantillas de un log agrupen también las líneas que solo se distinguen
 
 ## Tareas
 
-- [ ] Algoritmo tipo Drain (árbol de prefijos con umbral de similitud) en el Worker para campos variables desconocidos.
-- [ ] Versión del lector sube y recalcula.
-- [ ] Comparación de logs con las nuevas plantillas.
+- [x] Algoritmo tipo Drain (árbol de prefijos con umbral de similitud) en el Worker para campos variables desconocidos.
+- [x] Versión del lector sube y recalcula.
+- [x] Comparación de logs con las nuevas plantillas.
 
 ## Pruebas previstas
 
@@ -55,3 +55,17 @@ Que las plantillas de un log agrupen también las líneas que solo se distinguen
 ## Autorrevisión
 
 Cubre las tres tareas. Reutiliza la normalización, el orden por frecuencia, la vista, la comparación y la caché por versión; lo nuevo es un paso puro después del agrupamiento por texto.
+
+## Implementación
+
+- `src/lectores/log/drain.ts` (`agrupar`, `COMODIN`) y `juntarConDrain` en `analisis.ts`, al final del agrupamiento por texto: `plantillas` y `lineaPlantilla` salen de los grupos.
+- Lector `log` en la versión 2; `PlantillaPintada` pinta `<*>`.
+- Pruebas: `drain.test.ts` (lo que se junta y lo que no, determinismo, análisis y comparación), `drain.rendimiento.test.ts` (50.000 líneas con 5.000 usuarios en menos de 2 s), `PlantillaPintada.test.tsx`. Los ejemplos de `fixtures/logs/` dan las mismas plantillas que antes (ninguno tenía campos variables desconocidos).
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| Una sola palabra de prefijo, la primera que no es el nivel (Drain3 usa dos) | Con dos, un campo variable en la segunda palabra («user ana logged in») nunca se juntaba; y en los logs de texto la primera palabra suele ser el nivel, que no distingue nada. |
+| Umbral 0,6 sin contar el nivel (Drain3: 0,4) | Con una sola palabra de prefijo hace falta parecerse más: «failed to open file» y «failed to parse json» no son la misma plantilla. |
+| Una ruta distinta no se junta | En un log de peticiones la ruta es lo que interesa; con Drain sin más, `GET /api/salud` y `GET /api/items` quedaban en `GET <*>` (pasaba en `go.log`). |

@@ -60,7 +60,8 @@ const LINEAS_PARA_TITULO = 2000;
 export const lectorLog: Lector<DatosLog> = {
   nombre: 'log',
   tipo: 'log',
-  version: 1,
+  // 2 (IN-048): plantillas con Drain; los derivados y las comparaciones guardadas se recalculan.
+  version: 2,
   textos,
 
   detectar: (e: Entrada) => (e.texto !== undefined ? confianzaLog(e.texto) : 0),
