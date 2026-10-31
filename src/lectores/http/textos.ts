@@ -37,7 +37,10 @@ export const textos = definirTextos(
       opciones: 'curl también llevaba: {lista} (fetch no tiene equivalente)',
       tuberia: 'y después: {resto}',
       usuarioOculto: 'usuario {usuario}, con la contraseña oculta: añade su cabecera Authorization',
+      usuarioSinClave: 'usuario {usuario} sin contraseña (curl la pediría): añade su cabecera Authorization',
       cookie: 'el navegador no deja poner la cabecera Cookie: con credentials, manda las suyas',
+      cuerpoConGet: 'fetch no admite cuerpo con {metodo}: este curl lo mandaba (prueba con POST)',
+      archivo: 'curl leía el archivo {nombre}: añádelo como cuerpo (un File o un Blob)',
     },
   },
   {
@@ -75,7 +78,10 @@ export const textos = definirTextos(
       opciones: 'curl also had: {lista} (fetch has no equivalent)',
       tuberia: 'and then: {resto}',
       usuarioOculto: 'user {usuario}, with the password hidden: add its Authorization header',
+      usuarioSinClave: 'user {usuario} without a password (curl would ask for it): add its Authorization header',
       cookie: 'the browser does not let you set the Cookie header: with credentials, it sends its own',
+      cuerpoConGet: 'fetch does not allow a body with {metodo}: this curl sent one (try POST)',
+      archivo: 'curl read the file {nombre}: add it as the body (a File or a Blob)',
     },
   },
 );

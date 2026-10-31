@@ -85,3 +85,52 @@ Cubre las tres tareas. Reutiliza el contrato de lectores, la ocultación de IN-0
 | Las reglas no ocultan variables (`$TOKEN`, `{{token}}`), tampoco la de `Authorization` | No son secretos: ocultarlas quitaba información (y una petición de una documentación dejaba de leerse igual). |
 | `aCurl` escribe `-I` para HEAD | Con `-X HEAD`, curl espera un cuerpo que no llega. |
 | `aCurl` y `aFetch` van en un módulo que solo carga la vista | La carga inicial lleva solo lo que necesita la detección (268,6 KB de 300). |
+
+## Verificación
+
+**`pnpm verificar`**: en verde, 119 archivos y 1541 pruebas, más la de rendimiento aparte; carga inicial 271,0 KB de 300 (+2,4 KB: las reglas de secretos van con la captura, en la carga inicial). Dos ejecuciones anteriores fallaron por tiempos agotados al azar en pruebas que no tocan esto (un `render` de un SVG, lecturas de fixtures): atascos de WSL leyendo de la unidad `D:`; la siguiente, en verde.
+
+**Criterios de aceptación:** un `curl` pegado se guarda con el lector `http`, con sus secretos ocultos, su tabla, su respuesta y «Copiar como cURL» y «como fetch» (`http.test.ts`, `Vista.test.tsx`; corpus al 100 % en todos los tipos).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| Analiza cURL con secretos ocultos | `http.test.ts` (bash, cmd real de Chrome, `$'…'`, opciones, URL), `ocultar.test.ts` y el corpus de secretos (cookies, cabeceras, URL, cuerpo, JSON, `-u`) |
+| Vista en tabla | `Vista.test.tsx` |
+| Copiar como cURL o como `fetch` | `http.test.ts` (ida y vuelta, notas), `Vista.test.tsx` (los dos botones) |
+
+**Revisión independiente** (subagente con contexto limpio). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | `usuario-curl` cuadrática: segundos con un JSON de logs con `curl/7.81.0` | `contrasenasDeCurl` lineal (un recorrido por orden curl). `ocultar.test.ts` |
+| 2 | El «Copiar como cURL (cmd)» real (`^"…^"`, `\^"`, `^&`) se leía mal; los secretos rompían sus comillas | `palabrasCmd` en dos capas (cmd y MS CRT); las reglas no se comen `^`; fixture `http/09` real. `http.test.ts`, `ocultar.test.ts` |
+| 3 | Cookies con comillas dentro o en `$'…'` quedaban a la vista | El valor llega hasta la comilla que cierra su argumento (`peticiones.ts`). `ocultar.test.ts`, corpus |
+| 4 | Secretos del cuerpo (`-d client_secret=…`, `"password": "…"`) sin ocultar | `clave-url` también tras `-d`/`--data*`/`-F`, con `refresh_token`, `id_token`…; regla `clave-json`. Corpus |
+| 5 | Varias órdenes tras una tubería pasaban por una petición; notas de varias líneas rompían el JavaScript | La tubería acaba en su orden; cada línea de nota, comentada. `http.test.ts` |
+| 6 | Opciones con valor sin listar (`--max-redirs`, `--unix-socket`, `-D`…): la URL tomaba su valor | Las de `curl --help all` y la URL tiene que parecer una URL. `http.test.ts` |
+| 7 | «Curl no funciona…» se tomaba por una petición | Ídem (sin URL, no es una petición). `http.test.ts` |
+| 8 | `fetch` con GET y cuerpo lanza TypeError | Sin cuerpo y con una nota. `http.test.ts` |
+| 9 | `@archivo` se exportaba como texto literal | `cuerpo.archivo`: `--data-binary @x` y una nota en `fetch` (también en las partes de `-F`). `http.test.ts` |
+| 10 | Cabeceras repetidas: `fetch` se quedaba con la última | Cabeceras como pares. `http.test.ts` |
+| 11 | Faltaban cabeceras (`X-RapidAPI-Key`, `apikey`, `X-Auth-Key`…), esquemas de Authorization, `--oauth2-bearer`, `#access_token`, `private_token`, `sig`, `-U` | Ampliadas (con el prefijo acotado: sin retroceso cuadrático); regla `oauth2-bearer`. `ocultar.test.ts`, corpus |
+| 12 | `-uadmin:…`, `-su …`, `'admin:clave con espacios'` sin ocultar; `docker -u 1000:1000` tras una tubería, oculto | `contrasenasDeCurl` (pegado, cortas juntas, argumento entero, solo dentro de su orden). `ocultar.test.ts` |
+| 13 | `Set-Cookie` no se ocultaba (la ficha decía que sí) | Se oculta su primer valor si parece una sesión (16 caracteres o más); `tema=oscuro` y los atributos, no. `ocultar.test.ts` |
+| 14 | `$'…'` sin `\u`, octal ni `\cX` | Añadidos. `http.test.ts` |
+| 15 | Un comentario `#` delante impedía reconocerlo | Se saltan las líneas de comentario de delante. `http.test.ts` |
+| 16 | Un `^"` dentro de un argumento de bash pasaba a modo cmd | Modo cmd solo si empieza por `curl ^"` o hay líneas que acaban en ` ^`. `http.test.ts` |
+| 17 | `-T` daba GET | PUT implícito. `http.test.ts` |
+| 18 | `--data-urlencode '=x'` dejaba el `=`; `nombre@archivo` se codificaba | Como lo manda curl. `http.test.ts` |
+| 19 | `-u usuario` sin contraseña daba un Basic incompleto | Una nota (curl la pediría). `http.test.ts` |
+| 20 | Notas de `fetch` inexactas (`-L`, `--compressed`) | Las opciones que `fetch` ya hace no se avisan. `http.test.ts` |
+| 21 | Un método raro (`-X 'GET. Y luego!'`) rompía las reglas de estilo | Si no es una palabra en mayúsculas, en mono. `http.test.ts` |
+| 22 | `x.org\|jq` sin espacios; continuaciones de PowerShell | Se corta también pegado; `` ` `` al final de línea continúa. `http.test.ts` |
+
+### Decisiones de la verificación
+
+| Decisión | Por qué |
+|---|---|
+| `curl … \| sh` (instaladores) es una Petición | Lo esencial sigue siendo la petición; la tubería se enseña y se conserva al copiar. |
+| Las reglas de petición viven en `seguridad/secretos/peticiones.ts` | Leen argumentos de shell (dónde acaba cada uno); una expresión sola cortaba en comillas de dentro o retrocedía. |
+| Set-Cookie, solo si parece una sesión | El corpus de líneas limpias tiene `Set-Cookie: tema=oscuro` (un ajuste); una sesión es larga. |

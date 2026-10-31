@@ -151,4 +151,20 @@ anadir(
   (s) => `curl -sS -u admin:${s} https://jenkins.example.org/api/json`,
 );
 
+anadir('oauth2-bearer', mezcla(32, 'Rs7Tu9Vw'), (s) => `curl --oauth2-bearer ${s} https://api.example.org/v1`);
+anadir(
+  'clave-json',
+  `hunter2-${mezcla(12, 'Xy1Za3Bc')}`,
+  (s) => `curl -d '{"username":"ana","password":"${s}"}' https://x.org/login`,
+);
+anadir(
+  'clave-url',
+  mezcla(30, 'De5Fg7Hi'),
+  (s) => `curl https://oauth2.example.org/token -d client_id=abc -d client_secret=${s}`,
+);
+anadir('cookie', `s${mezcla(20, 'Jk2Lm4No')}`, (s) => `curl https://x.org -H 'Cookie: prefs={"a":1}; sid=${s}'`);
+anadir('cookie-curl', `s${mezcla(20, 'Pq6Rs8Tu')}`, (s) => `curl -b $'n=\\'x\\'; sid=${s}' https://x.org`);
+anadir('cabecera-clave', mezcla(36, 'Vw1Xy3Za'), (s) => `curl -H 'X-RapidAPI-Key: ${s}' https://api.example.org`);
+anadir('usuario-curl', `SuperSecreta-${mezcla(8, 'Bc5De7Fg')}`, (s) => `curl -su admin:${s} https://x.org`);
+
 export const SECRETOS: CasoSecreto[] = casos.map(([regla, secreto, texto]) => ({ regla, secreto, texto }));

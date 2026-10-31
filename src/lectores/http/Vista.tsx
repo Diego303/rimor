@@ -68,7 +68,10 @@ function Peticion({ p, t }: { p: PeticionHttp; t: T }) {
         opciones: (lista) => t('notas.opciones', { lista }),
         tuberia: (resto) => t('notas.tuberia', { resto }),
         usuarioOculto: (usuario) => t('notas.usuarioOculto', { usuario }),
+        usuarioSinClave: (usuario) => t('notas.usuarioSinClave', { usuario }),
         cookie: t('notas.cookie'),
+        cuerpoConGet: (metodo) => t('notas.cuerpoConGet', { metodo }),
+        archivo: (nombre) => t('notas.archivo', { nombre }),
       }),
     [p, t],
   );

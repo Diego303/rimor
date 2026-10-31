@@ -7,7 +7,7 @@ import type { Elemento } from '@rimor/formato';
 import { fmtNumero, type Idioma } from '../../i18n/formatos';
 import type { Fragmento } from '../../respuestas/tipos';
 import type { Borrador, Entrada, Lector } from '../contrato';
-import { analizarCurl, hostDe, type PeticionHttp, urlCorta } from './analisis';
+import { analizarCurl, esMetodo, hostDe, type PeticionHttp, urlCorta } from './analisis';
 import { textos } from './textos';
 
 /** La petición, o `ilegible` si el original ya no se analiza (editado a mano, o pedido con `/http` sin serlo). */
@@ -21,22 +21,37 @@ const LARGO_TITULO = 80;
 
 export const esPeticion = (d: DatosHttp): d is PeticionHttp => !('ilegible' in d);
 
-/** «POST a `api.example.org/v1/pagos` con 3 cabeceras y un cuerpo JSON.»: la URL en mono (es del usuario). */
+/**
+ * «POST a `api.example.org/v1/pagos` con 3 cabeceras y un cuerpo JSON.»: la URL en mono (es del usuario), y también
+ * un método que no lo parece (`-X 'GET. Y luego!'` no puede romper las reglas de estilo de la respuesta).
+ */
 function frase(p: PeticionHttp, idioma: Idioma): Fragmento[] {
   const cosas = [
     p.cabeceras.length ? t(idioma, 'cabeceras', { n: p.cabeceras.length }) : '',
     p.cuerpo ? t(idioma, `respuesta.cuerpos.${p.cuerpo.tipo}`) : '',
   ].filter(Boolean);
-  const HUECO = '\u0000';
+  const [HUECO_METODO, HUECO_URL] = ['\u0001', '\u0000'];
+  const vars = { metodo: HUECO_METODO, url: HUECO_URL };
   const plantilla = cosas.length
-    ? t(idioma, 'respuesta.con', { metodo: p.metodo, url: HUECO, cosas: cosas.join(t(idioma, 'respuesta.y')) })
-    : t(idioma, 'respuesta.sola', { metodo: p.metodo, url: HUECO });
-  const [antes = '', despues = ''] = plantilla.split(HUECO);
-  return [
-    { t: 'texto', v: antes },
-    { t: 'mono', v: urlCorta(p.url) },
-    { t: 'texto', v: despues },
-  ];
+    ? t(idioma, 'respuesta.con', { ...vars, cosas: cosas.join(t(idioma, 'respuesta.y')) })
+    : t(idioma, 'respuesta.sola', vars);
+  const metodo: Fragmento = esMetodo(p.metodo) ? { t: 'texto', v: p.metodo } : { t: 'mono', v: p.metodo };
+  const fragmentos: Fragmento[] = [];
+  // Los huecos, en su sitio: la URL en mono y el método como texto (o en mono, si no lo parece).
+  plantilla.split(HUECO_URL).forEach((trozoUrl, i) => {
+    if (i > 0) fragmentos.push({ t: 'mono', v: urlCorta(p.url) });
+    trozoUrl.split(HUECO_METODO).forEach((trozo, j) => {
+      if (j > 0) fragmentos.push(metodo);
+      if (trozo) fragmentos.push({ t: 'texto', v: trozo });
+    });
+  });
+  // Los trozos de texto seguidos, en uno (el método como texto va con lo que le rodea).
+  return fragmentos.reduce<Fragmento[]>((juntos, f) => {
+    const ultimo = juntos.at(-1);
+    if (f.t === 'texto' && ultimo?.t === 'texto') juntos[juntos.length - 1] = { t: 'texto', v: ultimo.v + f.v };
+    else juntos.push(f);
+    return juntos;
+  }, []);
 }
 
 export const lectorHttp: Lector<DatosHttp> = {

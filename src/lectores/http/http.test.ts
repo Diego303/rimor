@@ -14,7 +14,10 @@ const NOTAS = {
   opciones: (l: string) => `opciones: ${l}`,
   tuberia: (r: string) => `después: ${r}`,
   usuarioOculto: (u: string) => `usuario ${u} oculto`,
+  usuarioSinClave: (u: string) => `usuario ${u} sin clave`,
   cookie: 'cookie',
+  cuerpoConGet: (m: string) => `cuerpo con ${m}`,
+  archivo: (n: string) => `archivo ${n}`,
 };
 
 const CHROME = `curl 'https://api.example.org/v1/pagos?page=2&limit=50' \\
@@ -30,12 +33,19 @@ describe('palabras como las parte un shell', () => {
       tuberia: '| jq .x',
     });
     expect(palabrasShell('curl a \\\n  b')?.palabras).toEqual(['curl', 'a', 'b']);
-    // El «Copiar como cURL (cmd)» de Windows: `^` escapa y continúa.
-    expect(palabrasShell('curl "u" ^\n  --data-raw "{^"a^":1}"')?.palabras).toEqual([
+    // El «Copiar como cURL (cmd)» real de Chrome: `^"` en cada argumento, `\^"` dentro, `^&`, `^{` y ` ^` al final.
+    const cmd = [
+      'curl ^"https://api.example.org/v1/pagos?page=2^&limit=50^" ^',
+      '  -H ^"accept: application/json^" ^',
+      '  --data-raw ^"^{^\\^"importe^\\^":1250^}^"',
+    ].join('\n');
+    expect(palabrasShell(cmd)?.palabras).toEqual([
       'curl',
-      'u',
+      'https://api.example.org/v1/pagos?page=2&limit=50',
+      '-H',
+      'accept: application/json',
       '--data-raw',
-      '{"a":1}',
+      '{"importe":1250}',
     ]);
     expect(palabrasShell('curl a\nls -la')).toBeNull();
     expect(palabrasShell("curl 'sin cerrar")).toBeNull();
@@ -139,13 +149,12 @@ describe('de vuelta: cURL y fetch', () => {
     const p = analizarCurl(CHROME);
     expect(p && aFetch(p, NOTAS)).toBe(
       [
-        '// opciones: --compressed',
         'const respuesta = await fetch("https://api.example.org/v1/pagos?page=2&limit=50", {',
         '  method: "POST",',
-        '  headers: {',
-        '    "accept": "application/json",',
-        '    "content-type": "application/json",',
-        '  },',
+        '  headers: [',
+        '    ["accept", "application/json"],',
+        '    ["content-type", "application/json"],',
+        '  ],',
         '  body: "{\\"importe\\":1250,\\"moneda\\":\\"EUR\\"}",',
         '});',
       ].join('\n'),
@@ -155,7 +164,7 @@ describe('de vuelta: cURL y fetch', () => {
     expect(f).toContain('const form = new FormData();\nform.append("a", "1");');
     expect(f).toContain('fetch("http://x.org"');
     expect(f).toContain("credentials: 'include'");
-    expect(f).toContain(`"Authorization": "Basic ${btoa('ana:Ã±u')}"`);
+    expect(f).toContain(`["Authorization", "Basic ${btoa('ana:Ã±u')}"]`);
     const oculto = analizarCurl(`curl -u ana:‹oculto:contrasena› https://x.org | jq .`);
     expect(oculto && aFetch(oculto, NOTAS)).toMatch(/^\/\/ usuario ana oculto\n\/\/ después: \| jq \./);
   });
@@ -206,5 +215,66 @@ describe('lector http', () => {
       'POST x.org · 3 cabeceras',
     );
     expect(urlCorta(`https://x.org/${'a'.repeat(100)}`)).toHaveLength(60);
+  });
+});
+
+describe('revisión de IN-046', () => {
+  it('varias órdenes tras una tubería no son una petición; las notas de fetch, línea a línea', () => {
+    expect(analizarCurl('curl -s https://x.org | jq .\nls -la\nrm -rf tmp')).toBeNull();
+    const p = analizarCurl("curl -s https://x.org | jq '.a' \\\n  | head -1");
+    expect(p?.tuberia).toBe("| jq '.a' | head -1");
+    const f = p ? aFetch({ ...p, tuberia: 'uno\ndos' }, NOTAS) : '';
+    expect(f.split('\n').slice(0, 2)).toEqual(['// después: uno', '// dos']);
+  });
+
+  it('opciones con valor que antes se tomaban por la URL; prosa que empieza por curl', () => {
+    expect(analizarCurl('curl -L --max-redirs 5 https://example.com')?.url).toBe('https://example.com');
+    expect(analizarCurl('curl --unix-socket /var/run/docker.sock http://localhost/containers/json')?.url).toBe(
+      'http://localhost/containers/json',
+    );
+    expect(analizarCurl('curl --noproxy "*" https://x.org')?.url).toBe('https://x.org');
+    expect(analizarCurl('curl -D - https://example.com')?.url).toBe('https://example.com');
+    expect(analizarCurl('Curl no funciona en el servidor')).toBeNull();
+    expect(analizarCurl('curl up with a good book')).toBeNull();
+    expect(analizarCurl('curl localhost:8080/salud')?.url).toBe('localhost:8080/salud');
+  });
+
+  it('fetch: un cuerpo con GET (no lo admite), archivos que curl leía, -u sin contraseña; -L no se avisa', () => {
+    const get = analizarCurl(
+      `curl -X GET localhost:9200/_search -H 'Content-Type: application/json' -d '{"query":{}}'`,
+    );
+    const f = get ? aFetch(get, NOTAS) : '';
+    expect(f).toContain('// cuerpo con GET');
+    expect(f).not.toContain('body:');
+    const archivo = analizarCurl('curl -d @payload.json https://x.org');
+    expect(archivo?.cuerpo?.archivo).toBe('payload.json');
+    expect(archivo && aCurl(archivo)).toBe("curl 'https://x.org' \\\n  --data-binary '@payload.json'");
+    expect(archivo && aFetch(archivo, NOTAS)).toContain('// archivo payload.json');
+    expect(analizarCurl("curl --data-raw '@literal' https://x.org")?.cuerpo?.archivo).toBeUndefined();
+    const parte = analizarCurl("curl -F 'f=@a.pdf' https://x.org");
+    expect(parte && aFetch(parte, NOTAS)).toContain('// archivo a.pdf');
+    const sinClave = analizarCurl('curl -u ana https://x.org');
+    expect(sinClave && aFetch(sinClave, NOTAS)).toContain('// usuario ana sin clave');
+    const l = analizarCurl('curl -sSL --compressed https://x.org');
+    expect(l && aFetch(l, NOTAS)).not.toMatch(/^\/\//m);
+  });
+
+  it("$'…' con \\u, octal y \\cX; un comentario delante; ^\" en bash no es cmd; -T es PUT; --data-urlencode '=x'", () => {
+    expect(analizarCurl("curl --data-raw $'msg=hola\\u0021 \\101' https://x.org")?.cuerpo?.texto).toBe('msg=hola! A');
+    expect(analizarCurl('# Lista los pagos\ncurl https://x.org/pagos')?.url).toBe('https://x.org/pagos');
+    expect(analizarCurl(`curl -H 'X-Pattern: ^"a"' https://x.org`)?.cabeceras).toEqual([['X-Pattern', '^"a"']]);
+    expect(analizarCurl('curl -T archivo.txt https://x.org/subir')?.metodo).toBe('PUT');
+    expect(analizarCurl("curl -G --data-urlencode '=hola mundo' https://x.org")?.url).toBe(
+      'https://x.org?hola%20mundo',
+    );
+    expect(analizarCurl('curl https://x.org|jq')).toMatchObject({ url: 'https://x.org', tuberia: '|jq' });
+    expect(analizarCurl('curl.exe https://x.org `\n  -H "a: b"')?.cabeceras).toEqual([['a', 'b']]);
+  });
+
+  it('un método que no es una palabra en mayúsculas va en mono (no rompe las reglas de estilo)', async () => {
+    const el = elementoFalso(9, "curl -X 'GET. Y luego!' https://x.org", 'http');
+    const r = lectorHttp.respuesta(el, await lectorHttp.derivar(el), ctx('es'));
+    expect(r.texto.filter((f) => f.t === 'mono').map((f) => ('v' in f ? f.v : ''))).toEqual(['GET. Y LUEGO!', 'x.org']);
+    expect(comprobarEstilo(r)).toEqual([]);
   });
 });

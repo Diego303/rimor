@@ -137,3 +137,75 @@ describe('variables, no secretos (IN-046)', () => {
       expect(ocultar(texto).texto, texto).toBe(texto);
   });
 });
+
+describe('revisión de IN-046: secretos de una petición', () => {
+  it('curl -u en textos enormes es lineal (antes, cuadrático: segundos)', () => {
+    for (const texto of [
+      'curl '.repeat(20_000),
+      'curl -b a '.repeat(20_000),
+      'curl x \\\n'.repeat(20_000),
+      `[${Array.from({ length: 2500 }, (_, i) => `{"ua":"curl/7.81.0","i":${i},"msg":"petición servida sin errores"}`).join(',')}]`,
+    ]) {
+      const inicio = performance.now();
+      ocultar(texto);
+      expect(performance.now() - inicio, texto.slice(0, 20)).toBeLessThan(500);
+    }
+  });
+
+  it('el «Copiar como cURL (cmd)» de Windows: se oculta sin romper sus comillas', () => {
+    const clave = 'C1av3Secreta99';
+    const sid = 'abcdef1234567890abcdef';
+    const r = ocultar(
+      `curl ^"https://x.org^" ^\n  -H ^"authorization: Bearer ${'t'.repeat(30)}^" ^\n  -b ^"sid=${sid}; tema=oscuro^" ^\n  -u ^"admin:${clave}^"`,
+    );
+    expect(r.texto).not.toContain(clave);
+    expect(r.texto).not.toContain(sid);
+    expect(r.texto).toContain('Bearer ‹oculto:authorization›^"');
+    expect(r.texto).toContain('-b ^"sid=‹oculto:cookie›; tema=‹oculto:cookie›^"');
+    expect(r.texto).toContain('-u ^"admin:‹oculto:contrasena›^"');
+  });
+
+  it("cookies con comillas dentro, y en $'…': todas ocultas, y el curl se sigue leyendo", () => {
+    const sid = `s${'Q7'.repeat(10)}`;
+    for (const texto of [
+      `curl -H 'Cookie: prefs={"a":1}; sid=${sid}' https://x.org`,
+      `curl -b 'prefs="x y"; sid=${sid}' https://x.org`,
+      `curl -b $'n=\\'x\\'; sid=${sid}' https://x.org`,
+      `curl -H $'cookie: a=\\'x\\'; sid=${sid}' https://x.org`,
+    ]) {
+      const r = ocultar(texto).texto;
+      expect(r, texto).not.toContain(sid);
+      expect(r.endsWith(' https://x.org'), r).toBe(true);
+    }
+  });
+
+  it('Set-Cookie: la sesión (un valor largo) sí; un ajuste corto y sus atributos, no', () => {
+    expect(ocultar('Set-Cookie: sessionid=abcdef1234567890abcdef; Path=/').texto).toBe(
+      'Set-Cookie: sessionid=‹oculto:cookie›; Path=/',
+    );
+    expect(ocultar('Set-Cookie: tema=oscuro; Path=/').texto).toBe('Set-Cookie: tema=oscuro; Path=/');
+  });
+
+  it('curl -u: pegado, en cortas juntas, con espacios entre comillas; nunca más allá de una tubería', () => {
+    expect(ocultar('curl -uadmin:SuperSecreta99 https://x.org').texto).toBe(
+      'curl -uadmin:‹oculto:contrasena› https://x.org',
+    );
+    expect(ocultar("curl -u 'admin:mi clave larga' https://x.org").texto).toBe(
+      "curl -u 'admin:‹oculto:contrasena›' https://x.org",
+    );
+    expect(ocultar('curl -U proxy:Pr0xyClave1 https://x.org').texto).toContain('proxy:‹oculto:contrasena›');
+    const docker = 'curl https://get.docker.com | sh && docker run -u 1000:1000 img';
+    expect(ocultar(docker).texto).toBe(docker);
+  });
+
+  it('más cabeceras y esquemas: X-RapidAPI-Key, apikey, X-Auth-Key, Authorization: ApiKey, --oauth2-bearer; la URL con #', () => {
+    for (const [texto, visible] of [
+      [`curl -H 'apikey: ${'k'.repeat(30)}' x.org`, 'apikey: ‹oculto:clave-api›'],
+      [`curl -H 'X-Auth-Key: ${'k'.repeat(30)}' x.org`, 'X-Auth-Key: ‹oculto:clave-api›'],
+      [`Authorization: ApiKey ${'k'.repeat(30)}`, 'Authorization: ApiKey ‹oculto:authorization›'],
+      [`https://x.org/cb#access_token=${'k'.repeat(30)}&expires=3600`, '#access_token=‹oculto:clave-api›&expires'],
+      [`https://x.org/a?private_token=${'k'.repeat(20)}`, 'private_token=‹oculto:clave-api›'],
+    ] as const)
+      expect(ocultar(texto).texto, texto).toContain(visible);
+  });
+});

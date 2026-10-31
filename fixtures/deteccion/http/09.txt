@@ -1,5 +1,5 @@
-curl "https://api.example.org/v1/pedidos" ^
-  -H "accept: application/json" ^
-  -H "content-type: application/json" ^
-  --data-raw "{^\"estado^\":^\"pendiente^\"}" ^
+curl ^"https://api.example.org/v1/pedidos^" ^
+  -H ^"accept: application/json^" ^
+  -H ^"content-type: application/json^" ^
+  --data-raw ^"^{^\^"estado^\^":^\^"pendiente^\^"^}^" ^
   --compressed
