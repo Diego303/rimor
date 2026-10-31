@@ -242,7 +242,8 @@ export function Inicio() {
       // Tres correcciones de contenidos que empiezan igual proponen una regla en el feed (IN-049).
       void espacio.repositorio
         .leerElemento(nueva)
-        .then((r) => r.ok && aprenderCorreccion(espacio, r.valor.original, lector.tipo))
+        .then((r) => (r.ok ? aprenderCorreccion(espacio, r.valor.original, lector.tipo) : null))
+        .then((p) => p && avisos?.avisar(t('pantallas.inicio.reglaPropuesta')))
         .catch(() => undefined);
       void formarSiEsError(nueva, { repositorio: espacio.repositorio, entidades: espacio.entidades }).catch(() => null);
       // La selección y la marca siguen al elemento con su ref nueva.

@@ -124,10 +124,14 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
     a?.setSelectionRange(a.value.length, a.value.length);
   }, [llegadas, atendidas, atender]);
 
+  // Las reglas aprendidas de ahora: si cambian (se acepta una con algo ya escrito), la vista previa se rehace.
+  const [reglas, setReglas] = useState(() => espacio?.reglas().reglas);
+  useEffect(() => (espacio ? espacio.alCambiar(() => setReglas(espacio.reglas().reglas)) : undefined), [espacio]);
+
   // Vista previa 120 ms después de la última tecla; con textos grandes, en el Worker. Con las opciones de los
-  // ajustes de ahora (reglas de secretos y detección), como la captura.
+  // ajustes de ahora (reglas de secretos y detección) y las reglas aprendidas, como la captura.
   useEffect(() => {
-    const opciones = espacio ? opcionesCaptura(espacio.ajustes(), espacio.reglas().reglas) : undefined;
+    const opciones = espacio ? opcionesCaptura(espacio.ajustes(), reglas) : undefined;
     if (!texto.trim() || !lectores) {
       setPrevia(null);
       return undefined;
@@ -144,7 +148,7 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
       vigente = false;
       clearTimeout(espera);
     };
-  }, [texto, lectores, espacio]);
+  }, [texto, lectores, espacio, reglas]);
 
   /** Colecciones y etiquetas usadas, y tipos, para autocompletar. */
   const fuentes = useMemo(() => {
@@ -192,6 +196,9 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
     if (!ind.cuerpo.trim() && !archivos.length) return;
     if (soloLectura) return avisar(t('espacio.aviso.soloLectura'));
     if (!capturador) return;
+    // Dividir lo que se ofreció: si el texto ya no se parte en las mismas N (cambió desde la vista previa), nada.
+    const divididas = dividir ? partes(ind.cuerpo)?.partes : undefined;
+    if (dividir && divididas?.length !== previa?.division?.n) return;
     setGuardando(true);
     // Lo que se guarda ahora; lo que se escriba o adjunte mientras tanto se queda en el borrador.
     const textoGuardado = texto;
@@ -213,7 +220,7 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
     };
     const resultados: ResultadoDe[] = [];
     let textoHecho = true;
-    const textos = ind.cuerpo.trim() ? ((dividir ? partes(ind.cuerpo)?.partes : null) ?? [ind.cuerpo]) : [];
+    const textos = ind.cuerpo.trim() ? (divididas ?? [ind.cuerpo]) : [];
     for (const cuerpo of textos) {
       const r = await capturador.capturar({ texto: cuerpo, origen: 'pegado', ...comunes }).catch(() => null);
       resultados.push({ nombre: cuerpo.split('\n')[0]?.slice(0, 40) ?? '', r });

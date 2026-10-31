@@ -131,7 +131,9 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
             // Un `/tipo` que no es el que habría detectado corrige al detector: cuenta y enseña (IN-016, IN-049).
             if (c.detectado && espacio) {
               void espacio.contadores.contar('correccionesDeTipo').catch(() => undefined);
-              aprenderCorreccion(espacio, c.elemento.original, c.elemento.frontmatter.tipo);
+              void aprenderCorreccion(espacio, c.elemento.original, c.elemento.frontmatter.tipo).then(
+                (p) => p && avisar(t('pantallas.inicio.reglaPropuesta')),
+              );
             }
           } else if (r.valor.tipo === 'version') {
             const v = r.valor;

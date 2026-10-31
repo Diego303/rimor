@@ -1,12 +1,14 @@
 /**
  * Reglas de detección aprendidas (CAP-06, IN-049): si se corrige tres veces el tipo de contenidos que empiezan igual
  * (su firma: `[app]`, `svc:`), Rimor propone que los siguientes sean de ese tipo. Se guardan en
- * `.rimor/reglas-deteccion.json` con las correcciones que llevan a ellas y las propuestas que se rechazaron. TS puro:
- * leer, escribir, aprender y aplicar.
+ * `.rimor/reglas-deteccion.json` con las correcciones que llevan a ellas y las propuestas que se rechazaron; de esas dos,
+ * solo la huella de su firma (el principio de un elemento borrado no se queda en el archivo ni viaja en el ZIP). TS
+ * puro: leer, escribir, aprender y aplicar.
  */
-import { esTipoElemento, type TipoElemento } from '@rimor/formato';
+import { esTipoElemento, sha256Hex, type TipoElemento } from '@rimor/formato';
 
 export const RUTA_REGLAS = '.rimor/reglas-deteccion.json';
+export const ESQUEMA_REGLAS = 1;
 
 /** Correcciones con la misma firma y el mismo tipo que hacen una propuesta. */
 export const CORRECCIONES_PARA_PROPONER = 3;
@@ -16,6 +18,9 @@ export const MAX_CORRECCIONES = 100;
 export const LARGO_FIRMA = 32;
 export const LARGO_PREFIJO = 64;
 
+/** Tipos a los que no lleva una regla: los binarios no se detectan por su texto. */
+const SIN_REGLA: ReadonlySet<TipoElemento> = new Set(['imagen', 'pdf', 'archivo']);
+
 export interface ReglaDeteccion {
   /** Lo que empieza la primera línea con contenido. */
   prefijo: string;
@@ -24,7 +29,8 @@ export interface ReglaDeteccion {
 }
 
 export interface Correccion {
-  firma: string;
+  /** La huella de la firma (`huellaDe`), no la firma. */
+  huella: string;
   tipo: TipoElemento;
   en: string;
 }
@@ -38,8 +44,8 @@ export interface DatosReglas {
   esquema: 1;
   reglas: ReglaDeteccion[];
   correcciones: Correccion[];
-  /** Propuestas a las que se dijo «No»: no se vuelven a ofrecer. */
-  descartadas: Propuesta[];
+  /** Propuestas a las que se dijo «No» (la huella de su firma): no se vuelven a ofrecer. */
+  descartadas: { huella: string; tipo: TipoElemento }[];
 }
 
 export const REGLAS_INICIALES: DatosReglas = Object.freeze({
@@ -51,6 +57,9 @@ export const REGLAS_INICIALES: DatosReglas = Object.freeze({
 
 const esTipo = esTipoElemento;
 const esTexto = (x: unknown): x is string => typeof x === 'string';
+
+/** La huella de una firma: los 16 primeros caracteres de su SHA-256. */
+export const huellaDe = (firma: string): string => sha256Hex(firma).slice(0, 16);
 
 /** La primera línea con contenido, sin los espacios del principio (sin partir el texto entero: puede ser enorme). */
 function primeraLinea(texto: string): string {
@@ -64,22 +73,30 @@ function primeraLinea(texto: string): string {
   return '';
 }
 
+/** Una fecha o una hora (`2026-10-31`, `18:00:00`, `31/10`): cambia en cada captura. */
+const FECHA_U_HORA = /\d{1,4}[-/.:]\d{1,2}/;
+
 /**
  * La firma de un contenido: la primera palabra de su primera línea con contenido, si lleva una letra y un signo que no
- * es letra ni cifra (`[app]`, `app:`, `<svc>`). Una palabra corriente no hace una regla útil; una fecha cambia cada vez
- * (y la de más de 32 caracteres no es una firma). `null` si no tiene.
+ * es letra ni cifra (`[app]`, `app:`, `<svc>`). No cuenta la puntuación de una palabra corriente (`¿Por`, `Hola,`,
+ * `(nota)`, `"Cita"`, `I'm`): no hace una regla útil. Tampoco una fecha o una hora, que cambian cada vez, ni lo de más
+ * de 32 caracteres. `null` si no tiene.
  */
 export function firmaDe(texto: string): string | null {
   const palabra = primeraLinea(texto).split(/\s/, 1)[0] ?? '';
-  if (!palabra || palabra.length > LARGO_FIRMA) return null;
-  return /\p{L}/u.test(palabra) && /[^\p{L}\p{N}]/u.test(palabra) ? palabra : null;
+  if (!palabra || palabra.length > LARGO_FIRMA || FECHA_U_HORA.test(palabra)) return null;
+  const sinPuntuacion = palabra.replace(/^[¿¡"'“‘«(]+|[,;.!?"'”’»)]+$/gu, '').replace(/(?<=\p{L})['’-](?=\p{L})/gu, '');
+  return /\p{L}/u.test(sinPuntuacion) && /[^\p{L}\p{N}]/u.test(sinPuntuacion) ? palabra : null;
 }
 
 /** ¿Vale como prefijo de una regla (el que se escribe en Ajustes)? Sin saltos de línea y de largo razonable. */
 export const prefijoValido = (p: string): boolean =>
   p.trim() !== '' && p.length <= LARGO_PREFIJO && !/[\r\n]/.test(p) && p === p.trimStart();
 
-/** Lee el archivo; `null` si existe pero no se entiende (no se sobrescribe: se perderían las reglas). */
+/**
+ * Lee el archivo; `null` si existe pero no se entiende o es de un esquema más nuevo (no se sobrescribe: se perderían
+ * las reglas o lo que no se conoce).
+ */
 export function leerReglas(texto: string | null): DatosReglas | null {
   if (!texto) return { esquema: 1, reglas: [], correcciones: [], descartadas: [] };
   let d: unknown;
@@ -90,6 +107,7 @@ export function leerReglas(texto: string | null): DatosReglas | null {
   }
   if (typeof d !== 'object' || d === null || Array.isArray(d)) return null;
   const o = d as Record<string, unknown>;
+  if (typeof o.esquema === 'number' && o.esquema > ESQUEMA_REGLAS) return null;
   const lista = (x: unknown): Record<string, unknown>[] =>
     Array.isArray(x) ? x.filter((y): y is Record<string, unknown> => typeof y === 'object' && y !== null) : [];
   const vistos = new Set<string>();
@@ -101,22 +119,23 @@ export function leerReglas(texto: string | null): DatosReglas | null {
   }
   const correcciones = lista(o.correcciones)
     .flatMap((c) =>
-      esTexto(c.firma) && esTipo(c.tipo) ? [{ firma: c.firma, tipo: c.tipo, en: esTexto(c.en) ? c.en : '' }] : [],
+      esTexto(c.huella) && esTipo(c.tipo) ? [{ huella: c.huella, tipo: c.tipo, en: esTexto(c.en) ? c.en : '' }] : [],
     )
     .slice(-MAX_CORRECCIONES);
   const descartadas = lista(o.descartadas).flatMap((p) =>
-    esTexto(p.firma) && esTipo(p.tipo) ? [{ firma: p.firma, tipo: p.tipo }] : [],
+    esTexto(p.huella) && esTipo(p.tipo) ? [{ huella: p.huella, tipo: p.tipo }] : [],
   );
   return { esquema: 1, reglas, correcciones, descartadas };
 }
 
 export const escribirReglas = (d: DatosReglas): string => `${JSON.stringify(d, null, 2)}\n`;
 
-const misma = (a: Propuesta, b: Propuesta) => a.firma === b.firma && a.tipo === b.tipo;
+const misma = (a: { huella: string; tipo: TipoElemento }, huella: string, tipo: TipoElemento) =>
+  a.huella === huella && a.tipo === tipo;
 
 /**
  * Anota que un contenido se corrigió a `tipo`. Si con esta ya van {@link CORRECCIONES_PARA_PROPONER} con su firma y ese
- * tipo, y ni hay ya una regla que lo diga ni se rechazó, la propuesta. Sin firma, nada cambia.
+ * tipo, y ni hay ya una regla que lo diga ni se rechazó, la propuesta. Sin firma, o a un binario, nada cambia.
  */
 export function anotarCorreccion(
   d: DatosReglas,
@@ -125,59 +144,77 @@ export function anotarCorreccion(
   en: string,
 ): { datos: DatosReglas; propuesta: Propuesta | null } {
   const firma = firmaDe(texto);
-  if (!firma) return { datos: d, propuesta: null };
-  const correcciones = [...d.correcciones, { firma, tipo, en }].slice(-MAX_CORRECCIONES);
+  if (!firma || SIN_REGLA.has(tipo)) return { datos: d, propuesta: null };
+  const huella = huellaDe(firma);
+  const correcciones = [...d.correcciones, { huella, tipo, en }].slice(-MAX_CORRECCIONES);
   const datos = { ...d, correcciones };
-  const p = { firma, tipo };
-  const veces = correcciones.filter((c) => misma(c, p)).length;
+  const veces = correcciones.filter((c) => misma(c, huella, tipo)).length;
   const yaEsRegla = d.reglas.some((r) => r.prefijo === firma && r.tipo === tipo);
-  const rechazada = d.descartadas.some((x) => misma(x, p));
-  return { datos, propuesta: veces >= CORRECCIONES_PARA_PROPONER && !yaEsRegla && !rechazada ? p : null };
+  const rechazada = d.descartadas.some((x) => misma(x, huella, tipo));
+  return {
+    datos,
+    propuesta: veces >= CORRECCIONES_PARA_PROPONER && !yaEsRegla && !rechazada ? { firma, tipo } : null,
+  };
 }
 
 /** Acepta una propuesta: la regla (si ya había una con ese prefijo, cambia su tipo) y fuera sus correcciones. */
 export function aceptarPropuesta(d: DatosReglas, p: Propuesta, creada: string): DatosReglas {
   const existe = d.reglas.some((r) => r.prefijo === p.firma);
+  const huella = huellaDe(p.firma);
   return {
     ...d,
     reglas: existe
       ? d.reglas.map((r) => (r.prefijo === p.firma ? { ...r, tipo: p.tipo } : r))
       : [...d.reglas, { prefijo: p.firma, tipo: p.tipo, creada }],
-    correcciones: d.correcciones.filter((c) => c.firma !== p.firma),
+    correcciones: d.correcciones.filter((c) => c.huella !== huella),
   };
 }
 
 /** Rechaza una propuesta: no se vuelve a ofrecer, y fuera sus correcciones. */
 export function descartarPropuesta(d: DatosReglas, p: Propuesta): DatosReglas {
+  const huella = huellaDe(p.firma);
   return {
     ...d,
-    // Solo la firma y el tipo (la del feed lleva también su momento).
-    descartadas: d.descartadas.some((x) => misma(x, p))
+    descartadas: d.descartadas.some((x) => misma(x, huella, p.tipo))
       ? d.descartadas
-      : [...d.descartadas, { firma: p.firma, tipo: p.tipo }],
-    correcciones: d.correcciones.filter((c) => !misma(c, p)),
+      : [...d.descartadas, { huella, tipo: p.tipo }],
+    correcciones: d.correcciones.filter((c) => !misma(c, huella, p.tipo)),
   };
 }
 
-/** Cambia la regla `i` (su prefijo o su tipo); un prefijo que no vale o que ya tiene otra regla no se aplica. */
-export function editarRegla(d: DatosReglas, i: number, cambio: Partial<Pick<ReglaDeteccion, 'prefijo' | 'tipo'>>) {
+/**
+ * Cambia la regla de prefijo `prefijo` (su prefijo o su tipo): por su prefijo y no por su posición, que puede cambiar
+ * si la lista cambia entre tanto. Un prefijo que no vale o que ya tiene otra regla no se aplica.
+ */
+export function editarRegla(
+  d: DatosReglas,
+  prefijo: string,
+  cambio: Partial<Pick<ReglaDeteccion, 'prefijo' | 'tipo'>>,
+): DatosReglas {
+  const i = d.reglas.findIndex((r) => r.prefijo === prefijo);
   const actual = d.reglas[i];
   if (!actual) return d;
-  const prefijo = cambio.prefijo ?? actual.prefijo;
-  if (!prefijoValido(prefijo) || d.reglas.some((r, j) => j !== i && r.prefijo === prefijo)) return d;
+  const nuevo = cambio.prefijo ?? actual.prefijo;
+  if (!prefijoValido(nuevo) || d.reglas.some((r, j) => j !== i && r.prefijo === nuevo)) return d;
   const reglas = [...d.reglas];
-  reglas[i] = { ...actual, prefijo, tipo: cambio.tipo ?? actual.tipo };
+  reglas[i] = { ...actual, prefijo: nuevo, tipo: cambio.tipo ?? actual.tipo };
   return { ...d, reglas };
 }
 
-export const borrarRegla = (d: DatosReglas, i: number): DatosReglas => ({
+export const borrarRegla = (d: DatosReglas, prefijo: string): DatosReglas => ({
   ...d,
-  reglas: d.reglas.filter((_, j) => j !== i),
+  reglas: d.reglas.filter((r) => r.prefijo !== prefijo),
 });
 
-/** La primera regla cuyo prefijo empieza la primera línea con contenido del texto. */
+/**
+ * La regla que decide un texto: de las que su prefijo empieza la primera línea con contenido, la del prefijo más largo
+ * (la más concreta: `[app]` gana a `[`, en el orden que sea).
+ */
 export function reglaPara(texto: string, reglas: readonly ReglaDeteccion[]): ReglaDeteccion | undefined {
   if (!reglas.length) return undefined;
   const linea = primeraLinea(texto);
-  return reglas.find((r) => r.prefijo && linea.startsWith(r.prefijo));
+  let mejor: ReglaDeteccion | undefined;
+  for (const r of reglas)
+    if (r.prefijo && linea.startsWith(r.prefijo) && r.prefijo.length > (mejor?.prefijo.length ?? 0)) mejor = r;
+  return mejor;
 }

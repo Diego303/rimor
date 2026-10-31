@@ -180,7 +180,8 @@
       "reglaDespues": " son de tipo {tipo}. ¿Lo recuerdo para los siguientes?",
       "reglaSi": "Sí, recuérdalo",
       "reglaNo": "No",
-      "reglaGuardada": "Regla guardada"
+      "reglaGuardada": "Regla guardada",
+      "reglaPropuesta": "Rimor propone una regla de detección en Inicio"
     },
     "elemento": {
       "titulo": "Elemento",
@@ -909,9 +910,11 @@
     "reglas": "Reglas aprendidas",
     "reglasTexto": "Lo que empieza por el prefijo se guarda con su tipo, sin detectarlo.",
     "reglasVacio": "Ninguna todavía. Si corriges el tipo de algo parecido tres veces, Rimor te propondrá una.",
-    "reglaPrefijo": "Prefijo",
-    "reglaTipo": "Tipo",
+    "reglaPrefijo": "Prefijo de la regla {n}",
+    "reglaTipo": "Tipo de la regla {n}",
     "reglaBorrar": "Borrar la regla {prefijo}",
-    "reglaNoVale": "Ese prefijo no vale: vacío, con saltos de línea o ya en otra regla."
+    "reglaNoVale": "Ese prefijo no vale: vacío, con espacios al principio, de más de 64 caracteres, con saltos de línea o ya en otra regla.",
+    "reglasIlegibles": "El archivo .rimor/reglas-deteccion.json no se entiende (¿editado a mano o de una versión más nueva?): no se usa ni se toca. Arréglalo o bórralo para volver a aprender reglas.",
+    "reglasNoGuardadas": "No se pudieron guardar las reglas: el archivo no se entiende."
   }
 }

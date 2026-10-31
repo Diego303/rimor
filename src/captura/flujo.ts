@@ -34,6 +34,8 @@ import { anteriorDe } from './versiones';
 /** Por encima de este tamaño, un archivo se rechaza (ficha IN-014). */
 export const LIMITE_ARCHIVO = 50 * 1024 * 1024;
 const LARGO_TITULO = 120;
+/** Con un tipo forzado, solo se comprueba si contradice al detector en textos de hasta este tamaño. */
+export const LARGO_COMPROBAR_TIPO = 1024 * 1024;
 /** Tipos cuyo lector trabaja con los bytes del archivo, no con su texto. */
 const TIPOS_BINARIOS: ReadonlySet<TipoElemento> = new Set(['archivo', 'imagen', 'pdf']);
 
@@ -187,10 +189,18 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     ...(archivo ? { archivos: [bytes ? archivo : new File([texto ?? ''], archivo.name, { type: archivo.type })] } : {}),
   };
 
-  // 3. Detectar. Con el tipo forzado, solo para saber si el forzado lo corrige.
-  const detectada = detectar(vista, registro, { ...opcionesDetectar(opciones), ...(cabecera ? { cabecera } : {}) });
-  const deteccion = entrada.tipo ? null : detectada;
-  const detectado = entrada.tipo && detectada.tipo !== entrada.tipo ? detectada.tipo : undefined;
+  // 3. Detectar, salvo que el tipo venga forzado. Con el tipo forzado (y con lector) se detecta solo para saber si lo
+  // corrige, y solo si no es enorme: con 50 MB serían segundos de más por un recuento.
+  const opcionesDeteccion = { ...opcionesDetectar(opciones), ...(cabecera ? { cabecera } : {}) };
+  const deteccion = entrada.tipo ? null : detectar(vista, registro, opcionesDeteccion);
+  const comprobar =
+    entrada.tipo &&
+    registro.deTipo(entrada.tipo) &&
+    (texto?.length ?? Number.POSITIVE_INFINITY) <= LARGO_COMPROBAR_TIPO;
+  const detectada = comprobar ? detectar(vista, registro, opcionesDeteccion) : null;
+  // Solo contradice al detector si estaba convencido de otra cosa (no si nada le convencía y habría sido Texto).
+  const detectado =
+    detectada && detectada.via !== 'por-defecto' && detectada.tipo !== entrada.tipo ? detectada.tipo : undefined;
   const lector = lectorPara(registro, entrada.tipo, deteccion?.lector ?? null, bytes !== null);
   if (!lector) return fallo('captura.sinLector', { tipo: entrada.tipo ?? deteccion?.tipo ?? 'texto' });
 

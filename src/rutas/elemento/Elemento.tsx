@@ -205,7 +205,9 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       if (!ref) return avisos?.avisar(t('pantallas.inicio.noCambiado'));
       void espacio.contadores.contar('correccionesDeTipo').catch(() => undefined);
       // Tres correcciones de contenidos que empiezan igual proponen una regla en el feed (IN-049).
-      aprenderCorreccion(espacio, el.original, nuevo.tipo);
+      void aprenderCorreccion(espacio, el.original, nuevo.tipo).then(
+        (p) => p && avisos?.avisar(t('pantallas.inicio.reglaPropuesta')),
+      );
       // Ahora es un error: entra en el hilo de su huella, si lo hay (IN-030).
       void formarSiEsError(ref, { repositorio: espacio.repositorio, entidades: espacio.entidades }).catch(() => null);
       void navegar({ to: '/e/$ref', params: { ref }, replace: true });

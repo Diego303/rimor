@@ -36,6 +36,13 @@ describe('partir un pegado', () => {
     expect(partes(bloques)).toBeNull();
     expect(partes(`a\n\nb${'x'.repeat(LARGO_MAXIMO)}`)).toBeNull();
   });
+
+  it('un tramo largo de espacios dentro de un bloque no lo vuelve lento (sin retroceso cuadrático)', () => {
+    const texto = `uno\n\nb${' '.repeat(200_000)}c`;
+    const inicio = performance.now();
+    expect(partes(texto)?.partes).toHaveLength(2);
+    expect(performance.now() - inicio).toBeLessThan(200);
+  });
 });
 
 describe('cuándo ofrece dividir la vista previa', () => {
@@ -46,7 +53,7 @@ describe('cuándo ofrece dividir la vista previa', () => {
     });
   });
 
-  it('bloques que son cosas (dos trazas, una traza y un curl), sí', () => {
+  it('bloques que son cosas (dos trazas, una traza y un curl detrás), sí', () => {
     expect(previsualizar(`${TRAZA}\n\n${TRAZA.replace('42', '43')}`, REGISTRO).division).toEqual({
       n: 2,
       via: 'bloques',
@@ -54,7 +61,16 @@ describe('cuándo ofrece dividir la vista previa', () => {
     expect(previsualizar(`${TRAZA}\n\n${CURL}`, REGISTRO).division?.n).toBe(2);
     // Una mezcla que nadie reconoce entera (Texto) también.
     const json = '{"pedido": 7, "estado": "pagado", "lineas": [1, 2]}';
-    expect(previsualizar(`${CURL}\n\n${json}\n\n${TRAZA}`, REGISTRO).division?.n).toBe(3);
+    expect(previsualizar(`${json}\n\n${TRAZA}\n\n${CURL}`, REGISTRO).division?.n).toBe(3);
+  });
+
+  it('una orden con su salida es una sola cosa: no se divide', () => {
+    const peticion =
+      '$ curl -i https://api.ejemplo.es/v1/pagos\nHTTP/2 500\ncontent-type: application/json\n\n{"error": "fallo", "codigo": 7}';
+    expect(previsualizar(peticion, REGISTRO).division).toBeUndefined();
+    const prueba =
+      '$ npm test\n> vitest run\n\n FAIL  src/a.test.ts\nError: boom\n    at Object.<anonymous> (src/a.test.ts:3:9)';
+    expect(previsualizar(prueba, REGISTRO).division).toBeUndefined();
   });
 
   it('notas con párrafos, un código, un log con huecos o un Markdown, no', () => {

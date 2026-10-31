@@ -36,6 +36,9 @@ const CON_BLOQUES_PROPIOS: ReadonlySet<TipoElemento> = new Set([
   'prompt',
   'log',
   'mediciones',
+  // Una orden y su salida (`$ curl -i …` con la respuesta; `$ npm test` con el fallo) son una sola cosa.
+  'comando',
+  'http',
 ]);
 
 /**
@@ -58,6 +61,8 @@ export function previsualizar(texto: string, registro: Registro, opciones?: Opci
   };
 }
 
+/** Lo que se ejecuta: lo que va detrás de una orden es su salida. */
+const ORDENES: ReadonlySet<TipoElemento> = new Set(['comando', 'http']);
 /** Lo que se detecta en un párrafo de prosa: un bloque así no es un elemento suelto. */
 const PROSA: ReadonlySet<TipoElemento> = new Set(['texto', 'idea']);
 
@@ -78,7 +83,12 @@ function divisionDe(
     if (CON_BLOQUES_PROPIOS.has(tipo)) return undefined;
     const delBloque = (b: string) =>
       detectar({ texto: ocultar(b, opcionesOcultar(opciones)).texto }, registro, opcionesDetectar(opciones)).tipo;
-    if (p.partes.some((b) => PROSA.has(delBloque(b)))) return undefined;
+    // Una orden seguida de lo que sigue es la orden y su salida (`$ npm test` y el fallo): una sola cosa.
+    const primero = delBloque(p.partes[0] ?? '');
+    if (ORDENES.has(primero) || PROSA.has(primero)) return undefined;
+    // Los demás, los más cortos primero: el primero que es prosa ya decide, y detectar uno corto cuesta poco.
+    const porLargo = p.partes.slice(1).sort((a, b) => a.length - b.length);
+    if (porLargo.some((b) => PROSA.has(delBloque(b)))) return undefined;
   }
   return { n: p.partes.length, via: p.via };
 }

@@ -153,7 +153,7 @@ describe('Ajustes: casos de la revisión', () => {
     await screen.findByRole('heading', { name: 'Reglas aprendidas' }, PRIMERA_CARGA);
     const guardadas = async () =>
       JSON.parse((await leerTexto(almacen, '.rimor/reglas-deteccion.json')) ?? '{}').reglas as { prefijo: string }[];
-    const prefijos = () => screen.getAllByRole('textbox', { name: 'Prefijo' }) as HTMLInputElement[];
+    const prefijos = () => screen.getAllByRole('textbox', { name: /^Prefijo de la regla \d$/ }) as HTMLInputElement[];
     expect(prefijos().map((c) => c.value)).toEqual(['[app]', 'svc:']);
 
     // El prefijo se guarda al salir del campo.
@@ -167,7 +167,7 @@ describe('Ajustes: casos de la revisión', () => {
     expect(prefijos()[0]?.getAttribute('aria-invalid')).toBe('true');
     expect(prefijos()[0]?.value).toBe('app:');
     // El tipo, con los que tienen lector (sin los binarios).
-    const tipo = screen.getAllByRole('combobox', { name: 'Tipo' })[1] as HTMLSelectElement;
+    const tipo = screen.getByRole('combobox', { name: 'Tipo de la regla 2' }) as HTMLSelectElement;
     expect([...tipo.options].map((o) => o.value)).not.toContain('imagen');
     fireEvent.change(tipo, { target: { value: 'json' } });
     await waitFor(
@@ -179,5 +179,15 @@ describe('Ajustes: casos de la revisión', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Borrar la regla svc:' }));
     await waitFor(async () => expect(await guardadas()).toEqual([]), ESCRITURA);
     expect(screen.getByText(/Ninguna todavía/)).toBeTruthy();
+    // El botón se fue: el foco, al título de la lista.
+    expect(document.activeElement?.textContent).toBe('Reglas aprendidas');
+  }, 30_000);
+
+  it('un archivo de reglas que no se entiende se dice (y no se toca)', async () => {
+    const roto = '{"esquema": 1, "reglas": [roto';
+    const { almacen } = await montarApp('/ajustes', [], (a) => escribirTexto(a, '.rimor/reglas-deteccion.json', roto));
+    expect(await screen.findByText(/no se entiende/, {}, PRIMERA_CARGA)).toBeTruthy();
+    expect(screen.queryByText(/Ninguna todavía/)).toBeNull();
+    expect(await leerTexto(almacen, '.rimor/reglas-deteccion.json')).toBe(roto);
   }, 30_000);
 });

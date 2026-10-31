@@ -145,11 +145,30 @@ describe('Compositor', () => {
     fireEvent.keyDown(area, { key: 'Enter' });
     await waitFor(() => expect(repositorio?.elementos().some((fm) => fm.tipo === 'texto')).toBe(true));
     await waitFor(() => expect(espacio?.contadores.total('correccionesDeTipo')).toBe(antes + 1));
-    // Uno que coincide, no.
+    await waitFor(() => expect(useCompositor.getState().texto).toBe(''));
+    // Uno que coincide, no (se espera a que la caja se vacíe: el recuento va antes de vaciarla).
     escribir(area, '/log 17:41 ERROR otra');
     fireEvent.keyDown(area, { key: 'Enter' });
-    await waitFor(() => expect(repositorio?.elementos().some((fm) => fm.tipo === 'log')).toBe(true));
+    await waitFor(() => expect(useCompositor.getState().texto).toBe(''));
     expect(espacio?.contadores.total('correccionesDeTipo')).toBe(antes + 1);
+  });
+
+  it('tres /tipo que contradicen al detector con la misma firma proponen la regla (IN-049)', async () => {
+    useCompositor.setState({ propuestas: [] });
+    const area = await montar();
+    for (const n of [1, 2, 3]) {
+      escribir(area, `/texto [app] 17:4${n} ERROR caída ${n}`);
+      fireEvent.keyDown(area, { key: 'Enter' });
+      await waitFor(() => expect(useCompositor.getState().texto).toBe(''));
+    }
+    await waitFor(() => expect(useCompositor.getState().propuestas).toMatchObject([{ firma: '[app]', tipo: 'texto' }]));
+  });
+
+  it('pegar tres URL ofrece «Dividir en 3 elementos» y crea tres', async () => {
+    const area = await montar();
+    escribir(area, 'https://a.es/uno\nhttps://b.es/dos\nhttps://c.es/tres');
+    fireEvent.click(await screen.findByRole('button', { name: 'Dividir en 3 elementos' }));
+    await waitFor(() => expect(repositorio?.elementos()).toHaveLength(3));
   });
 
   it('autocompleta colecciones con el teclado', async () => {

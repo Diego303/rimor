@@ -29,8 +29,8 @@ Catálogo: CAP-06 y CAP-07 (plan §5, v0.2). Depende de IN-013 (detector) e IN-0
   {
     "esquema": 1,
     "reglas": [{ "prefijo": "[app]", "tipo": "log", "creada": "2026-10-31T18:00:00+01:00" }],
-    "correcciones": [{ "firma": "[app]", "tipo": "log", "en": "…" }],
-    "descartadas": [{ "firma": "[app]", "tipo": "log" }]
+    "correcciones": [{ "huella": "3f9a…", "tipo": "log", "en": "…" }],
+    "descartadas": [{ "huella": "3f9a…", "tipo": "log" }]
   }
   ```
 
@@ -125,3 +125,36 @@ Cubre las dos tareas y la nota de IN-016 sobre `/tipo`. Reutiliza el detector, l
 | Idea cuenta como prosa al decidir si se divide | Las notas cortas se detectan como Idea: con solo «no es Texto», unas notas con párrafos se ofrecían dividir. |
 | Un conjunto detectado como Texto sí puede dividirse | Una mezcla (un curl, un JSON y una traza) no la reconoce entera ningún lector: es justo cuando más sirve dividir. |
 | Al rechazar una propuesta se guardan solo su firma y su tipo | La del feed lleva también su momento. |
+
+## Verificación
+
+- `pnpm verificar` en verde (ver `docs/seguimiento.md`).
+- La revisión independiente encontró 15 hallazgos; todos se atendieron con pruebas:
+  1. **Retroceso cuadrático** en `partes()` (`/\s+$/` con un tramo largo de espacios: 3,8 s con 60.000) bloqueaba la vista previa: ahora usa `trimEnd`. Prueba con 200.000 espacios.
+  2. **Un error de E/S al abrir** dejaba las reglas vacías y la siguiente corrección sobrescribía el archivo. Ahora se distingue «no se pudo leer» (se vuelve a leer antes de escribir) de «no se entiende» (no se toca). Hay pruebas de los dos casos.
+  3. **La firma aceptaba palabras corrientes con puntuación** (`¿Por`, `Hola,`, `I'm`, `(nota)`) **y fechas u horas**: ahora quita esa puntuación y descarta las fechas.
+  4. **Se ofrecía dividir una orden con su salida** (`$ curl -i …` y la respuesta, `$ npm test` y el fallo): ahora no se divide si el conjunto o el primer bloque es Comando o Petición HTTP. Dos curl seguidos tampoco se ofrecen dividir (limitación aceptada).
+  5. Un `/tipo` hacía detectar siempre, también con 50 MB: ahora solo con textos de hasta 1 MB y tipos con lector.
+  6. **Un archivo ilegible no se veía**: Ajustes lo dice («no se entiende… no se usa ni se toca») y los errores tienen un texto propio (`ErrorReglasIlegibles`, `reglasLegibles()`).
+  7. **Una regla concreta podía quedar tapada por una general anterior**: ahora gana la del prefijo más largo.
+  8. **Se aprendía hacia tipos sin lector o binarios**, y se contaba como corrección un `/tipo` cuando el detector no estaba convencido: ya no.
+  9. Un archivo de un esquema más nuevo se leía y se sobrescribía: ahora no se entiende (y no se toca).
+  10. **Privacidad**: las correcciones y lo rechazado guardaban el principio del original. Ahora guardan la huella de la firma (16 caracteres de su SHA-256); solo las reglas aceptadas llevan su prefijo.
+  11. Las reglas se editaban y se borraban por su posición: ahora por su prefijo.
+  12. **Accesibilidad**:
+      - cada fila tiene sus etiquetas («Prefijo de la regla 2»);
+      - el campo lleva `maxLength`;
+      - el aviso de prefijo no válido dice todos los casos;
+      - al borrar, el foco va al título de la lista;
+      - con «Sí» o «No», el foco va a la caja de capturar;
+      - cuando sale una propuesta, el aviso dice «Rimor propone una regla de detección en Inicio».
+  13. La vista previa no seguía a las reglas: ahora se rehace cuando cambian. «Dividir» con una vista previa vieja (otro N) no hace nada.
+  14. Coste de la vista previa con bloques: se detectan primero los más cortos y se para en el primero que es prosa.
+  15. **Pruebas que faltaban**:
+      - el recuento del `/tipo` sin carrera;
+      - tres `/tipo` que proponen la regla;
+      - las tres URL que crean tres elementos;
+      - `aprender.test.ts`;
+      - la pestaña que solo lee releyendo las reglas;
+      - el error de E/S;
+      - el rendimiento de `partes`.

@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-31 18:01
-**Ahora:** IN-049 · Reglas aprendidas y captura múltiple · fase verificación
-**Siguiente:** IN-050 · PWA, sin conexión y compartir
-**Progreso:** F0 9/9 · v0.1 42/42 · v0.2 8/22 · v0.3 0/17 · v0.4 0/9 · total 59/99
+**Última actualización:** 2026-10-31 18:27
+**Ahora:** IN-050 · PWA, sin conexión y compartir · fase análisis y diseño
+**Siguiente:** IN-051 · Sesiones automáticas
+**Progreso:** F0 9/9 · v0.1 42/42 · v0.2 9/22 · v0.3 0/17 · v0.4 0/9 · total 60/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -68,7 +68,7 @@
 | IN-046 | Petición HTTP | v0.2 | 8 | hecha | ba600a9 7660ed5 48b78e9 | docs/features/IN-046-peticion-http.md |
 | IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | hecha | c10e372 e49767e e7ea869 | docs/features/IN-047-mediciones-formatos-hodges-lehmann.md |
 | IN-048 | Logs: plantillas con Drain | v0.2 | 8 | hecha | 7cfc86d 212c98c 8f51fbb | docs/features/IN-048-logs-drain.md |
-| IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | en verificación | f5deee9 | docs/features/IN-049-reglas-captura-multiple.md |
+| IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | hecha | f5deee9 3fae762 | docs/features/IN-049-reglas-captura-multiple.md |
 | IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | pendiente | — | — |
 | IN-051 | Sesiones automáticas | v0.2 | 9 | pendiente | — | — |
 | IN-052 | Grupos automáticos y pantalla de colección | v0.2 | 9 | pendiente | — | — |
@@ -178,7 +178,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-049 | implementación | reglas.ts (firma, archivo, aprender, aplicar), via regla en el detector y la vista previa, reglas() y guardarReglas() en el espacio, propuesta en el feed con Sí/No, lista en Ajustes, /tipo que contradice cuenta, dividir.ts y «Dividir en N elementos»; verificar en verde: 124 archivos, 1607 pruebas + 6 de rendimiento, 276,9 KB | … |
+| 2026-10-31 | IN-049 | verificación | revisión independiente (15 hallazgos) corregida con pruebas: partes sin retroceso cuadrático, reglas sin leer frente a ilegibles, firma sin puntuación ni fechas, orden y su salida sin dividir, /tipo solo hasta 1 MB y con lector, archivo ilegible avisado, prefijo más largo, sin tipos sin lector, esquema nuevo intacto, huellas en vez de firmas, edición por prefijo, accesibilidad, vista previa al día; verificar en verde: 125 archivos, 1618 pruebas + 6 de rendimiento, 277,6 KB | … |
+| 2026-10-31 | IN-049 | implementación | reglas.ts (firma, archivo, aprender, aplicar), via regla en el detector y la vista previa, reglas() y guardarReglas() en el espacio, propuesta en el feed con Sí/No, lista en Ajustes, /tipo que contradice cuenta, dividir.ts y «Dividir en N elementos»; verificar en verde: 124 archivos, 1607 pruebas + 6 de rendimiento, 276,9 KB | 3fae762 |
 | 2026-10-31 | IN-049 | análisis y diseño | reglas por la firma (primera palabra con letra y signo) en .rimor/reglas-deteccion.json, propuesta a la tercera corrección como mensaje del feed, aplicadas en el detector y la vista previa, editables en Ajustes; /tipo que contradice cuenta; dividir en enlaces o bloques reconocidos con un botón en la vista previa | f5deee9 |
 | 2026-10-31 | IN-048 | verificación | OK: pnpm verificar en verde (122 archivos, 1578 pruebas + 6 de rendimiento, 274,8 KB); revisión independiente con 11 hallazgos atendidos (agrupación sin parecido: identificadores y huecos de 5 valores; independiente del orden; lineal; comparación sobre la unión) | 8f51fbb |
 | 2026-10-31 | IN-048 | implementación | Drain sobre las plantillas normalizadas (nivel y largo en la raíz, primera palabra sin el nivel, umbral 0,6, rutas que no se juntan), versión 2 del lector log, <*> pintado; verificar en verde: 122 archivos, 1573 pruebas, 273,8 KB | 212c98c |

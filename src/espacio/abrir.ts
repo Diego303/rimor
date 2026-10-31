@@ -69,12 +69,25 @@ export interface EspacioAbierto {
   guardarAjustes(cambio: (a: Ajustes) => Ajustes): Promise<void>;
   /** Reglas de detección aprendidas (IN-049, `.rimor/reglas-deteccion.json`). */
   reglas(): DatosReglas;
-  /** Guarda un cambio de las reglas (en orden; solo escribe la pestaña que escribe) y avisa. */
+  /** Si se entiende el archivo de reglas (si no, no se toca: `guardarReglas` falla con `ErrorReglasIlegibles`). */
+  reglasLegibles(): boolean;
+  /**
+   * Guarda un cambio de las reglas (en orden; solo escribe la pestaña que escribe) y avisa. Con las reglas leídas, el
+   * cambio se aplica al momento; si aún no se pudieron leer, después de leerlas.
+   */
   guardarReglas(cambio: (r: DatosReglas) => DatosReglas): Promise<void>;
   /** Contadores locales de lo ahorrado (IN-016). */
   contadores: Contadores;
   /** Escribe lo pendiente y suelta el cerrojo y la caché. */
   cerrar(): Promise<void>;
+}
+
+/** El archivo de reglas existe pero no se entiende (o es de una versión más nueva): no se sobrescribe. */
+export class ErrorReglasIlegibles extends Error {
+  constructor() {
+    super('.rimor/reglas-deteccion.json no se entiende: no se sobrescribe');
+    this.name = 'ErrorReglasIlegibles';
+  }
 }
 
 export type FaseApertura = { fase: 'abriendo' } | { fase: 'indexando'; hechos: number; total: number };
@@ -163,27 +176,40 @@ export async function abrirEspacio(
         .then(() => coordinacion.avisarCambio([]));
       return ajustesPendientes;
     };
-    // Las reglas, igual; un archivo que existe pero no se entiende no se sobrescribe (se perderían): se ignora.
-    const leerReglasSeguro = async (): Promise<{ datos: DatosReglas; legible: boolean } | null> => {
+    // Las reglas, igual, salvo dos cosas: un archivo que existe pero no se entiende no se sobrescribe (se perderían), y
+    // si no se pudo leer (E/S) se vuelve a leer antes de escribir nada: se escriben solas con cada corrección del tipo.
+    type EstadoReglas = { datos: DatosReglas; estado: 'leidas' | 'ilegibles' | 'sinLeer' };
+    const leerReglasSeguro = async (): Promise<EstadoReglas> => {
       try {
         const datos = leerReglas(await leerTexto(dep.almacen, RUTA_REGLAS));
-        return datos ? { datos, legible: true } : { datos: REGLAS_INICIALES, legible: false };
+        return datos ? { datos, estado: 'leidas' } : { datos: REGLAS_INICIALES, estado: 'ilegibles' };
       } catch {
-        return null;
+        return { datos: REGLAS_INICIALES, estado: 'sinLeer' };
       }
     };
-    let reglas = (await leerReglasSeguro()) ?? { datos: REGLAS_INICIALES, legible: true };
+    let reglas = await leerReglasSeguro();
     let reglasPendientes: Promise<void> = Promise.resolve();
-    const guardarReglas = (cambio: (r: DatosReglas) => DatosReglas) => {
-      if (!reglas.legible) return Promise.reject(new Error('reglas-deteccion.json no se entiende'));
-      reglas = { datos: cambio(reglas.datos), legible: true };
-      const copia = reglas.datos;
-      avisar();
+    const guardarReglas = (cambio: (r: DatosReglas) => DatosReglas): Promise<void> => {
+      const aplicar = () => {
+        if (reglas.estado !== 'leidas') throw new ErrorReglasIlegibles();
+        reglas = { datos: cambio(reglas.datos), estado: 'leidas' };
+        const copia = reglas.datos;
+        avisar();
+        return copia;
+      };
+      // Leídas: el cambio vale ya (quien llama lee el resultado al momento) y la escritura va en su turno.
+      const copia = reglas.estado === 'leidas' ? aplicar() : null;
       reglasPendientes = reglasPendientes
         .catch(() => undefined)
-        .then(() =>
-          escribe() && !cerrado ? escribirTexto(dep.almacen, RUTA_REGLAS, escribirReglas(copia)) : undefined,
-        )
+        .then(async () => {
+          if (copia) return copia;
+          if (reglas.estado === 'sinLeer') {
+            const otra = await leerReglasSeguro();
+            if (reglas.estado === 'sinLeer') reglas = otra;
+          }
+          return aplicar();
+        })
+        .then((d) => (escribe() && !cerrado ? escribirTexto(dep.almacen, RUTA_REGLAS, escribirReglas(d)) : undefined))
         .then(() => coordinacion.avisarCambio([]));
       return reglasPendientes;
     };
@@ -251,7 +277,9 @@ export async function abrirEspacio(
         await gestor.cargar().catch(() => undefined);
         estado = leerEstado(await leerTexto(dep.almacen, RUTA_ESTADO));
         ajustes = (await leerAjustesSeguro()) ?? ajustes;
-        reglas = (await leerReglasSeguro()) ?? reglas;
+        const releidas = await leerReglasSeguro();
+        // Una lectura que falla deja lo que había (si ya estaba leído).
+        if (releidas.estado !== 'sinLeer' || reglas.estado === 'sinLeer') reglas = releidas;
         avisar();
         return true;
       });
@@ -314,6 +342,7 @@ export async function abrirEspacio(
       ajustes: () => ajustes,
       guardarAjustes,
       reglas: () => reglas.datos,
+      reglasLegibles: () => reglas.estado !== 'ilegibles',
       guardarReglas,
       contadores,
       alCambiar: (fn) => {

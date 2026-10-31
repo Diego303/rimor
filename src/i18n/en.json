@@ -180,7 +180,8 @@
       "reglaDespues": " are of type {tipo}. Shall I remember that for the next ones?",
       "reglaSi": "Yes, remember it",
       "reglaNo": "No",
-      "reglaGuardada": "Rule saved"
+      "reglaGuardada": "Rule saved",
+      "reglaPropuesta": "Rimor suggests a detection rule in Home"
     },
     "elemento": {
       "titulo": "Item",
@@ -909,9 +910,11 @@
     "reglas": "Learned rules",
     "reglasTexto": "Whatever starts with the prefix is saved with its type, without detecting it.",
     "reglasVacio": "None yet. If you correct the type of similar things three times, Rimor will suggest one.",
-    "reglaPrefijo": "Prefix",
-    "reglaTipo": "Type",
+    "reglaPrefijo": "Prefix of rule {n}",
+    "reglaTipo": "Type of rule {n}",
     "reglaBorrar": "Delete the rule {prefijo}",
-    "reglaNoVale": "That prefix is not valid: empty, with line breaks or already in another rule."
+    "reglaNoVale": "That prefix is not valid: empty, starting with spaces, longer than 64 characters, with line breaks or already in another rule.",
+    "reglasIlegibles": "The file .rimor/reglas-deteccion.json cannot be read (edited by hand or from a newer version?): it is neither used nor touched. Fix or delete it to learn rules again.",
+    "reglasNoGuardadas": "The rules could not be saved: the file cannot be read."
   }
 }

@@ -1588,6 +1588,9 @@ pre.code.codigo .ln {
   gap: 6px;
   margin-top: 6px;
 }
+.ajustes-reglas h4:focus {
+  outline: none;
+}
 .ajustes-regla {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;

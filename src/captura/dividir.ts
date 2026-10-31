@@ -31,7 +31,8 @@ export function partes(texto: string): Partes | null {
   // Un salto de línea seguido de una o más líneas en blanco (o solo con espacios) separa dos bloques.
   const bloques = texto
     .split(/\r?\n(?:[^\S\r\n]*\r?\n)+/)
-    .map((b) => b.replace(/\s+$/, ''))
+    // `trimEnd` y no `/\s+$/`: con un tramo largo de espacios en medio, la expresión retrocede en tiempo cuadrático.
+    .map((b) => b.trimEnd())
     .filter((b) => b.trim());
   return bloques.length >= 2 && bloques.length <= MAX_BLOQUES ? { via: 'bloques', partes: bloques } : null;
 }

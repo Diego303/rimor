@@ -7,7 +7,7 @@ import { AlmacenMemoria } from '../almacen/memoria';
 import type { Canal, Cerrojos } from '../almacen/pestanas';
 import { RUTA_DIARIO } from '../almacen/repositorio';
 import { RUTA_REGLAS } from '../captura/reglas';
-import { abrirEspacio } from './abrir';
+import { abrirEspacio, ErrorReglasIlegibles } from './abrir';
 import { conCopia, conPersistencia, ESTADO_INICIAL, leerEstado, RUTA_ESTADO } from './estado';
 import { crearManifest, RUTA_MANIFEST } from './manifest';
 import {
@@ -442,5 +442,55 @@ describe('reglas de detección del espacio (IN-049)', () => {
     await expect(c.valor.guardarReglas((d) => ({ ...d, reglas: [regla] }))).rejects.toThrow();
     expect(await leerTexto(roto, RUTA_REGLAS)).toBe('{roto');
     await c.valor.cerrar();
+  });
+
+  it('si no se pudieron leer al abrir (E/S), se vuelven a leer antes de escribir: no se pierden', async () => {
+    const almacen = new AlmacenMemoria();
+    await escribirTexto(almacen, RUTA_REGLAS, JSON.stringify({ esquema: 1, reglas: [regla] }));
+    let fallar = true;
+    const leer = almacen.leer.bind(almacen);
+    almacen.leer = async (ruta) => {
+      if (ruta === RUTA_REGLAS && fallar) {
+        fallar = false;
+        throw new Error('E/S');
+      }
+      return leer(ruta);
+    };
+    const a = await abrir(almacen, 'r4');
+    if (!a.ok) throw new Error('no abre');
+    expect(a.valor.reglas().reglas).toEqual([]);
+    expect(a.valor.reglasLegibles()).toBe(true);
+    const otra = { prefijo: 'svc:', tipo: 'error' as const, creada: '' };
+    await a.valor.guardarReglas((d) => ({ ...d, reglas: [...d.reglas, otra] }));
+    expect(JSON.parse((await leerTexto(almacen, RUTA_REGLAS)) ?? '{}').reglas).toEqual([regla, otra]);
+    await a.valor.cerrar();
+  });
+
+  it('un esquema más nuevo no se entiende: no se usa ni se toca, y se dice', async () => {
+    const almacen = new AlmacenMemoria();
+    const texto = JSON.stringify({ esquema: 2, reglas: [regla], nuevo: true });
+    await escribirTexto(almacen, RUTA_REGLAS, texto);
+    const a = await abrir(almacen, 'r5');
+    if (!a.ok) throw new Error('no abre');
+    expect(a.valor.reglasLegibles()).toBe(false);
+    expect(a.valor.reglas().reglas).toEqual([]);
+    await expect(a.valor.guardarReglas((d) => d)).rejects.toThrow(ErrorReglasIlegibles);
+    expect(await leerTexto(almacen, RUTA_REGLAS)).toBe(texto);
+    await a.valor.cerrar();
+  });
+
+  it('la pestaña que solo lee ve las reglas que escribe la otra al releer', async () => {
+    const almacen = new AlmacenMemoria();
+    const cerrojos = cerrojosFalsos();
+    const fabrica = new IDBFactory();
+    const a = await abrir(almacen, 'r6', cerrojos, fabrica);
+    const b = await abrir(almacen, 'r6', cerrojos, fabrica);
+    if (!a.ok || !b.ok) throw new Error('no abre');
+    await a.valor.guardarReglas((d) => ({ ...d, reglas: [regla] }));
+    expect(b.valor.reglas().reglas).toEqual([]);
+    await b.valor.recargar();
+    expect(b.valor.reglas().reglas).toEqual([regla]);
+    await a.valor.cerrar();
+    await b.valor.cerrar();
   });
 });

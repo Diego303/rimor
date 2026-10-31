@@ -9,6 +9,7 @@ import {
   editarRegla,
   escribirReglas,
   firmaDe,
+  huellaDe,
   leerReglas,
   MAX_CORRECCIONES,
   REGLAS_INICIALES,
@@ -31,9 +32,30 @@ describe('firma de un contenido', () => {
     expect(firmaDe('<pago> rechazado')).toBe('<pago>');
   });
 
-  it('una palabra corriente, un número, una fecha sin letras, lo vacío o lo larguísimo no son firma', () => {
-    for (const t of ['Error al abrir', '2026-10-31 algo', '1234 líneas', '', '   \n  ', `[${'a'.repeat(40)}] x`, '---'])
-      expect(firmaDe(t)).toBeNull();
+  it('una palabra corriente (también con su puntuación), un número, una fecha, lo vacío o lo larguísimo no', () => {
+    for (const t of [
+      'Error al abrir',
+      '¿Por qué falla?',
+      'Hola, equipo',
+      'Hi, all',
+      "I'm here",
+      '(nota) algo',
+      '"Cita" de alguien',
+      'buen-día a todos',
+      '2026-10-31 algo',
+      '2026-10-31T18:00:00Z INFO x',
+      '18:00:00 arranque',
+      'app-2026-10-31: x',
+      '1234 líneas',
+      '',
+      '   \n  ',
+      `[${'a'.repeat(40)}] x`,
+      '---',
+    ])
+      expect(firmaDe(t), t).toBeNull();
+    // Con un signo propio, sí: aunque lleve guion entre letras o puntuación al final.
+    expect(firmaDe('mi-app: listo')).toBe('mi-app:');
+    expect(firmaDe('[app], arrancado')).toBe('[app],');
   });
 });
 
@@ -53,6 +75,18 @@ describe('aprender de las correcciones', () => {
     expect(corregir(d, []).propuesta).toBeNull();
     const sinFirma = anotarCorreccion(REGLAS_INICIALES, 'Error al abrir', 'log', EN);
     expect(sinFirma.datos).toBe(REGLAS_INICIALES);
+    // A un binario (no se detecta por su texto), tampoco.
+    expect(anotarCorreccion(REGLAS_INICIALES, '[app] x', 'imagen', EN).datos).toBe(REGLAS_INICIALES);
+  });
+
+  it('no guarda la firma de las correcciones ni de lo rechazado: solo su huella', () => {
+    const { datos, propuesta } = corregir(REGLAS_INICIALES, tres.slice(0, 2));
+    expect(propuesta).toBeNull();
+    const rechazada = descartarPropuesta(datos, { firma: 'secreto:', tipo: 'log' });
+    const texto = escribirReglas(rechazada);
+    expect(texto).not.toContain('[app]');
+    expect(texto).not.toContain('secreto:');
+    expect(datos.correcciones[0]?.huella).toBe(huellaDe('[app]'));
   });
 
   it('ni si ya hay una regla que lo dice, ni si se rechazó; aceptar la crea y rechazar no la vuelve a ofrecer', () => {
@@ -62,9 +96,9 @@ describe('aprender de las correcciones', () => {
     expect(aceptada.reglas).toEqual([{ prefijo: '[app]', tipo: 'log', creada: EN }]);
     expect(aceptada.correcciones).toEqual([]);
     expect(corregir(aceptada, tres).propuesta).toBeNull();
-    // La del feed lleva su momento: no se guarda.
+    // La del feed lleva su momento: no se guarda (ni la firma: su huella).
     const rechazada = descartarPropuesta(datos, { ...propuesta, en: EN } as typeof propuesta);
-    expect(rechazada.descartadas).toEqual([{ firma: '[app]', tipo: 'log' }]);
+    expect(rechazada.descartadas).toEqual([{ huella: huellaDe('[app]'), tipo: 'log' }]);
     expect(corregir(rechazada, tres).propuesta).toBeNull();
     // A otro tipo, sí: y al aceptarla, la regla cambia de tipo (no hay dos con el mismo prefijo).
     const otra = corregir(aceptada, tres, 'error');
@@ -89,8 +123,13 @@ describe('aplicar y editar', () => {
     ],
   };
 
-  it('la primera regla cuyo prefijo empieza la primera línea con contenido', () => {
-    expect(reglaPara('\n  [app] ERROR algo', d.reglas)?.tipo).toBe('log');
+  it('de las reglas cuyo prefijo empieza la primera línea con contenido, la del prefijo más largo', () => {
+    expect(reglaPara('\n  [app] ERROR algo', d.reglas)?.tipo).toBe('error');
+    expect(reglaPara('[app] INFO algo', d.reglas)?.tipo).toBe('log');
+    // En cualquier orden: una general (`[`) añadida antes no tapa a la concreta.
+    const general = [{ prefijo: '[', tipo: 'codigo' as const, creada: EN }, ...d.reglas];
+    expect(reglaPara('[app] x', general)?.tipo).toBe('log');
+    expect(reglaPara('[otra] x', general)?.tipo).toBe('codigo');
     expect(reglaPara('otra [app] cosa', d.reglas)).toBeUndefined();
     expect(reglaPara('[app] x', [])).toBeUndefined();
     // Sin partir un texto enorme en líneas (solo mira el principio).
@@ -98,12 +137,14 @@ describe('aplicar y editar', () => {
   });
 
   it('editar el prefijo y el tipo; un prefijo vacío, con salto o repetido no se aplica; borrar', () => {
-    expect(editarRegla(d, 0, { prefijo: 'app:' }).reglas[0]?.prefijo).toBe('app:');
-    expect(editarRegla(d, 0, { tipo: 'error' }).reglas[0]?.tipo).toBe('error');
+    // Por su prefijo, no por su posición.
+    expect(editarRegla(d, '[app]', { prefijo: 'app:' }).reglas[0]?.prefijo).toBe('app:');
+    expect(editarRegla(d, '[app] ERROR', { tipo: 'log' }).reglas[1]?.tipo).toBe('log');
     for (const prefijo of ['', '   ', 'a\nb', '[app] ERROR', ' x', 'x'.repeat(65)])
-      expect(editarRegla(d, 0, { prefijo })).toBe(d);
-    expect(editarRegla(d, 5, { prefijo: 'x:' })).toBe(d);
-    expect(borrarRegla(d, 0).reglas.map((r) => r.prefijo)).toEqual(['[app] ERROR']);
+      expect(editarRegla(d, '[app]', { prefijo })).toBe(d);
+    expect(editarRegla(d, 'no:', { prefijo: 'x:' })).toBe(d);
+    expect(borrarRegla(d, '[app]').reglas.map((r) => r.prefijo)).toEqual(['[app] ERROR']);
+    expect(borrarRegla(d, 'no:')).toEqual(d);
   });
 });
 
@@ -129,8 +170,8 @@ describe('el archivo', () => {
         'basura',
         { prefijo: 'svc:', tipo: 'error' },
       ],
-      correcciones: [{ firma: '[a]', tipo: 'log', en: EN }, { firma: 3 }],
-      descartadas: [{ firma: 'k:', tipo: 'json' }, null],
+      correcciones: [{ huella: 'abc', tipo: 'log', en: EN }, { huella: 3 }],
+      descartadas: [{ huella: 'def', tipo: 'json' }, null],
     });
     expect(leerReglas(texto)).toEqual({
       esquema: 1,
@@ -138,9 +179,11 @@ describe('el archivo', () => {
         { prefijo: '[app]', tipo: 'log', creada: EN },
         { prefijo: 'svc:', tipo: 'error', creada: '' },
       ],
-      correcciones: [{ firma: '[a]', tipo: 'log', en: EN }],
-      descartadas: [{ firma: 'k:', tipo: 'json' }],
+      correcciones: [{ huella: 'abc', tipo: 'log', en: EN }],
+      descartadas: [{ huella: 'def', tipo: 'json' }],
     });
+    // De un esquema más nuevo: no se entiende (y no se sobrescribe lo que no se conoce).
+    expect(leerReglas(JSON.stringify({ esquema: 2, reglas: [], nuevo: 1 }))).toBeNull();
     expect(leerReglas('{roto')).toBeNull();
     expect(leerReglas('[1, 2]')).toBeNull();
     expect(leerReglas('{}')).toEqual(REGLAS_INICIALES);

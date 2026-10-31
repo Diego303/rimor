@@ -7,6 +7,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { AlmacenMemoria } from '../../almacen/memoria';
 import type { Cerrojos } from '../../almacen/pestanas';
 import { useCompositor } from '../../captura/compositor';
+import { huellaDe } from '../../captura/reglas';
 import { type DependenciasProveedor, ProveedorEspacio, useEspacioOpcional } from '../../espacio/Espacio';
 import { useFrescos } from '../../estado/frescos';
 import { ejecutorEnHilo } from '../../lectores/ejecutor';
@@ -227,7 +228,10 @@ describe('Inicio', () => {
     await screen.findByRole('button', { name: 'svc: listo' }, PRIMERA_CARGA);
     act(() => useCompositor.getState().anotarPropuesta({ firma: 'svc:', tipo: 'error', en: isoConZona(new Date()) }));
     fireEvent.click(await screen.findByRole('button', { name: 'No' }, PRIMERA_CARGA));
-    await waitFor(() => expect(abierto.e?.reglas().descartadas).toEqual([{ firma: 'svc:', tipo: 'error' }]), ESCRITURA);
+    await waitFor(
+      () => expect(abierto.e?.reglas().descartadas).toEqual([{ huella: huellaDe('svc:'), tipo: 'error' }]),
+      ESCRITURA,
+    );
     expect(screen.queryByText(/son de tipo Error/)).toBeNull();
     expect(abierto.e?.reglas().reglas).toEqual([]);
   }, 30_000);
