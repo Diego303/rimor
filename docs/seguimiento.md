@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-31 19:15
-**Ahora:** IN-051 · Sesiones automáticas · fase análisis y diseño
+**Última actualización:** 2026-10-31 19:17
+**Ahora:** IN-051 · Sesiones automáticas · fase implementación
 **Siguiente:** IN-052 · Grupos automáticos y pantalla de colección
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 10/22 · v0.3 0/17 · v0.4 0/9 · total 61/99
 
@@ -69,8 +69,8 @@
 | IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | hecha | c10e372 e49767e e7ea869 | docs/features/IN-047-mediciones-formatos-hodges-lehmann.md |
 | IN-048 | Logs: plantillas con Drain | v0.2 | 8 | hecha | 7cfc86d 212c98c 8f51fbb | docs/features/IN-048-logs-drain.md |
 | IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | hecha | f5deee9 3fae762 1112b71 | docs/features/IN-049-reglas-captura-multiple.md |
-| IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | hecha | 38cddd1 2878cbd | docs/features/IN-050-pwa.md |
-| IN-051 | Sesiones automáticas | v0.2 | 9 | pendiente | — | — |
+| IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | hecha | 38cddd1 2878cbd 49b8a4f | docs/features/IN-050-pwa.md |
+| IN-051 | Sesiones automáticas | v0.2 | 9 | en implementación | — | docs/features/IN-051-sesiones.md |
 | IN-052 | Grupos automáticos y pantalla de colección | v0.2 | 9 | pendiente | — | — |
 | IN-053 | Enlaces automáticos | v0.2 | 9 | pendiente | — | — |
 | IN-054 | Vistas guardadas | v0.2 | 9 | pendiente | — | — |
@@ -179,7 +179,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-050 | verificación | revisión independiente (19 hallazgos; 18 corregidos con pruebas): revisión de la portada con la CSP, varias pestañas al actualizar, sin conexión en el móvil, compartir en solo lectura y con fallo, update() periódico, caché de DuckDB por versión, sin entradas repetidas, denylist, apple-touch-icon opaco, instalar en Ajustes, región viva de avisos; verificar en verde: 128 archivos, 1640 pruebas + 6 de rendimiento, 279,5 KB | … |
+| 2026-10-31 | IN-051 | análisis y diseño | sesion asignada al capturar (umbral de 45 min, id AAAA-MM-DD-franja con sufijo), nombres editados en sesiones.json en la raíz (combinados al importar), propuesto por colección, etiquetas o franja, tarjeta .sess en el feed con Renombrar | … |
+| 2026-10-31 | IN-050 | verificación | revisión independiente (19 hallazgos; 18 corregidos con pruebas): revisión de la portada con la CSP, varias pestañas al actualizar, sin conexión en el móvil, compartir en solo lectura y con fallo, update() periódico, caché de DuckDB por versión, sin entradas repetidas, denylist, apple-touch-icon opaco, instalar en Ajustes, región viva de avisos; verificar en verde: 128 archivos, 1640 pruebas + 6 de rendimiento, 279,5 KB | 49b8a4f |
 | 2026-10-31 | IN-050 | implementación | @vite-pwa/astro 1.2.0 + vite-plugin-pwa 1.3.0 (injectManifest, workbox 7.4.1): precarga de 127 entradas sin DuckDB, rimor-wasm bajo demanda, manifest con iconos y share_target, compartir por caché al compositor, aviso de versión con Actualizar, sin conexión en el pie del raíl, validarPwa en comprobar-dist; verificar en verde: 128 archivos, 1632 pruebas + 6 de rendimiento, 278,6 KB | 2878cbd |
 | 2026-10-31 | IN-050 | análisis y diseño | @vite-pwa/astro 1.2.0 con injectManifest (workbox 7.4.1), precarga del núcleo sin DuckDB y WASM bajo demanda, manifest con los iconos de IN-089 y share_target POST, compartido por caché hasta el compositor, aviso de versión nueva en la carcasa, sin conexión en el pie del raíl | 38cddd1 |
 | 2026-10-31 | IN-049 | verificación | revisión independiente (15 hallazgos) corregida con pruebas: partes sin retroceso cuadrático, reglas sin leer frente a ilegibles, firma sin puntuación ni fechas, orden y su salida sin dividir, /tipo solo hasta 1 MB y con lector, archivo ilegible avisado, prefijo más largo, sin tipos sin lector, esquema nuevo intacto, huellas en vez de firmas, edición por prefijo, accesibilidad, vista previa al día; verificar en verde: 125 archivos, 1618 pruebas + 6 de rendimiento, 277,6 KB | 1112b71 |
