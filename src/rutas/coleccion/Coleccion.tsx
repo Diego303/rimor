@@ -1,6 +1,6 @@
 /**
- * Una colección (ORG-02; cabecera como `SC.coleccion`): la lista simple de sus elementos, de lo más reciente a lo
- * más antiguo (el panel visual llega con IN-052); el nombre se edita en el sitio (renombrar), a la derecha solo el
+ * Una colección (ORG-02; como `SC.coleccion`): el panel común de grupo (IN-052: qué hay, cuándo, qué se repite y
+ * sus elementos) y «Exportar ZIP»; el nombre se edita en el sitio (renombrar), a la derecha solo el
  * selector de vista (guía §8.2) y, plegado al final, subirla o bajarla (su sitio en el raíl) o borrarla (con
  * confirmación: los elementos se quedan).
  */
@@ -17,9 +17,10 @@ import { Boton, Detalles, Dialogo, FilaElemento, Vacio } from '../../ui/componen
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { Icono } from '../../ui/iconos/Icono';
 import { TituloElemento } from '../elemento/Cabecera';
+import { CuerpoGrupo, ExportarGrupo } from '../grupo/PanelGrupo';
 import { Pantalla } from '../Pantalla';
 import { type Vista, vistaDe } from '../vistas/orden';
-import { ListaDensa, Mosaico, SelectorVista } from '../vistas/Vistas';
+import { SelectorVista } from '../vistas/Vistas';
 
 /** Los elementos de la colección y si existe, al día con cada cambio. */
 function useColeccion(id: string): { existe: boolean; elementos: FrontmatterComun[]; posicion: number; total: number } {
@@ -137,24 +138,17 @@ export function Coleccion() {
           ? meta
           : t('pantallas.coleccion.desde', { meta, fecha: fmtDia(masAntiguo, new Date(), idioma) })
       }
-      control={elementos.length > 0 ? <SelectorVista vista={vista} alCambiar={cambiarVista} /> : undefined}
-    >
-      {elementos.length && vista === 'mosaico' ? (
-        <Mosaico elementos={elementos} alAbrir={abrir} />
-      ) : elementos.length && vista === 'densa' ? (
-        <section className="card" aria-labelledby="elementos-coleccion">
-          <h3 id="elementos-coleccion">{t('pantallas.coleccion.elementos')}</h3>
-          <ListaDensa elementos={elementos} alAbrir={abrir} />
-        </section>
-      ) : elementos.length ? (
-        <section className="card" aria-labelledby="elementos-coleccion">
-          <h3 id="elementos-coleccion">{t('pantallas.coleccion.elementos')}</h3>
-          <div className="list">
-            {elementos.map((fm) => (
-              <FilaElemento key={fm.id} fm={fm} resumen={legible(fm)} alAbrir={abrir} />
-            ))}
+      control={
+        elementos.length > 0 ? (
+          <div className="row">
+            <ExportarGrupo elementos={elementos} nombre={coleccion} />
+            <SelectorVista vista={vista} alCambiar={cambiarVista} />
           </div>
-        </section>
+        ) : undefined
+      }
+    >
+      {elementos.length ? (
+        <CuerpoGrupo elementos={elementos} vista={vista} id="elementos-coleccion" />
       ) : (
         <Vacio titulo={t('pantallas.coleccion.vaciaTitulo')}>{t('pantallas.coleccion.vacio')}</Vacio>
       )}

@@ -10,7 +10,7 @@ import type { Almacen } from '../almacen/contrato';
 import { conCopia, type EstadoCuidado } from '../espacio/estado';
 import { descargarBlob } from '../lectores/descargar';
 import type { ApiExportar } from '../workers/exportar.worker';
-import type { ProgresoExportacion } from './exportar';
+import type { ProgresoExportacion, SoloExportar } from './exportar';
 
 /** El módulo que exporta (con fflate), cargado al exportar: no pesa en la carga inicial. */
 const cargarExportar = () => import('./exportar');
@@ -55,7 +55,13 @@ interface Generado {
   excluidos: string[];
 }
 
-type Opciones = { ahora: Date; version: string; alProgreso: (p: ProgresoExportacion) => void; senal: AbortSignal };
+type Opciones = {
+  ahora: Date;
+  version: string;
+  alProgreso: (p: ProgresoExportacion) => void;
+  senal: AbortSignal;
+  solo?: SoloExportar;
+};
 
 /** Sin progreso en tanto tiempo, la exportación se da por atascada y se corta. */
 export const PLAZO_SIN_PROGRESO_MS = 60_000;
@@ -93,7 +99,12 @@ function enWorker(espacio: string, tipo: TipoExportacion, o: Opciones): Promise<
     o.senal.addEventListener('abort', () => rechazar(o.senal.reason ?? cancelada()), { once: true });
     worker.addEventListener('error', () => rechazar(new FalloWorker('exportar.workerNoCarga')));
     wrap<ApiExportar>(worker)
-      .exportar(espacio, tipo, { ahora: o.ahora, version: o.version }, proxy(o.alProgreso))
+      .exportar(
+        espacio,
+        tipo,
+        { ahora: o.ahora, version: o.version, ...(o.solo ? { solo: o.solo } : {}) },
+        proxy(o.alProgreso),
+      )
       .then(
         ({ blob, excluidos }) => resolver({ blob, excluidos }),
         (e) => rechazar(new FalloWorker(String(e))),
@@ -118,7 +129,16 @@ export function cancelarExportacion(): void {
 export async function exportarEspacio(
   espacio: EspacioExportable,
   tipo: TipoExportacion,
-  { motivo, reloj = () => new Date() }: { motivo?: string; reloj?: () => Date } = {},
+  {
+    motivo,
+    reloj = () => new Date(),
+    solo,
+  }: {
+    motivo?: string;
+    reloj?: () => Date;
+    /** Solo esos archivos: el ZIP de un grupo (IN-052), que no es una copia del espacio y no se apunta. */
+    solo?: SoloExportar;
+  } = {},
 ): Promise<Exportado | null> {
   if (useExportacion.getState().tipo) return null;
   useExportacion.setState({ tipo, porcentaje: 0 });
@@ -136,6 +156,7 @@ export async function exportarEspacio(
       ahora,
       version: __VERSION_APP__,
       senal: corte.signal,
+      ...(solo ? { solo } : {}),
       alProgreso: ({ hechos, total }) => {
         ultimoProgreso = Date.now();
         useExportacion.setState({ porcentaje: total ? Math.floor((hechos / total) * 100) : 100 });
@@ -155,7 +176,8 @@ export async function exportarEspacio(
     const nombre = (await cargarExportar()).nombreExportacion(espacio.manifest.espacio.nombre, ahora, tipo, motivo);
     descargarBlob(generado.blob, nombre);
     const completa = generado.excluidos.length === 0;
-    const apuntada = completa && espacio.coordinacion.modo() === 'escritor';
+    // El de un grupo no es una copia del espacio: no se apunta.
+    const apuntada = completa && !solo && espacio.coordinacion.modo() === 'escritor';
     if (apuntada) await espacio.guardarEstado((e) => conCopia(e, isoConZona(ahora), cambiosAlEmpezar));
     return { nombre, bytes: generado.blob.size, excluidos: generado.excluidos, completa, apuntada };
   } finally {

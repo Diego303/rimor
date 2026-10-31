@@ -115,6 +115,35 @@ describe('exportar ZIP', () => {
     for (const [ruta, hash] of Object.entries(archivos)) expect(hash).toBe(await sha256(leido.get(ruta) as Uint8Array));
   });
 
+  it('el ZIP de un grupo: solo sus rutas y lo que empieza por sus prefijos, con su manifest (IN-052)', async () => {
+    const a = await espacio({
+      'elementos/2026/10/TXT-0001--timeout.md': ELEMENTO,
+      'elementos/2026/10/TXT-0002--otro.md': ELEMENTO,
+      'adjuntos/ab/abcd.bin': new Uint8Array([1, 2]),
+      'adjuntos/cd/otro.bin': new Uint8Array([3]),
+      'historial/TXT-0001/2026-10-20T10-00-00.md': ELEMENTO,
+      'historial/TXT-0002/2026-10-20T10-00-00.md': ELEMENTO,
+      'colecciones.json': '{"esquema":1,"colecciones":[]}\n',
+    });
+    const solo = {
+      rutas: ['elementos/2026/10/TXT-0001--timeout.md', 'adjuntos/ab/abcd.bin'],
+      prefijos: ['historial/TXT-0001/'],
+    };
+    const { trozos, manifest } = await exportarZip(a, { ...O, solo });
+    const leido = await leerZip(unirTrozos(trozos));
+    expect([...leido.keys()]).toEqual([
+      'adjuntos/ab/abcd.bin',
+      'elementos/2026/10/TXT-0001--timeout.md',
+      'historial/TXT-0001/2026-10-20T10-00-00.md',
+      'manifest.json',
+    ]);
+    expect(Object.keys(manifest.hashes?.archivos ?? {})).toHaveLength(3);
+    expect(manifest.recuentos).toMatchObject({ elementos: 1, adjuntos: 1 });
+    // El JSON, igual.
+    const json = await exportarJson(a, { ...O, solo });
+    expect(Object.keys((JSON.parse(json.texto) as ExportacionJson).manifest.hashes?.archivos ?? {})).toHaveLength(3);
+  });
+
   it('avisa del progreso por bytes y se puede cancelar', async () => {
     const a = await espacio({ 'adjuntos/a.bin': new Uint8Array(600_000), 'elementos/a.md': ELEMENTO });
     const progreso: number[] = [];

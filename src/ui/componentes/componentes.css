@@ -1581,6 +1581,46 @@ pre.code.codigo .ln {
 .warn-texto {
   color: var(--warn);
 }
+/* Panel de grupo (IN-052), como `SC.coleccion`: barras por tipo con su icono, el gráfico de las dos semanas y las
+   filas con su casilla para comparar. */
+.lista-que-hay {
+  gap: 7px;
+}
+.etiqueta-tipo {
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.grafico-cuando {
+  min-width: 260px;
+}
+.grafico-cuando rect.con {
+  fill: var(--accent);
+}
+.grafico-cuando rect.sin {
+  fill: var(--line);
+}
+.grafico-cuando text {
+  fill: var(--muted);
+}
+.fila-marcable {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fila-marcable > :last-child {
+  flex: 1;
+  min-width: 0;
+}
+/* Los grupos de un elemento en sus detalles (IN-052): píldoras que enlazan a su panel. */
+.grupos-elemento {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.grupos-elemento a.st {
+  text-decoration: none;
+  color: inherit;
+}
 /* Tarjeta de sesión del feed (IN-051), como `.sess` de la portada de referencia. */
 .sess {
   display: flex;

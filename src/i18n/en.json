@@ -596,6 +596,37 @@
       "titulo": "Nothing here",
       "texto": "This link does not lead to any Rimor screen.",
       "volver": "Go to Home"
+    },
+    "grupo": {
+      "clases": {
+        "coleccion": "Collection",
+        "sesion": "Session",
+        "huella": "Error",
+        "dominio": "Domain",
+        "repositorio": "Repository",
+        "paquete": "Package",
+        "etiqueta": "Tag",
+        "tipo": "Type",
+        "mes": "Month"
+      },
+      "exportar": "Export ZIP",
+      "queHay": "What is here",
+      "cuando": "When",
+      "cuandoEtiqueta": "Items per day over the last two weeks",
+      "pico": "{mes} · the peak is day {dia}.",
+      "sinActividad": "Nothing in the last two weeks.",
+      "seRepite": "Recurring",
+      "veces": "{n} times · the latest, {cuando}",
+      "verHilo": "See thread",
+      "verGrupo": "See all",
+      "comparar": "Compare",
+      "seleccionar": "Tick two to compare them.",
+      "marcar": "Tick “{titulo}” to compare",
+      "vacioTitulo": "There is nothing in this group",
+      "vacio": "Either it does not exist, or what it had is gone (in the bin, archived or changed).",
+      "grupos": "Groups",
+      "mismoError": "same error",
+      "suSesion": "its session"
     }
   },
   "espacio": {

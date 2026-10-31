@@ -50,6 +50,12 @@ const coleccion = createRoute({
   validateSearch: (s: Record<string, unknown>): { vista?: Vista } => conVista(s),
   component: lazyRouteComponent(() => import('./coleccion/Coleccion'), 'Coleccion'),
 });
+const grupo = createRoute({
+  getParentRoute: () => raiz,
+  path: '/g/$clase/$valor',
+  validateSearch: (s: Record<string, unknown>): { vista?: Vista } => conVista(s),
+  component: lazyRouteComponent(() => import('./grupo/Grupo'), 'Grupo'),
+});
 const datos = createRoute({
   getParentRoute: () => raiz,
   path: '/datos',
@@ -71,7 +77,18 @@ const ajustes = createRoute({
   component: lazyRouteComponent(() => import('./ajustes/Ajustes'), 'Ajustes'),
 });
 
-const arbol = raiz.addChildren([inicio, elemento, hilo, buscar, coleccion, datos, importarRuta, papelera, ajustes]);
+const arbol = raiz.addChildren([
+  inicio,
+  elemento,
+  hilo,
+  buscar,
+  coleccion,
+  grupo,
+  datos,
+  importarRuta,
+  papelera,
+  ajustes,
+]);
 
 /** Crea el router; las pruebas pasan un historial en memoria. */
 export function crearRouter(historial: RouterHistory = createHashHistory()) {

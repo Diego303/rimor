@@ -70,9 +70,9 @@ Depende de IN-031 (la huella de los errores) e IN-051 (las sesiones).
 
 ## Tareas
 
-- [ ] Grupos por huella, dominio, repositorio, paquete, etiqueta, tipo y mes.
-- [ ] Panel común de grupo (qué hay, cuándo, qué se repite y elementos) como en la pantalla «Colección».
-- [ ] Acciones de grupo: exportar ZIP y comparar seleccionados (crear investigación, en v0.3).
+- [x] Grupos por huella, dominio, repositorio, paquete, etiqueta, tipo y mes.
+- [x] Panel común de grupo (qué hay, cuándo, qué se repite y elementos) como en la pantalla «Colección».
+- [x] Acciones de grupo: exportar ZIP y comparar seleccionados (crear investigación, en v0.3).
 
 ## Pruebas previstas
 
@@ -114,3 +114,14 @@ Cubre las tres tareas (crear investigación queda para v0.3, como dice la especi
 - `hiloDe`;
 - la clasificación de URL del lector Enlace;
 - la pantalla y las reglas CSS de la referencia (`.split`, `.hb`, `.gap.hi`, `.list`).
+
+## Implementación
+
+- `src/espacio/grupos.ts`: `clavesDe`, `enGrupo`, `elementosDe`, `panelDe` y `rutasDeGrupo`.
+- `src/rutas/grupo/PanelGrupo.tsx`: `CuerpoGrupo` (qué hay, cuándo, se repite y elementos, con la selección para comparar) y `ExportarGrupo`.
+- `src/rutas/grupo/Grupo.tsx`: la pantalla y la ruta `/g/$clase/$valor`, con `?vista`.
+- Colección: el panel en lugar de la lista, y «Exportar ZIP».
+- Exportar: `OpcionesExportar.solo` (rutas y prefijos), en el hilo y en el Worker. `exportarEspacio({ solo })` no apunta la copia, y `useExportar` acepta `solo`.
+- Detalles del elemento: la fila «Grupos», con un enlace por clave.
+- `BarraH` acepta el color del tipo.
+- Pruebas: `grupos.test.ts`, el ZIP y el JSON con `solo`, y `Grupo.test.tsx` (panel, se repite, comparar, vacío, colección y detalles).

@@ -11,6 +11,7 @@ import { useAvisosOpcional } from '../ui/componentes/Avisos';
 import { Senal } from '../ui/marca/Senal';
 import { useEsperaVisible } from '../ui/marca/useEsperaVisible';
 import { type EstadoExportacion, exportarEspacio, type TipoExportacion, useExportacion } from './exportacion';
+import type { SoloExportar } from './exportar';
 
 /**
  * Si hay una exportación en marcha y si se enseña: visible pasados 400 ms y al menos 600 ms (guía §11.1). No sigue
@@ -35,19 +36,22 @@ export function SenalExportacion(props: Omit<ComponentProps<typeof Senal>, 'esta
  * Exporta el espacio abierto. Devuelve si se exportó (`false` si no hay espacio, ya había una exportación en marcha
  * o falló). `motivo` va en el nombre del archivo: la copia previa («antes de reemplazar»).
  */
-export function useExportar(): (tipo: TipoExportacion, motivo?: string) => Promise<boolean> {
+export function useExportar(): (tipo: TipoExportacion, motivo?: string, solo?: SoloExportar) => Promise<boolean> {
   const espacio = useEspacioOpcional();
   const avisos = useAvisosOpcional();
   const { t, idioma } = useT();
   return useCallback(
-    async (tipo, motivo) => {
+    async (tipo, motivo, solo) => {
       if (!espacio) return false;
       try {
-        const hecho = await exportarEspacio(espacio, tipo, motivo ? { motivo } : {});
+        const hecho = await exportarEspacio(espacio, tipo, {
+          ...(motivo ? { motivo } : {}),
+          ...(solo ? { solo } : {}),
+        });
         if (!hecho) return false;
         const texto = !hecho.completa
           ? t('exportar.hechoConExcluidos', { nombre: hecho.nombre, n: hecho.excluidos.length })
-          : hecho.apuntada
+          : hecho.apuntada || solo
             ? t('exportar.hecho', { nombre: hecho.nombre, tam: fmtBytes(hecho.bytes, idioma) })
             : t('exportar.hechoSinApuntar', { nombre: hecho.nombre, tam: fmtBytes(hecho.bytes, idioma) });
         avisos?.avisar(

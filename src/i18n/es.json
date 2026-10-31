@@ -596,6 +596,37 @@
       "titulo": "Aquí no hay nada",
       "texto": "El enlace no lleva a ninguna pantalla de Rimor.",
       "volver": "Ir a Inicio"
+    },
+    "grupo": {
+      "clases": {
+        "coleccion": "Colección",
+        "sesion": "Sesión",
+        "huella": "Error",
+        "dominio": "Dominio",
+        "repositorio": "Repositorio",
+        "paquete": "Paquete",
+        "etiqueta": "Etiqueta",
+        "tipo": "Tipo",
+        "mes": "Mes"
+      },
+      "exportar": "Exportar ZIP",
+      "queHay": "Qué hay",
+      "cuando": "Cuándo",
+      "cuandoEtiqueta": "Elementos por día en las dos últimas semanas",
+      "pico": "{mes} · el pico es el día {dia}.",
+      "sinActividad": "Sin nada en las dos últimas semanas.",
+      "seRepite": "Se repite",
+      "veces": "{n} veces · la última, {cuando}",
+      "verHilo": "Ver hilo",
+      "verGrupo": "Ver todas",
+      "comparar": "Comparar",
+      "seleccionar": "Marca dos para compararlos.",
+      "marcar": "Marcar «{titulo}» para comparar",
+      "vacioTitulo": "No hay nada en este grupo",
+      "vacio": "O no existe, o lo que tenía ya no está (en la papelera, archivado o cambiado).",
+      "grupos": "Grupos",
+      "mismoError": "mismo error",
+      "suSesion": "su sesión"
     }
   },
   "espacio": {

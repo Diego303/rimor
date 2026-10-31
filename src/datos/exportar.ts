@@ -47,6 +47,14 @@ export interface OpcionesExportar {
   senal?: AbortSignal;
   /** Cede el hilo entre trozos; por defecto, un `setTimeout` de 0. */
   ceder?: () => Promise<void>;
+  /** Solo estos archivos (las rutas, y lo que empiece por un prefijo): el ZIP de un grupo (IN-052). */
+  solo?: SoloExportar;
+}
+
+/** Lo que exporta un grupo: sus rutas exactas y los prefijos de sus carpetas (su historial). */
+export interface SoloExportar {
+  rutas: readonly string[];
+  prefijos: readonly string[];
 }
 
 const cederPorDefecto = () => new Promise<void>((r) => setTimeout(r, 0));
@@ -99,10 +107,17 @@ export function recuentosDe(rutas: readonly string[]): Record<string, number> {
   };
 }
 
-/** Los archivos que se exportan, en orden de ruta (dos exportaciones del mismo espacio, en el mismo orden). */
-async function archivosDe(almacen: AlmacenLectura): Promise<EntradaAlmacen[]> {
+/**
+ * Los archivos que se exportan, en orden de ruta (dos exportaciones del mismo espacio, en el mismo orden). Con `solo`,
+ * solo esos (el ZIP de un grupo).
+ */
+async function archivosDe(almacen: AlmacenLectura, solo?: SoloExportar): Promise<EntradaAlmacen[]> {
   const todos = await listarTodo(almacen as Almacen, '');
-  return todos.filter((e) => !fueraDeLaExportacion(e.ruta)).sort((a, b) => (a.ruta < b.ruta ? -1 : 1));
+  const rutas = solo ? new Set(solo.rutas) : null;
+  const dentro = (ruta: string) => !rutas || rutas.has(ruta) || (solo?.prefijos ?? []).some((p) => ruta.startsWith(p));
+  return todos
+    .filter((e) => !fueraDeLaExportacion(e.ruta) && dentro(e.ruta))
+    .sort((a, b) => (a.ruta < b.ruta ? -1 : 1));
 }
 
 /** Lee un archivo; si se estaba escribiendo y falla, lo intenta otra vez. `null` si ya no está. */
@@ -172,7 +187,7 @@ export interface ZipExportado {
 export async function exportarZip(almacen: AlmacenLectura, o: OpcionesExportar): Promise<ZipExportado> {
   const ceder = cederCada(o.ceder ?? cederPorDefecto);
   const base = await manifestBase(almacen);
-  const archivos = await archivosDe(almacen);
+  const archivos = await archivosDe(almacen, o.solo);
   // Con el manifest; un ZIP que no cabe sería corrupto en silencio (y se apuntaría como copia).
   if (archivos.length + 1 > MAX_ENTRADAS_ZIP) throw new Error('exportar.demasiadoGrande');
   const total = archivos.reduce((s, e) => s + e.tam, 0);
@@ -282,7 +297,7 @@ export async function exportarJson(
 ): Promise<{ texto: string; manifest: Manifest; excluidos: string[] }> {
   const ceder = cederCada(o.ceder ?? cederPorDefecto);
   const base = await manifestBase(almacen);
-  const archivos = await archivosDe(almacen);
+  const archivos = await archivosDe(almacen, o.solo);
   const total = archivos.reduce((s, e) => s + e.tam, 0);
   const salida: Omit<ExportacionJson, 'manifest'> = { elementos: [], adjuntos: [], archivos: [] };
   const hashes = new Map<string, string>();

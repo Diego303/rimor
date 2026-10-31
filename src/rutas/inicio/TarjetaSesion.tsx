@@ -26,7 +26,7 @@ export interface ARenombrar {
 }
 
 /** El título de una sesión, su nombre editado y el propuesto (en el idioma de la interfaz). */
-function useNombre(s: ResumenSesion) {
+export function useNombreSesion(s: Pick<ResumenSesion, 'id' | 'elementos'>) {
   const { t, idioma } = useT();
   const espacio = useEspacioOpcional();
   const colecciones = useEspacio((e) => e.colecciones);
@@ -57,7 +57,7 @@ interface Props {
 
 export function TarjetaSesion({ sesion: s, soloLectura, alRenombrar }: Props) {
   const { t, idioma } = useT();
-  const { titulo, editado, propuesto } = useNombre(s);
+  const { titulo, editado, propuesto } = useNombreSesion(s);
   const desde = new Date(s.desde);
   const hasta = new Date(s.hasta);
   // De un día a otro (pasada la medianoche), con el día de cada extremo.

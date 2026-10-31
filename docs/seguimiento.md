@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-31 19:53
-**Ahora:** IN-052 · Grupos automáticos y pantalla de colección · fase implementación
+**Última actualización:** 2026-10-31 20:16
+**Ahora:** IN-052 · Grupos automáticos y pantalla de colección · fase verificación
 **Siguiente:** IN-053 · Enlaces automáticos
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 11/22 · v0.3 0/17 · v0.4 0/9 · total 62/99
 
@@ -71,7 +71,7 @@
 | IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | hecha | f5deee9 3fae762 1112b71 | docs/features/IN-049-reglas-captura-multiple.md |
 | IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | hecha | 38cddd1 2878cbd 49b8a4f | docs/features/IN-050-pwa.md |
 | IN-051 | Sesiones automáticas | v0.2 | 9 | hecha | 662ad48 4f20afc 5ce0130 | docs/features/IN-051-sesiones.md |
-| IN-052 | Grupos automáticos y pantalla de colección | v0.2 | 9 | en implementación | — | docs/features/IN-052-grupos.md |
+| IN-052 | Grupos automáticos y pantalla de colección | v0.2 | 9 | en verificación | 24b5d12 | docs/features/IN-052-grupos.md |
 | IN-053 | Enlaces automáticos | v0.2 | 9 | pendiente | — | — |
 | IN-054 | Vistas guardadas | v0.2 | 9 | pendiente | — | — |
 | IN-055 | Inicio con memoria | v0.2 | 9 | pendiente | — | — |
@@ -179,7 +179,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-052 | análisis y diseño | claves de grupo (colección, sesión, huella, dominio, repositorio, paquete, etiqueta, tipo, mes) desde el frontmatter, panel común como SC.coleccion (qué hay, cuándo, se repite, elementos), /g/$clase/$valor, exportar ZIP de solo el grupo sin apuntar copia, comparar seleccionados, enlaces desde los detalles del elemento | … |
+| 2026-10-31 | IN-052 | implementación | grupos.ts (claves, elementos y panel), PanelGrupo como SC.coleccion, /g/$clase/$valor, la colección con el panel, exportar solo el grupo (hilo y Worker) sin apuntar copia, comparar dos marcados, Grupos en los detalles; verificar en verde: 131 archivos, 1666 pruebas + 6 de rendimiento, 281,5 KB | … |
+| 2026-10-31 | IN-052 | análisis y diseño | claves de grupo (colección, sesión, huella, dominio, repositorio, paquete, etiqueta, tipo, mes) desde el frontmatter, panel común como SC.coleccion (qué hay, cuándo, se repite, elementos), /g/$clase/$valor, exportar ZIP de solo el grupo sin apuntar copia, comparar seleccionados, enlaces desde los detalles del elemento | 24b5d12 |
 | 2026-10-31 | IN-051 | verificación | revisión independiente (15 hallazgos; 13 corregidos con pruebas, 2 decididos): id con la hora de inicio (sin reutilizar tras la papelera ni chocar entre dispositivos), sesiones.json ilegible intacto y sin leer releído, título por franja, solo los días cargados, article con nombre, comillas en inglés, mismo instante, tarjeta en el primer día cargado, esquema nuevo al importar, diálogo en Inicio; verificar en verde: 129 archivos, 1656 pruebas + 6 de rendimiento, 280,7 KB | 5ce0130 |
 | 2026-10-31 | IN-051 | implementación | sesionPara al capturar (45 min, día y franja con sufijo), sesiones.json con nombres editados (combinado al importar), nombre propuesto por colección, etiquetas o franja, tarjeta .sess con Renombrar; verificar en verde: 129 archivos, 1650 pruebas + 6 de rendimiento, 280,5 KB | 4f20afc |
 | 2026-10-31 | IN-051 | análisis y diseño | sesion asignada al capturar (umbral de 45 min, id AAAA-MM-DD-franja con sufijo), nombres editados en sesiones.json en la raíz (combinados al importar), propuesto por colección, etiquetas o franja, tarjeta .sess en el feed con Renombrar | 662ad48 |

@@ -73,16 +73,18 @@ interface PropsBarraH {
   maximo: number;
   /** Valor ya formateado que se muestra a la derecha. */
   texto: string;
+  /** Color del relleno (el de un tipo, `var(--k-log)`); sin él, el acento. */
+  color?: string;
 }
 
 /** Barra horizontal con su valor. */
-export function BarraH({ etiqueta, valor, maximo, texto }: PropsBarraH) {
+export function BarraH({ etiqueta, valor, maximo, texto, color }: PropsBarraH) {
   const ancho = maximo > 0 ? Math.max(0, Math.min(100, (valor / maximo) * 100)) : 0;
   return (
     <div className="hb">
       <span>{etiqueta}</span>
       <span className="tr" aria-hidden="true">
-        <i className="fi" style={{ width: `${ancho}%` }} />
+        <i className="fi" style={{ width: `${ancho}%`, ...(color ? { background: color } : {}) }} />
       </span>
       <span className="v">{texto}</span>
     </div>

@@ -3,9 +3,11 @@
  * plegado: colecciones y etiquetas (en el sitio), secretos ocultados, origen, tipo con «Cambiar tipo», el original
  * y la referencia con sus alias.
  */
-import type { FrontmatterComun } from '@rimor/formato';
+import type { FrontmatterComun, TipoElemento } from '@rimor/formato';
+import { Link } from '@tanstack/react-router';
 import { useMemo, useRef, useState } from 'react';
 import { limpiarColeccion, limpiarEtiqueta } from '../../espacio/ediciones';
+import { type ClaveGrupo, clavesDe } from '../../espacio/grupos';
 import { fmtBytes, fmtFecha } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
 import { Boton, Ref } from '../../ui/componentes';
@@ -179,6 +181,10 @@ export function FilasComunes({
           </>
         )}
       </dd>
+      <dt>{t('pantallas.grupo.grupos')}</dt>
+      <dd>
+        <GruposDe fm={fm} />
+      </dd>
       <dt>{t('pantallas.elemento.referencia')}</dt>
       <dd>
         <span className="mono">{fm.ref}</span>
@@ -187,5 +193,47 @@ export function FilasComunes({
         ) : null}
       </dd>
     </>
+  );
+}
+
+/** El texto de un grupo en sus detalles: «#ureq», «github.com», «Log», «octubre de 2026», «mismo error»… */
+function textoGrupo(c: ClaveGrupo, t: ReturnType<typeof useT>['t'], idioma: string): string {
+  if (c.clase === 'etiqueta') return `#${c.valor}`;
+  if (c.clase === 'tipo') return t(`tipos.${c.valor as TipoElemento}`);
+  if (c.clase === 'huella') return t('pantallas.grupo.mismoError');
+  if (c.clase === 'sesion') return t('pantallas.grupo.suSesion');
+  if (c.clase === 'mes') {
+    const f = new Date(`${c.valor}-15T12:00:00`);
+    return Number.isNaN(f.getTime())
+      ? c.valor
+      : new Intl.DateTimeFormat(idioma, { month: 'long', year: 'numeric' }).format(f);
+  }
+  return c.valor;
+}
+
+/** Los grupos del elemento (IN-052): uno por clave, cada uno con su panel. */
+function GruposDe({ fm }: { fm: FrontmatterComun }) {
+  const { t, idioma } = useT();
+  const claves = useMemo(() => clavesDe(fm), [fm]);
+  return (
+    <span className="grupos-elemento">
+      {claves.map((c) =>
+        c.clase === 'coleccion' ? (
+          <Link key={`${c.clase}:${c.valor}`} className="st" to="/c/$coleccion" params={{ coleccion: c.valor }}>
+            {c.valor}
+          </Link>
+        ) : (
+          <Link
+            key={`${c.clase}:${c.valor}`}
+            className="st"
+            to="/g/$clase/$valor"
+            params={{ clase: c.clase, valor: c.valor }}
+            title={t(`pantallas.grupo.clases.${c.clase}`)}
+          >
+            {textoGrupo(c, t, idioma)}
+          </Link>
+        ),
+      )}
+    </span>
   );
 }

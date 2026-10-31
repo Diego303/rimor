@@ -5,13 +5,13 @@
  */
 import { expose } from 'comlink';
 import { AlmacenOpfs } from '../almacen/opfs/opfs';
-import { exportarJson, exportarZip, type ProgresoExportacion } from '../datos/exportar';
+import { exportarJson, exportarZip, type ProgresoExportacion, type SoloExportar } from '../datos/exportar';
 
 const api = {
   async exportar(
     espacio: string,
     tipo: 'zip' | 'json',
-    o: { ahora: Date; version: string },
+    o: { ahora: Date; version: string; solo?: SoloExportar },
     alProgreso?: (p: ProgresoExportacion) => void,
   ) {
     const raiz = await navigator.storage.getDirectory();
