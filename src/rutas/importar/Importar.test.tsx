@@ -23,7 +23,7 @@ function el(n: number, cambios: Partial<Elemento['frontmatter']> = {}): Elemento
 }
 
 /** Un ZIP exportado de otro espacio con estos elementos. */
-async function zipDe(elementos: Elemento[]): Promise<File> {
+async function zipDe(elementos: Elemento[], { parcial = false } = {}): Promise<File> {
   const a = new AlmacenMemoria();
   await escribirTexto(
     a,
@@ -45,6 +45,16 @@ async function zipDe(elementos: Elemento[]): Promise<File> {
     ahora: new Date('2026-10-15T12:00:00+02:00'),
     version: '0.1.0',
     ceder: async () => undefined,
+    // El de un grupo (IN-052): solo sus elementos, marcado como parcial.
+    ...(parcial
+      ? {
+          solo: {
+            rutas: elementos.map((e) => rutaElemento(e.frontmatter.ref, e.frontmatter.titulo, e.frontmatter.creado)),
+            prefijos: [],
+            grupo: { clase: 'etiqueta', valor: 'ureq' },
+          },
+        }
+      : {}),
   });
   return new File(trozos as Uint8Array<ArrayBuffer>[], 'rimor-otro-2026-10-15.zip', { type: 'application/zip' });
 }
@@ -138,6 +148,18 @@ describe('Importar', () => {
     expect(descargas.map((a) => a.download)).toEqual([expect.stringMatching(/-antes-de-reemplazar\.zip$/)]);
     await waitFor(() => expect(espacio.repositorio.frontmatter('TXT-0005')).toBeUndefined());
     expect(espacio.repositorio.frontmatter('TXT-0002')).toBeTruthy();
+  }, 30_000);
+
+  it('el ZIP de un grupo no se puede importar con «Reemplazar» (borraría lo demás) (IN-052)', async () => {
+    const { router } = await montarApp('/ajustes', [el(1), el(5, { titulo: 'Solo aquí' })]);
+    const archivo = await zipDe([el(2)], { parcial: true });
+    act(() => useArchivoImportar.setState({ archivo }));
+    await act(() => router.navigate({ to: '/importar' }));
+    await screen.findByText(/^ZIP válido/, {}, PRIMERA_CARGA);
+    const reemplazar = screen.getByRole('radio', { name: /Reemplazar/ }) as HTMLInputElement;
+    expect(reemplazar.disabled).toBe(true);
+    expect(screen.getByText(/Este ZIP es de un grupo, no de un espacio entero/)).toBeTruthy();
+    expect((screen.getByRole('radio', { name: /Juntar|Fusionar/ }) as HTMLInputElement).checked).toBe(true);
   }, 30_000);
 
   it('sin el ZIP previo, «Reemplazar» dice que no se exporta copia y no la exporta', async () => {

@@ -3,6 +3,7 @@ import { zipSync } from 'fflate';
 import { describe, expect, it, vi } from 'vitest';
 import { escribirTexto, leerTexto, listarTodo } from '../../almacen/contrato';
 import { AlmacenMemoria } from '../../almacen/memoria';
+import { rutasDeGrupo } from '../../espacio/grupos';
 import { elementoFalso } from '../../lectores/pruebas/falsos';
 import { exportarJson, exportarZip, MAX_ADJUNTO_JSON, sha256 } from '../exportar';
 import { enEspacioNuevo, fusionar, manifestNuevo, reemplazar, sinDominiosActivados } from './aplicar';
@@ -380,6 +381,41 @@ describe('casos de la revisión', () => {
         .filter((r) => r.startsWith('hilos/'))
         .sort(),
     ).toEqual(['hilos/HIL-0001--aqui.md', 'hilos/HIL-0002--hilo.md']);
+  });
+
+  it('el ZIP de un grupo lleva su hilo: al importarlo junto a otro HIL-0001, se reasigna (IN-052)', async () => {
+    const hilo = (id: string) =>
+      escribirEntidad({
+        frontmatter: {
+          id,
+          ref: 'HIL-0001',
+          tipo: 'hilo',
+          titulo: 'Hilo',
+          creado: '2026-10-10T10:00:00+02:00',
+          estado: 'abierto',
+        } as never,
+        cuerpo: '',
+      });
+    const origen = await espacio([el(1, { hilo: 'HIL-0001' as never }), el(2)], {
+      'hilos/HIL-0001--hilo.md': hilo('01JAB4C2Q2X8M5N7P0RZZZZ003'),
+    });
+    const elementos = [el(1, { hilo: 'HIL-0001' as never })];
+    const solo = rutasDeGrupo(
+      elementos.map((e) => e.frontmatter),
+      () => ruta(elementos[0] as Elemento),
+      (ref) => (ref === 'HIL-0001' ? 'hilos/HIL-0001--hilo.md' : undefined),
+    );
+    const zip = unirTrozos((await exportarZip(origen, { ...O, solo })).trozos);
+    const p = await leerPaquete(zip, 'grupo.zip');
+    expect([...p.archivos.keys()].sort()).toEqual([ruta(el(1)), 'hilos/HIL-0001--hilo.md']);
+    expect(p.manifest.parcial).toBe(true);
+    const local = await espacio([], { 'hilos/HIL-0001--aqui.md': hilo('01JAB4C2Q2X8M5N7P0RZZZZ002') });
+    const aqui = await localDe(local);
+    aqui.entidades = [{ id: '01JAB4C2Q2X8M5N7P0RZZZZ002', ref: 'HIL-0001', ruta: 'hilos/HIL-0001--aqui.md' }];
+    const plan = await planear(p.archivos, p.manifest, aqui);
+    expect(plan.reasignadas).toEqual([{ de: 'HIL-0001', a: 'HIL-0002' }]);
+    await fusionar(local, plan);
+    expect((await volcado(local))[ruta(el(1))]).toContain('hilo: HIL-0002');
   });
 
   it('un elemento se escribe en la ruta de su ref, aunque el paquete lo ponga en la de otro de aquí', async () => {

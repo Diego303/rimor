@@ -139,6 +139,11 @@ describe('exportar ZIP', () => {
     ]);
     expect(Object.keys(manifest.hashes?.archivos ?? {})).toHaveLength(3);
     expect(manifest.recuentos).toMatchObject({ elementos: 1, adjuntos: 1 });
+    // Marcado como parcial (no es el espacio entero); uno completo, no.
+    expect(manifest.parcial).toBe(true);
+    const conGrupo = await exportarZip(a, { ...O, solo: { ...solo, grupo: { clase: 'etiqueta', valor: 'ureq' } } });
+    expect(conGrupo.manifest.parcial).toEqual({ clase: 'etiqueta', valor: 'ureq' });
+    expect((await exportarZip(a, O)).manifest.parcial).toBeUndefined();
     // El JSON, igual.
     const json = await exportarJson(a, { ...O, solo });
     expect(Object.keys((JSON.parse(json.texto) as ExportacionJson).manifest.hashes?.archivos ?? {})).toHaveLength(3);

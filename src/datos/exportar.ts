@@ -51,10 +51,13 @@ export interface OpcionesExportar {
   solo?: SoloExportar;
 }
 
-/** Lo que exporta un grupo: sus rutas exactas y los prefijos de sus carpetas (su historial). */
+/** Lo que exporta un grupo: sus rutas exactas y los prefijos de sus carpetas (su historial), y qué grupo es. */
 export interface SoloExportar {
   rutas: readonly string[];
+  /** Carpetas enteras, con su barra final (`historial/LOG-0001/`). */
   prefijos: readonly string[];
+  /** Va al manifest (`parcial`): al importarlo, se sabe que no es un espacio entero. */
+  grupo?: { clase: string; valor: string };
 }
 
 const cederPorDefecto = () => new Promise<void>((r) => setTimeout(r, 0));
@@ -114,7 +117,15 @@ export function recuentosDe(rutas: readonly string[]): Record<string, number> {
 async function archivosDe(almacen: AlmacenLectura, solo?: SoloExportar): Promise<EntradaAlmacen[]> {
   const todos = await listarTodo(almacen as Almacen, '');
   const rutas = solo ? new Set(solo.rutas) : null;
-  const dentro = (ruta: string) => !rutas || rutas.has(ruta) || (solo?.prefijos ?? []).some((p) => ruta.startsWith(p));
+  const prefijos = new Set(solo?.prefijos ?? []);
+  // Cada carpeta de la ruta (`historial/`, `historial/LOG-0001/`…), mirada en el conjunto: no todos los prefijos para
+  // cada archivo.
+  const enCarpeta = (ruta: string) => {
+    for (let i = ruta.indexOf('/'); i >= 0; i = ruta.indexOf('/', i + 1))
+      if (prefijos.has(ruta.slice(0, i + 1))) return true;
+    return false;
+  };
+  const dentro = (ruta: string) => !rutas || rutas.has(ruta) || enCarpeta(ruta);
   return todos
     .filter((e) => !fueraDeLaExportacion(e.ruta) && dentro(e.ruta))
     .sort((a, b) => (a.ruta < b.ruta ? -1 : 1));
@@ -142,7 +153,12 @@ async function manifestBase(almacen: AlmacenLectura): Promise<Manifest> {
 export function manifestExportado(
   base: Manifest,
   hashes: ReadonlyMap<string, string>,
-  { ahora, version, excluidos = [] }: { ahora: Date; version: string; excluidos?: readonly string[] },
+  {
+    ahora,
+    version,
+    excluidos = [],
+    solo,
+  }: { ahora: Date; version: string; excluidos?: readonly string[]; solo?: SoloExportar | undefined },
 ): Manifest {
   const rutas = [...hashes.keys()];
   const nuevo: Record<string, unknown> = {
@@ -152,6 +168,8 @@ export function manifestExportado(
     recuentos: recuentosDe([...rutas, ...excluidos]),
     adjuntos_excluidos: [...excluidos],
     hashes: { algoritmo: 'SHA-256', archivos: Object.fromEntries(rutas.map((r) => [r, hashes.get(r) ?? ''])) },
+    // El ZIP de un grupo (IN-052): no es el espacio entero (al importarlo, «Reemplazar» borraría lo demás).
+    ...(solo ? { parcial: solo.grupo ?? true } : {}),
   };
   // Siempre en el mismo orden (el del Anexo A y después lo demás): leer un manifest lo reordena, y exportar dos
   // veces lo mismo debe dar el mismo archivo.

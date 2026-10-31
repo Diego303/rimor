@@ -5,7 +5,7 @@
  * sale del frontmatter (la huella y la URL van en el resumen del lector).
  */
 import type { FrontmatterComun, TipoElemento } from '@rimor/formato';
-import { clasificar } from '../lectores/enlace/urls';
+import { clasificar, hostLegible } from '../lectores/enlace/urls';
 
 export const CLASES_GRUPO = [
   'coleccion',
@@ -43,24 +43,34 @@ export function mesDe(iso: string): string | undefined {
 const diaDe = (f: Date) =>
   `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`;
 
-/** El host de una URL, sin `www.` (o `undefined` si no es una URL). */
-function hostDe(url: string): string | undefined {
+/**
+ * El dominio de una URL (o de un host suelto, con su puerto o sus credenciales): sin puerto ni credenciales, en
+ * minúsculas, sin `www.` ni `m.` y legible (`xn--` en Unicode, como lo enseña el lector Enlace). `undefined` si no es
+ * una URL.
+ */
+export function dominioDe(urlOHost: string): string | undefined {
   try {
-    return new URL(url).hostname.replace(/^www\./, '').toLowerCase() || undefined;
+    const url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(urlOHost) ? urlOHost : `http://${urlOHost}`);
+    return hostLegible(url.hostname.toLowerCase().replace(/^(?:www|m)\./, '')) || undefined;
   } catch {
     return undefined;
   }
 }
 
+/** Un nombre de repositorio o de paquete comparable: sin `.git`, y en minúsculas donde no distinguen. */
+const nombreComparable = (sitio: string, nombre: string) =>
+  (['GitHub', 'GitLab', 'Codeberg', 'PyPI'].includes(sitio) ? nombre.toLowerCase() : nombre).replace(/\.git$/i, '');
+
 /** Lo que dice un enlace de su destino: dominio y, si es de un repositorio o un paquete, cuál. */
 function delEnlace(url: string): ClaveGrupo[] {
   const claves: ClaveGrupo[] = [];
-  const dominio = hostDe(url);
+  const dominio = dominioDe(url);
   if (dominio) claves.push({ clase: 'dominio', valor: dominio });
   const d = clasificar(url);
   if ((d.clase === 'repositorio' || d.clase === 'issue' || d.clase === 'pr') && d.nombre)
-    claves.push({ clase: 'repositorio', valor: `${d.sitio}/${d.nombre}` });
-  if (d.clase === 'paquete' && d.nombre) claves.push({ clase: 'paquete', valor: `${d.sitio}/${d.nombre}` });
+    claves.push({ clase: 'repositorio', valor: `${d.sitio}/${nombreComparable(d.sitio, d.nombre)}` });
+  if (d.clase === 'paquete' && d.nombre)
+    claves.push({ clase: 'paquete', valor: `${d.sitio}/${nombreComparable(d.sitio, d.nombre)}` });
   return claves;
 }
 
@@ -76,14 +86,16 @@ export function clavesDe(fm: FrontmatterComun): ClaveGrupo[] {
   const url = fm.tipo === 'enlace' ? texto(r.url) : undefined;
   if (url) claves.push(...delEnlace(url));
   const host = fm.tipo === 'http' ? texto(r.host) : undefined;
-  if (host) claves.push({ clase: 'dominio', valor: host.replace(/^www\./, '').toLowerCase() });
+  const dominio = host ? dominioDe(host) : undefined;
+  if (dominio) claves.push({ clase: 'dominio', valor: dominio });
   claves.push(...(fm.etiquetas ?? []).map((valor) => ({ clase: 'etiqueta' as const, valor })));
   claves.push({ clase: 'tipo', valor: fm.tipo });
   const mes = mesDe(fm.creado);
   if (mes) claves.push({ clase: 'mes', valor: mes });
   const vistas = new Set<string>();
   return claves.filter((c) => {
-    const k = `${c.clase}\u0000${c.valor}`;
+    // Las etiquetas, sin distinguir mayúsculas (`Ureq` y `ureq` son el mismo grupo).
+    const k = `${c.clase}\u0000${c.clase === 'etiqueta' ? c.valor.toLocaleLowerCase() : c.valor}`;
     if (vistas.has(k)) return false;
     vistas.add(k);
     return true;
@@ -98,16 +110,25 @@ export function enGrupo(fm: FrontmatterComun, clase: ClaseGrupo, valor: string):
   if (clase === 'tipo') return fm.tipo === valor;
   if (clase === 'sesion') return fm.sesion === valor;
   if (clase === 'mes') return mesDe(fm.creado) === valor;
+  if (clase === 'huella') return fm.tipo === 'error' && fm.lector.resumen.huella === valor;
+  // Dominio, repositorio y paquete: solo los enlaces y las peticiones tienen (no se analiza la URL de los demás).
+  if (fm.tipo !== 'enlace' && fm.tipo !== 'http') return false;
   return clavesDe(fm).some((c) => c.clase === clase && c.valor === valor);
 }
+
+/** Instante de un elemento (las fechas pueden llevar desfases distintos: no se comparan como texto). */
+const ms = (fm: FrontmatterComun) => {
+  const t = Date.parse(fm.creado);
+  return Number.isNaN(t) ? 0 : t;
+};
+const masReciente = (a: FrontmatterComun, b: FrontmatterComun) => ms(b) - ms(a);
 
 /** Los elementos de un grupo, de lo más reciente a lo más antiguo. */
 export const elementosDe = (
   clase: ClaseGrupo,
   valor: string,
   elementos: readonly FrontmatterComun[],
-): FrontmatterComun[] =>
-  elementos.filter((fm) => enGrupo(fm, clase, valor)).sort((a, b) => (a.creado < b.creado ? 1 : -1));
+): FrontmatterComun[] => elementos.filter((fm) => enGrupo(fm, clase, valor)).sort(masReciente);
 
 export interface Repetido {
   huella: string;
@@ -137,14 +158,18 @@ export function panelDe(elementos: readonly FrontmatterComun[], ahora: Date): Pa
   const tipos = new Map<TipoElemento, number>();
   const porDia = new Map<string, number>();
   const porHuella = new Map<string, FrontmatterComun[]>();
-  let desde: string | null = null;
+  let desde: FrontmatterComun | null = null;
   for (const fm of elementos) {
     tipos.set(fm.tipo, (tipos.get(fm.tipo) ?? 0) + 1);
-    if (!desde || fm.creado < desde) desde = fm.creado;
+    if (!desde || ms(fm) < ms(desde)) desde = fm;
     const f = new Date(fm.creado);
     if (!Number.isNaN(f.getTime())) porDia.set(diaDe(f), (porDia.get(diaDe(f)) ?? 0) + 1);
     const huella = fm.tipo === 'error' ? texto(fm.lector.resumen.huella) : undefined;
-    if (huella) porHuella.set(huella, [...(porHuella.get(huella) ?? []), fm]);
+    if (huella) {
+      const lista = porHuella.get(huella);
+      if (lista) lista.push(fm);
+      else porHuella.set(huella, [fm]);
+    }
   }
   const dias: { dia: string; n: number }[] = [];
   for (let k = DIAS_CUANDO - 1; k >= 0; k--) {
@@ -156,19 +181,19 @@ export function panelDe(elementos: readonly FrontmatterComun[], ahora: Date): Pa
   let repetido: Repetido | null = null;
   for (const [huella, lista] of porHuella) {
     if (lista.length < 2) continue;
-    const ordenados = [...lista].sort((a, b) => (a.creado < b.creado ? 1 : -1));
+    const ordenados = [...lista].sort(masReciente);
     const ultimo = ordenados[0];
     if (!ultimo) continue;
     if (
       !repetido ||
       lista.length > repetido.veces ||
-      (lista.length === repetido.veces && ultimo.creado > repetido.ultimo.creado)
+      (lista.length === repetido.veces && ms(ultimo) > ms(repetido.ultimo))
     )
       repetido = { huella, veces: lista.length, ultimo, elementos: ordenados };
   }
   return {
     total: elementos.length,
-    desde,
+    desde: desde?.creado ?? null,
     tipos: [...tipos].map(([tipo, n]) => ({ tipo, n })).sort((a, b) => b.n - a.n),
     dias,
     pico: pico?.dia ?? null,
@@ -177,21 +202,26 @@ export function panelDe(elementos: readonly FrontmatterComun[], ahora: Date): Pa
 }
 
 /**
- * Las rutas que exporta un grupo (IN-052): el `.md` de cada elemento, su adjunto y su historial (el prefijo de su
- * carpeta). Con `rutaDe`, la del repositorio.
+ * Lo que exporta un grupo (IN-052): el `.md` de cada elemento, su adjunto, su historial (la carpeta de su ref y la de
+ * cada alias: sus versiones de antes de cambiar de tipo), las entidades que citan (sus hilos: sin ellas, al importar
+ * su `hilo` apuntaría a otro con la misma ref) y los registros del espacio (`colecciones.json`, `sesiones.json`), que
+ * al importar se juntan. Con `rutaDe`, la del repositorio; con `rutaEntidad`, la de un hilo por su ref.
  */
 export function rutasDeGrupo(
   elementos: readonly FrontmatterComun[],
   rutaDe: (id: string) => string | undefined,
+  rutaEntidad: (ref: string) => string | undefined = () => undefined,
 ): { rutas: string[]; prefijos: string[] } {
-  const rutas: string[] = [];
-  const prefijos: string[] = [];
+  const rutas = new Set<string>(['colecciones.json', 'sesiones.json']);
+  const prefijos = new Set<string>();
   for (const fm of elementos) {
     const ruta = rutaDe(fm.id);
     if (!ruta) continue;
-    rutas.push(ruta);
-    if (fm.adjunto?.ruta) rutas.push(fm.adjunto.ruta);
-    prefijos.push(`historial/${fm.ref}/`);
+    rutas.add(ruta);
+    if (fm.adjunto?.ruta) rutas.add(fm.adjunto.ruta);
+    for (const ref of [fm.ref, ...(fm.alias ?? [])]) prefijos.add(`historial/${ref}/`);
+    const hilo = fm.hilo ? rutaEntidad(fm.hilo) : undefined;
+    if (hilo) rutas.add(hilo);
   }
-  return { rutas, prefijos };
+  return { rutas: [...rutas], prefijos: [...prefijos] };
 }

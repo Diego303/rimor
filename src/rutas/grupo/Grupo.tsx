@@ -2,9 +2,9 @@
  * Un grupo automático (ORG-09, IN-052): `/g/$clase/$valor` (una etiqueta, un dominio, un repositorio, un paquete, la
  * huella de un error, un tipo, un mes o una sesión) con el panel común de grupo, como la colección.
  */
-import type { FrontmatterComun, TipoElemento } from '@rimor/formato';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { esTipoElemento, type FrontmatterComun, type TipoElemento } from '@rimor/formato';
+import { Navigate, useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { useEffect, useMemo, useState } from 'react';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { type ClaseGrupo, elementosDe, esClaseGrupo } from '../../espacio/grupos';
 import { fmtDia } from '../../i18n/formatos';
@@ -14,7 +14,6 @@ import { ASPECTO_TIPO } from '../../ui/iconos/tipos';
 import { useNombreSesion } from '../inicio/TarjetaSesion';
 import { Pantalla } from '../Pantalla';
 import { type Vista, vistaDe } from '../vistas/orden';
-import { SelectorVista } from '../vistas/Vistas';
 import { CuerpoGrupo, ExportarGrupo, GrupoVacio } from './PanelGrupo';
 
 /** El icono de cada clase de grupo (el de su tipo, si es un tipo). */
@@ -30,23 +29,28 @@ const ICONOS: Record<ClaseGrupo, NombreIcono> = {
   mes: 'tiempo',
 };
 
-/** Los elementos de un grupo, al día con cada cambio. */
+/**
+ * Los elementos de un grupo, al día con cada cambio: se calculan al pintar (sin un primer pintado vacío, ni uno con
+ * los del grupo anterior al cambiar de grupo).
+ */
 export function useElementosDeGrupo(clase: ClaseGrupo | null, valor: string): FrontmatterComun[] {
   const espacio = useEspacioOpcional();
-  const [elementos, setElementos] = useState<FrontmatterComun[]>([]);
-  useEffect(() => {
-    if (!espacio || !clase) return undefined;
-    const leer = () => setElementos(elementosDe(clase, valor, espacio.repositorio.elementos()));
-    leer();
-    return espacio.alCambiar(leer);
-  }, [espacio, clase, valor]);
-  return elementos;
+  const [version, setVersion] = useState(0);
+  useEffect(() => (espacio ? espacio.alCambiar(() => setVersion((v) => v + 1)) : undefined), [espacio]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `version` cambia con cada cambio del espacio.
+  return useMemo(
+    () => (espacio && clase ? elementosDe(clase, valor, espacio.repositorio.elementos()) : []),
+    [espacio, clase, valor, version],
+  );
 }
+
+const SIN_ELEMENTOS: FrontmatterComun[] = [];
 
 /** El nombre de un grupo en el idioma de la interfaz. */
 function useNombreGrupo(clase: ClaseGrupo, valor: string, elementos: readonly FrontmatterComun[]): string {
   const { t, idioma } = useT();
-  const sesion = useNombreSesion({ id: valor, elementos: [...elementos] });
+  // El nombre propuesto de una sesión se calcula solo si es una sesión.
+  const sesion = useNombreSesion({ id: valor, elementos: clase === 'sesion' ? [...elementos] : SIN_ELEMENTOS });
   if (clase === 'sesion') return sesion.titulo;
   if (clase === 'tipo') return t(`tipos.${valor as TipoElemento}`);
   if (clase === 'etiqueta') return `#${valor}`;
@@ -63,7 +67,8 @@ function useNombreGrupo(clase: ClaseGrupo, valor: string, elementos: readonly Fr
 export function Grupo() {
   const { t, idioma } = useT();
   const { clase: crudo, valor } = useParams({ from: '/g/$clase/$valor' });
-  const clase = esClaseGrupo(crudo) ? crudo : null;
+  // Un tipo que no existe tampoco (`/g/tipo/foo`).
+  const clase = esClaseGrupo(crudo) && (crudo !== 'tipo' || esTipoElemento(valor)) ? crudo : null;
   const navegar = useNavigate();
   const vista = vistaDe(useSearch({ from: '/g/$clase/$valor' }).vista);
   const cambiarVista = (nueva: Vista) =>
@@ -75,6 +80,8 @@ export function Grupo() {
     });
   const elementos = useElementosDeGrupo(clase, valor);
   const nombre = useNombreGrupo(clase ?? 'etiqueta', valor, elementos);
+  // Una colección tiene su pantalla (con su nombre editable).
+  if (clase === 'coleccion') return <Navigate to="/c/$coleccion" params={{ coleccion: valor }} replace />;
   if (!clase || !elementos.length)
     return (
       <Pantalla titulo={clase ? nombre : valor}>
@@ -98,14 +105,17 @@ export function Grupo() {
           ? meta
           : t('pantallas.coleccion.desde', { meta, fecha: fmtDia(masAntiguo, new Date(), idioma) })
       }
-      control={
-        <div className="row">
-          <ExportarGrupo elementos={elementos} nombre={nombre} />
-          <SelectorVista vista={vista} alCambiar={cambiarVista} />
-        </div>
-      }
+      control={<ExportarGrupo elementos={elementos} nombre={nombre} grupo={{ clase, valor }} />}
     >
-      <CuerpoGrupo elementos={elementos} vista={vista} id="elementos-grupo" />
+      {/* Por grupo: al cambiar de grupo, su selección y lo desplegado empiezan de nuevo. */}
+      <CuerpoGrupo
+        key={`${clase}/${valor}`}
+        elementos={elementos}
+        vista={vista}
+        alCambiarVista={cambiarVista}
+        id="elementos-grupo"
+        sinRepetido={clase === 'huella'}
+      />
     </Pantalla>
   );
 }

@@ -1599,13 +1599,16 @@ pre.code.codigo .ln {
 .grafico-cuando rect.sin {
   fill: var(--line);
 }
-.grafico-cuando text {
+.grafico-cuando .eje {
   fill: var(--muted);
 }
 .fila-marcable {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.fila-marcable input[type="checkbox"] {
+  accent-color: var(--accent);
 }
 .fila-marcable > :last-child {
   flex: 1;

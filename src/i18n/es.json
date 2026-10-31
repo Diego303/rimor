@@ -616,17 +616,20 @@
       "pico": "{mes} · el pico es el día {dia}.",
       "sinActividad": "Sin nada en las dos últimas semanas.",
       "seRepite": "Se repite",
-      "veces": "{n} veces · la última, {cuando}",
+      "veces": "{n} veces · última {cuando}",
       "verHilo": "Ver hilo",
       "verGrupo": "Ver todas",
       "comparar": "Comparar",
       "seleccionar": "Marca dos para compararlos.",
       "marcar": "Marcar «{titulo}» para comparar",
       "vacioTitulo": "No hay nada en este grupo",
-      "vacio": "O no existe, o lo que tenía ya no está (en la papelera, archivado o cambiado).",
+      "vacio": "O no existe, o lo que tenía ya no está (en la papelera o cambiado).",
       "grupos": "Grupos",
       "mismoError": "mismo error",
-      "suSesion": "su sesión"
+      "suSesion": "su sesión",
+      "verTodos": "Ver los {n}",
+      "verMenos": "Ver menos",
+      "yMas": "y {n} más"
     }
   },
   "espacio": {
@@ -843,7 +846,8 @@
       "reemplazar": {
         "titulo": "Reemplazar",
         "texto": "Borra «{nombre}» y carga el archivo. Antes se exporta una copia.",
-        "textoSinCopia": "Borra «{nombre}» y carga el archivo. No se exporta una copia antes (lo desactivaste en Datos y copias)."
+        "textoSinCopia": "Borra «{nombre}» y carga el archivo. No se exporta una copia antes (lo desactivaste en Datos y copias).",
+        "parcial": "Este ZIP es de un grupo, no de un espacio entero: reemplazar borraría todo lo demás. Júntalo o ábrelo como espacio nuevo."
       },
       "nuevo": {
         "titulo": "Espacio nuevo",

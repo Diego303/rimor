@@ -125,3 +125,53 @@ Cubre las tres tareas (crear investigación queda para v0.3, como dice la especi
 - Detalles del elemento: la fila «Grupos», con un enlace por clave.
 - `BarraH` acepta el color del tipo.
 - Pruebas: `grupos.test.ts`, el ZIP y el JSON con `solo`, y `Grupo.test.tsx` (panel, se repite, comparar, vacío, colección y detalles).
+
+## Verificación
+
+- `pnpm verificar` en verde (ver `docs/seguimiento.md`).
+- La revisión independiente encontró 14 hallazgos, atendidos con pruebas salvo donde se dice:
+  1. **El ZIP de un grupo no llevaba los hilos de sus errores**: al importarlo, su `hilo` apuntaba al HIL-NNNN de aquí. Ahora lleva las entidades de hilo que citan sus elementos, y la ref se reasigna como con el ZIP completo (prueba de ida y vuelta).
+  2. El pie de «Cuándo» decía el mes de hoy: ahora, el del pico.
+  3. **La selección para comparar sobrevivía al cambiar de grupo** (TanStack no vuelve a montar la ruta): ahora el panel va por `key`, y lo marcado que sale del grupo se poda.
+  4. **«Comparar»**:
+     - ya no sale en una pestaña que solo lee;
+     - se deshabilita con el motivo si los dos no se comparan;
+     - es el botón primario de Inicio;
+     - con dos marcados, los demás esperan (no se desmarca uno en silencio).
+  5. **Coste**:
+     - `panelDe` es lineal;
+     - `enGrupo` solo analiza URL de enlaces y peticiones;
+     - la lista enseña los 8 más recientes y «Ver los N» (como la referencia), con los resúmenes en un `useMemo`;
+     - el nombre propuesto de sesión, solo en las sesiones;
+     - la exportación mira cada carpeta en un conjunto.
+  6. Las fechas se comparan por su instante, no como texto (desfases distintos en el cambio de hora).
+  7. **El ZIP de un grupo**:
+     - lleva el historial de sus alias, `colecciones.json` y `sesiones.json` (que se juntan al importar);
+     - el manifest lo marca como `parcial`, e Importar deshabilita «Reemplazar» con su motivo.
+  8. Dominios sin `www.` ni `m.`, legibles (punycode), sin puerto ni credenciales. Repositorios y paquetes sin `.git`, en minúsculas donde no distinguen. Etiquetas sin duplicar por mayúsculas.
+  9. En el grupo de una huella, «Se repite» no se pinta (sería ella misma).
+  10. Los elementos del grupo se calculan al pintar: sin un instante «vacío» ni el grupo anterior.
+  11. **Textos y rutas**:
+      - el de vacío ya no dice «archivado»;
+      - `/g/tipo/foo` da vacío;
+      - «N veces · última hoy», como en la referencia;
+      - `/g/coleccion/x` lleva a `/c/x`;
+      - «hoy» se pone al día cada minuto.
+  12. **Accesibilidad y aspecto**:
+      - el gráfico tiene su texto para lectores de pantalla (los días con algo);
+      - la pista va unida a las casillas;
+      - las casillas, con el acento;
+      - en la cabecera, solo «Exportar ZIP» (como la referencia): el selector de vista pasa a la tarjeta «Elementos»;
+      - la fila «Grupos» ya no repite las colecciones y enseña como mucho 6 grupos («y N más»).
+  13. Código muerto de `Coleccion.tsx` fuera.
+  14. **Pruebas añadidas**:
+      - ida y vuelta con un hilo;
+      - manifest parcial;
+      - Importar con un ZIP parcial;
+      - motivo de comparación y selección al cambiar de grupo;
+      - «Ver los N» y `/g/tipo/foo`;
+      - `/g/coleccion` a la colección;
+      - normalización y orden con desfases.
+      - **Sin prueba:** el mes del pico a principios de mes (haría falta falsear la fecha en la interfaz). Es una línea, revisada a mano.
+
+**Decisión.** VIS-04 (plan §9.4) cita también el estado (abiertos, resueltos y archivados), los fijados entre los recientes y lo más frecuente (dominios, paquetes y etiquetas). La especificación de IN-052 limita el panel a qué hay, cuándo, qué se repite y elementos, como la pantalla de referencia: lo demás queda para las facetas de Buscar (IN-056).

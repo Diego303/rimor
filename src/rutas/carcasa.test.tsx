@@ -75,7 +75,7 @@ describe('Carcasa', () => {
       act(() => void window.dispatchEvent(new Event('online')));
       expect(screen.queryByText('Sin conexión')).toBeNull();
     } finally {
-      // biome-ignore lint/performance/noDelete: se quita la propiedad propia para volver a la del prototipo.
+      // Se quita la propiedad propia: vuelve la del prototipo.
       delete (navigator as { onLine?: boolean }).onLine;
     }
   });

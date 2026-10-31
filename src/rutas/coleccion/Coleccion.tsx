@@ -1,8 +1,8 @@
 /**
  * Una colección (ORG-02; como `SC.coleccion`): el panel común de grupo (IN-052: qué hay, cuándo, qué se repite y
- * sus elementos) y «Exportar ZIP»; el nombre se edita en el sitio (renombrar), a la derecha solo el
- * selector de vista (guía §8.2) y, plegado al final, subirla o bajarla (su sitio en el raíl) o borrarla (con
- * confirmación: los elementos se quedan).
+ * sus elementos, con el selector de vista en su tarjeta) y, a la derecha de la cabecera, «Exportar ZIP» como en la
+ * referencia; el nombre se edita en el sitio (renombrar) y, plegado al final, subirla o bajarla (su sitio en el raíl)
+ * o borrarla (con confirmación: los elementos se quedan).
  */
 import type { FrontmatterComun } from '@rimor/formato';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
@@ -12,15 +12,13 @@ import { limpiarColeccion } from '../../espacio/ediciones';
 import { useEspacio } from '../../estado/espacio';
 import { fmtDia } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
-import { useLectoresOpcional } from '../../lectores/Lectores';
-import { Boton, Detalles, Dialogo, FilaElemento, Vacio } from '../../ui/componentes';
+import { Boton, Detalles, Dialogo, Vacio } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { Icono } from '../../ui/iconos/Icono';
 import { TituloElemento } from '../elemento/Cabecera';
 import { CuerpoGrupo, ExportarGrupo } from '../grupo/PanelGrupo';
 import { Pantalla } from '../Pantalla';
 import { type Vista, vistaDe } from '../vistas/orden';
-import { SelectorVista } from '../vistas/Vistas';
 
 /** Los elementos de la colección y si existe, al día con cada cambio. */
 function useColeccion(id: string): { existe: boolean; elementos: FrontmatterComun[]; posicion: number; total: number } {
@@ -59,22 +57,12 @@ export function Coleccion() {
       replace: true,
     });
   const espacio = useEspacioOpcional();
-  const lectores = useLectoresOpcional();
   const avisos = useAvisosOpcional();
   const soloLectura = useEspacio((s) => s.soloLectura);
   const { existe, elementos, posicion, total } = useColeccion(coleccion);
   const [editando, setEditando] = useState(false);
   const [borrando, setBorrando] = useState(false);
   const editable = Boolean(espacio) && !soloLectura;
-
-  const abrir = (ref: string) => void navegar({ to: '/e/$ref', params: { ref } });
-  const legible = (fm: FrontmatterComun) => {
-    try {
-      return lectores?.registro.paraElemento({ frontmatter: fm })?.resumenLegible?.(fm.lector.resumen, idioma) ?? '';
-    } catch {
-      return '';
-    }
-  };
 
   if (!existe)
     return (
@@ -140,15 +128,18 @@ export function Coleccion() {
       }
       control={
         elementos.length > 0 ? (
-          <div className="row">
-            <ExportarGrupo elementos={elementos} nombre={coleccion} />
-            <SelectorVista vista={vista} alCambiar={cambiarVista} />
-          </div>
+          <ExportarGrupo elementos={elementos} nombre={coleccion} grupo={{ clase: 'coleccion', valor: coleccion }} />
         ) : undefined
       }
     >
       {elementos.length ? (
-        <CuerpoGrupo elementos={elementos} vista={vista} id="elementos-coleccion" />
+        <CuerpoGrupo
+          key={coleccion}
+          elementos={elementos}
+          vista={vista}
+          alCambiarVista={cambiarVista}
+          id="elementos-coleccion"
+        />
       ) : (
         <Vacio titulo={t('pantallas.coleccion.vaciaTitulo')}>{t('pantallas.coleccion.vacio')}</Vacio>
       )}

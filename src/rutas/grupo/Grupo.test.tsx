@@ -68,16 +68,34 @@ describe('Grupos', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Marcar «error 3» para comparar' }));
     expect(screen.queryByRole('button', { name: 'Comparar' })).toBeNull();
     fireEvent.click(screen.getByRole('checkbox', { name: 'Marcar «error 2» para comparar' }));
-    expect(screen.getByRole('button', { name: 'Comparar' })).toBeTruthy();
+    // Dos errores no se comparan (aún): el botón, deshabilitado, y el motivo en la pista.
+    expect((screen.getByRole('button', { name: 'Comparar' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/Este tipo aún no se compara/)).toBeTruthy();
+    // Con dos marcados, el tercero espera (no se desmarca uno sin decirlo).
+    expect((screen.getByRole('checkbox', { name: 'Marcar «log 1» para comparar' }) as HTMLInputElement).disabled).toBe(
+      true,
+    );
     expect(screen.getByRole('button', { name: 'Exportar ZIP' })).toBeTruthy();
-    // «Ver todas» lleva al grupo de esa huella.
+    // «Ver todas» lleva al grupo de esa huella (que no se repite a sí mismo), con la selección de nuevo vacía.
     fireEvent.click(screen.getByRole('button', { name: 'Ver todas' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/g/huella/h-timeout'), ESCRITURA);
     expect(await screen.findByRole('heading', { name: 'error 3' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Se repite' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Comparar' })).toBeNull();
+    expect(
+      screen
+        .getAllByRole('checkbox')
+        .every((c) => !(c as HTMLInputElement).checked && !(c as HTMLInputElement).disabled),
+    ).toBe(true);
   }, 30_000);
 
-  it('una clase o un valor que no existe: vacío; la colección también tiene su panel', async () => {
+  it('una clase, un tipo o un valor que no existe: vacío; la colección, en su pantalla y con su panel', async () => {
     const { router } = await montarApp('/ajustes', ELEMENTOS);
+    await act(() => router.navigate({ to: '/g/$clase/$valor', params: { clase: 'tipo', valor: 'foo' } }));
+    expect(await screen.findByText('No hay nada en este grupo', {}, PRIMERA_CARGA)).toBeTruthy();
+    // `/g/coleccion/…` lleva a la pantalla de la colección (con su nombre editable).
+    await act(() => router.navigate({ to: '/g/$clase/$valor', params: { clase: 'coleccion', valor: 'gateway' } }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/c/gateway'), ESCRITURA);
     await act(() => router.navigate({ to: '/g/$clase/$valor', params: { clase: 'inventada', valor: 'x' } }));
     expect(await screen.findByText('No hay nada en este grupo', {}, PRIMERA_CARGA)).toBeTruthy();
     await act(() => router.navigate({ to: '/g/$clase/$valor', params: { clase: 'etiqueta', valor: 'nadie' } }));
@@ -99,6 +117,18 @@ describe('Grupos', () => {
     // (Al abrirlo, su lector recalcula la huella del original: la de la prueba puede cambiar.)
     expect(screen.getByRole('link', { name: 'mismo error' }).getAttribute('href')).toContain('/g/huella/');
     expect(screen.getByRole('link', { name: 'Error' }).getAttribute('href')).toContain('/g/tipo/error');
-    expect(screen.getByRole('link', { name: 'gateway' }).getAttribute('href')).toContain('/c/gateway');
+    // Su colección no: ya tiene su fila (y su pantalla, desde el raíl).
+    expect(document.querySelector('.grupos-elemento')?.textContent).not.toContain('gateway');
+  }, 30_000);
+
+  it('la lista enseña los 8 más recientes y «Ver los N»', async () => {
+    const muchos = Array.from({ length: 11 }, (_, i) => el(10 + i, 'log', i, ['mucho']));
+    const { router } = await montarApp('/ajustes', muchos);
+    await act(() => router.navigate({ to: '/g/$clase/$valor', params: { clase: 'etiqueta', valor: 'mucho' } }));
+    await screen.findByRole('heading', { name: '#mucho' }, PRIMERA_CARGA);
+    expect(document.querySelectorAll('.fila-marcable')).toHaveLength(8);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver los 11' }));
+    expect(document.querySelectorAll('.fila-marcable')).toHaveLength(11);
+    expect(screen.getByRole('button', { name: 'Ver menos' })).toBeTruthy();
   }, 30_000);
 });

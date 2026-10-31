@@ -616,17 +616,20 @@
       "pico": "{mes} · the peak is day {dia}.",
       "sinActividad": "Nothing in the last two weeks.",
       "seRepite": "Recurring",
-      "veces": "{n} times · the latest, {cuando}",
+      "veces": "{n} times · latest {cuando}",
       "verHilo": "See thread",
       "verGrupo": "See all",
       "comparar": "Compare",
       "seleccionar": "Tick two to compare them.",
       "marcar": "Tick “{titulo}” to compare",
       "vacioTitulo": "There is nothing in this group",
-      "vacio": "Either it does not exist, or what it had is gone (in the bin, archived or changed).",
+      "vacio": "Either it does not exist, or what it had is gone (in the bin or changed).",
       "grupos": "Groups",
       "mismoError": "same error",
-      "suSesion": "its session"
+      "suSesion": "its session",
+      "verTodos": "See all {n}",
+      "verMenos": "See fewer",
+      "yMas": "and {n} more"
     }
   },
   "espacio": {
@@ -843,7 +846,8 @@
       "reemplazar": {
         "titulo": "Replace",
         "texto": "Deletes “{nombre}” and loads the file. A copy is exported first.",
-        "textoSinCopia": "Deletes “{nombre}” and loads the file. No copy is exported first (you turned it off in Data and backups)."
+        "textoSinCopia": "Deletes “{nombre}” and loads the file. No copy is exported first (you turned it off in Data and backups).",
+        "parcial": "This ZIP is from a group, not a whole space: replacing would delete everything else. Merge it or open it as a new space."
       },
       "nuevo": {
         "titulo": "New space",

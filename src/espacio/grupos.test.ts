@@ -47,6 +47,27 @@ describe('las claves de grupo de un elemento', () => {
     );
   });
 
+  it('dominios, repositorios y paquetes comparables: sin www ni m, legibles, sin puerto ni credenciales, sin .git', () => {
+    const de = (url: string) => claves(fm(1, 16, { tipo: 'enlace' }, { url }));
+    expect(de('https://m.youtube.com/watch?v=x')).toContain('dominio:youtube.com');
+    expect(de('https://xn--mnchen-3ya.de/a')).toContain('dominio:münchen.de');
+    expect(de('https://github.com/Algesten/Ureq.git')).toContain('repositorio:GitHub/algesten/ureq');
+    expect(de('https://pypi.org/project/Requests/')).toContain('paquete:PyPI/requests');
+    expect(claves(fm(2, 16, { tipo: 'http' }, { host: 'yo:secreto@API.local:8080' }))).toContain('dominio:api.local');
+    // Las etiquetas que solo cambian en mayúsculas, una vez.
+    expect(claves(fm(3, 16, { etiquetas: ['Ureq', 'ureq'] })).filter((c) => c.startsWith('etiqueta'))).toEqual([
+      'etiqueta:Ureq',
+    ]);
+  });
+
+  it('el orden y «desde» por el instante, aunque las fechas lleven desfases distintos (cambio de hora)', () => {
+    // 02:50+02:00 es 00:50Z; 02:10+01:00 es 01:10Z: el segundo es el más reciente.
+    const antes = { ...fm(1, 25), creado: '2026-10-25T02:50:00+02:00' };
+    const despues = { ...fm(2, 25), creado: '2026-10-25T02:10:00+01:00' };
+    expect(elementosDe('mes', '2026-10', [antes, despues]).map((f) => f.ref)).toEqual([despues.ref, antes.ref]);
+    expect(panelDe([despues, antes], new Date(2026, 9, 26)).desde).toBe(antes.creado);
+  });
+
   it('los de un grupo, de lo más reciente a lo más antiguo; la etiqueta sin distinguir mayúsculas', () => {
     const lista = [fm(1, 2, { etiquetas: ['Ureq'] }), fm(2, 9, { etiquetas: ['ureq'] }), fm(3, 5)];
     expect(elementosDe('etiqueta', 'ureq', lista).map((f) => f.ref)).toEqual([lista[1]?.ref, lista[0]?.ref]);
@@ -92,14 +113,25 @@ describe('el panel de un grupo', () => {
 });
 
 describe('lo que exporta un grupo', () => {
-  it('el .md de cada uno, su adjunto y la carpeta de su historial', () => {
+  it('el .md de cada uno, su adjunto, su historial (también el de sus alias), sus hilos y los registros', () => {
     const conAdjunto = fm(2, 16, {
       adjunto: { hash: 'sha256:x', ruta: 'adjuntos/ab/x.bin', tam: 3 },
+      alias: ['TXT-0099'],
+      hilo: 'HIL-0001',
     } as Partial<FrontmatterComun>);
-    const r = rutasDeGrupo([fm(1, 16), conAdjunto, fm(3, 16)], (id) =>
-      id === fm(3, 16).id ? undefined : `elementos/${id}.md`,
+    const r = rutasDeGrupo(
+      [fm(1, 16), conAdjunto, fm(3, 16)],
+      (id) => (id === fm(3, 16).id ? undefined : `elementos/${id}.md`),
+      (ref) => (ref === 'HIL-0001' ? 'hilos/HIL-0001--timeout.md' : undefined),
     );
-    expect(r.rutas).toEqual([`elementos/${fm(1, 16).id}.md`, `elementos/${conAdjunto.id}.md`, 'adjuntos/ab/x.bin']);
-    expect(r.prefijos).toEqual([`historial/${fm(1, 16).ref}/`, `historial/${conAdjunto.ref}/`]);
+    expect(r.rutas).toEqual([
+      'colecciones.json',
+      'sesiones.json',
+      `elementos/${fm(1, 16).id}.md`,
+      `elementos/${conAdjunto.id}.md`,
+      'adjuntos/ab/x.bin',
+      'hilos/HIL-0001--timeout.md',
+    ]);
+    expect(r.prefijos).toEqual([`historial/${fm(1, 16).ref}/`, `historial/${conAdjunto.ref}/`, 'historial/TXT-0099/']);
   });
 });

@@ -211,28 +211,31 @@ function textoGrupo(c: ClaveGrupo, t: ReturnType<typeof useT>['t'], idioma: stri
   return c.valor;
 }
 
-/** Los grupos del elemento (IN-052): uno por clave, cada uno con su panel. */
+/** Píldoras de grupo como mucho (guía §8.3); el resto, «y N más». */
+const MAX_GRUPOS = 6;
+
+/**
+ * Los grupos del elemento (IN-052): uno por clave, cada uno con su panel. Sin sus colecciones (tienen su fila y su
+ * pantalla, desde el raíl).
+ */
 function GruposDe({ fm }: { fm: FrontmatterComun }) {
   const { t, idioma } = useT();
-  const claves = useMemo(() => clavesDe(fm), [fm]);
+  const claves = useMemo(() => clavesDe(fm).filter((c) => c.clase !== 'coleccion'), [fm]);
   return (
     <span className="grupos-elemento">
-      {claves.map((c) =>
-        c.clase === 'coleccion' ? (
-          <Link key={`${c.clase}:${c.valor}`} className="st" to="/c/$coleccion" params={{ coleccion: c.valor }}>
-            {c.valor}
-          </Link>
-        ) : (
-          <Link
-            key={`${c.clase}:${c.valor}`}
-            className="st"
-            to="/g/$clase/$valor"
-            params={{ clase: c.clase, valor: c.valor }}
-            title={t(`pantallas.grupo.clases.${c.clase}`)}
-          >
-            {textoGrupo(c, t, idioma)}
-          </Link>
-        ),
+      {claves.slice(0, MAX_GRUPOS).map((c) => (
+        <Link
+          key={`${c.clase}:${c.valor}`}
+          className="st"
+          to="/g/$clase/$valor"
+          params={{ clase: c.clase, valor: c.valor }}
+          title={t(`pantallas.grupo.clases.${c.clase}`)}
+        >
+          {textoGrupo(c, t, idioma)}
+        </Link>
+      ))}
+      {claves.length > MAX_GRUPOS && (
+        <span className="xs muted">{t('pantallas.grupo.yMas', { n: claves.length - MAX_GRUPOS })}</span>
       )}
     </span>
   );

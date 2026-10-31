@@ -155,20 +155,32 @@ export function Importar() {
           <section className="card" aria-labelledby="como-importar">
             <h3 id="como-importar">{t('importar.como')}</h3>
             <div className="list modos-importar" role="radiogroup" aria-labelledby="como-importar">
-              {MODOS.filter((m) => m !== 'nuevo' || !espacio.enMemoria).map((m) => (
-                <label key={m} className={`radio${modo === m ? ' on' : ''}`}>
-                  <input type="radio" name="modo" checked={modo === m} onChange={() => setModo(m)} />
-                  <span>
-                    <b className="sm">{t(`importar.modos.${m}.titulo`)}</b>
-                    <br />
-                    <span className="xs muted">
-                      {m === 'reemplazar' && !espacio.ajustes().copias.zipPrevio
-                        ? t('importar.modos.reemplazar.textoSinCopia', { nombre: espacio.manifest.espacio.nombre })
-                        : t(`importar.modos.${m}.texto`, { nombre: espacio.manifest.espacio.nombre })}
+              {MODOS.filter((m) => m !== 'nuevo' || !espacio.enMemoria).map((m) => {
+                // El ZIP de un grupo (IN-052) no es un espacio entero: reemplazar borraría lo demás.
+                const parcial = m === 'reemplazar' && Boolean(estado.comprobado.paquete.manifest.parcial);
+                return (
+                  <label key={m} className={`radio${modo === m ? ' on' : ''}`}>
+                    <input
+                      type="radio"
+                      name="modo"
+                      checked={modo === m}
+                      disabled={parcial}
+                      onChange={() => setModo(m)}
+                    />
+                    <span>
+                      <b className="sm">{t(`importar.modos.${m}.titulo`)}</b>
+                      <br />
+                      <span className="xs muted">
+                        {parcial
+                          ? t('importar.modos.reemplazar.parcial')
+                          : m === 'reemplazar' && !espacio.ajustes().copias.zipPrevio
+                            ? t('importar.modos.reemplazar.textoSinCopia', { nombre: espacio.manifest.espacio.nombre })
+                            : t(`importar.modos.${m}.texto`, { nombre: espacio.manifest.espacio.nombre })}
+                      </span>
                     </span>
-                  </span>
-                </label>
-              ))}
+                  </label>
+                );
+              })}
             </div>
             <div className="row acciones-importar">
               {/* La señal junto a los botones (deshabilitados), sin quitarlos. */}
