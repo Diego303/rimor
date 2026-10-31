@@ -52,6 +52,7 @@ export const textos = definirTextos(
     },
     linea: 'línea {n}',
     mostrando: 'Se muestran las {n} primeras.',
+    comodin: 'campo variable',
   },
   {
     analizando: 'Looking for templates and errors',
@@ -103,5 +104,6 @@ export const textos = definirTextos(
     },
     linea: 'line {n}',
     mostrando: 'Showing the first {n}.',
+    comodin: 'variable field',
   },
 );

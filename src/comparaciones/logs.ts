@@ -2,9 +2,11 @@
  * Comparación de dos logs (CMP-01, pantalla «Comparación de logs»): dónde se separa la ejecución que se investiga
  * («la mala») de la de referencia («la buena») y qué mensajes aparecen, faltan o cambian de frecuencia, ignorando
  * fechas, IDs y números (por plantilla). Sale de los derivados del lector Log: la plantilla de cada línea y los
- * recuentos. TS puro y lineal en líneas.
+ * recuentos. Las plantillas de los dos se vuelven a juntar con Drain (IN-048): cada log solo ve sus valores, y un campo
+ * variable de los dos (los usuarios de una y de otra) se encuentra con los de ambos. TS puro y lineal en líneas.
  */
 import type { DatosLog } from '../lectores/log/analisis';
+import { juntarPlantillas } from '../lectores/log/drain';
 
 /** Cambia de frecuencia si una aparece al menos el doble (o la mitad) de veces que en la otra. */
 export const FACTOR_FRECUENCIA = 2;
@@ -30,9 +32,9 @@ export interface ComparacionLogs {
   lineas: { a: number; b: number };
 }
 
-/** La plantilla de cada línea ('' en las vacías), sin las líneas vacías del final. */
-function secuencia(d: DatosLog): string[] {
-  const s = d.lineaPlantilla.map((k) => (k >= 0 ? (d.plantillas[k]?.plantilla ?? '') : ''));
+/** La plantilla común (`texto(k)`) de cada línea ('' en las vacías), sin las líneas vacías del final. */
+function secuencia(d: DatosLog, texto: (k: number) => string): string[] {
+  const s = d.lineaPlantilla.map((k) => (k >= 0 ? texto(k) : ''));
   let fin = s.length;
   while (fin > 0 && s[fin - 1] === '') fin--;
   return s.slice(0, fin);
@@ -46,8 +48,11 @@ function recuentos(sec: readonly string[]): Map<string, number> {
 }
 
 export function compararLogs(a: DatosLog, b: DatosLog): ComparacionLogs {
-  const sa = secuencia(a);
-  const sb = secuencia(b);
+  const comunes = juntarPlantillas([...a.plantillas, ...b.plantillas]);
+  const texto = (d: DatosLog, desde: number) => (k: number) =>
+    k < 0 || k >= d.plantillas.length ? '' : (comunes.plantillas[comunes.grupoDe[desde + k] ?? -1]?.plantilla ?? '');
+  const sa = secuencia(a, texto(a, 0));
+  const sb = secuencia(b, texto(b, a.plantillas.length));
   let i = 0;
   const comun = Math.min(sa.length, sb.length);
   while (i < comun && sa[i] === sb[i]) i++;

@@ -1,8 +1,11 @@
 /** Pinta una plantilla de log: la usan la vista de Log y la comparación de logs. */
 import type { ReactNode } from 'react';
+import { useT } from '../../i18n/useT';
+import { textos } from './textos';
 
 /** Una plantilla con sus marcadores (`<N>`, `<ID>`…) y su nivel resaltados, como en la pantalla de referencia. */
 export function PlantillaPintada({ plantilla }: { plantilla: string }) {
+  const { idioma } = useT();
   const piezas: ReactNode[] = [];
   let resto = plantilla;
   let k = 0;
@@ -19,7 +22,13 @@ export function PlantillaPintada({ plantilla }: { plantilla: string }) {
     if (m[2]) nivelPintado = true;
     if (m.index) piezas.push(resto.slice(0, m.index));
     piezas.push(
-      m[1] ? (
+      m[1] === '*' ? (
+        // El comodín se ve como «*» y se lee como lo que es.
+        <span key={k++} className="ph">
+          <span aria-hidden="true">*</span>
+          <span className="solo-lector">{textos.t(idioma, 'comodin')}</span>
+        </span>
+      ) : m[1] ? (
         <span key={k++} className="ph">
           {m[1]}
         </span>
