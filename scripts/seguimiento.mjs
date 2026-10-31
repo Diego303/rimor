@@ -97,7 +97,8 @@ texto = lineas.join('\n');
 if (args.registro && args.id) {
   const [fase, resultado = ''] = args.registro.split(' · ');
   const nueva = `| ${marca.slice(0, 10)} | ${args.id} | ${fase} | ${resultado} | … |`;
-  texto = texto.replace(/(## Registro\n\| Fecha[^\n]*\n\|[-|]+\|\n)/, `$1${nueva}\n`);
+  // Con una función: un texto con `$'` o `$&` (un curl con $'…') no debe expandirse como patrón de reemplazo.
+  texto = texto.replace(/(## Registro\n\| Fecha[^\n]*\n\|[-|]+\|\n)/, (_, ini) => `${ini}${nueva}\n`);
 }
 texto = texto.replace(/(## Registro\n\| Fecha[^\n]*\n\|[-|]+\|\n)([\s\S]*?)(\n## )/, (_, ini, cuerpo, fin) => {
   const filas = cuerpo.split('\n').filter(Boolean);
@@ -115,7 +116,7 @@ texto = texto.replace(/(## Registro\n\| Fecha[^\n]*\n\|[-|]+\|\n)([\s\S]*?)(\n##
 });
 
 if (args.retomar !== undefined) {
-  texto = texto.replace(/## Cómo retomar\n[\s\S]*$/, `## Cómo retomar\n${args.retomar.trim()}\n`);
+  texto = texto.replace(/## Cómo retomar\n[\s\S]*$/, () => `## Cómo retomar\n${args.retomar.trim()}\n`);
 }
 
 writeFileSync(RUTA, texto);

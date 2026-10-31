@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-31 17:28
-**Ahora:** IN-049 · Reglas aprendidas y captura múltiple · fase análisis y diseño
+**Última actualización:** 2026-10-31 17:34
+**Ahora:** IN-049 · Reglas aprendidas y captura múltiple · fase implementación
 **Siguiente:** IN-050 · PWA, sin conexión y compartir
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 8/22 · v0.3 0/17 · v0.4 0/9 · total 59/99
 
@@ -67,8 +67,8 @@
 | IN-045 | JSON, YAML y TOML con comparación estructural | v0.2 | 8 | hecha | 079d746 4176cd5 9049c78 | docs/features/IN-045-json-yaml-toml.md |
 | IN-046 | Petición HTTP | v0.2 | 8 | hecha | ba600a9 7660ed5 48b78e9 | docs/features/IN-046-peticion-http.md |
 | IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | hecha | c10e372 e49767e e7ea869 | docs/features/IN-047-mediciones-formatos-hodges-lehmann.md |
-| IN-048 | Logs: plantillas con Drain | v0.2 | 8 | hecha | 7cfc86d 212c98c | docs/features/IN-048-logs-drain.md |
-| IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | pendiente | — | — |
+| IN-048 | Logs: plantillas con Drain | v0.2 | 8 | hecha | 7cfc86d 212c98c 8f51fbb | docs/features/IN-048-logs-drain.md |
+| IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | en implementación | — | docs/features/IN-049-reglas-captura-multiple.md |
 | IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | pendiente | — | — |
 | IN-051 | Sesiones automáticas | v0.2 | 9 | pendiente | — | — |
 | IN-052 | Grupos automáticos y pantalla de colección | v0.2 | 9 | pendiente | — | — |
@@ -178,13 +178,15 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-048 | verificación | OK: pnpm verificar en verde (122 archivos, 1578 pruebas + 6 de rendimiento, 274,8 KB); revisión independiente con 11 hallazgos atendidos (agrupación sin parecido: identificadores y huecos de 5 valores; independiente del orden; lineal; comparación sobre la unión) | … |
+| 2026-10-31 | IN-049 | análisis y diseño | reglas por la firma (primera palabra con letra y signo) en .rimor/reglas-deteccion.json, propuesta a la tercera corrección como mensaje del feed, aplicadas en el detector y la vista previa, editables en Ajustes; /tipo que contradice cuenta; dividir en enlaces o bloques reconocidos con un botón en la vista previa | … |
+| 2026-10-31 | IN-048 | verificación | OK: pnpm verificar en verde (122 archivos, 1578 pruebas + 6 de rendimiento, 274,8 KB); revisión independiente con 11 hallazgos atendidos (agrupación sin parecido: identificadores y huecos de 5 valores; independiente del orden; lineal; comparación sobre la unión) | 8f51fbb |
 | 2026-10-31 | IN-048 | implementación | Drain sobre las plantillas normalizadas (nivel y largo en la raíz, primera palabra sin el nivel, umbral 0,6, rutas que no se juntan), versión 2 del lector log, <*> pintado; verificar en verde: 122 archivos, 1573 pruebas, 273,8 KB | 212c98c |
 | 2026-10-31 | IN-048 | análisis y diseño | Drain sobre las plantillas normalizadas (raíz por nivel y largo, 2 palabras de prefijo, umbral 0,5, comodín <*>), versión 2 del lector log, comparación con las plantillas nuevas | 7cfc86d |
 | 2026-10-31 | IN-047 | verificación | revisión independiente (12 hallazgos) corregida con pruebas: Hodges-Lehmann sin materializar las m·n diferencias (10.000×10.000 en <2 s), corrección de continuidad, criterion change y sample sin sampling_mode fuera, JMH sample como resumen, CSV de una columna y sufijos con enteros, cifras en ns y extremos citables, versión 2 del lector, serie principal, frase B frente a A; verificar en verde: 120 archivos, 1566 pruebas, 273,2 KB | e7ea869 |
 | 2026-10-31 | IN-047 | implementación | pytest-benchmark, JMH, criterion (sample y estimates como resumen) y columnas CSV con unidad; Hodges-Lehmann exacto o normal contra referencias de Python (33 casos), en comparar, la vista y el resultado guardado; testTimeout de 15 s por las pausas del entorno; verificar en verde: 120 archivos, 1558 pruebas, 272,9 KB | e49767e |
 | 2026-10-31 | IN-047 | análisis y diseño | pytest-benchmark (data o resumen), JMH (rawData, solo tiempos), criterion (sample.json y estimates.json como resumen), columnas CSV con unidad; Hodges-Lehmann con intervalo de Moses exacto o normal, referencias en Python por otro camino; en la comparación y su resultado | c10e372 |
-| 2026-10-31 | IN-046 | verificación | revisión independiente (22 hallazgos) corregida con pruebas: usuario-curl lineal, cmd real de Windows en dos capas, cookies con comillas, secretos del cuerpo y en JSON, varias órdenes tras tubería, opciones con valor y URL con forma de URL, fetch con GET, @archivo, cabeceras repetidas, más cabeceras y esquemas, Set-Cookie de sesión, | 2026-10-26 | IN-046 | implementación | lector http (puesto 9) con palabras de shell (bash y cmd), opciones de curl, tablas, copiar como cURL y fetch (exportar.ts diferido), reglas de secretos cookie, cabecera-clave, clave-url y usuario-curl, variables sin ocultar; verificar en verde: 119 archivos, 1524 pruebas, 268,6 KB | … |
+| 2026-10-31 | IN-046 | verificación | revisión independiente (22 hallazgos) corregida con pruebas: usuario-curl lineal, cmd real de Windows en dos capas, cookies con comillas, secretos del cuerpo y en JSON, varias órdenes tras tubería, opciones con valor y URL con forma de URL, fetch con GET, @archivo, cabeceras repetidas, más cabeceras y esquemas, Set-Cookie de sesión, $'…' completo, comentarios delante, -T PUT, urlencode, métodos raros; verificar en verde: 119 archivos, 1542 pruebas, 271,0 KB | 48b78e9 |
+| 2026-10-26 | IN-046 | implementación | lector http (puesto 9) con palabras de shell (bash y cmd), opciones de curl, tablas, copiar como cURL y fetch (exportar.ts diferido), reglas de secretos cookie, cabecera-clave, clave-url y usuario-curl, variables sin ocultar; verificar en verde: 119 archivos, 1524 pruebas, 268,6 KB | 7660ed5 |
 | 2026-10-26 | IN-046 | análisis y diseño | lector http (puesto 9) que analiza un único curl (bash y cmd) con tubería aparte, reglas de secretos nuevas (cookie, cabeceras de clave, claves en la URL, curl -u), vista en tablas, copiar como cURL y como fetch | ba600a9 |
 | 2026-10-26 | IN-045 | verificación | revisión independiente (17 hallazgos) corregida con pruebas: log grande como JSON, YAML cuadrático, notas Clave: valor, versiones por títulos generados (tituloGenerico), ilegibles en comparación, leer tolerante, TOML inválido y enteros grandes, esquema recortado, plurales, fechas TOML, etiquetas YAML, JSONC, árbol memorizado, vista previa del feed, rutas; verificar en verde: 117 archivos, 1501 pruebas, 265,1 KB | 9049c78 |
 | 2026-10-26 | IN-045 | implementación | lector json (puesto 7) con detección ligera en la carga inicial y análisis diferido (smol-toml 1.9.1), árbol plegable con ruta, esquema, cambios frente a la versión anterior, respuestaVersion en el mensaje del feed, comparación estructural (clase json); verificar en verde: 116 archivos, 1487 pruebas, 263,9 KB | 4176cd5 |
@@ -338,160 +340,6 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 | 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
 
 ## Cómo retomar
-- IN-020 hecha. Siguiente: IN-021 (diseño escrito en docs/features/IN-021-error.md, sin commit; corpus de 30 trazas en el scratchpad in021/trazas).
-…' completo, comentarios delante, -T PUT, urlencode, métodos raros; verificar en verde: 119 archivos, 1542 pruebas, 271,0 KB | … |
-| 2026-10-26 | IN-046 | implementación | lector http (puesto 9) con palabras de shell (bash y cmd), opciones de curl, tablas, copiar como cURL y fetch (exportar.ts diferido), reglas de secretos cookie, cabecera-clave, clave-url y usuario-curl, variables sin ocultar; verificar en verde: 119 archivos, 1524 pruebas, 268,6 KB | … |
-| 2026-10-26 | IN-046 | análisis y diseño | lector http (puesto 9) que analiza un único curl (bash y cmd) con tubería aparte, reglas de secretos nuevas (cookie, cabeceras de clave, claves en la URL, curl -u), vista en tablas, copiar como cURL y como fetch | ba600a9 |
-| 2026-10-26 | IN-045 | verificación | revisión independiente (17 hallazgos) corregida con pruebas: log grande como JSON, YAML cuadrático, notas Clave: valor, versiones por títulos generados (tituloGenerico), ilegibles en comparación, leer tolerante, TOML inválido y enteros grandes, esquema recortado, plurales, fechas TOML, etiquetas YAML, JSONC, árbol memorizado, vista previa del feed, rutas; verificar en verde: 117 archivos, 1501 pruebas, 265,1 KB | 9049c78 |
-| 2026-10-26 | IN-045 | implementación | lector json (puesto 7) con detección ligera en la carga inicial y análisis diferido (smol-toml 1.9.1), árbol plegable con ruta, esquema, cambios frente a la versión anterior, respuestaVersion en el mensaje del feed, comparación estructural (clase json); verificar en verde: 116 archivos, 1487 pruebas, 263,9 KB | 4176cd5 |
-| 2026-10-25 | IN-045 | análisis y diseño | lector json (puesto 7) con JSON, YAML (yaml) y TOML (smol-toml 1.9.1), YAML/TOML solo con forma de configuración, árbol plegable con ruta, esquema inferido, versiones (TIPOS_CON_VERSIONES y respuestaVersion en el mensaje del feed), comparación estructural como clase json | 079d746 |
-| 2026-10-25 | IN-044 | verificación | revisión independiente (15 hallazgos) corregida con pruebas: bytes transferidos, extensión de Parquet servida por el sitio, valores de Arrow por tipo, muestra de Parquet, plazo propio y perfil en 7 consultas, consulta en su conexión y recortada, unidades, señal leyendo-datos, escalas de la muestra, CSV en Latin-1/UTF-16, detección (GFM corta, asctime, comillas multilínea), infinitos, resultado validado, releer pendientes y accesibilidad; pruebas de rendimiento en su proyecto; verificar en verde: 113 archivos, 1462 pruebas, 259,8 KB | 42ea221 |
-| 2026-10-25 | IN-044 | implementación | lector datos con DuckDB-WASM (eh/mvp) diferido, perfil por columna con muestra, consulta SQL con CodeMirror, gráfico rápido, comparación de datos, Parquet por firma, leyendo-datos en la señal, wasm-unsafe-eval en la CSP; verificar en verde: 113 archivos, 1437 pruebas, 259,8 KB | be063ce |
-| 2026-10-25 | IN-044 | análisis y diseño | lector datos (puesto 8), DuckDB-WASM diferido (1.33.1-dev57.0, eh/mvp), perfil por columna con muestra por encima de 50 MB, SQL con CodeMirror, comparación por perfiles, leyendo-datos en la señal, wasm-unsafe-eval en la CSP | 5e9f8b1 |
-| 2026-10-25 | IN-043 | verificación | revisión independiente (10 hallazgos) corregida con pruebas: prompts y prosa, sudo/env/time, plantillas de Go, heredocs y sesiones, tarjeta desde el original, segunda frase, Copiar con respaldo, abrir en solo lectura y en el hilo; verificar en verde: 109 archivos, 1414 pruebas, 255,2 KB | b9ca2c0 |
-| 2026-10-25 | IN-043 | implementación | lector comando (puesto 13) con huecos {{x}}, chuleta, Copiar con valores común con el Prompt y la acción abrir en Inicio; verificar en verde: 109 archivos, 1407 pruebas, 254,2 KB | c6eb683 |
-| 2026-10-25 | IN-043 | análisis y diseño | lector comando (puesto 13), huecos {{x}}, chuleta con resaltado, Copiar con valores compartido con el Prompt, acción abrir en Inicio | 6073c48 |
-| 2026-10-25 | IN-042 | verificación | revisión independiente (12 hallazgos) corregida con pruebas: .patch soltado, unificado en estrecho, rutas de git y Subversion, RFC 2047, sin versiones, plegados perezosos, más formatos, series, ref al cambiar tipo, lector de pantalla, modos; verificar en verde: 107 archivos, 1394 pruebas, 252,6 KB | b8ff910 |
-| 2026-10-25 | IN-042 | implementación | lector diff (código) con análisis por cuentas, vista lado a lado en tabla, Registro.deTipo, etiqueta del lector, duda entre tipos distintos y versiones por lector; verificar en verde: 107 archivos, 1384 pruebas, 251,5 KB | f901a5a |
-| 2026-10-25 | IN-042 | análisis y diseño | lector diff de tipo código (puesto 10), lado a lado con el estilo .diff, Registro.deTipo, etiqueta del lector, duda entre tipos distintos y versiones del mismo lector | d1d8e29 |
-| 2026-10-25 | IN-041 | verificación | revisión independiente (15 hallazgos) corregida con pruebas: no reactivar dominios, foco, plazo de 15 s, fallos al capturar, token, Go, DOI de DataCite, importar sin dominios, redirecciones; verificar en verde: 105 archivos, 1370 pruebas, 249,1 KB | a78cdaf |
-| 2026-10-25 | IN-041 | implementación | proveedores (GitHub, GitLab, deps.dev con OSV, Crossref, DataCite), ficha con la anterior y sus cambios, Ajustes | 76c95a1 |
-| 2026-10-25 | IN-041 | análisis y diseño | proveedores de F0-7 (GitHub, GitLab, paquetes con OSV, Crossref, arXiv por DataCite), ficha en el frontmatter con la anterior, dominios en Ajustes, token solo en el navegador, sin-conexion en la señal | f2f85db |
-| 2026-10-25 | IN-040 | verificación | revisión de diseño y movimiento (23 hallazgos) y segunda revisión (9), corregidos con pruebas; v0.1.0 en el CHANGELOG y package.json; verificar en verde: 103 archivos, 1332 pruebas, 245,9 KB | 8ccb01e |
-| 2026-10-24 | IN-040 | análisis y diseño | presupuesto de exportar sin bloquear, matriz al 90 %, recorrido de integración completo, axe sobre las pantallas, revisión de diseño y movimiento, CHANGELOG 0.1.0 | 6dcf500 |
-| 2026-10-24 | IN-039 | verificación | pnpm verificar OK (1310 pruebas, 244,8 KB); revisión independiente con 8 hallazgos atendidos (borrar con cerrojo y copia previa, carpetas huérfanas) | 86d1dda |
-| 2026-10-24 | IN-039 | implementación | bienvenida con la señal y tres ejemplos, espacio de ejemplo generado con la captura e importado como nuevo, borrar espacios, instalar | 4c0df39 |
-| 2026-10-24 | IN-039 | análisis y diseño | bienvenida con la señal de primer uso y tres ejemplos, espacio de ejemplo generado con la captura real e importado como espacio nuevo, borrar espacios, instalar si el navegador lo ofrece | fec4ff4 |
-| 2026-10-24 | IN-038 | verificación | pnpm verificar OK (1300 pruebas, 244,1 KB); revisión independiente con 9 hallazgos atendidos | 2249ee7 |
-| 2026-10-24 | IN-038 | implementación | ajustes normalizados, opciones de captura en la captura y la vista previa (también el Worker), tema e idioma del espacio, pantalla de tarjetas | fcf110c |
-| 2026-10-23 | IN-038 | análisis y diseño | ajustes normalizados con opciones de captura (reglas y duda) también en el Worker, tema e idioma en el espacio y el navegador, pantalla de tarjetas | 26f3057 |
-| 2026-10-23 | IN-037 | verificación | pnpm verificar OK (1290 pruebas, 242,3 KB); revisión independiente con 9 hallazgos atendidos | 9eb2973 |
-| 2026-10-23 | IN-037 | implementación | ajustes de copia con guardarAjustes, recordatorio en Inicio con aplazamiento, piloto animado, plegado del recordatorio y ZIP previo opcional | 485e5f9 |
-| 2026-10-23 | IN-037 | análisis y diseño | ajustes de copia con guardarAjustes, recordatorio en Inicio que se pospone, animación del piloto, plegado del recordatorio y ZIP previo opcional | 0479bc1 |
-| 2026-10-23 | IN-036 | verificación | pnpm verificar OK (1277 pruebas, 241,3 KB); revisión independiente con 13 hallazgos atendidos (refs al reimportar, rutas, repetidos, relectura, espacios conocidos) | 9790355 |
-| 2026-10-23 | IN-036 | implementación | leerPaquete con corpus malicioso rechazado, plan por id con conflictos y refs reasignadas, tres modos con copia previa y relectura, pantalla Importar | cb68c02 |
-| 2026-10-23 | IN-036 | análisis y diseño | validar todo antes de escribir (ZIP, enlaces, manifest, hashes, esquemas), plan por id con conflictos según la fecha de exportación y refs reasignadas, tres modos con ZIP previo y relectura, pantalla como la referencia | 9728e95 |
-| 2026-10-23 | IN-035 | verificación | pnpm verificar OK (1255 pruebas, 238,6 KB); revisión independiente con 13 hallazgos atendidos (bombas, validación del directorio, ZIP64, copia exacta, cancelar) | 3361b0b |
-| 2026-10-23 | IN-035 | implementación | ZIP en streaming en Worker con manifest de recuentos y hashes, JSON con excluidos declarados, lector por directorio central, propiedad de ida y vuelta, Datos y copias y Ctrl+E | b70ba11 |
-| 2026-10-23 | IN-035 | análisis y diseño | ZIP en streaming en un Worker sobre OPFS con manifest de recuentos y hashes, JSON con adjuntos ≤ 1 MB y excluidos declarados, lector por directorio central para la ida y vuelta, Ctrl+E y copia previa | 2023eae |
-| 2026-10-23 | IN-034 | verificación | pnpm verificar OK (1227 pruebas, 236,6 KB); revisión independiente con 5 hallazgos atendidos con pruebas | 3338b05 |
-| 2026-10-23 | IN-034 | implementación | selector de vista en la dirección, mosaico por tipo o día con tarjetas en tandas, lista densa ordenable y virtual, en colecciones y Buscar | 8ed1999 |
-| 2026-10-22 | IN-034 | análisis y diseño | selector Lista, Mosaico y Densa en la dirección; mosaico por tipo o fecha con tarjetas de cada lector en tandas; lista densa ordenable y virtual | 129a1b1 |
-| 2026-10-22 | IN-033 | verificación | pnpm verificar OK (1212 pruebas, 235,3 KB); revisión independiente con 8 hallazgos atendidos con pruebas | 8301765 |
-| 2026-10-22 | IN-033 | implementación | acciones = atajos con o sin tecla, lógica de puntuación y recientes, paleta con combobox, Ctrl+K en la carcasa | 5d9fe05 |
-| 2026-10-22 | IN-033 | análisis y diseño | las acciones son los atajos (con o sin tecla), lógica pura de puntuación y orden con recientes, paleta modal con la caja de Buscar y elementos del motor | dd50a0d |
-| 2026-10-22 | IN-032 | verificación | pnpm verificar OK (1194 pruebas, 232,5 KB); revisión independiente con 12 hallazgos atendidos con pruebas | 7c7f416 |
-| 2026-10-22 | IN-032 | implementación | consulta del Anexo G, índice MiniSearch en Worker con claves y gzip, motor con ranking y facetas, pantalla Buscar, ? del compositor y contador | e9a801d |
-| 2026-10-20 | IN-032 | análisis y diseño | MiniSearch en Worker con claves por elemento y gzip en la caché, analizador del Anexo G sobre el frontmatter, motor con ranking, pantalla como la referencia y el ? del compositor | f797561 |
-| 2026-10-20 | IN-031 | verificación | pnpm verificar OK (1103 pruebas, 227,1 KB); revisión independiente con 12 hallazgos atendidos con pruebas | 0d00edd |
-| 2026-10-20 | IN-031 | implementación | registro colecciones.json sincronizado, raíl en su orden, pantalla con renombrar, mover y borrar, etiquetas inferidas al capturar, sugerencia en la respuesta | 7134d64 |
-| 2026-10-20 | IN-031 | análisis y diseño | registro colecciones.json sincronizado con los elementos, raíl en su orden, pantalla de lista, etiquetas inferidas al capturar y sugerencia en la respuesta | f7526c7 |
-| 2026-10-20 | IN-030 | verificación | pnpm verificar OK (1087 pruebas, 224,3 KB); revisión independiente con 12 hallazgos atendidos con pruebas | 7287d9a |
-| 2026-10-20 | IN-030 | implementación | hilos con el hilo en cada elemento, formación por huella en cola, responder y «a su hilo», pantalla con resolver y reabrir, mover desde el elemento | 2fd00eb |
-| 2026-10-19 | IN-030 | análisis y diseño | el hilo en cada elemento (D13), formación por huella y al responder, pantalla como la referencia, resolver con la nota en el último elemento | f79375a |
-| 2026-10-19 | IN-029 | verificación | pnpm verificar OK (1076 pruebas, 222,1 KB); revisión independiente con 13 hallazgos atendidos con pruebas | … |
-| 2026-10-19 | IN-029 | implementación | diff Myers y por secciones, historial en turno, versión nueva al capturar con deshacer y guardar aparte, versiones y restaurar en la pantalla, índice de Markdown marcado | 7eac401 |
-| 2026-10-19 | IN-029 | implementación (a medias) | hecho: diff Myers y por secciones, parecido, historial del repositorio, versión al capturar, fila del feed, versiones en la pantalla y en Markdown; falta: pruebas de pantalla (Versiones.test.tsx), CHANGELOG, pnpm verificar y commit | 701dbe2 |
-| 2026-10-19 | IN-029 | análisis y diseño | historial en turno con copia entera, versión nueva al capturar por título o shingles, Myers y diff por secciones, lista y restaurar | 2a73dd9 |
-| 2026-10-19 | IN-028 | verificación | pnpm verificar OK (1058 pruebas, 219,7 KB); aceptación confirmada por la revisión independiente y 11 hallazgos atendidos con pruebas | a9fce8f |
-| 2026-10-19 | IN-028 | implementación | entidades en su carpeta, cálculo de logs y mediciones desde los derivados, pantalla como la referencia, crear desde el elemento o Inicio y recálculo con aviso | cd731a1 |
-| 2026-10-19 | IN-028 | análisis y diseño | entidades en su carpeta con repositorio genérico, cálculo desde los derivados, pantalla como la referencia y recálculo por huella de las fuentes | 6f0e9f7 |
-| 2026-10-19 | IN-027 | verificación | pnpm verificar OK (1030 pruebas, 216,0 KB); revisión independiente con 10 hallazgos corregidos con pruebas | 52abc20 |
-| 2026-10-19 | IN-027 | implementación | cabecera editable, «Detalles» común en las once vistas, estados, notas, cambiar tipo, fijar y papelera con ZIP previo | e004ba0 |
-| 2026-10-19 | IN-027 | análisis y diseño | cabecera editable, un solo «Detalles» con lo común, estados, notas, cambiar tipo, fijar y papelera con ZIP previo | 8e26cc6 |
-| 2026-10-19 | IN-026 | verificación | OK (995 pruebas; 10 grupos de hallazgos de la revisión corregidos) | 3e903c6 |
-| 2026-10-19 | IN-026 | implementación | OK (987 pruebas; triaje completo con teclado; 5.000 elementos) | 3387a22 |
-| 2026-10-19 | IN-026 | análisis y diseño | feed por días con lista virtual, mensajes, búsquedas, ideas y triaje con teclado | c71fe34 |
-| 2026-10-19 | IN-025 | verificación | OK (964 pruebas; 11 grupos de hallazgos de la revisión corregidos) | 9926e80 |
-| 2026-10-19 | IN-025 | implementación | OK (951 pruebas; matriz 250/250; 12 lenguajes, resaltado Lezer en 8) | 976f145 |
-| 2026-10-19 | IN-025 | análisis y diseño | 12 lenguajes por densidad y extensión, resaltado con Lezer bajo demanda | 7c063ed |
-| 2026-10-19 | IN-024 | verificación | OK (898 pruebas; 13 hallazgos de la revisión corregidos) | 5a6c03e |
-| 2026-10-18 | IN-024 | implementación | OK (883 pruebas; matriz 225/225) | 39b2632 |
-| 2026-10-18 | IN-024 | análisis y diseño | índice con anclas estables, palabras, tareas por sección, enlaces y código; vista como la referencia | 77638b0 |
-| 2026-10-18 | IN-023 | verificación | OK (858 pruebas; 13 grupos de hallazgos de la revisión corregidos) | 5498fa1 |
-| 2026-10-18 | IN-023 | implementación | OK (829 pruebas; matriz 200/200) | bc9fa85 |
-| 2026-10-18 | IN-023 | análisis y diseño | variables en tres sintaxis, copiar con valores, resultados en historial/ | 7b6580a |
-| 2026-10-18 | IN-022 | verificación | OK (798 pruebas; 13 hallazgos de la revisión corregidos) | 9b9c796 |
-| 2026-10-18 | IN-022 | implementación | OK (774 pruebas; 3 formatos; matriz 175/175) | 6a1cf43 |
-| 2026-10-18 | IN-022 | análisis y diseño | tres formatos, estadísticas de IN-011, gráfico de puntos como la referencia, avisos plegados | b310e37 |
-| 2026-10-18 | IN-021 | verificación | OK (724 pruebas; 18 hallazgos de la revisión corregidos) | d363617 |
-| 2026-10-18 | IN-021 | implementación | OK (684 pruebas; 30 trazas; matriz 150/150) | 2ab9520 |
-| 2026-10-18 | IN-021 | análisis y diseño | trazas de 6 lenguajes, marcos propios, huella versionada, ocurrencias y «así lo resolví» | 40322cb |
-| 2026-10-18 | IN-020 | verificación | OK (646 pruebas; 15 hallazgos de la revisión corregidos) | 3710ad0 |
-| 2026-10-18 | IN-020 | implementación | OK (632 pruebas; 8 formatos; 50.000 líneas en 0,7 s) | 070d82c |
-| 2026-10-18 | IN-020 | análisis y diseño | marcas y niveles de 8 formatos, plantillas, pares, histograma, bloques con progreso y carga de adjuntos | 2dc9a36 |
-| 2026-10-18 | IN-019 | verificación | OK (608 pruebas; 14 hallazgos de la revisión corregidos) | d8043f4 |
-| 2026-10-18 | IN-019 | implementación | OK (603 pruebas; 60/60 URL; matriz 100/100) | bed4c8f |
-| 2026-10-18 | IN-019 | análisis y diseño | normalización sin seguimiento, clasificación por destino, título y huella por URL | 218e20d |
-| 2026-10-18 | IN-018 | verificación | OK (592 pruebas; 11 hallazgos de la revisión corregidos) | 8c171e4 |
-| 2026-10-18 | IN-018 | implementación | OK (589 pruebas; matriz 75/75) | 1f5f2dc |
-| 2026-10-18 | IN-018 | análisis y diseño | detección de ideas cortas, estados, vuelta a los 7 y 30 días | 42c27b3 |
-| 2026-10-18 | IN-017 | verificación | OK (581 pruebas; 7 hallazgos de la revisión corregidos) | d231066 |
-| 2026-10-18 | IN-017 | implementación | OK (577 pruebas; matriz 50/50) | 19869f2 |
-| 2026-10-18 | IN-017 | análisis y diseño | Texto con enlaces y menciones, Archivo con descarga y marca de pendiente, corpus de binarios | ecade38 |
-| 2026-10-18 | IN-016 | verificación | OK (567 pruebas; 11 hallazgos de la revisión corregidos) | 674f816 |
-| 2026-10-18 | IN-016 | implementación | OK (563 pruebas) | 5b52db2 |
-| 2026-10-18 | IN-016 | análisis y diseño | contexto, composición con frase de secretos, reglas de estilo, RespuestaRimor y contadores | c521a65 |
-| 2026-10-18 | IN-015 | verificación | OK (548 pruebas; 10 hallazgos de la revisión corregidos) | 871224d |
-| 2026-10-18 | IN-015 | implementación | OK (537 pruebas) | 3531022 |
-| 2026-10-18 | IN-015 | análisis y diseño | indicaciones con exclusiones, vista previa con debounce, autocompletar, adjuntos y atajo global | df7d8c3 |
-| 2026-10-18 | IN-014 | verificación | OK (485 pruebas; 9 hallazgos de la revisión corregidos) | 02b7548 |
-| 2026-10-18 | IN-014 | implementación | OK (479 pruebas; 100 KB en < 300 ms p95 en memoria) | 9830443 |
-| 2026-10-18 | IN-014 | análisis y diseño | ocho pasos con efectos inyectados, pegar al compositor, soltar, límite y deshacer | 683703f |
-| 2026-10-18 | IN-013 | verificación | OK (457 pruebas; 5 hallazgos de la revisión corregidos) | e6f4ac8 |
-| 2026-10-18 | IN-013 | implementación | OK (452 pruebas; matriz 100 % con Texto por defecto) | 6697076 |
-| 2026-10-18 | IN-013 | análisis y diseño | atajos, arbitraje con duda, corpus por carpeta y matriz | 9e3e067 |
-| 2026-10-18 | IN-012 | verificación | OK (439 pruebas; 8 hallazgos de la revisión corregidos) | aa34b1e |
-| 2026-10-18 | IN-012 | implementación | OK (431 pruebas) | 00d01e5 |
-| 2026-10-18 | IN-012 | análisis y diseño | núcleo y vistas por carpeta, cola de derivados en Worker, contenedores y plantilla | fa7e527 |
-| 2026-10-18 | IN-007 | verificación | OK (412 pruebas; 11 hallazgos de la revisión corregidos) | d410b16 |
-| 2026-10-18 | IN-007 | implementación | OK (402 pruebas) | 86e9ce2 |
-| 2026-10-18 | IN-007 | análisis y diseño | abrir o crear, persistencia, última copia y arranque | 39f479a |
-| 2026-10-18 | IN-090 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | 69e2ee5 |
-| 2026-10-18 | IN-090 | implementación | pnpm verificar OK (361 pruebas) | bdd15f6 |
-| 2026-10-18 | IN-090 | análisis y diseño | SMIL portado a @keyframes, reposo y umbrales | b9e91ee |
-| 2026-10-18 | IN-011 | verificación | pnpm verificar OK; 7 hallazgos de la revisión corregidos | afb9e32 |
-| 2026-10-18 | IN-011 | implementación | pnpm verificar OK (30 referencias de SciPy) | b2ebf4e |
-| 2026-10-18 | IN-011 | análisis y diseño | métodos documentados y referencias de SciPy | 5838d9a |
-| 2026-10-18 | IN-010 | verificación | pnpm verificar OK; 10 hallazgos de seguridad corregidos | 34b4ca4 |
-| 2026-10-18 | IN-010 | implementación | pnpm verificar OK (272 pruebas) | e8cae1b |
-| 2026-10-18 | IN-010 | análisis y diseño | reglas de gitleaks, ocultar puro e idempotente | a206f2c |
-| 2026-10-18 | IN-009 | verificación | pnpm verificar OK; 4 hallazgos de seguridad corregidos | d0c9d58 |
-| 2026-10-18 | IN-009 | implementación | pnpm verificar OK (219 pruebas) | ae2a843 |
-| 2026-10-18 | IN-009 | análisis y diseño | rehype-sanitize con esquema propio y CSP con hashes | f63fd83 |
-| 2026-10-18 | IN-008 | verificación | pnpm verificar OK; 5 hallazgos de la revisión corregidos | daacb69 |
-| 2026-10-18 | IN-008 | implementación | pnpm verificar OK (182 pruebas, 112,7 KB) | f9cda52 |
-| 2026-10-18 | IN-008 | análisis y diseño | router por hash, raíl, atajos y límite de errores | bd270d9 |
-| 2026-10-18 | IN-006 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | 4b6ee55 |
-| 2026-10-18 | IN-006 | implementación | pnpm verificar OK (165 pruebas) | 74e501c |
-| 2026-10-18 | IN-006 | análisis y diseño | IndexedDB con frontmatter, derivados, índice y reconciliación | 07a0baf |
-| 2026-10-18 | IN-005 | verificación | pnpm verificar OK; 6 hallazgos de la revisión corregidos | 06512fc |
-| 2026-10-18 | IN-005 | implementación | pnpm verificar OK (149 pruebas) | 1212e5a |
-| 2026-10-18 | IN-005 | análisis y diseño | contrato, OPFS en Worker, cola, repositorio y pestañas | 8683837 |
-| 2026-10-18 | IN-089 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | 9c0cb34 |
-| 2026-10-18 | IN-089 | implementación | pnpm verificar OK (112 pruebas) | 58a44ca |
-| 2026-10-18 | IN-089 | análisis y diseño | SVGO, publicación, componentes y contornos | 4177d63 |
-| 2026-10-18 | IN-004 | verificación | pnpm verificar OK; 5 hallazgos de la revisión corregidos | feceb14 |
-| 2026-10-18 | IN-004 | implementación | pnpm verificar OK (84 pruebas) | f942aa1 |
-| 2026-10-18 | IN-004 | análisis y diseño | modelo, formato del .md y migraciones | eea9cb1 |
-| 2026-10-18 | IN-003 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | d44efd6 |
-| 2026-10-18 | IN-003 | implementación | pnpm verificar OK (61 pruebas, 76,2 KB) | 2001502 |
-| 2026-10-18 | IN-003 | análisis y diseño | librería propia mínima y regla de textos | e4770f8 |
-| 2026-10-18 | IN-002 | verificación | pnpm verificar OK; 9 hallazgos de la revisión corregidos | 63afa3a |
-| 2026-10-18 | IN-002 | implementación | pnpm verificar OK (34 pruebas, 76,9 KB) | 4b3c27c |
-| 2026-10-18 | IN-002 | análisis y diseño | diseño y ADR-0004 | 3f75c99 |
-| 2026-10-18 | IN-001 | verificación | pnpm verificar OK; 4 hallazgos de la revisión corregidos | d8ece75 |
-| 2026-10-18 | IN-001 | implementación | pnpm verificar OK (31 s, carga inicial 68,6 KB) | b31670c |
-| 2026-10-18 | IN-001 | análisis y diseño | diseño escrito y autorrevisado | 4088155 |
-| 2026-10-18 | F0-9 | informe | 182 KB sin peticiones externas | f529c42 |
-| 2026-10-18 | F0-8 | informe | 29 ms realista; índice 4,4 MB comprimido | 7eacd39 |
-| 2026-10-18 | F0-7 | informe | todo con CORS salvo arXiv y Maven (alternativas) | f42735a |
-| 2026-10-18 | F0-6 | informe | 50.000 líneas en 0,43–0,53 s | 1b0d2b2 |
-| 2026-10-18 | F0-5 | informe | 100 MB en 8,6 s (no cumple); límite de 50 MB y muestra | 7992596 |
-| 2026-10-18 | F0-4 | informe | PDF sin red correcto; IN-085 se hace | fe9ad6a |
-| 2026-10-18 | F0-3 | informe | tres salidas correctas; 15,5 MB gzip; carga diferida | 23b903b |
-| 2026-10-18 | F0-2 | informe | 5.030/5.030 idénticos; importar por directorio central | f501d1a |
-| 2026-10-18 | F0-1 | informe | parcial: medición en navegador pendiente | 589ad61 |
-
-## Cómo retomar
-- IN-020 hecha. Siguiente: IN-021 (diseño escrito en docs/features/IN-021-error.md, sin commit; corpus de 30 trazas en el scratchpad in021/trazas).
+- Lee primero la cabecera (Ahora, Siguiente) y el tablero; la ficha de la IN en curso está en su columna Documento.
+- Ciclo por IN: diseño (docs/features, commit docs), implementación con pruebas y CHANGELOG (commit feat), verificación con pnpm verificar y revisión independiente, sección Verificación y estado hecha (commit test).
+- Registra cada fase con node scripts/seguimiento.mjs (--id, --estado, --ahora, --siguiente, --registro «fase · resultado»).
