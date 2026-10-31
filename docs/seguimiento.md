@@ -1,10 +1,10 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-31 21:21
-**Ahora:** IN-053 · Enlaces automáticos · fase verificación
-**Siguiente:** IN-054 · Vistas guardadas
-**Progreso:** F0 9/9 · v0.1 42/42 · v0.2 12/22 · v0.3 0/17 · v0.4 0/9 · total 63/99
+**Última actualización:** 2026-10-31 21:53
+**Ahora:** IN-054 · Vistas guardadas · fase análisis y diseño
+**Siguiente:** IN-055 · Inicio con memoria
+**Progreso:** F0 9/9 · v0.1 42/42 · v0.2 13/22 · v0.3 0/17 · v0.4 0/9 · total 64/99
 
 ## Tablero
 | ID | Funcionalidad | Versión | Ola | Estado | Commits | Documento |
@@ -72,7 +72,7 @@
 | IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | hecha | 38cddd1 2878cbd 49b8a4f | docs/features/IN-050-pwa.md |
 | IN-051 | Sesiones automáticas | v0.2 | 9 | hecha | 662ad48 4f20afc 5ce0130 | docs/features/IN-051-sesiones.md |
 | IN-052 | Grupos automáticos y pantalla de colección | v0.2 | 9 | hecha | 24b5d12 e2ba02e 97c1c15 | docs/features/IN-052-grupos.md |
-| IN-053 | Enlaces automáticos | v0.2 | 9 | en verificación | 2feedcf | docs/features/IN-053-menciones.md |
+| IN-053 | Enlaces automáticos | v0.2 | 9 | hecha | 2feedcf 126c39a | docs/features/IN-053-menciones.md |
 | IN-054 | Vistas guardadas | v0.2 | 9 | pendiente | — | — |
 | IN-055 | Inicio con memoria | v0.2 | 9 | pendiente | — | — |
 | IN-056 | Búsqueda: facetas, contenido derivado y parecidos | v0.2 | 9 | pendiente | — | — |
@@ -152,6 +152,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **IN-014/IN-016/IN-026 (IN-012):** `VistaElemento` y `TarjetaElemento` aún no están en ninguna pantalla; la pantalla Elemento (IN-016/IN-026) y el feed deben usarlas para que un lector nuevo «aparezca en la app». La captura pide los derivados con prioridad de fondo y pasa los primeros bytes de los archivos al detector (`cabecera`).
 - **IN-050:** las rutas de `public/marca/manifest-iconos.json` son relativas a `marca/`; al copiar el bloque `icons` al manifest de la PWA, hay que anteponer `marca/` (revisión de IN-089).
 - **IN-008 e IN-016:** el raíl usa `Logotipo` de 18 px y el avatar de `RespuestaRimor`, `SimboloRimor` mono de 13 px (IN-089).
+- **Refs retiradas (de IN-053):** vaciar la papelera libera la ref más alta y `asignarRef` la vuelve a dar; las notas que mencionaban la borrada pasan a mencionar la nueva. Un registro de refs retiradas (en el espacio, para que viaje) lo evitaría.
 
 ## Pendientes de validación humana
 - **Licencia (D5):** no se ha añadido archivo de licencia. La propuesta del plan es «la misma que Struo». Ojo: pandoc-wasm (IN-084) es GPL-2.0-or-later (F0-3).
@@ -180,7 +181,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-053 | implementación | menciones.ts (términos: refs y paquetes), menciones en la caché (versión 2), índice inverso en el repositorio, mencionadoPor por ref, alias y paquete, renombrarMenciones al cambiar de tipo (notas con su modificado), fila Mencionado por; verificar en verde: 132 archivos, 1677 pruebas + 6 de rendimiento, 282,5 KB | … |
+| 2026-10-31 | IN-053 | verificación | revisión independiente (15 hallazgos; 13 corregidos con pruebas, 2 decididos): renombrar solo texto corriente, con historial, sin papelera, en segundo plano y con aviso; alias que chocan; caché sin subir versión (entradas sin menciones se releen); releerPendientes renombra; huellas en el índice; misma frontera; sin URLs, código, entidades ni originales que no son prosa; límites aparte; enlaces accesibles; refs retiradas y entidades, anotadas; verificar en verde: 132 archivos, 1681 pruebas + 6 de rendimiento, 283,0 KB | … |
+| 2026-10-31 | IN-053 | implementación | menciones.ts (términos: refs y paquetes), menciones en la caché (versión 2), índice inverso en el repositorio, mencionadoPor por ref, alias y paquete, renombrarMenciones al cambiar de tipo (notas con su modificado), fila Mencionado por; verificar en verde: 132 archivos, 1677 pruebas + 6 de rendimiento, 282,5 KB | 126c39a |
 | 2026-10-31 | IN-053 | análisis y diseño | términos (refs de notas y original, paquetes de sus enlaces) en la caché junto al frontmatter (versión 2), índice inverso en el repositorio, mencionadoPor por ref, alias y paquete, renombrar reescribe las notas (no el original), fila Mencionado por; las huellas conectan por su hilo y su grupo | 2feedcf |
 | 2026-10-31 | IN-052 | verificación | revisión independiente (14 hallazgos) corregida con pruebas: el ZIP de grupo lleva sus hilos, alias y registros y va marcado parcial (Reemplazar deshabilitado), mes del pico, selección por grupo, Comparar con motivo y sin solo lectura, coste lineal y 8 más Ver los N, fechas por instante, claves normalizadas, sin parpadeo, rutas y textos, accesibilidad del gráfico; verificar en verde: 131 archivos, 1671 pruebas + 6 de rendimiento, 281,7 KB | 97c1c15 |
 | 2026-10-31 | IN-052 | implementación | grupos.ts (claves, elementos y panel), PanelGrupo como SC.coleccion, /g/$clase/$valor, la colección con el panel, exportar solo el grupo (hilo y Worker) sin apuntar copia, comparar dos marcados, Grupos en los detalles; verificar en verde: 131 archivos, 1666 pruebas + 6 de rendimiento, 281,5 KB | e2ba02e |

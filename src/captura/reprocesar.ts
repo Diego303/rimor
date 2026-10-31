@@ -36,6 +36,11 @@ export interface OpcionesCambio {
   /** El lector de ahora: sus claves propias del frontmatter (`url`, `vuelve`…) no pasan al nuevo. */
   anterior?: Lector;
   reloj?: () => Date;
+  /**
+   * Con otra ref, las notas que mencionaban la vieja se actualizan después, en segundo plano (IN-053): al terminar,
+   * cuántas.
+   */
+  alRenombrarMenciones?: (n: number) => void;
 }
 
 /**
@@ -81,7 +86,7 @@ export async function cambiarTipo(
   refOId: string,
   lector: Lector,
   repositorio: Repositorio,
-  { anterior, reloj = () => new Date() }: OpcionesCambio = {},
+  { anterior, reloj = () => new Date(), alRenombrarMenciones }: OpcionesCambio = {},
 ): Promise<string | null> {
   const leido = await repositorio.leerElemento(refOId);
   if (!leido.ok || !sePuedeCambiar(leido.valor, lector)) return null;
@@ -113,14 +118,21 @@ export async function cambiarTipo(
     };
   });
   if (!r.ok || !r.valor || !nueva) return null;
-  // Con otra ref, las notas que mencionaban la vieja pasan a la nueva (IN-053). El original capturado no se toca: la
-  // vieja sigue llevando aquí como alias.
+  // Con otra ref, las notas que mencionaban la vieja pasan a la nueva (IN-053), en segundo plano: el cambio de tipo
+  // vuelve ya. El original capturado no se toca: la vieja sigue llevando aquí como alias.
   const vieja = el.frontmatter.ref;
-  if (nueva !== vieja) await renombrarMenciones(vieja, nueva, repositorio, reloj);
+  if (nueva !== vieja)
+    void renombrarMenciones(vieja, nueva, repositorio, reloj)
+      .then((n) => alRenombrarMenciones?.(n))
+      .catch(() => undefined);
   return nueva;
 }
 
-/** Reescribe la ref `vieja` como `nueva` en las notas de los que la mencionan (cada uno en su turno). */
+/**
+ * Reescribe la ref `vieja` como `nueva` en las notas de los que la mencionan, cada uno en su turno y con su copia en
+ * el historial (como cualquier edición de las notas): fuera de URLs y de código (un enlace externo o un `grep` no son
+ * menciones), y no en lo que está en la papelera. Devuelve cuántas notas cambió.
+ */
 export async function renombrarMenciones(
   vieja: string,
   nueva: string,
@@ -129,17 +141,24 @@ export async function renombrarMenciones(
 ): Promise<number> {
   const cambios = new Map([[vieja, nueva]]);
   let hechos = 0;
+  const enPapelera = new Set(repositorio.enPapelera().map((fm) => fm.id));
   for (const id of repositorio.mencionanRef(vieja)) {
+    if (enPapelera.has(id)) continue;
     const r = await repositorio
-      .actualizarElemento(id, (actual) => {
-        const notas = reescribirRefs(actual.notas, cambios);
-        // Con su fecha de cambio: al importar, un cambio sin ella se tomaría por no hecho.
-        return notas === actual.notas
-          ? null
-          : { ...actual, notas, frontmatter: { ...actual.frontmatter, modificado: isoConZona(reloj()) } };
-      })
+      .guardarConHistorial(
+        id,
+        (actual) => {
+          const notas = reescribirRefs(actual.notas, cambios, { soloCorriente: true });
+          // Con su fecha de cambio: al importar, un cambio sin ella se tomaría por no hecho.
+          return notas === actual.notas
+            ? null
+            : { ...actual, notas, frontmatter: { ...actual.frontmatter, modificado: isoConZona(reloj()) } };
+        },
+        'edicion',
+        reloj,
+      )
       .catch(() => null);
-    if (r?.ok && r.valor) hechos++;
+    if (r?.ok && r.valor.copia) hechos++;
   }
   return hechos;
 }
@@ -195,7 +214,11 @@ export async function releerPendientes(
         ),
       };
     });
-    if (r.ok && r.valor && nueva) nuevas.push(nueva);
+    if (r.ok && r.valor && nueva) {
+      nuevas.push(nueva);
+      // Las notas que lo mencionaban por su ref de archivo pasan a la nueva (IN-053).
+      await renombrarMenciones(fm.ref, nueva, repositorio, reloj).catch(() => 0);
+    }
   }
   return nuevas;
 }

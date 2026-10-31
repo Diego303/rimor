@@ -239,7 +239,12 @@ export function Inicio() {
       if (!ref || !espacio) return;
       const fm = espacio.repositorio.frontmatter(ref);
       const anterior = fm ? lectores?.registro.paraElemento({ frontmatter: fm }) : undefined;
-      const nueva = await cambiarTipo(ref, lector, espacio.repositorio, anterior ? { anterior } : {}).catch(() => null);
+      const nueva = await cambiarTipo(ref, lector, espacio.repositorio, {
+        ...(anterior ? { anterior } : {}),
+        alRenombrarMenciones: (n) => {
+          if (n) avisos?.avisar(t('pantallas.elemento.mencionesActualizadas', { n }));
+        },
+      }).catch(() => null);
       if (!nueva) return avisos?.avisar(t('pantallas.inicio.noCambiado'));
       void espacio.contadores.contar('correccionesDeTipo').catch(() => undefined);
       // Tres correcciones de contenidos que empiezan igual proponen una regla en el feed (IN-049).

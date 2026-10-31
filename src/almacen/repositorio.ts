@@ -18,7 +18,7 @@ import {
 } from '@rimor/formato';
 import type { EntradaFrontmatter } from './cache/cache';
 import { type Almacen, escribirTexto, leerTexto, listarTodo, validarRuta } from './contrato';
-import { paqueteDe, terminoPaquete, terminosDe } from './menciones';
+import { paqueteDe, terminoHuella, terminoPaquete, terminosDe } from './menciones';
 import { conDiario, Turnos, terminarDiario } from './turnos';
 
 export const CARPETA_PAPELERA = 'papelera';
@@ -262,16 +262,19 @@ export class Repositorio {
   }
 
   /**
-   * Quién menciona un elemento (IN-053): los que nombran su ref o un alias suyo y, si es un enlace a un paquete, los
-   * que enlazan ese paquete. Sin él mismo ni lo de la papelera; de lo más reciente a lo más antiguo.
+   * Quién menciona un elemento (IN-053): los que nombran su ref o un alias que siga siendo suyo (uno que ya es la ref
+   * de otro, tras importar, habla del otro); si es un enlace a un paquete, los que enlazan ese paquete; si es un error,
+   * los que copian su huella. Sin él mismo ni lo de la papelera; de lo más reciente a lo más antiguo.
    */
   mencionadoPor(refOId: string): FrontmatterComun[] {
     const fm = this.frontmatter(refOId);
     if (!fm) return [];
-    const claves: string[] = [fm.ref, ...(fm.alias ?? [])];
+    const claves: string[] = [fm.ref, ...(fm.alias ?? []).filter((a) => this.idPorRef.get(a) === fm.id)];
     const url = fm.tipo === 'enlace' ? fm.lector.resumen.url : undefined;
     const paquete = typeof url === 'string' ? paqueteDe(url) : undefined;
     if (paquete) claves.push(terminoPaquete(paquete));
+    const huella = fm.tipo === 'error' ? fm.lector.resumen.huella : undefined;
+    if (typeof huella === 'string' && huella) claves.push(terminoHuella(huella));
     const ids = new Set<string>();
     for (const c of claves) for (const id of this.mencionadoEn.get(c) ?? []) if (id !== fm.id) ids.add(id);
     return [...ids]

@@ -301,7 +301,12 @@
         "importado": "Versión {n}, importada {cuando}"
       },
       "mencionadoPor": "Mencionado por",
-      "nadie": "Nadie todavía"
+      "nadie": "Nadie todavía",
+      "mencionesActualizadas": {
+        "one": "{n} nota que lo mencionaba, actualizada",
+        "other": "{n} notas que lo mencionaban, actualizadas"
+      },
+      "mencion": "{ref}: {titulo}"
     },
     "papelera": {
       "titulo": "Papelera",

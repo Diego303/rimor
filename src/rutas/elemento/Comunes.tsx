@@ -4,7 +4,7 @@
  * y la referencia con sus alias.
  */
 import type { FrontmatterComun, TipoElemento } from '@rimor/formato';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { limpiarColeccion, limpiarEtiqueta } from '../../espacio/ediciones';
@@ -253,21 +253,30 @@ const MAX_MENCIONES = 6;
 function MencionadoPor({ fm }: { fm: FrontmatterComun }) {
   const { t } = useT();
   const espacio = useEspacioOpcional();
-  const navegar = useNavigate();
   const [version, setVersion] = useState(0);
+  const [todos, setTodos] = useState(false);
   useEffect(() => (espacio ? espacio.alCambiar(() => setVersion((v) => v + 1)) : undefined), [espacio]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: `version` cambia con cada cambio del espacio.
   const quienes = useMemo(() => espacio?.repositorio.mencionadoPor(fm.id) ?? [], [espacio, fm.id, fm.ref, version]);
   if (!quienes.length) return <span className="muted">{t('pantallas.elemento.nadie')}</span>;
   return (
     <span className="grupos-elemento">
-      {quienes.slice(0, MAX_MENCIONES).map((otro) => (
-        <span key={otro.id} title={otro.titulo}>
-          <Ref refe={otro.ref} alPulsar={(ref) => void navegar({ to: '/e/$ref', params: { ref } })} />
-        </span>
+      {(todos ? quienes : quienes.slice(0, MAX_MENCIONES)).map((otro) => (
+        <Link
+          key={otro.id}
+          className="st mono"
+          to="/e/$ref"
+          params={{ ref: otro.ref }}
+          title={otro.titulo}
+          aria-label={t('pantallas.elemento.mencion', { ref: otro.ref, titulo: otro.titulo })}
+        >
+          {otro.ref}
+        </Link>
       ))}
       {quienes.length > MAX_MENCIONES && (
-        <span className="xs muted">{t('pantallas.grupo.yMas', { n: quienes.length - MAX_MENCIONES })}</span>
+        <Boton variante="fantasma" pequeno onClick={() => setTodos((x) => !x)}>
+          {todos ? t('pantallas.grupo.verMenos') : t('pantallas.grupo.verTodos', { n: quienes.length })}
+        </Boton>
       )}
     </span>
   );

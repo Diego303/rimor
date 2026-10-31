@@ -200,7 +200,12 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
     async (nuevo: Lector) => {
       setDialogo(null);
       if (!espacio) return;
-      const opciones = lector ? { anterior: lector } : {};
+      const opciones = {
+        ...(lector ? { anterior: lector } : {}),
+        alRenombrarMenciones: (n: number) => {
+          if (n) avisos?.avisar(t('pantallas.elemento.mencionesActualizadas', { n }));
+        },
+      };
       const ref = await cambiarTipo(fm.id, nuevo, espacio.repositorio, opciones).catch(() => null);
       if (!ref) return avisos?.avisar(t('pantallas.inicio.noCambiado'));
       void espacio.contadores.contar('correccionesDeTipo').catch(() => undefined);

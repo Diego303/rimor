@@ -301,7 +301,12 @@
         "importado": "Version {n}, imported {cuando}"
       },
       "mencionadoPor": "Mentioned by",
-      "nadie": "Nobody yet"
+      "nadie": "Nobody yet",
+      "mencionesActualizadas": {
+        "one": "{n} note that mentioned it, updated",
+        "other": "{n} notes that mentioned it, updated"
+      },
+      "mencion": "{ref}: {titulo}"
     },
     "papelera": {
       "titulo": "Bin",

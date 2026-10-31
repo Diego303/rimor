@@ -21,19 +21,43 @@ function texto(i: number, original: string): Elemento {
 }
 
 describe('cambiarTipo', () => {
-  it('con otra ref, las notas que mencionaban la vieja pasan a la nueva (el original, no) (IN-053)', async () => {
+  it('con otra ref, las notas que la mencionaban pasan a la nueva (no el original, ni URLs, ni la papelera) (IN-053)', async () => {
     const repo = new Repositorio(new AlmacenMemoria());
     await repo.guardarElemento(texto(1, 'Probar ureq con un timeout más largo'));
-    const quien = { ...texto(2, 'Ver TXT-0001 en el original'), notas: 'Sigue en TXT-0001.' };
-    await repo.guardarElemento(quien);
-    const nueva = await cambiarTipo('TXT-0001', lectorIdea, repo, { reloj: () => new Date('2026-10-31T10:00:00Z') });
+    const porNotas = {
+      ...texto(2, 'Algo sin menciones'),
+      notas: 'Sigue en TXT-0001; doc: https://x.org/TXT-0001.html',
+    };
+    await repo.guardarElemento(porNotas);
+    await repo.guardarElemento(texto(3, 'Ver TXT-0001 en el original'));
+    await repo.guardarElemento({ ...texto(4, 'En la papelera'), notas: 'Ver TXT-0001.' });
+    await repo.moverAPapelera('TXT-0004');
+    let renombradas = -1;
+    const nueva = await cambiarTipo('TXT-0001', lectorIdea, repo, {
+      reloj: () => new Date('2026-10-31T10:00:00Z'),
+      alRenombrarMenciones: (n) => {
+        renombradas = n;
+      },
+    });
     expect(nueva).toBe('IDE-0001');
+    // En segundo plano: el cambio de tipo ya volvió.
+    await vi.waitFor(() => expect(renombradas).toBe(1));
     const leido = await repo.leerElemento('TXT-0002');
-    expect(leido.ok && leido.valor.notas).toBe('Sigue en IDE-0001.');
-    expect(leido.ok && leido.valor.original).toBe('Ver TXT-0001 en el original');
-    expect(leido.ok && leido.valor.frontmatter.modificado).not.toBe(quien.frontmatter.modificado);
-    // Las dos (la de las notas, la del original por su alias) siguen llevando a él.
-    expect(repo.mencionadoPor('IDE-0001').map((f) => f.ref)).toEqual(['TXT-0002']);
+    expect(leido.ok && leido.valor.notas).toBe('Sigue en IDE-0001; doc: https://x.org/TXT-0001.html');
+    expect(leido.ok && leido.valor.frontmatter.modificado).not.toBe(porNotas.frontmatter.modificado);
+    // Con su copia en el historial, como cualquier edición de las notas.
+    expect((await repo.versiones('TXT-0002')).map((v) => v.elemento.notas)).toContain(porNotas.notas);
+    // El original no se toca; sigue contando por el alias. Lo de la papelera no se toca.
+    const original = await repo.leerElemento('TXT-0003');
+    expect(original.ok && original.valor.original).toBe('Ver TXT-0001 en el original');
+    expect(
+      repo
+        .mencionadoPor('IDE-0001')
+        .map((f) => f.ref)
+        .sort(),
+    ).toEqual(['TXT-0002', 'TXT-0003']);
+    const papelera = await repo.leerElemento('TXT-0004');
+    expect(papelera.ok && papelera.valor.notas).toBe('Ver TXT-0001.');
   });
 
   it('entre lectores del mismo tipo (Código y Diff) la ref no cambia', async () => {

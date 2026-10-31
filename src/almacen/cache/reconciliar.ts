@@ -82,7 +82,8 @@ export async function reconciliar(
   const pendientes: EntradaAlmacen[] = [];
   for (const a of archivos) {
     const c = porRuta.get(a.ruta);
-    if (c && c.tam === a.tam && c.modificado === a.modificado) anotar(c, false);
+    // Una entrada sin sus menciones (de antes de IN-053) se lee otra vez, sin vaciar la caché entera.
+    if (c && c.tam === a.tam && c.modificado === a.modificado && c.menciones !== undefined) anotar(c, false);
     else pendientes.push(a);
   }
 

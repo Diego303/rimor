@@ -5,7 +5,7 @@
  * sale del frontmatter (la huella y la URL van en el resumen del lector).
  */
 import type { FrontmatterComun, TipoElemento } from '@rimor/formato';
-import { nombreComparable, paqueteDe } from '../almacen/menciones';
+import { nombreComparable, paqueteDeDestino } from '../almacen/menciones';
 import { clasificar, hostLegible } from '../lectores/enlace/urls';
 
 export const CLASES_GRUPO = [
@@ -66,7 +66,7 @@ function delEnlace(url: string): ClaveGrupo[] {
   const d = clasificar(url);
   if ((d.clase === 'repositorio' || d.clase === 'issue' || d.clase === 'pr') && d.nombre)
     claves.push({ clase: 'repositorio', valor: `${d.sitio}/${nombreComparable(d.sitio, d.nombre)}` });
-  const paquete = paqueteDe(url);
+  const paquete = paqueteDeDestino(d);
   if (paquete) claves.push({ clase: 'paquete', valor: paquete });
   return claves;
 }

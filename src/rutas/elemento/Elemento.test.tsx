@@ -215,7 +215,9 @@ describe('Elemento', () => {
     const detalles = await screen.findByText('Detalles', { selector: 'summary' }, PRIMERA_CARGA);
     const plegado = within(detalles.closest('details') as HTMLElement);
     expect(plegado.getByText('Mencionado por')).toBeTruthy();
-    fireEvent.click(plegado.getByRole('button', { name: 'TXT-0002' }));
+    // Un enlace con su ref y su título (se puede abrir en otra pestaña).
+    fireEvent.click(plegado.getByRole('link', { name: 'TXT-0002: Seguimiento' }));
+    expect(plegado.queryByRole('link', { name: /TXT-0003/ })).toBeNull();
     await waitFor(() => expect(router.state.location.pathname).toBe('/e/TXT-0002'), ESCRITURA);
     // Al que nadie menciona: «Nadie todavía».
     const otra = await screen.findByText('Detalles', { selector: 'summary' }, PRIMERA_CARGA);
