@@ -1581,6 +1581,24 @@ pre.code.codigo .ln {
 .warn-texto {
   color: var(--warn);
 }
+/* Reglas aprendidas (IN-049): el prefijo, su tipo y borrar en una fila. */
+.ajustes-reglas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ajustes-regla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+.ajustes-regla input[type="text"] {
+  font-family: var(--f-m);
+  font-size: 0.78125rem;
+  padding: 5px 9px;
+}
 
 /* Importar (IN-036): los tres modos separados como en `SC.importar` (`.list` con `gap:8px`) y «Cancelar» e
    «Importar», a la derecha. */

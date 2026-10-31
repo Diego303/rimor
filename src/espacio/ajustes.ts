@@ -5,6 +5,7 @@
  */
 import { esTipoElemento, type TipoElemento } from '@rimor/formato';
 import { MARGEN_DUDA, UMBRAL_DETECCION } from '../captura/detector';
+import type { ReglaDeteccion } from '../captura/reglas';
 import { REGLAS_SECRETOS } from '../seguridad/secretos/reglas';
 
 export const RUTA_AJUSTES = '.rimor/ajustes.json';
@@ -146,10 +147,13 @@ export interface OpcionesCaptura {
   secretosDesactivados: string[];
   umbral: number;
   margen: number;
+  /** Las reglas de detección aprendidas (IN-049, `.rimor/reglas-deteccion.json`). */
+  reglas?: readonly ReglaDeteccion[];
 }
 
-export const opcionesCaptura = (a: Ajustes): OpcionesCaptura => ({
+export const opcionesCaptura = (a: Ajustes, reglas?: readonly ReglaDeteccion[]): OpcionesCaptura => ({
   secretosDesactivados: a.secretos.desactivadas.filter((id) => IDS_REGLAS.has(id)),
   umbral: a.deteccion.umbral,
   margen: a.deteccion.duda,
+  ...(reglas?.length ? { reglas } : {}),
 });

@@ -6,5 +6,5 @@ import type { OpcionesDeteccion } from './detector';
 export const opcionesOcultar = (o?: OpcionesCaptura): OpcionesOcultar =>
   o?.secretosDesactivados.length ? { desactivadas: new Set(o.secretosDesactivados) } : {};
 
-export const opcionesDetectar = (o?: OpcionesCaptura): Pick<OpcionesDeteccion, 'umbral' | 'margen'> =>
-  o ? { umbral: o.umbral, margen: o.margen } : {};
+export const opcionesDetectar = (o?: OpcionesCaptura): Pick<OpcionesDeteccion, 'umbral' | 'margen' | 'reglas'> =>
+  o ? { umbral: o.umbral, margen: o.margen, ...(o.reglas?.length ? { reglas: o.reglas } : {}) } : {};

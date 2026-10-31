@@ -95,6 +95,32 @@ describe('capturar', () => {
     expect(c.elemento.frontmatter).toMatchObject({ tipo: 'mediciones', ref: 'MED-0001', lector: { nombre: 'texto' } });
   });
 
+  it('un tipo forzado que no es el detectado lo dice (es una corrección); el que coincide, no (IN-049)', async () => {
+    const { efectos: ef } = efectos();
+    const corrige = creado(await capturar({ texto: '17:40 ERROR', origen: 'pegado', tipo: 'texto' }, ef));
+    expect(corrige.detectado).toBe('log');
+    const coincide = creado(await capturar({ texto: '17:41 ERROR', origen: 'pegado', tipo: 'log' }, ef));
+    expect(coincide.detectado).toBeUndefined();
+    expect(creado(await capturar({ texto: '17:42 ERROR', origen: 'pegado' }, ef)).detectado).toBeUndefined();
+  });
+
+  it('aplica las reglas aprendidas de las opciones (IN-049)', async () => {
+    const { efectos: ef } = efectos({
+      opciones: () => ({
+        secretosDesactivados: [],
+        umbral: 0.6,
+        margen: 0.15,
+        reglas: [{ prefijo: '[app]', tipo: 'log', creada: '' }],
+      }),
+    });
+    expect(creado(await capturar({ texto: '[app] arrancado', origen: 'pegado' }, ef)).elemento.frontmatter.tipo).toBe(
+      'log',
+    );
+    expect(creado(await capturar({ texto: 'arrancado', origen: 'pegado' }, ef)).elemento.frontmatter.tipo).toBe(
+      'texto',
+    );
+  });
+
   it('sin ningún lector, falla con captura.sinLector; vacío, con captura.vacia', async () => {
     const { repositorio } = efectos();
     const vacio = crearRegistro([]);

@@ -77,7 +77,7 @@ describe('Inicio', () => {
     // después de desmontar el entorno de pruebas.
     cleanup();
     await act(async () => new Promise((r) => setTimeout(r, 500)));
-    useCompositor.setState({ texto: '', archivos: [], respondiendoA: null, busquedas: [] });
+    useCompositor.setState({ texto: '', archivos: [], respondiendoA: null, busquedas: [], propuestas: [] });
     useFrescos.setState({ capturados: {} });
     olvidarElementos();
   });
@@ -184,6 +184,52 @@ describe('Inicio', () => {
     expect(document.activeElement?.getAttribute('data-ref')).toBe('TXT-0003');
     await tecla('Enter');
     await waitFor(() => expect(router.state.location.pathname).toBe('/e/TXT-0003'), ESCRITURA);
+  }, 30_000);
+
+  it('tres correcciones a Log de lo que empieza por [app] proponen una regla; con «Sí», lo siguiente ya es Log', async () => {
+    const { abierto } = montar();
+    await waitFor(() => expect(abierto.e).toBeTruthy(), PRIMERA_CARGA);
+    const e = abierto.e;
+    if (!e) throw new Error('sin espacio');
+    await act(async () => {
+      for (const i of [1, 2, 3])
+        await e.repositorio.guardarElemento(capturado(i, `[app] arranque número ${i}`, 40 - i));
+    });
+    await screen.findByRole('button', { name: '[app] arranque número 3' }, PRIMERA_CARGA);
+    // j empieza por lo más reciente; tras cambiar el tipo, la selección sigue al elemento y k sube al anterior.
+    await tecla('j');
+    for (const n of [1, 2, 3]) {
+      await tecla('t');
+      fireEvent.click(await screen.findByRole('button', { name: /^Log/ }));
+      await waitFor(() => expect(e.repositorio.frontmatter(`LOG-000${n}`)).toBeTruthy(), ESCRITURA);
+      await tecla('k');
+    }
+    // La propuesta, como mensaje de Rimor, con la firma en mono.
+    const frase = await screen.findByText(/son de tipo Log\. ¿Lo recuerdo para los siguientes\?/, {}, ESCRITURA);
+    expect(frase.querySelector('.mono')?.textContent).toBe('[app]');
+    fireEvent.click(screen.getByRole('button', { name: 'Sí, recuérdalo' }));
+    await waitFor(() => expect(e.reglas().reglas).toMatchObject([{ prefijo: '[app]', tipo: 'log' }]), ESCRITURA);
+    expect(screen.queryByRole('button', { name: 'Sí, recuérdalo' })).toBeNull();
+    expect(useCompositor.getState().propuestas).toEqual([]);
+
+    // Lo siguiente que empieza por [app] se guarda como Log sin que ningún lector lo reconozca.
+    const caja = screen.getByRole('textbox', { name: /Capturar|Pega/ });
+    fireEvent.change(caja, { target: { value: '[app] otra cosa cualquiera' } });
+    fireEvent.keyDown(caja, { key: 'Enter' });
+    await waitFor(() => expect(e.repositorio.frontmatter('LOG-0004')?.titulo).toBeTruthy(), ESCRITURA);
+  }, 40_000);
+
+  it('una propuesta rechazada con «No» se va y no se vuelve a ofrecer', async () => {
+    const { abierto } = montar();
+    await waitFor(() => expect(abierto.e).toBeTruthy(), PRIMERA_CARGA);
+    // Con el feed vacío, Inicio enseña el primer uso: un elemento antes.
+    await act(() => abierto.e?.repositorio.guardarElemento(capturado(1, 'svc: listo', 30)));
+    await screen.findByRole('button', { name: 'svc: listo' }, PRIMERA_CARGA);
+    act(() => useCompositor.getState().anotarPropuesta({ firma: 'svc:', tipo: 'error', en: isoConZona(new Date()) }));
+    fireEvent.click(await screen.findByRole('button', { name: 'No' }, PRIMERA_CARGA));
+    await waitFor(() => expect(abierto.e?.reglas().descartadas).toEqual([{ firma: 'svc:', tipo: 'error' }]), ESCRITURA);
+    expect(screen.queryByText(/son de tipo Error/)).toBeNull();
+    expect(abierto.e?.reglas().reglas).toEqual([]);
   }, 30_000);
 
   it('«Sin clasificar» y las búsquedas del compositor con sus resultados', async () => {

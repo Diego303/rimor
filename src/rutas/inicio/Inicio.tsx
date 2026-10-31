@@ -6,6 +6,7 @@
 import type { FrontmatterComun } from '@rimor/formato';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { aprenderCorreccion } from '../../captura/aprender';
 import { useCompositor } from '../../captura/compositor';
 import { cambiarTipo, sePuedeCambiar } from '../../captura/reprocesar';
 import { RecordatorioCopia } from '../../datos/RecordatorioCopia';
@@ -43,6 +44,7 @@ import {
 } from './filas';
 import { Mensaje } from './Mensaje';
 import { MensajeBusqueda } from './MensajeBusqueda';
+import { MensajePropuesta } from './MensajePropuesta';
 import { MensajeVersion } from './MensajeVersion';
 import { PrimerUso } from './PrimerUso';
 
@@ -75,6 +77,7 @@ export function Inicio() {
   const soloLectura = useEspacio((s) => s.soloLectura);
   const busquedas = useCompositor((s) => s.busquedas);
   const versiones = useCompositor((s) => s.versiones);
+  const propuestas = useCompositor((s) => s.propuestas);
   const responderA = useCompositor((s) => s.responderA);
   const capturados = useFrescos((s) => s.capturados);
   const elementos = useElementos();
@@ -107,9 +110,10 @@ export function Inicio() {
         textos: { hoy: t('pantallas.inicio.hoy'), ayer: t('pantallas.inicio.ayer') },
         busquedas,
         versiones,
+        propuestas,
         conIdeas,
       }),
-    [elementos, filtro, diasCargados, ahora, idioma, t, busquedas, versiones, conIdeas],
+    [elementos, filtro, diasCargados, ahora, idioma, t, busquedas, versiones, propuestas, conIdeas],
   );
   /** El resumen legible del lector de un elemento («Go · 15 líneas»). */
   const legible = useCallback(
@@ -235,6 +239,11 @@ export function Inicio() {
       const nueva = await cambiarTipo(ref, lector, espacio.repositorio, anterior ? { anterior } : {}).catch(() => null);
       if (!nueva) return avisos?.avisar(t('pantallas.inicio.noCambiado'));
       void espacio.contadores.contar('correccionesDeTipo').catch(() => undefined);
+      // Tres correcciones de contenidos que empiezan igual proponen una regla en el feed (IN-049).
+      void espacio.repositorio
+        .leerElemento(nueva)
+        .then((r) => r.ok && aprenderCorreccion(espacio, r.valor.original, lector.tipo))
+        .catch(() => undefined);
       void formarSiEsError(nueva, { repositorio: espacio.repositorio, entidades: espacio.entidades }).catch(() => null);
       // La selección y la marca siguen al elemento con su ref nueva.
       setSeleccionado((s) => (s === ref ? nueva : s));
@@ -389,6 +398,8 @@ export function Inicio() {
           return <IdeasQueVuelven />;
         case 'version':
           return <MensajeVersion version={fila.version} soloLectura={soloLectura} alAbrir={abrir} />;
+        case 'propuesta':
+          return <MensajePropuesta propuesta={fila.propuesta} soloLectura={soloLectura} />;
         case 'busqueda':
           return (
             <MensajeBusqueda

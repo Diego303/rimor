@@ -202,3 +202,32 @@ describe('arnés', () => {
     expect(ev.acierto).toBe(1);
   });
 });
+
+describe('reglas aprendidas (IN-049)', () => {
+  const reglas = [{ prefijo: '[app]', tipo: 'log' as const, creada: '' }];
+  const r = crearRegistro([
+    puntua('error', 'error', 0.95),
+    puntua('log', 'log', 0.1),
+    puntua('enlace', 'enlace', 0),
+    puntua('archivo', 'archivo', 0),
+  ]);
+
+  it('una regla que encaja gana al arbitraje y a los enlaces', () => {
+    expect(detectar({ texto: '[app] Traceback…' }, r, { reglas })).toMatchObject({
+      tipo: 'log',
+      lector: 'log',
+      confianza: 1,
+      via: 'regla',
+    });
+    const enlace = [{ prefijo: 'https://interno', tipo: 'log' as const, creada: '' }];
+    expect(detectar({ texto: 'https://interno.es/x' }, r, { reglas: enlace }).tipo).toBe('log');
+    expect(detectar({ texto: 'otra cosa' }, r, { reglas }).via).toBe('arbitraje');
+  });
+
+  it('no gana a un binario, y con un tipo sin lector se ignora', () => {
+    const { entrada, cabecera } = entradaDeArchivo('a.bin', '', bytes('[app]', 0, 1, 2, 0xff));
+    expect(detectar(entrada, r, { reglas, cabecera }).tipo).toBe('archivo');
+    const sinLector = [{ prefijo: '[app]', tipo: 'mediciones' as const, creada: '' }];
+    expect(detectar({ texto: '[app] x' }, r, { reglas: sinLector }).tipo).toBe('error');
+  });
+});

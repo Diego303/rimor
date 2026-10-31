@@ -174,7 +174,13 @@
       "ejemploListo": "Done. To come back to this space, go to Data and backups.",
       "ejemploFallo": "The example could not be created.",
       "instalar": "Install Rimor",
-      "ejemploNombre": "Example · gateway"
+      "ejemploNombre": "Example · gateway",
+      "reglaTitulo": "Detection rule",
+      "reglaAntes": "Texts that start with ",
+      "reglaDespues": " are of type {tipo}. Shall I remember that for the next ones?",
+      "reglaSi": "Yes, remember it",
+      "reglaNo": "No",
+      "reglaGuardada": "Rule saved"
     },
     "elemento": {
       "titulo": "Item",
@@ -672,7 +678,11 @@
       "buscar": "search",
       "nuevaLinea": "Shift+Enter: new line"
     },
-    "sugerencia": "Suggestion: {opcion}. Arrows to change, Enter to choose."
+    "sugerencia": "Suggestion: {opcion}. Arrows to change, Enter to choose.",
+    "dividir": {
+      "one": "Split into {n} item",
+      "other": "Split into {n} items"
+    }
   },
   "respuestas": {
     "secretos": {
@@ -895,6 +905,13 @@
     "tokenGithub": "GitHub token (optional)",
     "tokenTexto": "Raises the limit from 60 to 5,000 checks per hour. Use a fine-grained token with no permissions (it only reads public data): it is stored in this browser, not in the space or the ZIP, and other pages published on the same domain could read it.",
     "tokenNoVale": "That token has invalid characters (an invisible space when pasting?): it was not saved.",
-    "noGuardado": "The setting could not be saved: it applies now, but not after reopening."
+    "noGuardado": "The setting could not be saved: it applies now, but not after reopening.",
+    "reglas": "Learned rules",
+    "reglasTexto": "Whatever starts with the prefix is saved with its type, without detecting it.",
+    "reglasVacio": "None yet. If you correct the type of similar things three times, Rimor will suggest one.",
+    "reglaPrefijo": "Prefix",
+    "reglaTipo": "Type",
+    "reglaBorrar": "Delete the rule {prefijo}",
+    "reglaNoVale": "That prefix is not valid: empty, with line breaks or already in another rule."
   }
 }

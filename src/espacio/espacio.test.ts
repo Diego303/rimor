@@ -6,6 +6,7 @@ import { escribirTexto, leerTexto } from '../almacen/contrato';
 import { AlmacenMemoria } from '../almacen/memoria';
 import type { Canal, Cerrojos } from '../almacen/pestanas';
 import { RUTA_DIARIO } from '../almacen/repositorio';
+import { RUTA_REGLAS } from '../captura/reglas';
 import { abrirEspacio } from './abrir';
 import { conCopia, conPersistencia, ESTADO_INICIAL, leerEstado, RUTA_ESTADO } from './estado';
 import { crearManifest, RUTA_MANIFEST } from './manifest';
@@ -398,5 +399,48 @@ describe('persistencia', () => {
         },
       }),
     ).toBe(true);
+  });
+});
+
+describe('reglas de detección del espacio (IN-049)', () => {
+  const abrir = (almacen: AlmacenMemoria, espacioId: string, cerrojos = cerrojosFalsos(), fabrica = new IDBFactory()) =>
+    abrirEspacio({ espacioId, almacen, fabricaIndexedDb: fabrica, cerrojos, canal: canal() });
+  const regla = { prefijo: '[app]', tipo: 'log' as const, creada: '2026-10-31T18:00:00+01:00' };
+
+  it('se guardan en .rimor/reglas-deteccion.json y se leen al volver a abrir', async () => {
+    const almacen = new AlmacenMemoria();
+    const a = await abrir(almacen, 'r1');
+    if (!a.ok) throw new Error('no abre');
+    expect(a.valor.reglas().reglas).toEqual([]);
+    await a.valor.guardarReglas((d) => ({ ...d, reglas: [regla] }));
+    expect(a.valor.reglas().reglas).toEqual([regla]);
+    expect(JSON.parse((await leerTexto(almacen, RUTA_REGLAS)) ?? '{}').reglas).toEqual([regla]);
+    await a.valor.cerrar();
+    const b = await abrir(almacen, 'r1');
+    if (!b.ok) throw new Error('no abre');
+    expect(b.valor.reglas().reglas).toEqual([regla]);
+    await b.valor.cerrar();
+  });
+
+  it('una pestaña que solo lee no las escribe; un archivo que no se entiende no se sobrescribe', async () => {
+    const almacen = new AlmacenMemoria();
+    const cerrojos = cerrojosFalsos();
+    const fabrica = new IDBFactory();
+    const a = await abrir(almacen, 'r2', cerrojos, fabrica);
+    const b = await abrir(almacen, 'r2', cerrojos, fabrica);
+    if (!a.ok || !b.ok) throw new Error('no abre');
+    await b.valor.guardarReglas((d) => ({ ...d, reglas: [regla] }));
+    expect(await leerTexto(almacen, RUTA_REGLAS)).toBeNull();
+    await a.valor.cerrar();
+    await b.valor.cerrar();
+
+    const roto = new AlmacenMemoria();
+    await escribirTexto(roto, RUTA_REGLAS, '{roto');
+    const c = await abrir(roto, 'r3');
+    if (!c.ok) throw new Error('no abre');
+    expect(c.valor.reglas().reglas).toEqual([]);
+    await expect(c.valor.guardarReglas((d) => ({ ...d, reglas: [regla] }))).rejects.toThrow();
+    expect(await leerTexto(roto, RUTA_REGLAS)).toBe('{roto');
+    await c.valor.cerrar();
   });
 });

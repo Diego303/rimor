@@ -7,6 +7,7 @@ import { analizarRef, type Elemento as ElementoFormato, isoConZona, PREFIJOS } f
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { VersionGuardada } from '../../almacen/repositorio';
+import { aprenderCorreccion } from '../../captura/aprender';
 import { cambiarTipo, sePuedeCambiar } from '../../captura/reprocesar';
 import { claseDe } from '../../comparaciones/clases';
 import { useEspacioOpcional } from '../../espacio/Espacio';
@@ -203,12 +204,14 @@ function PantallaElemento({ el, enPapelera }: { el: ElementoFormato; enPapelera:
       const ref = await cambiarTipo(fm.id, nuevo, espacio.repositorio, opciones).catch(() => null);
       if (!ref) return avisos?.avisar(t('pantallas.inicio.noCambiado'));
       void espacio.contadores.contar('correccionesDeTipo').catch(() => undefined);
+      // Tres correcciones de contenidos que empiezan igual proponen una regla en el feed (IN-049).
+      aprenderCorreccion(espacio, el.original, nuevo.tipo);
       // Ahora es un error: entra en el hilo de su huella, si lo hay (IN-030).
       void formarSiEsError(ref, { repositorio: espacio.repositorio, entidades: espacio.entidades }).catch(() => null);
       void navegar({ to: '/e/$ref', params: { ref }, replace: true });
       avisos?.avisar(t('pantallas.inicio.tipoCambiado', { tipo: t(`tipos.${nuevo.tipo}`), ref }));
     },
-    [espacio, lector, fm.id, navegar, avisos, t],
+    [espacio, lector, el.original, fm.id, navegar, avisos, t],
   );
 
   // «Comparar con…» (logs y mediciones): los del mismo tipo y lector, salvo él mismo.

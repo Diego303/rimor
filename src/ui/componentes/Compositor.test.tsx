@@ -29,8 +29,10 @@ const registro = crearRegistro([
 ]);
 
 let repositorio: ReturnType<typeof useEspacioAbierto>['repositorio'] | null = null;
+let espacio: ReturnType<typeof useEspacioAbierto> | null = null;
 function Espia() {
-  repositorio = useEspacioAbierto().repositorio;
+  espacio = useEspacioAbierto();
+  repositorio = espacio.repositorio;
   return null;
 }
 
@@ -110,6 +112,44 @@ describe('Compositor', () => {
     escribir(area, '/mediciones 38 ms');
     await waitFor(() => expect(vistaPrevia()).toContain('elegido con /'));
     expect(vistaPrevia()).toContain('Mediciones');
+  });
+
+  it('varios bloques que son cosas: «Dividir en N elementos» guarda cada uno con las indicaciones (IN-049)', async () => {
+    const area = await montar();
+    escribir(area, 'panic: uno\n\n\npanic: dos\n@gateway #rust');
+    const dividir = await screen.findByRole('button', { name: 'Dividir en 2 elementos' });
+    fireEvent.click(dividir);
+    await waitFor(() => expect(repositorio?.elementos()).toHaveLength(2));
+    expect(repositorio?.elementos().map((fm) => [fm.tipo, fm.colecciones, fm.etiquetas])).toEqual([
+      ['error', ['gateway'], ['rust']],
+      ['error', ['gateway'], ['rust']],
+    ]);
+    const originales = await Promise.all(
+      (repositorio?.elementos() ?? []).map(async (fm) => {
+        const r = await repositorio?.leerElemento(fm.id);
+        return r?.ok ? r.valor.original : null;
+      }),
+    );
+    expect(originales.sort()).toEqual(['panic: dos', 'panic: uno']);
+    await waitFor(() => expect(useCompositor.getState().texto).toBe(''));
+    // Unas notas con párrafos no se ofrecen dividir.
+    escribir(area, 'una nota\n\notra nota');
+    await waitFor(() => expect(vistaPrevia()).toContain('Se guardará como'));
+    expect(screen.queryByRole('button', { name: /Dividir en/ })).toBeNull();
+  });
+
+  it('un /tipo que no es el que habría detectado cuenta como corrección del tipo (IN-016, IN-049)', async () => {
+    const area = await montar();
+    const antes = espacio?.contadores.total('correccionesDeTipo') ?? 0;
+    escribir(area, '/texto 17:40 ERROR conexión');
+    fireEvent.keyDown(area, { key: 'Enter' });
+    await waitFor(() => expect(repositorio?.elementos().some((fm) => fm.tipo === 'texto')).toBe(true));
+    await waitFor(() => expect(espacio?.contadores.total('correccionesDeTipo')).toBe(antes + 1));
+    // Uno que coincide, no.
+    escribir(area, '/log 17:41 ERROR otra');
+    fireEvent.keyDown(area, { key: 'Enter' });
+    await waitFor(() => expect(repositorio?.elementos().some((fm) => fm.tipo === 'log')).toBe(true));
+    expect(espacio?.contadores.total('correccionesDeTipo')).toBe(antes + 1);
   });
 
   it('autocompleta colecciones con el teclado', async () => {

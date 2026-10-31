@@ -70,6 +70,11 @@ export interface Capturado {
   elemento: Elemento;
   /** Cuando el detector dudó: el otro tipo posible, para ofrecer el cambio. */
   alternativa?: Candidato;
+  /**
+   * Con un tipo forzado (`/tipo`) que no es el que habría detectado: el detectado. Es una corrección del tipo (cuenta
+   * y enseña, IN-049).
+   */
+  detectado?: TipoElemento;
   /** Ruta del adjunto si lo creó esta captura (para deshacer). */
   adjuntoNuevo?: string;
   /** Los derivados que se están calculando, para la respuesta de Rimor (IN-016). */
@@ -182,10 +187,10 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     ...(archivo ? { archivos: [bytes ? archivo : new File([texto ?? ''], archivo.name, { type: archivo.type })] } : {}),
   };
 
-  // 3. Detectar, salvo que el tipo venga forzado.
-  const deteccion = entrada.tipo
-    ? null
-    : detectar(vista, registro, { ...opcionesDetectar(opciones), ...(cabecera ? { cabecera } : {}) });
+  // 3. Detectar. Con el tipo forzado, solo para saber si el forzado lo corrige.
+  const detectada = detectar(vista, registro, { ...opcionesDetectar(opciones), ...(cabecera ? { cabecera } : {}) });
+  const deteccion = entrada.tipo ? null : detectada;
+  const detectado = entrada.tipo && detectada.tipo !== entrada.tipo ? detectada.tipo : undefined;
   const lector = lectorPara(registro, entrada.tipo, deteccion?.lector ?? null, bytes !== null);
   if (!lector) return fallo('captura.sinLector', { tipo: entrada.tipo ?? deteccion?.tipo ?? 'texto' });
 
@@ -357,6 +362,7 @@ async function pasos(entrada: EntradaCaptura, efectos: EfectosCaptura): Promise<
     capturado: {
       elemento,
       ...(deteccion?.alternativa ? { alternativa: deteccion.alternativa } : {}),
+      ...(detectado ? { detectado } : {}),
       ...(adjuntoNuevo ? { adjuntoNuevo } : {}),
       ...(derivados ? { derivados } : {}),
     },

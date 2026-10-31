@@ -19,6 +19,7 @@ import { Detalles, Segmentado, SelectorTema } from '../../ui/componentes';
 import { useAvisosOpcional } from '../../ui/componentes/Avisos';
 import { leerPreferencia } from '../../ui/tema/tema';
 import { Pantalla } from '../Pantalla';
+import { ReglasAprendidas } from './ReglasAprendidas';
 
 /** Las reglas de secretos por lo que ocultan (`aws` agrupa la clave y el secreto). */
 const TIPOS_SECRETO = [...new Set(REGLAS_SECRETOS.map((r) => r.tipo))];
@@ -107,6 +108,7 @@ export function Ajustes() {
           />
         </label>
         <p className="xs muted">{t('ajustes.dudaTexto')}</p>
+        <ReglasAprendidas editable={editable} />
       </Seccion>
 
       <Seccion titulo={t('ajustes.respuestas')}>

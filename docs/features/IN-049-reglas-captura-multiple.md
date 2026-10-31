@@ -75,8 +75,8 @@ Catálogo: CAP-06 y CAP-07 (plan §5, v0.2). Depende de IN-013 (detector) e IN-0
 
 ## Tareas
 
-- [ ] Reglas aprendidas: tres correcciones de contenidos parecidos proponen una regla, guardada en `.rimor/reglas-deteccion.json`, que se edita o borra en Ajustes.
-- [ ] Captura múltiple: varias URL o varios bloques ofrecen «Dividir en N elementos».
+- [x] Reglas aprendidas: tres correcciones de contenidos parecidos proponen una regla, guardada en `.rimor/reglas-deteccion.json`, que se edita o borra en Ajustes.
+- [x] Captura múltiple: varias URL o varios bloques ofrecen «Dividir en N elementos».
 
 ## Pruebas previstas
 
@@ -106,3 +106,22 @@ Catálogo: CAP-06 y CAP-07 (plan §5, v0.2). Depende de IN-013 (detector) e IN-0
 ## Autorrevisión
 
 Cubre las dos tareas y la nota de IN-016 sobre `/tipo`. Reutiliza el detector, las opciones de captura, el patrón de los ajustes en el espacio, los mensajes en su momento del feed y la captura de varias cosas a la vez. Lo nuevo: `reglas.ts` y `dividir.ts` (puros), la propuesta en el feed, la lista en Ajustes y el botón del compositor.
+
+## Implementación
+
+- `src/captura/reglas.ts`: firma, lectura tolerante y escritura del archivo, `anotarCorreccion`, `aceptarPropuesta`, `descartarPropuesta`, `editarRegla`, `borrarRegla` y `reglaPara`. Busca la primera línea con contenido sin partir el texto entero.
+- `detector.ts`: `OpcionesDeteccion.reglas` y `via: 'regla'`. `opcionesCaptura(ajustes, reglas)` lleva las reglas a la captura y a la vista previa (también la del Worker).
+- `espacio/abrir.ts`: `reglas()` y `guardarReglas()`, como los ajustes. Se releen con la otra pestaña, y un archivo ilegible no se sobrescribe (`guardarReglas` lo rechaza).
+- `captura/aprender.ts` (`aprenderCorreccion`): lo llaman «Cambiar tipo» en el elemento y en el feed, y la captura con un `/tipo` que contradice al detector (`Capturado.detectado`, que también cuenta `correccionesDeTipo`).
+- La propuesta, en el almacén del compositor (`propuestas`), la pinta en su momento `rutas/inicio/MensajePropuesta.tsx`.
+- `rutas/ajustes/ReglasAprendidas.tsx`, en la tarjeta «Detección».
+- `captura/dividir.ts` (`partes`) y `Previa.division`. El botón «Dividir en N elementos» de la vista previa llama a `guardar(true)`, que captura cada parte con las mismas indicaciones.
+- Pruebas: `reglas.test.ts`, `dividir.test.ts` (con la vista previa), el detector, el flujo (`detectado` y reglas en las opciones), el espacio (archivo, pestaña que solo lee y archivo ilegible), el feed (tres correcciones, «Sí» y «No»), Ajustes (editar, no vale, tipo, borrar, vacío), el compositor (dividir y `/tipo`) y las filas del feed.
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| Idea cuenta como prosa al decidir si se divide | Las notas cortas se detectan como Idea: con solo «no es Texto», unas notas con párrafos se ofrecían dividir. |
+| Un conjunto detectado como Texto sí puede dividirse | Una mezcla (un curl, un JSON y una traza) no la reconoce entera ningún lector: es justo cuando más sirve dividir. |
+| Al rechazar una propuesta se guardan solo su firma y su tipo | La del feed lleva también su momento. |

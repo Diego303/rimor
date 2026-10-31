@@ -9,6 +9,7 @@ import { type ChangeEvent, type KeyboardEvent, useEffect, useId, useMemo, useRef
 import { useBuscar } from '../../busqueda/Busqueda';
 import { ATRIBUTO_ZONA_SOLTAR, type ResultadoDe, useCaptura } from '../../captura/Captura';
 import { useCompositor } from '../../captura/compositor';
+import { partes } from '../../captura/dividir';
 import type { EntradaCaptura } from '../../captura/flujo';
 import { analizarIndicaciones } from '../../captura/indicaciones';
 import { PREVIA_EN_WORKER, type Previa, previsualizar } from '../../captura/previa';
@@ -21,6 +22,7 @@ import { useT } from '../../i18n/useT';
 import { useLectoresOpcional } from '../../lectores/Lectores';
 import { Icono } from '../iconos/Icono';
 import { useAvisos } from './Avisos';
+import { Boton } from './Boton';
 import { ChipTipo, Estado, Ref } from './Marcas';
 
 /** Espera tras la última tecla antes de recalcular la vista previa. */
@@ -125,7 +127,7 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
   // Vista previa 120 ms después de la última tecla; con textos grandes, en el Worker. Con las opciones de los
   // ajustes de ahora (reglas de secretos y detección), como la captura.
   useEffect(() => {
-    const opciones = espacio ? opcionesCaptura(espacio.ajustes()) : undefined;
+    const opciones = espacio ? opcionesCaptura(espacio.ajustes(), espacio.reglas().reglas) : undefined;
     if (!texto.trim() || !lectores) {
       setPrevia(null);
       return undefined;
@@ -177,7 +179,8 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
     requestAnimationFrame(() => area.current?.setSelectionRange(cursor, cursor));
   }
 
-  async function guardar() {
+  /** Guarda lo escrito; con `dividir`, cada parte (cada URL o cada bloque, IN-049) como un elemento. */
+  async function guardar(dividir = false) {
     if (guardando) return;
     const ind = analizarIndicaciones(texto);
     if (ind.busqueda !== undefined) {
@@ -210,10 +213,12 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
     };
     const resultados: ResultadoDe[] = [];
     let textoHecho = true;
-    if (ind.cuerpo.trim()) {
-      const r = await capturador.capturar({ texto: ind.cuerpo, origen: 'pegado', ...comunes }).catch(() => null);
-      resultados.push({ nombre: ind.cuerpo.split('\n')[0]?.slice(0, 40) ?? '', r });
-      textoHecho = terminado(r);
+    const textos = ind.cuerpo.trim() ? ((dividir ? partes(ind.cuerpo)?.partes : null) ?? [ind.cuerpo]) : [];
+    for (const cuerpo of textos) {
+      const r = await capturador.capturar({ texto: cuerpo, origen: 'pegado', ...comunes }).catch(() => null);
+      resultados.push({ nombre: cuerpo.split('\n')[0]?.slice(0, 40) ?? '', r });
+      // El texto se queda en la caja si alguna parte no se pudo guardar (para reintentar).
+      textoHecho = textoHecho && terminado(r);
     }
     const hechos: File[] = [];
     for (const archivo of archivosGuardados) {
@@ -351,7 +356,12 @@ export function Compositor({ alAbrir, hiloFijo }: Props) {
             ))}
           </div>
         )}
-        <VistaPrevia previa={previa} archivos={archivos} alQuitar={quitarArchivo} />
+        <VistaPrevia
+          previa={previa}
+          archivos={archivos}
+          alQuitar={quitarArchivo}
+          {...(guardando || soloLectura ? {} : { alDividir: () => void guardar(true) })}
+        />
         <div className="crow">
           <button
             type="button"
@@ -415,10 +425,13 @@ function VistaPrevia({
   previa: p,
   archivos: adjuntos,
   alQuitar,
+  alDividir,
 }: {
   previa: Previa | null;
   archivos: File[];
   alQuitar: (i: number) => void;
+  /** Guardar cada parte como un elemento (sin ella, no se ofrece). */
+  alDividir?: () => void;
 }) {
   const { t, idioma } = useT();
   const lectores = useLectoresOpcional();
@@ -473,6 +486,13 @@ function VistaPrevia({
         <span key="alt" className="xs aviso-tipo">
           {t('compositor.alternativa', { tipo: t(`tipos.${alternativa.tipo}`), palabra: alternativa.tipo })}
         </span>,
+      );
+    // Varias URL o varios bloques que son cosas distintas: guardarlos por separado (IN-049).
+    if (p.division && alDividir)
+      piezas.push(
+        <Boton key="dividir" pequeno onClick={alDividir}>
+          {t('compositor.dividir', { n: p.division.n })}
+        </Boton>,
       );
   }
   adjuntos.forEach((a, i) => {

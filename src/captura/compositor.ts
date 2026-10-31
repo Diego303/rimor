@@ -5,6 +5,7 @@
  */
 import { create } from 'zustand';
 import type { VersionCapturada } from './flujo';
+import type { Propuesta } from './reglas';
 
 export const CLAVE_BORRADOR = 'rimor:borrador';
 
@@ -19,6 +20,11 @@ export interface VersionEnFeed extends VersionCapturada {
   en: string;
 }
 
+/** Una regla de detección que Rimor propone (IN-049), que el feed pinta como mensaje en su momento. */
+export interface PropuestaEnFeed extends Propuesta {
+  en: string;
+}
+
 export interface Borrador {
   texto: string;
   archivos: File[];
@@ -26,6 +32,7 @@ export interface Borrador {
   respondiendoA: string | null;
   busquedas: BusquedaPendiente[];
   versiones: VersionEnFeed[];
+  propuestas: PropuestaEnFeed[];
   /** Sube cada vez que algo llega de fuera o se pide el foco: el compositor se enfoca. */
   llegadas: number;
   /** Las llegadas que el compositor ya atendió (al montarse, solo enfoca si hay alguna nueva). */
@@ -41,6 +48,10 @@ export interface Borrador {
   anotarVersion(v: VersionEnFeed): void;
   /** Quita del feed la versión de esa copia (se deshizo o se guardó aparte). */
   quitarVersion(copia: string): void;
+  /** Una propuesta nueva (si ya estaba la misma, se queda la que había). */
+  anotarPropuesta(p: PropuestaEnFeed): void;
+  /** Quita del feed la propuesta (se aceptó o se rechazó). */
+  quitarPropuesta(p: Propuesta): void;
   enfocar(): void;
   /** Tras guardar: sin texto, sin archivos y sin respuesta. */
   vaciar(): void;
@@ -79,6 +90,7 @@ export const useCompositor = create<Borrador>((set) => ({
   respondiendoA: null,
   busquedas: [],
   versiones: [],
+  propuestas: [],
   llegadas: 0,
   atendidas: 0,
   atender: () => set((s) => ({ atendidas: s.llegadas })),
@@ -95,6 +107,12 @@ export const useCompositor = create<Borrador>((set) => ({
   anotarBusqueda: (texto, en) => set((s) => ({ busquedas: [...s.busquedas, { texto, en }] })),
   anotarVersion: (v) => set((s) => ({ versiones: [...s.versiones, v] })),
   quitarVersion: (copia) => set((s) => ({ versiones: s.versiones.filter((v) => v.copia !== copia) })),
+  anotarPropuesta: (p) =>
+    set((s) =>
+      s.propuestas.some((x) => x.firma === p.firma && x.tipo === p.tipo) ? s : { propuestas: [...s.propuestas, p] },
+    ),
+  quitarPropuesta: (p) =>
+    set((s) => ({ propuestas: s.propuestas.filter((x) => x.firma !== p.firma || x.tipo !== p.tipo) })),
   enfocar: () => set((s) => ({ llegadas: s.llegadas + 1 })),
   vaciar: () => set({ texto: '', archivos: [], respondiendoA: null }),
   quitarGuardado: (g) =>

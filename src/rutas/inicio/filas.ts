@@ -4,7 +4,7 @@
  * intercaladas en «Hoy». Puro: la vista solo pinta lo que sale de aquí.
  */
 import type { FrontmatterComun } from '@rimor/formato';
-import type { BusquedaPendiente, VersionEnFeed } from '../../captura/compositor';
+import type { BusquedaPendiente, PropuestaEnFeed, VersionEnFeed } from '../../captura/compositor';
 import { sinClasificar } from '../../espacio/resumen';
 import { fmtDia, type Idioma } from '../../i18n/formatos';
 
@@ -15,6 +15,7 @@ export type FilaFeed =
   | { t: 'mensaje'; clave: string; fm: FrontmatterComun }
   | { t: 'busqueda'; clave: string; busqueda: BusquedaPendiente }
   | { t: 'version'; clave: string; version: VersionEnFeed }
+  | { t: 'propuesta'; clave: string; propuesta: PropuestaEnFeed }
   | { t: 'ideas'; clave: string };
 
 /** El día civil (`AAAA-MM-DD`) de un instante, en la zona del equipo. */
@@ -79,6 +80,8 @@ export interface OpcionesFeed {
   busquedas?: readonly BusquedaPendiente[];
   /** Capturas de esta sesión que se guardaron como versión nueva de otro elemento (IN-029). */
   versiones?: readonly VersionEnFeed[];
+  /** Reglas de detección que Rimor propone (IN-049). */
+  propuestas?: readonly PropuestaEnFeed[];
   /** Si hay ideas que vuelven: van al principio de «Hoy». */
   conIdeas?: boolean;
 }
@@ -109,6 +112,11 @@ export function filasDelFeed(elementos: readonly FrontmatterComun[], o: Opciones
   for (const v of o.versiones ?? []) {
     const dia = claveDia(v.en);
     if (dia) anotar(dia, Date.parse(v.en), { t: 'version', clave: `version:${v.copia}`, version: v });
+  }
+  // Las propuestas de reglas, igual: en su momento.
+  for (const p of o.propuestas ?? []) {
+    const dia = claveDia(p.en);
+    if (dia) anotar(dia, Date.parse(p.en), { t: 'propuesta', clave: `propuesta:${p.tipo}:${p.firma}`, propuesta: p });
   }
   if (o.conIdeas && o.filtro === 'todo') anotar(hoy, Number.NEGATIVE_INFINITY, { t: 'ideas', clave: 'ideas' });
 

@@ -136,4 +136,48 @@ describe('Ajustes: casos de la revisión', () => {
       (await screen.findAllByText('No se pudo guardar el ajuste: vale ahora, pero no al volver a abrir.')).length,
     ).toBeGreaterThan(0);
   }, 30_000);
+
+  it('las reglas aprendidas: editar el prefijo y el tipo, un prefijo que no vale, borrar y vacío (IN-049)', async () => {
+    const reglas = {
+      esquema: 1,
+      reglas: [
+        { prefijo: '[app]', tipo: 'log', creada: '2026-10-31T18:00:00+01:00' },
+        { prefijo: 'svc:', tipo: 'error', creada: '2026-10-31T18:00:00+01:00' },
+      ],
+      correcciones: [],
+      descartadas: [],
+    };
+    const { almacen } = await montarApp('/ajustes', [], (a) =>
+      escribirTexto(a, '.rimor/reglas-deteccion.json', JSON.stringify(reglas)),
+    );
+    await screen.findByRole('heading', { name: 'Reglas aprendidas' }, PRIMERA_CARGA);
+    const guardadas = async () =>
+      JSON.parse((await leerTexto(almacen, '.rimor/reglas-deteccion.json')) ?? '{}').reglas as { prefijo: string }[];
+    const prefijos = () => screen.getAllByRole('textbox', { name: 'Prefijo' }) as HTMLInputElement[];
+    expect(prefijos().map((c) => c.value)).toEqual(['[app]', 'svc:']);
+
+    // El prefijo se guarda al salir del campo.
+    fireEvent.change(prefijos()[0] as HTMLInputElement, { target: { value: 'app:' } });
+    fireEvent.blur(prefijos()[0] as HTMLInputElement);
+    await waitFor(async () => expect((await guardadas()).map((r) => r.prefijo)).toEqual(['app:', 'svc:']), ESCRITURA);
+    // Uno repetido (o vacío) no vale: se dice y no se guarda.
+    fireEvent.change(prefijos()[0] as HTMLInputElement, { target: { value: 'svc:' } });
+    fireEvent.blur(prefijos()[0] as HTMLInputElement);
+    expect(screen.getByText(/Ese prefijo no vale/)).toBeTruthy();
+    expect(prefijos()[0]?.getAttribute('aria-invalid')).toBe('true');
+    expect(prefijos()[0]?.value).toBe('app:');
+    // El tipo, con los que tienen lector (sin los binarios).
+    const tipo = screen.getAllByRole('combobox', { name: 'Tipo' })[1] as HTMLSelectElement;
+    expect([...tipo.options].map((o) => o.value)).not.toContain('imagen');
+    fireEvent.change(tipo, { target: { value: 'json' } });
+    await waitFor(
+      async () => expect((await guardadas())[1]).toMatchObject({ prefijo: 'svc:', tipo: 'json' }),
+      ESCRITURA,
+    );
+    // Borrar las dos: queda el texto de vacío.
+    fireEvent.click(screen.getByRole('button', { name: 'Borrar la regla app:' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Borrar la regla svc:' }));
+    await waitFor(async () => expect(await guardadas()).toEqual([]), ESCRITURA);
+    expect(screen.getByText(/Ninguna todavía/)).toBeTruthy();
+  }, 30_000);
 });

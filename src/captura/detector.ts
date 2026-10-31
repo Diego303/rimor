@@ -1,12 +1,13 @@
 /**
- * Detector de tipo (CAP-04, IN-013): atajos del Anexo D para binarios y enlaces y, si no, cada lector puntúa y
- * gana el mayor por encima del umbral; si el segundo queda cerca, se duda entre los dos; si nadie convence, Texto.
+ * Detector de tipo (CAP-04, IN-013): atajos del Anexo D para binarios y enlaces, las reglas aprendidas (CAP-06,
+ * IN-049) y, si no, cada lector puntúa y gana el mayor por encima del umbral; si el segundo queda cerca, se duda entre los dos; si nadie convence, Texto.
  * TS puro: no conoce ningún lector concreto, solo el registro.
  */
 import type { TipoElemento } from '@rimor/formato';
 import type { Entrada } from '../lectores/contrato';
 import type { Registro } from '../lectores/registro';
 import { BYTES_CABECERA, decodificarTexto, esImagen, firmaDe, pareceTexto } from './firmas';
+import { type ReglaDeteccion, reglaPara } from './reglas';
 
 /** Cabecera de un archivo que no es texto aunque su principio lo parezca (un byte nulo la marca como binaria). */
 const NO_TEXTO = new Uint8Array([0, 0xff, 0]);
@@ -24,7 +25,7 @@ export interface Candidato {
 }
 
 export interface Deteccion extends Candidato {
-  via: 'atajo' | 'arbitraje' | 'por-defecto';
+  via: 'atajo' | 'regla' | 'arbitraje' | 'por-defecto';
   /** Segundo candidato cuando la diferencia es pequeña: la captura ofrece los dos. */
   alternativa?: Candidato;
   /** Todas las puntuaciones, de mayor a menor. */
@@ -36,6 +37,8 @@ export interface OpcionesDeteccion {
   margen?: number;
   /** Primeros bytes del archivo (`BYTES_CABECERA`): su firma y si es texto. */
   cabecera?: Uint8Array;
+  /** Reglas aprendidas (IN-049): la primera que encaja con el texto decide, si su tipo tiene lector. */
+  reglas?: readonly ReglaDeteccion[];
 }
 
 const URL_SOLA = /^https?:\/\/[^\s/$.?#][^\s]*$/i;
@@ -102,7 +105,7 @@ function puntuar(fn: () => number): number {
 }
 
 export function detectar(entrada: Entrada, registro: Registro, opciones: OpcionesDeteccion = {}): Deteccion {
-  const { umbral = UMBRAL_DETECCION, margen = MARGEN_DUDA, cabecera } = opciones;
+  const { umbral = UMBRAL_DETECCION, margen = MARGEN_DUDA, cabecera, reglas = [] } = opciones;
   const lectorDe = (tipo: TipoElemento) => registro.deTipo(tipo)?.nombre ?? null;
 
   const puntuaciones: Candidato[] = registro.lectores
@@ -119,6 +122,10 @@ export function detectar(entrada: Entrada, registro: Registro, opciones: Opcione
     const tipo = propio || !generico ? binario : 'archivo';
     return { tipo, lector: propio ?? generico, confianza: 1, via: 'atajo', puntuaciones };
   }
+  // Una regla aprendida: la quiso el usuario, gana a todo lo demás (salvo a un binario). Con un tipo sin lector, no.
+  const regla = entrada.texto !== undefined ? reglaPara(entrada.texto, reglas) : undefined;
+  const deRegla = regla ? lectorDe(regla.tipo) : null;
+  if (regla && deRegla) return { tipo: regla.tipo, lector: deRegla, confianza: 1, via: 'regla', puntuaciones };
   // URL o DOI completos: solo si hay lector de enlaces; si no, decide el arbitraje.
   const enlace = entrada.texto !== undefined && esEnlaceCompleto(entrada.texto) ? lectorDe('enlace') : null;
   if (enlace) return { tipo: 'enlace', lector: enlace, confianza: 1, via: 'atajo', puntuaciones };

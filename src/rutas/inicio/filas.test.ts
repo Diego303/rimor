@@ -77,6 +77,18 @@ describe('filasDelFeed', () => {
     ).toBe(false);
   });
 
+  it('una regla propuesta, en su momento (IN-049)', () => {
+    const elementos = [fm(1, 18, 10), fm(2, 18, 14)];
+    const propuesta = { firma: '[app]', tipo: 'log' as const, en: new Date(2026, 9, 18, 12, 0, 0).toISOString() };
+    const filas = filasDelFeed(elementos, opciones({ propuestas: [propuesta] }));
+    expect(filas.map((f) => f.clave)).toEqual([
+      'dia:2026-10-18',
+      elementos[0]?.id,
+      'propuesta:log:[app]',
+      elementos[1]?.id,
+    ]);
+  });
+
   it('una búsqueda o las ideas de hoy no le quitan el sitio al día más antiguo cargado', () => {
     const ocho = Array.from({ length: 8 }, (_, i) => fm(i + 1, 10 + i, 9));
     const busqueda = { texto: 'x', en: new Date(2026, 9, 18, 8, 0).toISOString() };

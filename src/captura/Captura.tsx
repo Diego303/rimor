@@ -15,6 +15,7 @@ import { useT } from '../i18n/useT';
 import { useLectoresOpcional } from '../lectores/Lectores';
 import { esCampoDeTexto } from '../ui/atajos/atajos';
 import { useAvisos } from '../ui/componentes';
+import { aprenderCorreccion } from './aprender';
 import { useCompositor } from './compositor';
 import { type Capturado, type Capturador, crearCapturador, LIMITE_ARCHIVO, type ResultadoCaptura } from './flujo';
 
@@ -71,7 +72,7 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
             repositorio: espacio.repositorio,
             registro: lectores.registro,
             cola: lectores.cola,
-            opciones: () => opcionesCaptura(espacio.ajustes()),
+            opciones: () => opcionesCaptura(espacio.ajustes(), espacio.reglas().reglas),
           })
         : null,
     [espacio, lectores],
@@ -124,8 +125,15 @@ export function ProveedorCaptura({ children, alRecibir, alAbrir }: Props) {
       for (const { nombre, tam, r } of resultados) {
         if (!r) otros.push(() => avisar(t('captura.fallo', { nombre })));
         else if (r.ok) {
-          if (r.valor.tipo === 'creado') creados.push(r.valor.capturado);
-          else if (r.valor.tipo === 'version') {
+          if (r.valor.tipo === 'creado') {
+            const c = r.valor.capturado;
+            creados.push(c);
+            // Un `/tipo` que no es el que habría detectado corrige al detector: cuenta y enseña (IN-016, IN-049).
+            if (c.detectado && espacio) {
+              void espacio.contadores.contar('correccionesDeTipo').catch(() => undefined);
+              aprenderCorreccion(espacio, c.elemento.original, c.elemento.frontmatter.tipo);
+            }
+          } else if (r.valor.tipo === 'version') {
             const v = r.valor;
             const fm = v.capturado.elemento.frontmatter;
             // El feed la pinta en su momento (el elemento es de otro día); el aviso, con deshacer.

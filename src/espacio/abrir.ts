@@ -12,6 +12,7 @@ import { type Almacen, escribirTexto, leerTexto } from '../almacen/contrato';
 import { RepositorioEntidades } from '../almacen/entidades';
 import { type Canal, type Cerrojos, type Coordinacion, coordinarPestanas } from '../almacen/pestanas';
 import { Repositorio } from '../almacen/repositorio';
+import { type DatosReglas, escribirReglas, leerReglas, REGLAS_INICIALES, RUTA_REGLAS } from '../captura/reglas';
 import { abrirContadores, type Contadores } from '../respuestas/contadores';
 import { type Ajustes, leerAjustes, RUTA_AJUSTES } from './ajustes';
 import { GestorColecciones } from './colecciones';
@@ -66,6 +67,10 @@ export interface EspacioAbierto {
   ajustes(): Ajustes;
   /** Guarda un cambio de los ajustes (en orden; solo escribe la pestaña que escribe) y avisa. */
   guardarAjustes(cambio: (a: Ajustes) => Ajustes): Promise<void>;
+  /** Reglas de detección aprendidas (IN-049, `.rimor/reglas-deteccion.json`). */
+  reglas(): DatosReglas;
+  /** Guarda un cambio de las reglas (en orden; solo escribe la pestaña que escribe) y avisa. */
+  guardarReglas(cambio: (r: DatosReglas) => DatosReglas): Promise<void>;
   /** Contadores locales de lo ahorrado (IN-016). */
   contadores: Contadores;
   /** Escribe lo pendiente y suelta el cerrojo y la caché. */
@@ -158,6 +163,30 @@ export async function abrirEspacio(
         .then(() => coordinacion.avisarCambio([]));
       return ajustesPendientes;
     };
+    // Las reglas, igual; un archivo que existe pero no se entiende no se sobrescribe (se perderían): se ignora.
+    const leerReglasSeguro = async (): Promise<{ datos: DatosReglas; legible: boolean } | null> => {
+      try {
+        const datos = leerReglas(await leerTexto(dep.almacen, RUTA_REGLAS));
+        return datos ? { datos, legible: true } : { datos: REGLAS_INICIALES, legible: false };
+      } catch {
+        return null;
+      }
+    };
+    let reglas = (await leerReglasSeguro()) ?? { datos: REGLAS_INICIALES, legible: true };
+    let reglasPendientes: Promise<void> = Promise.resolve();
+    const guardarReglas = (cambio: (r: DatosReglas) => DatosReglas) => {
+      if (!reglas.legible) return Promise.reject(new Error('reglas-deteccion.json no se entiende'));
+      reglas = { datos: cambio(reglas.datos), legible: true };
+      const copia = reglas.datos;
+      avisar();
+      reglasPendientes = reglasPendientes
+        .catch(() => undefined)
+        .then(() =>
+          escribe() && !cerrado ? escribirTexto(dep.almacen, RUTA_REGLAS, escribirReglas(copia)) : undefined,
+        )
+        .then(() => coordinacion.avisarCambio([]));
+      return reglasPendientes;
+    };
     const contadores = await abrirContadores(dep.almacen, () => escribe() && alDia && !cerrado, reloj);
 
     const abierta = await abrirCache(dep);
@@ -222,6 +251,7 @@ export async function abrirEspacio(
         await gestor.cargar().catch(() => undefined);
         estado = leerEstado(await leerTexto(dep.almacen, RUTA_ESTADO));
         ajustes = (await leerAjustesSeguro()) ?? ajustes;
+        reglas = (await leerReglasSeguro()) ?? reglas;
         avisar();
         return true;
       });
@@ -262,6 +292,7 @@ export async function abrirEspacio(
       esperarEscrituras: async () => {
         await pendiente.catch(() => undefined);
         await ajustesPendientes.catch(() => undefined);
+        await reglasPendientes.catch(() => undefined);
         await contadores.esperar().catch(() => undefined);
         await gestor.escrito();
         await dep.almacen.esperar?.().catch(() => undefined);
@@ -282,6 +313,8 @@ export async function abrirEspacio(
       guardarEstado,
       ajustes: () => ajustes,
       guardarAjustes,
+      reglas: () => reglas.datos,
+      guardarReglas,
       contadores,
       alCambiar: (fn) => {
         oyentes.add(fn);
@@ -292,6 +325,7 @@ export async function abrirEspacio(
         // Primero lo que ya estaba pedido; después nada más se escribe y se sueltan cerrojo y caché.
         await pendiente.catch(() => undefined);
         await ajustesPendientes.catch(() => undefined);
+        await reglasPendientes.catch(() => undefined);
         await contadores.esperar();
         await dep.almacen.esperar?.().catch(() => undefined);
         cerrado = true;
