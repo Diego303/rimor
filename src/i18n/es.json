@@ -355,8 +355,8 @@
         "avisos": "Avisos de método",
         "mismaMaquina": "Si se midieron en la misma máquina, para generalizar repite en otra.",
         "antesDeMedir": "Decide el número de repeticiones antes de medir; repetir hasta que salga una diferencia aumenta los falsos positivos.",
-        "hodgesLehmann": "Diferencia según Hodges-Lehmann: {diferencia} (IC 95 %: {bajo} a {alto}).",
-        "hodgesLehmannSinIc": "Diferencia según Hodges-Lehmann: {diferencia} (pocas mediciones para un intervalo)."
+        "hodgesLehmann": "{b} frente a {a}: {diferencia} según Hodges-Lehmann (IC 95 %: {bajo} a {alto}).",
+        "hodgesLehmannSinIc": "{b} frente a {a}: {diferencia} según Hodges-Lehmann (pocas mediciones para un intervalo)."
       },
       "datos": {
         "filas": "De {antes} filas a {despues}",

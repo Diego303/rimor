@@ -78,4 +78,44 @@ Cubre las cinco tareas. Reutiliza las series, la descriptiva, la comparación y 
 | La distribución exacta de U, en coma flotante | Con m·n ≤ 400 los recuentos caben de sobra y la referencia con enteros exactos da lo mismo. |
 | `testTimeout` de Vitest a 15 s y la prueba de linealidad de `curl -u` en el proyecto `rendimiento` | El entorno tenía pausas de varios segundos que agotaban pruebas al azar (también en el commit anterior); ninguna aserción cambia. |
 | `elementoDeTexto` en `pruebas/falsos.ts` (un elemento con el resumen de verdad) para la prueba de exportar | Con el resumen de mentira, la puesta al día en segundo plano contaba un cambio a destiempo (la misma carrera que en Importar). |
-| Las columnas CSV con unidad puntúan 0,9, como una tabla de Datos con cabecera | Mediciones va antes en el orden (puesto 6), así que gana el empate; una tabla sin unidades sigue siendo de Datos. |
+| Las columnas CSV con unidad puntúan 0,9, como una tabla de Datos con cabecera | Mediciones va antes en el orden (puesto 6), así que gana el empate, y la captura ofrece Datos como alternativa (duda); una tabla sin unidades sigue siendo de Datos. |
+
+## Verificación
+
+**`pnpm verificar`**: en verde, 120 archivos y 1563 pruebas, más 3 de rendimiento aparte; carga inicial 273,2 KB de 300.
+
+**Criterios de aceptación:** los cuatro formatos se leen como mediciones (`mediciones.test.ts`, ejemplos de `fixtures/mediciones/` con sus valores calculados por fuera y corpus de detección al 100 %); la comparación enseña Hodges-Lehmann con su intervalo, igual que las referencias (`referencias.test.ts`: 33 casos).
+
+**Tareas, con su evidencia:**
+
+| Tarea | Evidencia |
+|---|---|
+| JSON de pytest-benchmark | `mediciones.test.ts` (con `data`, sin ella, mezclados) |
+| JSON de JMH | `mediciones.test.ts` (`avgt` con parámetros, `thrpt` fuera, `sample` como resumen) |
+| `estimates.json` de criterion | `mediciones.test.ts`, `VistaMediciones.test.tsx` (resumen); `sample.json` con sus valores |
+| Columnas CSV | `mediciones.test.ts` (con unidad, de una columna, sin unidad es de Datos, `_us` con enteros no, columnas desiguales) |
+| Hodges-Lehmann verificado contra referencias | `referencias.test.ts` (33 casos, propiedades, fuerza bruta), `hodgesLehmann.rendimiento.test.ts` (10.000 × 10.000), `comparaciones.test.ts`, `VistaMediciones.test.tsx` |
+
+**Revisión independiente** (subagente con contexto limpio). Comprobó que el intervalo exacto es el de Hollander y Wolfe en todos los m·n ≤ 400 (frente a R, que da un rango menos cuando P(U ≤ q) es exactamente 0,025 y que fuerza un intervalo cuando no hay mediciones para el 95 %: aquí, `NaN`). Hallazgos y lo hecho:
+
+| # | Hallazgo | Corrección y prueba |
+|---|---|---|
+| 1 | Hodges-Lehmann escribía las m·n diferencias: 10.000 × 10.000, 54 s y 1,6 GB; un pytest-benchmark real de una función rápida rompía la comparación | Selección por recuento (dos punteros, bisección y enumeración de las pocas que quedan): 10.000 × 10.000 por debajo de 2 s y sin memoria cuadrática. `referencias.test.ts` (contra la fuerza bruta), `hodgesLehmann.rendimiento.test.ts` |
+| 2 | El `change/estimates.json` de criterion (fracciones) se leía como tiempos; cualquier JSON con `iters` y `times` pasaba | `estimates.json` exige `std_dev` y `median_abs_dev`; `sample.json`, `sampling_mode`. `mediciones.test.ts` |
+| 3 | JMH en modo `sample` (solo `rawDataHistogram`) no se leía | Un resumen con su percentil 50 y su media, sin expandir el histograma. `mediciones.test.ts` |
+| 4 | Un CSV de una columna ignoraba la unidad de la cabecera (× 1000) | Una columna con la unidad entre paréntesis es una serie con esa unidad. `mediciones.test.ts` |
+| 5 | La aproximación normal redondeaba hacia abajo sin corrección de continuidad (un rango más conservador que el exacto en la mayoría) | `⌊mn/2 − zσ + ½⌋`, la misma corrección que Mann-Whitney; referencias regeneradas (cambian 11 extremos). `referencias.test.ts` |
+| 6 | Las cifras citables en ms perdían los ns («0,000000 ms»); `hl_bajo` y `hl_alto` no se podían citar | En la escala de la vista; también los extremos. `comparaciones.test.ts` |
+| 7 | Sin subir la versión, lo guardado no se recalculaba | El lector pasa a la versión 2. `mediciones.test.ts` |
+| 8 | La nota sobre pytest-benchmark aconsejaba la opción equivocada | `--benchmark-json` (o `--benchmark-save` con `--benchmark-save-data`). |
+| 9 | `ventas_us` con enteros pasaba por µs; columnas de distinta longitud se rechazaban | El sufijo solo vale con decimales; las celdas vacías al final se aceptan. `mediciones.test.ts` |
+| 10 | Un resumen delante tapaba una serie con mediciones | La serie principal es la primera con mediciones. `mediciones.test.ts` |
+| 11 | La frase de Hodges-Lehmann no decía quién frente a quién | «ureq frente a reqwest: −1,82 ms según Hodges-Lehmann (IC 95 %: …).» `VistaMediciones.test.tsx` |
+| 12 | Menores: valores negativos descartados, empate CSV–Datos como duda, `testTimeout` | Documentado (un tiempo negativo no es una medida; la duda ofrece Datos; las pruebas de tiempo de reloj van en `rendimiento`). |
+
+### Decisiones de la verificación
+
+| Decisión | Por qué |
+|---|---|
+| La prueba y el intervalo pueden discrepar en el límite (p ≈ 0,05) | Mann-Whitney es siempre asintótica y el intervalo puede ser exacto; con la corrección de continuidad en los dos, los casos son raros y se dicen las dos cosas. |
+| El elemento de prueba de Comparaciones nace con la versión vigente de su lector | Con la 1, al cargar se sube a la 2 y la comparación se recalcula (lo correcto en la app), y la prueba pulsaba durante el recálculo. |

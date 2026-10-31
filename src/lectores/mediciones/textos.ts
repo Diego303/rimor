@@ -63,7 +63,7 @@ export const textos = definirTextos(
       csv: 'Columnas CSV',
     },
     resumenNota:
-      'Sin las mediciones sueltas no hay gráfico, ni avisos de método, ni comparación. Para verlas, pega las de cada ronda (el sample.json de criterion, o pytest-benchmark con --benchmark-save-data).',
+      'Sin las mediciones sueltas no hay gráfico, ni avisos de método, ni comparación. Para verlas, pega las de cada ronda: el sample.json de criterion, el JSON de pytest-benchmark --benchmark-json (o --benchmark-save con --benchmark-save-data) o JMH en un modo que no sea sample.',
     estadisticos: {
       media: 'Media',
       desviacion: 'Desviación típica',
@@ -127,7 +127,7 @@ export const textos = definirTextos(
       csv: 'CSV columns',
     },
     resumenNota:
-      'Without the individual measurements there is no chart, no method warnings and no comparison. To see them, paste the ones from each round (criterion sample.json, or pytest-benchmark with --benchmark-save-data).',
+      'Without the individual measurements there is no chart, no method warnings and no comparison. To see them, paste the ones from each round: criterion sample.json, pytest-benchmark --benchmark-json (or --benchmark-save with --benchmark-save-data) or JMH in a mode other than sample.',
     estadisticos: {
       media: 'Mean',
       desviacion: 'Standard deviation',

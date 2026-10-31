@@ -32,6 +32,13 @@ function descriptivaDeResumen(r: NonNullable<Serie['resumen']>): Descriptiva {
   };
 }
 
+/**
+ * La serie de la que hablan la respuesta, las cifras y la vista: la primera con mediciones sueltas (o la primera, si
+ * todas son resúmenes).
+ */
+export const principal = (d: DatosMediciones): SerieDerivada | undefined =>
+  d.series.find((s) => s.valores.length) ?? d.series[0];
+
 /** ¿Es un resumen de su herramienta (sin las mediciones sueltas)? */
 export const esResumen = (s: Serie): s is Serie & { resumen: NonNullable<Serie['resumen']> } =>
   s.resumen !== undefined && !s.valores.length;
@@ -95,7 +102,7 @@ export function formatosDe(s: ConMediana, idioma: Idioma, escala: Escala = escal
 
 /** Cifra de la primera serie, escrita en la escala de todas (como en la vista); sin series, «—». */
 function cifraDe(d: DatosMediciones, f: (s: SerieDerivada, escala: Escala) => Cifra): Cifra {
-  const s = d.series[0];
+  const s = principal(d);
   return s ? f(s, escalaDe(d.series)) : { texto: '—' };
 }
 
@@ -108,7 +115,9 @@ const valorCon = (s: SerieDerivada, escala: Escala, v: number): Cifra => ({
 export const lectorMediciones: Lector<DatosMediciones> = {
   nombre: 'mediciones',
   tipo: 'mediciones',
-  version: 1,
+  // 2 (IN-047): resúmenes de criterion, JMH y pytest-benchmark y columnas CSV; y que se recalculen las comparaciones
+  // guardadas, que ahora traen Hodges-Lehmann.
+  version: 2,
   textos,
 
   detectar: (e: Entrada) => (e.texto !== undefined ? confianzaMediciones(e.texto) : 0),
@@ -137,7 +146,7 @@ export const lectorMediciones: Lector<DatosMediciones> = {
   },
 
   resumen: (d) => {
-    const s = d.series[0];
+    const s = principal(d);
     if (!s) return { n: 0, series: 0 };
     // De un resumen no se sabe cuántas mediciones fueron: sin `n`.
     return { ...(esResumen(s) ? {} : { n: s.d.n }), mediana: s.d.mediana, unidad: s.unidad, series: d.series.length };
@@ -157,7 +166,7 @@ export const lectorMediciones: Lector<DatosMediciones> = {
 
   respuesta(_el, d, ctx) {
     const i = ctx.idioma;
-    const s = d.series[0];
+    const s = principal(d);
     if (s && esResumen(s)) {
       const f = formatosDe(s, i, escalaDe(d.series));
       const vars = {

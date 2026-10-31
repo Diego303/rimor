@@ -355,8 +355,8 @@
         "avisos": "Method warnings",
         "mismaMaquina": "If they were measured on the same machine, repeat on another one to generalise.",
         "antesDeMedir": "Decide the number of repetitions before measuring; repeating until a difference shows up increases false positives.",
-        "hodgesLehmann": "Difference by Hodges-Lehmann: {diferencia} (95% CI: {bajo} to {alto}).",
-        "hodgesLehmannSinIc": "Difference by Hodges-Lehmann: {diferencia} (too few measurements for an interval)."
+        "hodgesLehmann": "{b} compared with {a}: {diferencia} by Hodges-Lehmann (95% CI: {bajo} to {alto}).",
+        "hodgesLehmannSinIc": "{b} compared with {a}: {diferencia} by Hodges-Lehmann (too few measurements for an interval)."
       },
       "datos": {
         "filas": "From {antes} rows to {despues}",

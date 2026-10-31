@@ -214,7 +214,7 @@ describe('Hodges-Lehmann en la comparación (IN-047)', () => {
       elemento(8, 'mediciones', ureq),
     ]);
     expect(r).toMatchObject({ clase: 'mediciones', hl: expect.closeTo(-1.82, 9) });
-    expect(Object.fromEntries(cifrasDeResultado(r, 'es')).hl?.replaceAll(' ', ' ')).toBe('−1,820 ms');
+    expect(Object.fromEntries(cifrasDeResultado(r, 'es')).hl?.replaceAll(' ', ' ')).toBe('−1,82 ms');
     // Un resultado de antes, sin `hl`, se sigue leyendo (y no cita lo que no tiene).
     const viejo = { ...r, hl: undefined, hl_bajo: undefined, hl_alto: undefined } as unknown as Record<string, unknown>;
     const leido = leerResultado(viejo);
@@ -231,5 +231,25 @@ describe('Hodges-Lehmann en la comparación (IN-047)', () => {
     );
     const b = await lectorMediciones.derivar(elemento(8, 'mediciones', ureq));
     expect(compararMediciones(resumen, b)).toBeNull();
+  });
+});
+
+describe('cifras de una comparación de nanosegundos (revisión de IN-047)', () => {
+  it('en la escala de la vista (ns), no «0,000000 ms»; también los extremos del intervalo', async () => {
+    const lento = Array.from({ length: 12 }, (_, i) => `${(2.5 + (i % 3) * 0.01).toFixed(3)} ns`).join('\n');
+    const rapido = Array.from({ length: 12 }, (_, i) => `${(2.2 + (i % 3) * 0.01).toFixed(3)} ns`).join('\n');
+    const a = await lectorMediciones.derivar(elemento(7, 'mediciones', lento));
+    const b = await lectorMediciones.derivar(elemento(8, 'mediciones', rapido));
+    const c = compararMediciones(a, b);
+    if (!c) throw new Error('sin comparación');
+    const r = resultadoDe({ clase: 'mediciones', mediciones: c }, [
+      elemento(7, 'mediciones', lento),
+      elemento(8, 'mediciones', rapido),
+    ]);
+    const cifras = Object.fromEntries(cifrasDeResultado(r, 'es').map(([k, v]) => [k, v.replaceAll(' ', ' ')]));
+    expect(cifras.mediana_a).toBe('2,510 ns');
+    expect(cifras.hl).toBe('−0,300 ns');
+    expect(cifras.hl_bajo).toMatch(/ ns$/);
+    expect(cifras.hl_alto).toMatch(/ ns$/);
   });
 });

@@ -5,6 +5,7 @@ import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-libra
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { useCompositor } from '../../captura/compositor';
 import { leerResultado } from '../../comparaciones/resultado';
+import { REGISTRO } from '../../lectores/registro';
 import { ESCRITURA, montarApp, PRIMERA_CARGA } from '../../pruebas/app';
 import { haceMinutos } from '../../pruebas/fechas';
 
@@ -30,7 +31,8 @@ function capturado(n: number, tipo: 'log' | 'mediciones', original: string, titu
       origen: 'pegado',
       hash: hashOriginal(original),
       ocultados: 0,
-      lector: { nombre: tipo, version: 1, resumen: {} },
+      // Con la versión vigente de su lector: si no, la puesta al día la sube y la comparación se recalcula.
+      lector: { nombre: tipo, version: REGISTRO.porNombre(tipo)?.version ?? 1, resumen: {} },
     },
     notas: '',
     original,

@@ -20,9 +20,9 @@ describe('mediciones de v0.2 en pantalla (IN-047)', () => {
     const c = compararMediciones(a, b);
     if (!c) throw new Error('sin comparación');
     render(<VistaComparacionMediciones c={c} nombres={['reqwest', 'ureq']} />);
-    const linea = screen.getByText(/^Diferencia según Hodges-Lehmann: /);
+    const linea = screen.getByText(/según Hodges-Lehmann/);
     expect(sinNbsp(linea.textContent)).toMatch(
-      /^Diferencia según Hodges-Lehmann: −1,82 ms \(IC 95 %: −2,\d\d a −1,\d\d\)\.$/,
+      /^ureq frente a reqwest: −1,82 ms según Hodges-Lehmann \(IC 95 %: −2,\d\d a −1,\d\d\)\.$/,
     );
   });
 

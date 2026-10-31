@@ -4,7 +4,7 @@
  * recalcula. TS puro.
  */
 import { fmtCifra, fmtNumero, fmtP, type Idioma } from '../i18n/formatos';
-import { decimalesPara } from '../lectores/mediciones/lector';
+import { escalaDe, formatosDe } from '../lectores/mediciones/lector';
 import type { ClaseComparacion } from './clases';
 import type { ComparacionDatos } from './datos';
 import type { ComparacionJson } from './json';
@@ -185,13 +185,25 @@ export function textoCambio(cambio: number | null, idioma: Idioma): string {
 /** Las cifras que se pueden citar de una comparación, ya escritas. */
 export function cifrasDeResultado(r: ResultadoComparacion, idioma: Idioma): [nombre: string, texto: string][] {
   if (r.clase === 'mediciones') {
-    const mediana = (v: number) => fmtCifra(v, decimalesPara(v), r.unidad, idioma);
+    // Como la vista: en µs o ns si son de menos de 1 ms (0,26 ns no puede citarse «0,000000 ms»), y la diferencia de
+    // Hodges-Lehmann con los decimales de la segunda serie.
+    const unidad = r.unidad === 's' ? 's' : 'ms';
+    const a = { d: { mediana: r.mediana_a }, unidad } as const;
+    const b = { d: { mediana: r.mediana_b }, unidad } as const;
+    const escala = escalaDe([a, b]);
+    const fb = formatosDe(b, idioma, escala);
+    const hl = (clave: 'hl' | 'hl_bajo' | 'hl_alto'): [string, string][] => {
+      const v = r[clave];
+      return typeof v === 'number' ? [[clave, fb.conUnidad(v)]] : [];
+    };
     return [
       ['cambio', textoCambio(r.cambio, idioma)],
       ['p', r.p === null ? '—' : fmtP(r.p, idioma)],
-      ['mediana_a', mediana(r.mediana_a)],
-      ['mediana_b', mediana(r.mediana_b)],
-      ...(typeof r.hl === 'number' ? [['hl', mediana(r.hl)] as [string, string]] : []),
+      ['mediana_a', formatosDe(a, idioma, escala).conUnidad(r.mediana_a)],
+      ['mediana_b', fb.conUnidad(r.mediana_b)],
+      ...hl('hl'),
+      ...hl('hl_bajo'),
+      ...hl('hl_alto'),
     ];
   }
   if (r.clase === 'json')

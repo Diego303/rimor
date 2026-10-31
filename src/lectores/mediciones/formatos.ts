@@ -53,8 +53,8 @@ function deHyperfine(json: Record<string, unknown>): SerieEnMs[] | null {
 }
 
 /**
- * pytest-benchmark (`--benchmark-json`): una serie por benchmark con `stats.data` (segundos, con
- * `--benchmark-save-data`); sin ella, un resumen con su mediana, su media y su desviación.
+ * pytest-benchmark: una serie por benchmark con `stats.data` (segundos; la trae `--benchmark-json`, y
+ * `--benchmark-save` con `--benchmark-save-data`); sin ella, un resumen con su mediana, su media y su desviación.
  */
 function dePytest(json: Record<string, unknown>): SerieEnMs[] | null {
   if (!Array.isArray(json.benchmarks) || (!objeto(json.machine_info) && !json.version)) return null;
@@ -90,8 +90,9 @@ const unidadJmh = (u: unknown): number | null => {
 };
 
 /**
- * JMH (`-rf json`): una serie por benchmark (y sus parámetros) con `primaryMetric.rawData` aplanado. Solo los modos
- * de tiempo (`avgt`, `ss`, `sample`): en el de rendimiento (`thrpt`, `ops/s`) más es mejor y no es un tiempo.
+ * JMH (`-rf json`): una serie por benchmark (y sus parámetros) con `primaryMetric.rawData` aplanado (`avgt`, `ss`);
+ * del modo `sample`, que solo da un histograma, un resumen. En el de rendimiento (`thrpt`, `ops/s`) más es mejor y no
+ * es un tiempo: no se lee.
  */
 function deJmh(json: unknown): SerieEnMs[] | null {
   if (!Array.isArray(json) || !json.length || !json.every((b) => objeto(b)?.primaryMetric)) return null;
@@ -101,7 +102,15 @@ function deJmh(json: unknown): SerieEnMs[] | null {
     const factor = unidadJmh(metrica?.scoreUnit);
     if (!metrica || factor === null || b?.mode === 'thrpt') continue;
     const ms = Array.isArray(metrica.rawData) ? metrica.rawData.flatMap((f: unknown) => enMs(f, factor)) : [];
-    if (!ms.length) continue;
+    // En el modo `sample`, JMH no da `rawData` sino un histograma (con recuentos de millones): un resumen con su
+    // percentil 50 y su media, sin expandirlo.
+    const p50 = numero(objeto(metrica.scorePercentiles)?.['50.0']);
+    const media = numero(metrica.score);
+    const resumen: ResumenExterno | undefined =
+      !ms.length && p50 !== undefined
+        ? { mediana: p50 * factor, ...(media !== undefined ? { media: media * factor } : {}) }
+        : undefined;
+    if (!ms.length && !resumen) continue;
     const nombre = typeof b?.benchmark === 'string' ? b.benchmark.split('.').slice(-2).join('.') : null;
     const params = objeto(b?.params);
     const sufijo = params
@@ -109,7 +118,7 @@ function deJmh(json: unknown): SerieEnMs[] | null {
           .map(([k, v]) => `${k}=${String(v)}`)
           .join(', ')})`
       : '';
-    series.push({ etiqueta: nombre ? `${nombre}${sufijo}` : null, ms });
+    series.push({ etiqueta: nombre ? `${nombre}${sufijo}` : null, ms, ...(resumen ? { resumen } : {}) });
   }
   return series.length ? series : null;
 }
@@ -119,7 +128,14 @@ function deJmh(json: unknown): SerieEnMs[] | null {
  * el `estimates.json`, un resumen (la mediana con su intervalo, la media y la desviación que calculó criterion).
  */
 function deCriterion(json: Record<string, unknown>): SerieEnMs[] | null {
-  if (Array.isArray(json.iters) && Array.isArray(json.times) && json.iters.length === json.times.length) {
+  // Un `sample.json` lleva su `sampling_mode`; un `estimates.json`, la desviación y la mediana de las desviaciones
+  // (el `change/estimates.json`, en fracciones relativas, no: no son tiempos).
+  if (
+    typeof json.sampling_mode === 'string' &&
+    Array.isArray(json.iters) &&
+    Array.isArray(json.times) &&
+    json.iters.length === json.times.length
+  ) {
     const ms = json.times
       .map((t, i) => {
         const iters = numero(json.iters instanceof Array ? json.iters[i] : undefined);
@@ -131,7 +147,8 @@ function deCriterion(json: Record<string, unknown>): SerieEnMs[] | null {
   }
   const mediana = objeto(json.median);
   const puntual = numero(mediana?.point_estimate);
-  if (!mediana || puntual === undefined || !objeto(json.mean)) return null;
+  if (!mediana || puntual === undefined || !objeto(json.mean) || !objeto(json.std_dev) || !objeto(json.median_abs_dev))
+    return null;
   const ic = objeto(mediana.confidence_interval);
   const bajo = numero(ic?.lower_bound);
   const alto = numero(ic?.upper_bound);
@@ -177,8 +194,14 @@ export function deJsonDeBenchmark(texto: string): { formato: FormatoJsonMedicion
 
 // ---------- Columnas CSV ----------
 
-/** La unidad que dice una cabecera: `reqwest (ms)`, `ureq_ms`, `latencia [µs]`, `t s`. */
-const UNIDAD_CABECERA = /(?:\(|\[)\s*(ns|us|µs|μs|ms|s|min)\s*(?:\)|\])\s*$|[_\s-](ns|us|µs|μs|ms|s)$/iu;
+/**
+ * La unidad que dice una cabecera: entre paréntesis o corchetes (`reqwest (ms)`, `latencia [µs]`), o como sufijo
+ * (`ureq_ms`), que es más dudoso (`ventas_us` son ventas en EE. UU.): el sufijo solo vale si los valores tienen
+ * decimales.
+ */
+const UNIDAD_ENTRE = /(?:\(|\[)\s*(ns|us|µs|μs|ms|s)\s*(?:\)|\])\s*$/iu;
+const UNIDAD_SUFIJO = /[_\s-](ns|us|µs|μs|ms|s)$/iu;
+const UNIDAD_CABECERA = new RegExp(`${UNIDAD_ENTRE.source}|${UNIDAD_SUFIJO.source}`, 'iu');
 /** Un número con unidad opcional en una celda (`38.4`, `38,4 ms`). */
 const CELDA = /^([+-]?\d+(?:[.,]\d+)?(?:e[-+]?\d+)?)\s*(ns|us|µs|μs|ms|s|min)?$/iu;
 
@@ -192,26 +215,37 @@ export function deColumnas(lineas: readonly string[]): SerieEnMs[] | null {
   if (filas.length < 4) return null;
   const cabecera = filas[0] ?? '';
   const separador = cabecera.includes('\t') ? '\t' : cabecera.includes(';') ? ';' : cabecera.includes(',') ? ',' : null;
-  if (!separador) return null;
-  const partir = (l: string) => l.split(separador).map((c) => c.trim().replace(/^"(.*)"$/, '$1'));
+  // Una sola columna, solo si su cabecera dice la unidad entre paréntesis (`tiempo (s)`): si no, es una medida por
+  // línea con su título.
+  if (!separador && !UNIDAD_ENTRE.test(cabecera)) return null;
+  const partir = (l: string) => (separador ? l.split(separador) : [l]).map((c) => c.trim().replace(/^"(.*)"$/, '$1'));
   const nombres = partir(cabecera);
   if (nombres.length < 1 || nombres.some((n) => !n || CELDA.test(n))) return null;
   const columnas = nombres.map(() => [] as number[]);
   const unidades: (string | null)[] = nombres.map((n) => UNIDAD_CABECERA.exec(n)?.slice(1).find(Boolean) ?? null);
+  const porSufijo = nombres.map((n) => !UNIDAD_ENTRE.test(n) && UNIDAD_SUFIJO.test(n));
+  const conDecimales = nombres.map(() => false);
   for (const fila of filas.slice(1)) {
     const celdas = partir(fila);
-    if (celdas.length !== nombres.length) return null;
+    // Una columna más corta (20 repeticiones frente a 30) deja sus celdas vacías al final.
+    if (celdas.length > nombres.length) return null;
     for (const [i, c] of celdas.entries()) {
+      if (!c) continue;
       const m = CELDA.exec(c);
       if (!m || (separador === ',' && /,/.test(m[1] ?? ''))) return null;
       const unidad = m[2] ?? unidades[i];
       if (!unidad) return null;
+      if (m[2]) porSufijo[i] = false;
       unidades[i] = unidad;
+      if (/[.,]/.test(m[1] ?? '')) conDecimales[i] = true;
       const ms = Number((m[1] ?? '').replace(',', '.')) * (A_MS[unidad.toLowerCase()] ?? A_MS[unidad] ?? Number.NaN);
       if (!Number.isFinite(ms) || ms < 0) return null;
       columnas[i]?.push(ms);
     }
   }
+  // Una unidad que solo dice un sufijo, con enteros (`ventas_us`): no son tiempos.
+  if (porSufijo.some((s, i) => s && !conDecimales[i])) return null;
+  if (columnas.some((c) => c.length < 3)) return null;
   return nombres.map((n, i) => ({
     etiqueta: n.replace(UNIDAD_CABECERA, '').trim() || n,
     ms: columnas[i] ?? [],

@@ -475,3 +475,68 @@ describe('formatos de v0.2 (IN-047)', () => {
     expect(leerSeries('cliente,latencia_ms\nureq,31\nreqwest,30000\nureq,33\n').formato).not.toBe('csv');
   });
 });
+
+describe('revisión de IN-047', () => {
+  it('criterion: el change/estimates.json (fracciones) y un JSON cualquiera con iters y times no son tiempos', () => {
+    const cambio = JSON.stringify({
+      mean: { point_estimate: 0.034, confidence_interval: { lower_bound: 0.02, upper_bound: 0.049 } },
+      median: { point_estimate: 0.034, confidence_interval: { lower_bound: 0.02, upper_bound: 0.049 } },
+    });
+    expect(confianzaMediciones(cambio)).toBe(0);
+    expect(confianzaMediciones(JSON.stringify({ iters: [1, 2, 3], times: [10, 20, 30] }))).toBe(0);
+  });
+
+  it('JMH en modo sample (solo histograma): un resumen con su percentil 50', async () => {
+    const sample = JSON.stringify([
+      {
+        benchmark: 'org.rimor.Bench.parse',
+        mode: 'sample',
+        primaryMetric: {
+          score: 41.9,
+          scoreUnit: 'us/op',
+          scorePercentiles: { '0.0': 39.1, '50.0': 41.5, '99.0': 55.2 },
+          rawDataHistogram: [
+            [
+              [
+                [41.5, 120000],
+                [42.0, 80000],
+              ],
+            ],
+          ],
+        },
+      },
+    ]);
+    const d = await derivar(sample);
+    expect(d.formato).toBe('jmh');
+    expect(d.series[0]?.valores).toEqual([]);
+    expect(d.series[0]?.d.mediana).toBeCloseTo(0.0415, 9);
+  });
+
+  it('CSV: una columna con su unidad entre paréntesis; un sufijo con enteros no; columnas de distinta longitud', () => {
+    const una = leerSeries('tiempo (s)\n1.21\n1.35\n1.18\n1.27\n1.33\n');
+    expect(una.formato).toBe('csv');
+    expect(una.series[0]).toMatchObject({ etiqueta: 'tiempo', unidad: 'ms', valores: [1210, 1350, 1180, 1270, 1330] });
+    const us = leerSeries('latencia [µs]\n41.2\n40.8\n42.1\n').series[0]?.valores ?? [];
+    expect(us.map((v) => Number(v.toFixed(7)))).toEqual([0.0412, 0.0408, 0.0421]);
+    expect(confianzaMediciones('ventas_us,costes_us\n1200,800\n1350,900\n1100,750\n')).toBe(0);
+    const desiguales = leerSeries('a (ms),b (ms)\n1.5,2.5\n1.6,2.6\n1.7,2.7\n1.8,\n');
+    expect(desiguales.series.map((s) => s.valores.length)).toEqual([4, 3]);
+  });
+
+  it('la respuesta y las cifras hablan de la primera serie con mediciones, no de un resumen delante', async () => {
+    const mezcla = JSON.stringify({
+      machine_info: {},
+      benchmarks: [
+        { name: 'sin_data', stats: { median: 0.001, mean: 0.001 } },
+        { name: 'con_data', stats: { median: 0.002, data: [0.002, 0.0021, 0.0019, 0.002] } },
+      ],
+    });
+    const d = await derivar(mezcla);
+    expect(lectorMediciones.resumen(d)).toMatchObject({ n: 4 });
+    expect(textoRespuesta(lectorMediciones.respuesta(elementoFalso(1, mezcla), d, ctx()))).toMatch(/^4 mediciones/);
+  });
+
+  it('el lector sube a la versión 2 (los derivados y las comparaciones guardadas se recalculan)', () => {
+    expect(lectorMediciones.version).toBe(2);
+  });
+});

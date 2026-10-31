@@ -85,7 +85,8 @@ def hodges_lehmann(x, y):
         _, t = np.unique(todos, return_counts=True)
         correccion = float(np.sum(t**3 - t))
         varianza = N / 12 * (m + n + 1 - correccion / ((m + n) * (m + n - 1)))
-        k = math.floor(N / 2 - stats.norm.ppf(0.975) * math.sqrt(varianza))
+        # Con la corrección de continuidad, como la de Mann-Whitney.
+        k = math.floor(N / 2 - stats.norm.ppf(0.975) * math.sqrt(varianza) + 0.5)
     if k < 1:
         return {"estimacion": est, "icBajo": None, "icAlto": None, "exacto": exacto}
     return {"estimacion": est, "icBajo": float(d[k - 1]), "icAlto": float(d[N - k]), "exacto": exacto}

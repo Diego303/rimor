@@ -31,7 +31,8 @@ export default function VistaMediciones({ el, datos }: PropsVista<DatosMedicione
     nombre: s.etiqueta ?? (datos.series.length > 1 ? t('serieSinNombre', { n: i + 1 }) : t('titulo')),
     s,
   }));
-  const primera = filas[0];
+  // La primera con mediciones sueltas (si todas son resúmenes, la primera).
+  const primera = filas.find((f) => f.s.valores.length) ?? filas[0];
   const varias = filas.length > 1;
   // Una sola escala para todo (gráfico, tabla y avisos): µs o ns si los valores son de menos de 1 ms.
   const escala = escalaDe(datos.series);

@@ -200,3 +200,25 @@ describe('Hodges-Lehmann (IN-047)', () => {
     );
   });
 });
+
+describe('Hodges-Lehmann sin escribir todas las diferencias (revisión de IN-047)', () => {
+  it('da lo mismo que ordenar todas las m·n diferencias, también con empates y repetidos', () => {
+    const fuerzaBruta = (a: number[], b: number[]) => {
+      const d = b.flatMap((y) => a.map((x) => y - x)).sort((x, y) => x - y);
+      const N = d.length;
+      return N % 2 ? d[(N - 1) / 2] : ((d[N / 2 - 1] ?? 0) + (d[N / 2] ?? 0)) / 2;
+    };
+    const entero = fc.integer({ min: -20, max: 20 });
+    const real = fc.double({ min: -1e3, max: 1e3, noNaN: true });
+    for (const valor of [entero, real])
+      fc.assert(
+        fc.property(
+          fc.array(valor, { minLength: 1, maxLength: 60 }),
+          fc.array(valor, { minLength: 1, maxLength: 60 }),
+          (a, b) => {
+            expect(hodgesLehmann(a, b).estimacion).toBeCloseTo(fuerzaBruta(a, b) ?? Number.NaN, 9);
+          },
+        ),
+      );
+  });
+});
