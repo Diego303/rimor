@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-31 18:29
-**Ahora:** IN-050 · PWA, sin conexión y compartir · fase implementación
+**Última actualización:** 2026-10-31 18:49
+**Ahora:** IN-050 · PWA, sin conexión y compartir · fase verificación
 **Siguiente:** IN-051 · Sesiones automáticas
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 9/22 · v0.3 0/17 · v0.4 0/9 · total 60/99
 
@@ -69,7 +69,7 @@
 | IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | hecha | c10e372 e49767e e7ea869 | docs/features/IN-047-mediciones-formatos-hodges-lehmann.md |
 | IN-048 | Logs: plantillas con Drain | v0.2 | 8 | hecha | 7cfc86d 212c98c 8f51fbb | docs/features/IN-048-logs-drain.md |
 | IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | hecha | f5deee9 3fae762 1112b71 | docs/features/IN-049-reglas-captura-multiple.md |
-| IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | en implementación | — | docs/features/IN-050-pwa.md |
+| IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | en verificación | 38cddd1 | docs/features/IN-050-pwa.md |
 | IN-051 | Sesiones automáticas | v0.2 | 9 | pendiente | — | — |
 | IN-052 | Grupos automáticos y pantalla de colección | v0.2 | 9 | pendiente | — | — |
 | IN-053 | Enlaces automáticos | v0.2 | 9 | pendiente | — | — |
@@ -171,6 +171,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **IN-007 (dos pestañas):** abrir dos pestañas, comprobar que la segunda avisa de solo lectura y que, al cerrar la primera, la segunda pasa a escribir con lo último guardado.
 - **Puerta de validación de v0.1 (IN-040, plan §19):** cuatro semanas de uso real de la app publicada. Se cumple con ≥ 5 capturas por día laborable, ≥ 1 «esto ya te pasó» útil por semana, lo buscado encontrado en < 10 s y menos de 1 de cada 10 respuestas corregida o descartada. Se mide con los contadores locales de `.rimor/contadores.json` (IN-016: `erroresReconocidos`, `busquedasConResultado`, `correccionesDeTipo`, `respuestasDescartadas`) y el recuento de elementos por día; el tiempo de búsqueda, a mano.
 - **IN-040 (navegador real):** el recorrido pegar → elemento → comparar → hilo → buscar → exportar → importar con Playwright en Chromium, Firefox y WebKit; axe en navegador real (con contraste) y una pasada manual con teclado y lector de pantalla; exportar 200 MB con el panel de rendimiento abierto (ver F0-2); y repasar a ojo cada pantalla contra `Pantallas de Rimor.html` en claro, oscuro y 400 px.
+- **PWA (IN-050):** en un navegador real, instalar Rimor en Android (el icono maskable no se recorta: zona segura del 80 %) y en iOS (el `apple-touch-icon` de 180); abrirla sin conexión tras una visita (captura y búsqueda; los datos tabulares solo si ya se usaron con red); compartir texto, una URL y un archivo desde otra app y ver el compositor relleno; publicar una versión nueva y ver «Hay una versión nueva.» y «Actualizar».
 
 ## Bloqueos
 (ninguno)
@@ -178,7 +179,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-050 | análisis y diseño | @vite-pwa/astro 1.2.0 con injectManifest (workbox 7.4.1), precarga del núcleo sin DuckDB y WASM bajo demanda, manifest con los iconos de IN-089 y share_target POST, compartido por caché hasta el compositor, aviso de versión nueva en la carcasa, sin conexión en el pie del raíl | … |
+| 2026-10-31 | IN-050 | implementación | @vite-pwa/astro 1.2.0 + vite-plugin-pwa 1.3.0 (injectManifest, workbox 7.4.1): precarga de 127 entradas sin DuckDB, rimor-wasm bajo demanda, manifest con iconos y share_target, compartir por caché al compositor, aviso de versión con Actualizar, sin conexión en el pie del raíl, validarPwa en comprobar-dist; verificar en verde: 128 archivos, 1632 pruebas + 6 de rendimiento, 278,6 KB | … |
+| 2026-10-31 | IN-050 | análisis y diseño | @vite-pwa/astro 1.2.0 con injectManifest (workbox 7.4.1), precarga del núcleo sin DuckDB y WASM bajo demanda, manifest con los iconos de IN-089 y share_target POST, compartido por caché hasta el compositor, aviso de versión nueva en la carcasa, sin conexión en el pie del raíl | 38cddd1 |
 | 2026-10-31 | IN-049 | verificación | revisión independiente (15 hallazgos) corregida con pruebas: partes sin retroceso cuadrático, reglas sin leer frente a ilegibles, firma sin puntuación ni fechas, orden y su salida sin dividir, /tipo solo hasta 1 MB y con lector, archivo ilegible avisado, prefijo más largo, sin tipos sin lector, esquema nuevo intacto, huellas en vez de firmas, edición por prefijo, accesibilidad, vista previa al día; verificar en verde: 125 archivos, 1618 pruebas + 6 de rendimiento, 277,6 KB | 1112b71 |
 | 2026-10-31 | IN-049 | implementación | reglas.ts (firma, archivo, aprender, aplicar), via regla en el detector y la vista previa, reglas() y guardarReglas() en el espacio, propuesta en el feed con Sí/No, lista en Ajustes, /tipo que contradice cuenta, dividir.ts y «Dividir en N elementos»; verificar en verde: 124 archivos, 1607 pruebas + 6 de rendimiento, 276,9 KB | 3fae762 |
 | 2026-10-31 | IN-049 | análisis y diseño | reglas por la firma (primera palabra con letra y signo) en .rimor/reglas-deteccion.json, propuesta a la tercera corrección como mensaje del feed, aplicadas en el detector y la vista previa, editables en Ajustes; /tipo que contradice cuenta; dividir en enlaces o bloques reconocidos con un botón en la vista previa | f5deee9 |

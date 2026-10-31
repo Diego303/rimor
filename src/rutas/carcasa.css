@@ -102,6 +102,12 @@
   align-items: center;
   gap: 7px;
 }
+/* Sin red (IN-050): la señal «sin-conexion» y su texto, bajo la copia. */
+.rail .space .sin-red {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .amain {
   position: relative;
   grid-column: 2;

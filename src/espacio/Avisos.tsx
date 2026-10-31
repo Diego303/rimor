@@ -3,6 +3,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { useEspacio } from '../estado/espacio';
 import { fmtBytes, fmtFechaRelativa } from '../i18n/formatos';
 import { useT } from '../i18n/useT';
+import { actualizar, useActualizacion } from '../pwa/registrar';
 import { Banner, Boton, Tarjeta } from '../ui/componentes';
 import { ahoraIso } from './abrir';
 import { useEspacioOpcional } from './Espacio';
@@ -25,6 +26,24 @@ export function AvisoAlmacenamiento() {
   return texto ? (
     <div className="aviso-espacio">
       <Banner>{texto}</Banner>
+    </div>
+  ) : null;
+}
+
+/** Banner de la carcasa cuando hay una versión nueva de Rimor esperando (IN-050): entra cuando se pide. */
+export function AvisoVersion() {
+  const { t } = useT();
+  const esperando = useActualizacion((s) => s.esperando);
+  return esperando ? (
+    <div className="aviso-espacio">
+      <Banner>
+        <span className="row aviso-version">
+          {t('espacio.aviso.version')}
+          <Boton pequeno onClick={actualizar}>
+            {t('espacio.aviso.actualizar')}
+          </Boton>
+        </span>
+      </Banner>
     </div>
   ) : null;
 }

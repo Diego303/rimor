@@ -35,6 +35,35 @@ export function validarCsp(politica) {
   return fallos;
 }
 
+/**
+ * Problemas de la PWA (IN-050): el manifest con los colores, los iconos de `manifest-iconos.json` (bajo `marca/`) y el
+ * destino de «Compartir»; la precarga del service worker sin DuckDB (79 MB, que va bajo demanda).
+ * @param {{ theme_color?: string; background_color?: string; icons?: { src: string }[]; share_target?: any }} manifest
+ * @param {{ src: string }[]} iconos los de `manifest-iconos.json`
+ * @param {string} sw el `sw.js` construido
+ * @param {string} base la `BASE`, con su barra final: la portada se precarga con ella
+ * @returns {string[]}
+ */
+export function validarPwa(manifest, iconos, sw, base = '/') {
+  const fallos = [];
+  if (manifest.theme_color !== '#E8E6E1') fallos.push('el manifest debe llevar theme_color #E8E6E1'); // rimor-permitir-color
+  if (manifest.background_color !== '#F6F5F1') fallos.push('el manifest debe llevar background_color #F6F5F1'); // rimor-permitir-color
+  const srcs = new Set((manifest.icons ?? []).map((i) => i.src));
+  for (const i of iconos) if (!srcs.has(`marca/${i.src}`)) fallos.push(`al manifest le falta el icono marca/${i.src}`);
+  const destino = manifest.share_target;
+  if (destino?.action !== 'compartir' || destino?.method !== 'POST' || destino?.enctype !== 'multipart/form-data')
+    fallos.push('el manifest debe llevar share_target POST multipart a «compartir»');
+  if (!destino?.params?.files?.some((/** @type {{ name: string }} */ f) => f.name === 'archivos'))
+    fallos.push('el share_target debe aceptar archivos («archivos»)');
+  // Las entradas de la precarga, como las escribe Workbox: `{"revision":…,"url":"_astro/App.js"}`.
+  const precarga = [...sw.matchAll(/"url":"([^"]+)"/g)].map((m) => m[1]);
+  if (!precarga.length) fallos.push('el service worker no precarga nada');
+  for (const u of precarga)
+    if (/\.wasm$|duckdb/.test(u)) fallos.push(`el service worker precarga ${u} (DuckDB va bajo demanda)`);
+  if (!precarga.includes(base)) fallos.push(`el service worker no precarga la portada (${base})`);
+  return fallos;
+}
+
 function principal() {
   const dist = fileURLToPath(new URL('../dist/', import.meta.url));
   const base = (process.env.BASE ?? '/').replace(/\/?$/, '/');
@@ -55,6 +84,21 @@ function principal() {
     if (!html.includes(`media="${media}"`)) fallos.push(`falta theme-color para ${media}`);
   if (!existsSync(join(dist, 'marca/manifest-iconos.json'))) fallos.push('no existe dist/marca/manifest-iconos.json');
 
+  // PWA (IN-050).
+  if (!html.includes(`rel="manifest" href="${base}manifest.webmanifest"`))
+    fallos.push(`falta <link rel="manifest" href="${base}manifest.webmanifest">`);
+  if (!existsSync(join(dist, 'manifest.webmanifest')) || !existsSync(join(dist, 'sw.js')))
+    fallos.push('faltan dist/manifest.webmanifest o dist/sw.js');
+  else
+    fallos.push(
+      ...validarPwa(
+        JSON.parse(readFileSync(join(dist, 'manifest.webmanifest'), 'utf8')),
+        JSON.parse(readFileSync(join(dist, 'marca/manifest-iconos.json'), 'utf8')).icons,
+        readFileSync(join(dist, 'sw.js'), 'utf8'),
+        base,
+      ),
+    );
+
   const csp = /<meta http-equiv="Content-Security-Policy" content="([^"]+)">/.exec(html);
   if (!csp) fallos.push('falta la CSP');
   else {
@@ -67,7 +111,9 @@ function principal() {
     for (const f of fallos) console.error(f);
     process.exit(1);
   }
-  console.log('Construcción: iconos de marca enlazados y publicados; CSP estricta con los hashes de sus scripts.');
+  console.log(
+    'Construcción: iconos de marca enlazados y publicados; CSP estricta con los hashes de sus scripts; manifest y service worker de la PWA.',
+  );
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) principal();

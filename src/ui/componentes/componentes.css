@@ -1581,6 +1581,12 @@ pre.code.codigo .ln {
 .warn-texto {
   color: var(--warn);
 }
+/* El aviso de versión nueva (IN-050): la frase y «Actualizar» en una fila. */
+.aviso-version {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 /* Reglas aprendidas (IN-049): el prefijo, su tipo y borrar en una fila. */
 .ajustes-reglas {
   display: flex;

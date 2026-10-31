@@ -1,7 +1,8 @@
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { useEspacio } from '../estado/espacio';
+import { useActualizacion } from '../pwa/registrar';
 import { textoUltimaCopia } from './Rail';
 import { crearRouter } from './rutas';
 
@@ -48,6 +49,42 @@ describe('Carcasa', () => {
     expect(screen.getByRole('link', { name: /gateway/ }).getAttribute('href')).toContain('/c/gateway');
     expect(screen.getByRole('img', { name: 'Copia al día' })).toBeTruthy();
     expect(screen.getByText('Trabajo')).toBeTruthy();
+  });
+
+  it('sin red, el pie del raíl lo dice con la señal «sin-conexion»; con red, no (IN-050)', async () => {
+    let red = true;
+    Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => red });
+    try {
+      montar('/');
+      await screen.findByRole('link', { name: /Inicio/ }, PRIMERA_CARGA);
+      expect(screen.queryByText('Sin conexión')).toBeNull();
+      red = false;
+      act(() => void window.dispatchEvent(new Event('offline')));
+      const aviso = await screen.findByText('Sin conexión');
+      expect(aviso.closest('.space')?.querySelector('.senal-sin-conexion')).toBeTruthy();
+      red = true;
+      act(() => void window.dispatchEvent(new Event('online')));
+      expect(screen.queryByText('Sin conexión')).toBeNull();
+    } finally {
+      // biome-ignore lint/performance/noDelete: se quita la propiedad propia para volver a la del prototipo.
+      delete (navigator as { onLine?: boolean }).onLine;
+    }
+  });
+
+  it('una versión nueva esperando: el banner «Hay una versión nueva.» con «Actualizar» (IN-050)', async () => {
+    const postMessage = vi.fn();
+    montar('/');
+    await screen.findByRole('link', { name: /Inicio/ }, PRIMERA_CARGA);
+    expect(screen.queryByText('Hay una versión nueva.')).toBeNull();
+    act(() =>
+      useActualizacion.setState({
+        esperando: { state: 'installed', postMessage, addEventListener: () => undefined },
+      }),
+    );
+    expect(screen.getByText('Hay una versión nueva.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Actualizar' }));
+    expect(postMessage).toHaveBeenCalledWith({ tipo: 'SALTAR_ESPERA' });
+    expect(screen.queryByText('Hay una versión nueva.')).toBeNull();
   });
 
   it('navega desde el raíl y con los atajos «/» y «g h»', async () => {

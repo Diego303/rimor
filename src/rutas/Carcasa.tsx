@@ -7,7 +7,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { ProveedorCaptura } from '../captura/Captura';
 import { useCompositor } from '../captura/compositor';
 import { useExportar } from '../datos/useExportar';
-import { AvisoAlmacenamiento } from '../espacio/Avisos';
+import { AvisoAlmacenamiento, AvisoVersion } from '../espacio/Avisos';
 import { useT } from '../i18n/useT';
 import { AyudaAtajos } from '../ui/atajos/AyudaAtajos';
 import { type Atajo, describir, esCampoDeTexto, GestorAtajos } from '../ui/atajos/atajos';
@@ -115,6 +115,7 @@ export function Carcasa() {
             <div className="shell">
               <Rail />
               <main className="amain" id="principal">
+                <AvisoVersion />
                 <AvisoAlmacenamiento />
                 <ProveedorEsperas>
                   <LimiteErrores clave={ruta}>

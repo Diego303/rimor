@@ -65,12 +65,12 @@ Depende de IN-014 (la captura y el compositor). Plan §15: vite-plugin-pwa (Work
 
 ## Tareas
 
-- [ ] vite-plugin-pwa con precarga del núcleo y caché bajo demanda de los WASM.
-- [ ] Manifest con los iconos de IN-089, `theme_color` `#E8E6E1` y `background_color` `#F6F5F1`.
-- [ ] Actualización con aviso «Hay una versión nueva».
-- [ ] Web Share Target (texto, URL y archivos) que abre el compositor relleno.
-- [ ] Instalación sugerida en el primer uso.
-- [ ] Estado `sin-conexion` en el pie del raíl cuando no hay red (ya en `senal.css`).
+- [x] vite-plugin-pwa con precarga del núcleo y caché bajo demanda de los WASM.
+- [x] Manifest con los iconos de IN-089, `theme_color` `#E8E6E1` y `background_color` `#F6F5F1`.
+- [x] Actualización con aviso «Hay una versión nueva».
+- [x] Web Share Target (texto, URL y archivos) que abre el compositor relleno.
+- [x] Instalación sugerida en el primer uso.
+- [x] Estado `sin-conexion` en el pie del raíl cuando no hay red (ya en `senal.css`).
 
 ## Pruebas previstas
 
@@ -109,3 +109,30 @@ Cubre las seis tareas. Reutiliza los iconos y el `theme-color` de IN-089, la se�
 - la integración y el service worker;
 - `compartir.ts` y `registrar.ts`, puros o con dependencias inyectadas;
 - el aviso de actualización y el pie del raíl sin conexión.
+
+## Implementación
+
+- `astro.config.mjs`: la integración `@vite-pwa/astro` con `injectManifest` (`src/pwa/sw.ts`), `registerType: 'prompt'` y `injectRegister: false`. El manifest toma los iconos de `public/marca/manifest-iconos.json` y lleva el `share_target`. La precarga es `**/*.{html,js,css,woff2,svg,png,json,webmanifest}` sin `*.wasm` ni DuckDB (127 entradas, unos 3,4 MB).
+- `src/pwa/sw.ts`:
+  - compartir (POST);
+  - `SALTAR_ESPERA`;
+  - la precarga;
+  - la navegación al `index.html` precargado (`@vite-pwa/astro` lo precarga con la URL del alcance);
+  - DuckDB con `CacheFirst` en `rimor-wasm`.
+- `src/pwa/compartir.ts`: guardar y recoger lo compartido, el texto sin repetir y `esDuckdb`.
+- `src/pwa/recibir.ts`: lo compartido, al compositor, y la URL limpia.
+- `src/pwa/registrar.ts`: el registro, `useActualizacion` y `actualizar`.
+- `src/pwa/enLinea.ts`: `useEnLinea`.
+- `Base.astro`: `<link rel="manifest">`.
+- `AvisoVersion` en la carcasa y «Sin conexión» con la señal en el pie del raíl.
+- `scripts/comprobar-dist.mjs`: `validarPwa` comprueba los colores, los iconos, el `share_target`, que la precarga no lleve DuckDB y que precargue la portada con la `BASE`.
+- Pruebas: `compartir.test.ts`, `recibir.test.ts`, `registrar.test.ts`, la carcasa (sin red, versión nueva) y `comprobar-dist.test.mjs`.
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| La portada se precarga con la URL del alcance (`/` o `/rimor/`), no como `index.html` | Así la escribe `@vite-pwa/astro`; `createHandlerBoundToURL` usa esa URL. |
+| La CSP se añade después de generar el service worker | La revisión de la portada es un dato para saber si cambió: lo que se precarga es el archivo publicado (con su CSP). Si cambian los scripts en línea, cambia también la construcción de Astro. |
+| Sin `workbox-window` | El registro y el aviso son unas 40 líneas propias, probadas con un contenedor falso. |
+| Tipos del ámbito del worker declarados a mano en `sw.ts` | La `lib` de WebWorker choca con la del DOM del resto del proyecto. Los tipos de Workbox no se escribieron con `exactOptionalPropertyTypes`: una conversión en el plugin de caducidad. |

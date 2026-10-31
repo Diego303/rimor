@@ -6,6 +6,7 @@ import { useEspacio } from '../estado/espacio';
 import { diasDesde, type Idioma } from '../i18n/formatos';
 import { traducir } from '../i18n/i18n';
 import { useT } from '../i18n/useT';
+import { useEnLinea } from '../pwa/enLinea';
 import { Piloto } from '../ui/componentes';
 import { Icono, type NombreIcono } from '../ui/iconos/Icono';
 import { ESTADOS_SENAL } from '../ui/marca/estadosSenal';
@@ -87,6 +88,7 @@ export function Rail() {
   const espacio = useEspacio();
   const exportacion = useEsperaExportacion();
   const copia = textoUltimaCopia(espacio.ultimaCopia, idioma);
+  const enLinea = useEnLinea();
   return (
     <nav className="rail" aria-label={t('rail.etiqueta')}>
       <div className="rbrand">
@@ -126,6 +128,13 @@ export function Rail() {
           {espacio.nombre || t('rail.espacioSinNombre')}
         </b>
         <span>{copia}</span>
+        {/* Sin red (IN-050): la señal y el texto, bajo la copia. */}
+        {!enLinea && (
+          <span className="sin-red">
+            <Senal estado="sin-conexion" decorativa etiqueta="" tamano={12} />
+            {t('rail.sinConexion')}
+          </span>
+        )}
       </Link>
     </nav>
   );

@@ -66,7 +66,8 @@
         "other": "Last backup {n} days ago"
       }
     },
-    "sinCopia": "No backup yet"
+    "sinCopia": "No backup yet",
+    "sinConexion": "Offline"
   },
   "atajos": {
     "titulo": "Keyboard shortcuts",
@@ -603,7 +604,9 @@
     "aviso": {
       "memoria": "This browser does not allow saving: what you capture will be lost when you close the tab.",
       "privada": "This looks like a private window: everything will be deleted when you close it.",
-      "soloLectura": "Rimor is open in another tab: here you can only read."
+      "soloLectura": "Rimor is open in another tab: here you can only read.",
+      "version": "There is a new version.",
+      "actualizar": "Update"
     },
     "cuidado": {
       "usado": {
