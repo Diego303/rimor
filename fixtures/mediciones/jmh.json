@@ -1,0 +1,25 @@
+[
+  {
+    "jmhVersion": "1.37",
+    "benchmark": "org.rimor.bench.ParserBench.parseJson",
+    "mode": "avgt",
+    "threads": 1,
+    "forks": 2,
+    "params": { "size": "1000" },
+    "primaryMetric": {
+      "score": 41.7,
+      "scoreError": 0.9,
+      "scoreUnit": "us/op",
+      "rawData": [[41.2, 42.0, 41.8, 41.5, 42.3], [41.1, 41.9, 42.4, 41.6, 41.2]]
+    },
+    "secondaryMetrics": {}
+  },
+  {
+    "jmhVersion": "1.37",
+    "benchmark": "org.rimor.bench.ParserBench.parseJsonThroughput",
+    "mode": "thrpt",
+    "threads": 1,
+    "forks": 1,
+    "primaryMetric": { "score": 23980.1, "scoreUnit": "ops/s", "rawData": [[23900.0, 24050.2, 23990.1]] }
+  }
+]

@@ -12,7 +12,7 @@ import {
 import { MAX_ADJUNTO_JSON } from '../../datos/exportar';
 import { ESTADO_INICIAL, type EstadoCuidado } from '../../espacio/estado';
 import { useEspacio } from '../../estado/espacio';
-import { elementoFalso } from '../../lectores/pruebas/falsos';
+import { elementoDeTexto, elementoFalso } from '../../lectores/pruebas/falsos';
 import { ESCRITURA, montarApp, PRIMERA_CARGA } from '../../pruebas/app';
 
 /** Lo descargado: nombre y contenido. */
@@ -45,7 +45,8 @@ describe('Datos y copias: exportar', () => {
   });
 
   it('«Exportar ZIP» descarga el ZIP, avisa con su nombre y apunta la copia (el piloto pasa a verde)', async () => {
-    const { router, espacio } = await montarApp('/ajustes', [elementoFalso(1, 'hola', 'texto')]);
+    // Con su resumen de verdad: la puesta al día del resumen contaría otro cambio a destiempo.
+    const { router, espacio } = await montarApp('/ajustes', [await elementoDeTexto(1, 'hola')]);
     await act(() => router.navigate({ to: '/datos' }));
     // El cambio de guardar el elemento ya contado (si llegara durante la exportación, seguiría contando: no está en ella).
     await waitFor(() => expect(espacio.estado().cambiosDesdeCopia).toBe(1), ESCRITURA);

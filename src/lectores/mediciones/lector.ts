@@ -16,6 +16,26 @@ export interface SerieDerivada extends Serie {
   avisos: AvisoMetodo[];
 }
 
+/**
+ * La descriptiva de una serie que es un resumen (sin mediciones sueltas, IN-047): lo que calculó su herramienta y
+ * `NaN` en lo demás, con `n` = 0 (no se sabe cuántas fueron). No se inventa nada.
+ */
+function descriptivaDeResumen(r: NonNullable<Serie['resumen']>): Descriptiva {
+  const vacia = describir([]);
+  return {
+    ...vacia,
+    mediana: r.mediana,
+    media: r.media ?? Number.NaN,
+    desviacion: r.desviacion ?? Number.NaN,
+    icBajo: r.icBajo ?? Number.NaN,
+    icAlto: r.icAlto ?? Number.NaN,
+  };
+}
+
+/** ¿Es un resumen de su herramienta (sin las mediciones sueltas)? */
+export const esResumen = (s: Serie): s is Serie & { resumen: NonNullable<Serie['resumen']> } =>
+  s.resumen !== undefined && !s.valores.length;
+
 export interface DatosMediciones {
   formato: FormatoMediciones;
   series: SerieDerivada[];
@@ -108,30 +128,49 @@ export const lectorMediciones: Lector<DatosMediciones> = {
     const { formato, series } = leerSeries(el.original);
     return {
       formato,
-      series: series.map((s) => ({ ...s, d: describir(s.valores), avisos: avisosDeMetodo(s.valores) })),
+      series: series.map((s) =>
+        esResumen(s)
+          ? { ...s, d: descriptivaDeResumen(s.resumen), avisos: [] }
+          : { ...s, d: describir(s.valores), avisos: avisosDeMetodo(s.valores) },
+      ),
     };
   },
 
   resumen: (d) => {
     const s = d.series[0];
     if (!s) return { n: 0, series: 0 };
-    return { n: s.d.n, mediana: s.d.mediana, unidad: s.unidad, series: d.series.length };
+    // De un resumen no se sabe cuántas mediciones fueron: sin `n`.
+    return { ...(esResumen(s) ? {} : { n: s.d.n }), mediana: s.d.mediana, unidad: s.unidad, series: d.series.length };
   },
 
   resumenLegible(r, idioma) {
-    if (typeof r.n !== 'number') return '';
-    const mediciones = textos.t(idioma, 'mediciones', { n: r.n });
-    if (typeof r.mediana !== 'number' || !Number.isFinite(r.mediana) || typeof r.unidad !== 'string') {
-      return mediciones;
-    }
+    const conMediana = typeof r.mediana === 'number' && Number.isFinite(r.mediana) && typeof r.unidad === 'string';
     const unidad: UnidadSerie = r.unidad === 's' ? 's' : 'ms';
-    const mediana = formatosDe({ d: { mediana: r.mediana }, unidad }, idioma).conUnidad(r.mediana);
-    return textos.t(idioma, 'legible', { mediciones, mediana });
+    const mediana = conMediana
+      ? formatosDe({ d: { mediana: r.mediana as number }, unidad }, idioma).conUnidad(r.mediana as number)
+      : '';
+    // Un resumen (sin `n`): solo la mediana.
+    if (typeof r.n !== 'number') return mediana ? textos.t(idioma, 'legibleResumen', { mediana }) : '';
+    const mediciones = textos.t(idioma, 'mediciones', { n: r.n });
+    return mediana ? textos.t(idioma, 'legible', { mediciones, mediana }) : mediciones;
   },
 
   respuesta(_el, d, ctx) {
     const i = ctx.idioma;
     const s = d.series[0];
+    if (s && esResumen(s)) {
+      const f = formatosDe(s, i, escalaDe(d.series));
+      const vars = {
+        mediana: f.conUnidad(s.d.mediana),
+        herramienta: textos.t(i, `herramientas.${d.formato}`),
+        bajo: f.numero(s.d.icBajo),
+        alto: f.numero(s.d.icAlto),
+      };
+      const conIc = Number.isFinite(s.d.icBajo) && Number.isFinite(s.d.icAlto);
+      const mas = d.series.length > 1 ? textos.t(i, 'respuesta.masSeries', { n: d.series.length - 1 }) : '';
+      const frase = textos.t(i, conIc ? 'respuesta.resumen' : 'respuesta.resumenSinIc', vars);
+      return { texto: [{ t: 'texto', v: `${frase}${mas}${textos.t(i, 'respuesta.fin')}` }] };
+    }
     if (!s || !s.d.n) return { texto: [{ t: 'texto', v: textos.t(i, 'respuesta.vacia') }] };
     const f = formatosDe(s, i, escalaDe(d.series));
     const mediciones = textos.t(i, 'mediciones', { n: s.d.n });
@@ -155,7 +194,8 @@ export const lectorMediciones: Lector<DatosMediciones> = {
     mediana: (d) => cifraDe(d, (s, e) => valorCon(s, e, s.d.mediana)),
     ic_bajo: (d) => cifraDe(d, (s, e) => valorCon(s, e, s.d.icBajo)),
     ic_alto: (d) => cifraDe(d, (s, e) => valorCon(s, e, s.d.icAlto)),
-    n: (d) => cifraDe(d, (s) => ({ texto: fmtNumero(s.d.n, 'es'), valor: s.d.n })),
+    // De un resumen no se sabe cuántas fueron.
+    n: (d) => cifraDe(d, (s) => (esResumen(s) ? { texto: '—' } : { texto: fmtNumero(s.d.n, 'es'), valor: s.d.n })),
     cv: (d) =>
       cifraDe(d, (s) => ({
         texto: fmtCifra(s.d.cv * 100, 1, '%', 'es'),

@@ -37,6 +37,10 @@ export interface ResultadoMediciones extends Comun {
   unidad: string;
   n_a: number;
   n_b: number;
+  /** Diferencia B − A según Hodges-Lehmann y su intervalo del 95 %, en `unidad` (IN-047; antes no se guardaba). */
+  hl?: number | null;
+  hl_bajo?: number | null;
+  hl_alto?: number | null;
 }
 
 export interface ResultadoLogs extends Comun {
@@ -98,6 +102,9 @@ export function resultadoDeMediciones(c: ComparacionMediciones, f: DeLasFuentes)
     unidad: c.unidad,
     n_a: c.a.d.n,
     n_b: c.b.d.n,
+    hl: finito(c.resultado.hl.estimacion),
+    hl_bajo: finito(c.resultado.hl.icBajo),
+    hl_alto: finito(c.resultado.hl.icAlto),
   };
 }
 
@@ -184,6 +191,7 @@ export function cifrasDeResultado(r: ResultadoComparacion, idioma: Idioma): [nom
       ['p', r.p === null ? '—' : fmtP(r.p, idioma)],
       ['mediana_a', mediana(r.mediana_a)],
       ['mediana_b', mediana(r.mediana_b)],
+      ...(typeof r.hl === 'number' ? [['hl', mediana(r.hl)] as [string, string]] : []),
     ];
   }
   if (r.clase === 'json')

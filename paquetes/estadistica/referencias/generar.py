@@ -5,7 +5,8 @@ Uso (con un entorno que tenga numpy y scipy):
 
 Cada caso trae dos series y lo que deben dar: descriptiva de cada una (mediana, media, desviación típica
 muestral, coeficiente de variación, mínimo, máximo, percentiles 5, 25, 75 y 95 con interpolación lineal) y la
-prueba de Mann-Whitney U bilateral con aproximación normal, corrección por empates y de continuidad.
+prueba de Mann-Whitney U bilateral con aproximación normal, corrección por empates y de continuidad; y el
+estimador de Hodges-Lehmann con su intervalo de Moses (IN-047).
 """
 import json
 import math
@@ -50,6 +51,46 @@ def mann_whitney(x, y):
     return {"u": float(r.statistic), "p": float(r.pvalue)}
 
 
+def hodges_lehmann(x, y):
+    """Hodges-Lehmann de y − x y su intervalo de Moses del 95 % (Hollander y Wolfe), por otro camino que el de
+    TypeScript: todas las diferencias con NumPy, y la distribución exacta de U contando arreglos con enteros
+    (recurrencia memorizada) o, con empates o m·n > 400, la normal de SciPy con la corrección por empates."""
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    m, n = len(x), len(y)
+    d = np.sort((y[None, :] - x[:, None]).ravel())
+    N = m * n
+    est = float(np.median(d))
+    todos = np.concatenate([x, y])
+    empates = len(np.unique(todos)) < len(todos)
+    exacto = N <= 400 and not empates
+    if exacto:
+        from functools import lru_cache
+
+        @lru_cache(maxsize=None)
+        def cuenta(mm, nn, u):
+            if u < 0:
+                return 0
+            if mm == 0 or nn == 0:
+                return 1 if u == 0 else 0
+            return cuenta(mm - 1, nn, u - nn) + cuenta(mm, nn - 1, u)
+
+        total = math.comb(m + n, m)
+        k = 0
+        acumulado = 0
+        while k <= N and (acumulado + cuenta(m, n, k)) / total <= 0.025 + 1e-12:
+            acumulado += cuenta(m, n, k)
+            k += 1
+    else:
+        _, t = np.unique(todos, return_counts=True)
+        correccion = float(np.sum(t**3 - t))
+        varianza = N / 12 * (m + n + 1 - correccion / ((m + n) * (m + n - 1)))
+        k = math.floor(N / 2 - stats.norm.ppf(0.975) * math.sqrt(varianza))
+    if k < 1:
+        return {"estimacion": est, "icBajo": None, "icAlto": None, "exacto": exacto}
+    return {"estimacion": est, "icBajo": float(d[k - 1]), "icAlto": float(d[N - k]), "exacto": exacto}
+
+
 casos = []
 
 # El ejemplo del plan (reqwest frente a ureq, pantallas de referencia).
@@ -90,6 +131,16 @@ casos.append(("sin solape grande", list(range(60)), list(range(100, 160))))
 
 salida = []
 for nombre, a, b in casos:
-    salida.append({"nombre": nombre, "a": a, "b": b, "da": describir(a), "db": describir(b), "mw": mann_whitney(a, b)})
+    salida.append(
+        {
+            "nombre": nombre,
+            "a": a,
+            "b": b,
+            "da": describir(a),
+            "db": describir(b),
+            "mw": mann_whitney(a, b),
+            "hl": hodges_lehmann(a, b),
+        }
+    )
 
 print(json.dumps({"generado": "numpy " + np.__version__ + ", scipy " + __import__("scipy").__version__, "casos": salida}, ensure_ascii=False, indent=1))

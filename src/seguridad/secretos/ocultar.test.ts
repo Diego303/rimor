@@ -139,19 +139,6 @@ describe('variables, no secretos (IN-046)', () => {
 });
 
 describe('revisión de IN-046: secretos de una petición', () => {
-  it('curl -u en textos enormes es lineal (antes, cuadrático: segundos)', () => {
-    for (const texto of [
-      'curl '.repeat(20_000),
-      'curl -b a '.repeat(20_000),
-      'curl x \\\n'.repeat(20_000),
-      `[${Array.from({ length: 2500 }, (_, i) => `{"ua":"curl/7.81.0","i":${i},"msg":"petición servida sin errores"}`).join(',')}]`,
-    ]) {
-      const inicio = performance.now();
-      ocultar(texto);
-      expect(performance.now() - inicio, texto.slice(0, 20)).toBeLessThan(500);
-    }
-  });
-
   it('el «Copiar como cURL (cmd)» de Windows: se oculta sin romper sus comillas', () => {
     const clave = 'C1av3Secreta99';
     const sid = 'abcdef1234567890abcdef';

@@ -66,6 +66,26 @@ export function VeredictoMediciones({ r, nombre }: { r: DatosVeredicto; nombre: 
   );
 }
 
+/** Cuánto cambia según Hodges-Lehmann (B − A), con su intervalo del 95 % si hay mediciones para darlo (IN-047). */
+function DiferenciaHl({ c }: { c: ComparacionMediciones }) {
+  const { t, idioma } = useT();
+  const { hl } = c.resultado;
+  if (!Number.isFinite(hl.estimacion)) return null;
+  const f = formatosDe(c.b, idioma, escalaDe([c.a, c.b]));
+  const diferencia = f.conUnidad(hl.estimacion);
+  return (
+    <p className="sm muted">
+      {Number.isFinite(hl.icBajo) && Number.isFinite(hl.icAlto)
+        ? t('pantallas.comparacion.mediciones.hodgesLehmann', {
+            diferencia,
+            bajo: f.numero(hl.icBajo),
+            alto: f.numero(hl.icAlto),
+          })
+        : t('pantallas.comparacion.mediciones.hodgesLehmannSinIc', { diferencia })}
+    </p>
+  );
+}
+
 export function VistaComparacionMediciones({ c, nombres }: Props) {
   const { t, idioma } = useT();
   const tm = (clave: 'leyenda' | 'columnas.mediana' | 'columnas.ic' | 'columnas.variacion') =>
@@ -145,6 +165,7 @@ export function VistaComparacionMediciones({ c, nombres }: Props) {
             },
           ]}
         />
+        <DiferenciaHl c={c} />
       </Tarjeta>
       <Detalles resumen={t('pantallas.comparacion.mediciones.avisos')} recuento={avisos.length}>
         <Huecos>

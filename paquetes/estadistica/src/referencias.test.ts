@@ -1,7 +1,16 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import casos from '../referencias/casos.json';
-import { avisosDeMetodo, comparar, describir, icMediana, mannWhitney, ordenados } from './index';
+import {
+  avisosDeMetodo,
+  comparar,
+  describir,
+  distribucionU,
+  hodgesLehmann,
+  icMediana,
+  mannWhitney,
+  ordenados,
+} from './index';
 
 const TOL_ESTADISTICO = 1e-9;
 const TOL_P = 1e-6;
@@ -49,6 +58,12 @@ describe('referencias de NumPy y SciPy', () => {
       const mw = mannWhitney(c.a, c.b);
       cerca(mw.u, c.mw.u, TOL_ESTADISTICO, 'U');
       cercaP(mw.p, c.mw.p);
+      // Hodges-Lehmann (IN-047): la estimación y su intervalo de Moses, exacto o normal como la referencia.
+      const hl = hodgesLehmann(c.a, c.b);
+      expect(hl.exacto, 'exacto').toBe(c.hl.exacto);
+      cerca(hl.estimacion, c.hl.estimacion, TOL_ESTADISTICO, 'HL');
+      cerca(hl.icBajo, c.hl.icBajo, TOL_ESTADISTICO, 'HL bajo');
+      cerca(hl.icAlto, c.hl.icAlto, TOL_ESTADISTICO, 'HL alto');
     });
   }
 });
@@ -135,6 +150,53 @@ describe('propiedades', () => {
         expect(ab.u + ba.u).toBeCloseTo(a.length * b.length, 6);
         expect(ab.p).toBeCloseTo(ba.p, 12);
       }),
+    );
+  });
+});
+
+describe('Hodges-Lehmann (IN-047)', () => {
+  it('la distribución exacta de U suma 1 y es simétrica (m = 3, n = 4: los 35 arreglos)', () => {
+    const p = distribucionU(3, 4);
+    expect(p).toHaveLength(13);
+    expect(p.reduce((s, x) => s + x, 0)).toBeCloseTo(1, 12);
+    for (let u = 0; u <= 12; u++) expect(p[u]).toBeCloseTo(p[12 - u] ?? Number.NaN, 12);
+    expect((p[0] ?? 0) * 35).toBeCloseTo(1, 12);
+  });
+
+  it('el ejemplo del plan: ureq es unos 1,8 ms más rápido que reqwest', () => {
+    const [plan] = casos.casos;
+    const hl = hodgesLehmann(plan?.a ?? [], plan?.b ?? []);
+    expect(hl.estimacion).toBeCloseTo(-1.82, 9);
+    expect(hl.icBajo).toBeLessThan(hl.estimacion);
+    expect(hl.icAlto).toBeGreaterThan(hl.estimacion);
+    expect(hl.icAlto).toBeLessThan(0);
+  });
+
+  it('casos límite: vacías, con NaN, una sola medición o demasiado pocas para un intervalo', () => {
+    expect(Number.isNaN(hodgesLehmann([], [1, 2]).estimacion)).toBe(true);
+    expect(Number.isNaN(hodgesLehmann([1, Number.NaN], [2, 3]).estimacion)).toBe(true);
+    const uno = hodgesLehmann([7], [8, 9, 10]);
+    expect(uno.estimacion).toBe(2);
+    expect(Number.isNaN(uno.icBajo) && Number.isNaN(uno.icAlto)).toBe(true);
+  });
+
+  it('propiedades: al intercambiar las series cambia de signo; al desplazar una, se desplaza igual', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.double({ min: -1e3, max: 1e3, noNaN: true }), { minLength: 1, maxLength: 15 }),
+        fc.array(fc.double({ min: -1e3, max: 1e3, noNaN: true }), { minLength: 1, maxLength: 15 }),
+        fc.double({ min: -100, max: 100, noNaN: true }),
+        (a, b, d) => {
+          const ab = hodgesLehmann(a, b);
+          const ba = hodgesLehmann(b, a);
+          expect(ba.estimacion).toBeCloseTo(-ab.estimacion, 6);
+          const desplazada = hodgesLehmann(
+            a,
+            b.map((x) => x + d),
+          );
+          expect(desplazada.estimacion).toBeCloseTo(ab.estimacion + d, 6);
+        },
+      ),
     );
   });
 });

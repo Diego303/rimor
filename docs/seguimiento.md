@@ -1,8 +1,8 @@
 # Seguimiento de Rimor
 
 **Estado global:** EN CURSO
-**Última actualización:** 2026-10-31 04:06
-**Ahora:** IN-047 · Mediciones: más formatos y Hodges-Lehmann · fase implementación
+**Última actualización:** 2026-10-31 16:03
+**Ahora:** IN-047 · Mediciones: más formatos y Hodges-Lehmann · fase verificación
 **Siguiente:** IN-048 · Logs: plantillas con Drain
 **Progreso:** F0 9/9 · v0.1 42/42 · v0.2 6/22 · v0.3 0/17 · v0.4 0/9 · total 57/99
 
@@ -66,7 +66,7 @@
 | IN-044 | Datos tabulares con DuckDB | v0.2 | 8 | hecha | 5e9f8b1 be063ce 42ea221 | docs/features/IN-044-datos-tabulares.md |
 | IN-045 | JSON, YAML y TOML con comparación estructural | v0.2 | 8 | hecha | 079d746 4176cd5 9049c78 | docs/features/IN-045-json-yaml-toml.md |
 | IN-046 | Petición HTTP | v0.2 | 8 | hecha | ba600a9 7660ed5 48b78e9 | docs/features/IN-046-peticion-http.md |
-| IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | en implementación | — | docs/features/IN-047-mediciones-formatos-hodges-lehmann.md |
+| IN-047 | Mediciones: más formatos y Hodges-Lehmann | v0.2 | 8 | en verificación | c10e372 | docs/features/IN-047-mediciones-formatos-hodges-lehmann.md |
 | IN-048 | Logs: plantillas con Drain | v0.2 | 8 | pendiente | — | — |
 | IN-049 | Reglas aprendidas y captura múltiple | v0.2 | 9 | pendiente | — | — |
 | IN-050 | PWA, sin conexión y compartir | v0.2 | 9 | pendiente | — | — |
@@ -127,6 +127,7 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 - **Datos y copias adelanta su primera tarjeta** (IN-007): espacio usado, persistencia y última copia, como en la pantalla de referencia, para que la persistencia concedida «se muestre». IN-037 completa la pantalla.
 - **Despliegue en GitHub Pages** (instrucción del autor del 2026-10-18). Sin cabeceras HTTP propias: la CSP va solo en `<meta>` y la ruta base es configurable (`BASE_URL`).
 - **Sin Playwright por ahora** (instrucción del autor del 2026-10-18: «por ahora no testees con Playwright, cuando esté todo hecho ya vemos»). `pnpm verificar` ejecuta tipos, lint, unidades y construcción. Las pruebas de extremo a extremo, visuales, de axe y de fidelidad de animaciones del plan se sustituyen, mientras tanto, por pruebas de componentes con Vitest y happy-dom donde aportan, y quedan apuntadas en «Pendientes de validación humana».
+- **Límite de 15 s por prueba** (`vitest.config.ts`, IN-047): en este entorno (WSL con el repositorio en una unidad de Windows) hay pausas de varios segundos que agotaban, al azar, pruebas de milisegundos (también en commits que antes pasaban). Ninguna aserción cambia; las pruebas de tiempo de reloj van aparte, en el proyecto `rendimiento`.
 - **`docs/olas/`** no se crea: el estado de cada funcionalidad vive en el tablero de este archivo.
 - **Símbolo:** `Pantallas de Rimor.html` dibuja el símbolo antiguo; se usa «Señal» (paquete `rimor-icono`).
 - **Fichas que cambia la Fase 0** (`docs/referencias/` es de solo lectura, así que el cambio se anota aquí y en la ficha de cada IN):
@@ -177,7 +178,8 @@ Estados: pendiente · en análisis y diseño · en implementación · en verific
 ## Registro
 | Fecha | ID | Fase | Resultado | Commit |
 |---|---|---|---|---|
-| 2026-10-31 | IN-047 | análisis y diseño | pytest-benchmark (data o resumen), JMH (rawData, solo tiempos), criterion (sample.json y estimates.json como resumen), columnas CSV con unidad; Hodges-Lehmann con intervalo de Moses exacto o normal, referencias en Python por otro camino; en la comparación y su resultado | … |
+| 2026-10-31 | IN-047 | implementación | pytest-benchmark, JMH, criterion (sample y estimates como resumen) y columnas CSV con unidad; Hodges-Lehmann exacto o normal contra referencias de Python (33 casos), en comparar, la vista y el resultado guardado; testTimeout de 15 s por las pausas del entorno; verificar en verde: 120 archivos, 1558 pruebas, 272,9 KB | … |
+| 2026-10-31 | IN-047 | análisis y diseño | pytest-benchmark (data o resumen), JMH (rawData, solo tiempos), criterion (sample.json y estimates.json como resumen), columnas CSV con unidad; Hodges-Lehmann con intervalo de Moses exacto o normal, referencias en Python por otro camino; en la comparación y su resultado | c10e372 |
 | 2026-10-31 | IN-046 | verificación | revisión independiente (22 hallazgos) corregida con pruebas: usuario-curl lineal, cmd real de Windows en dos capas, cookies con comillas, secretos del cuerpo y en JSON, varias órdenes tras tubería, opciones con valor y URL con forma de URL, fetch con GET, @archivo, cabeceras repetidas, más cabeceras y esquemas, Set-Cookie de sesión, | 2026-10-26 | IN-046 | implementación | lector http (puesto 9) con palabras de shell (bash y cmd), opciones de curl, tablas, copiar como cURL y fetch (exportar.ts diferido), reglas de secretos cookie, cabecera-clave, clave-url y usuario-curl, variables sin ocultar; verificar en verde: 119 archivos, 1524 pruebas, 268,6 KB | … |
 | 2026-10-26 | IN-046 | análisis y diseño | lector http (puesto 9) que analiza un único curl (bash y cmd) con tubería aparte, reglas de secretos nuevas (cookie, cabeceras de clave, claves en la URL, curl -u), vista en tablas, copiar como cURL y como fetch | ba600a9 |
 | 2026-10-26 | IN-045 | verificación | revisión independiente (17 hallazgos) corregida con pruebas: log grande como JSON, YAML cuadrático, notas Clave: valor, versiones por títulos generados (tituloGenerico), ilegibles en comparación, leer tolerante, TOML inválido y enteros grandes, esquema recortado, plurales, fechas TOML, etiquetas YAML, JSONC, árbol memorizado, vista previa del feed, rutas; verificar en verde: 117 archivos, 1501 pruebas, 265,1 KB | 9049c78 |

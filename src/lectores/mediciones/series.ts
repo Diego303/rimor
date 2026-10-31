@@ -1,7 +1,9 @@
 /**
- * Series de mediciones (LEC-06, plan §8.3): una medida por línea (con o sin unidad), `go test -bench` y el JSON
- * de hyperfine. TS puro: lo usan la detección (hilo principal) y la derivación (Worker).
+ * Series de mediciones (LEC-06, plan §8.3): una medida por línea (con o sin unidad), `go test -bench` y, de
+ * `formatos.ts`, el JSON de hyperfine, pytest-benchmark, JMH y criterion y las columnas CSV (IN-047). TS puro: lo usan
+ * la detección (hilo principal) y la derivación (Worker).
  */
+import { A_MS, deColumnas, deJsonDeBenchmark, type ResumenExterno, type SerieEnMs } from './formatos';
 
 /** Unidad en la que se guardan los valores de una serie (la vista puede enseñarlos en µs o ns). */
 export type UnidadSerie = 'ms' | 's';
@@ -12,18 +14,17 @@ export interface Serie {
   unidad: UnidadSerie;
   /** En `unidad`, en el orden en que se midieron. */
   valores: number[];
+  /** Si la herramienta no dio las mediciones sueltas (`valores` vacío): lo que calculó ella, en `unidad`. */
+  resumen?: ResumenExterno;
 }
 
 /** Formato del que salió la serie. */
-export type FormatoMediciones = 'lineas' | 'go' | 'hyperfine';
+export type FormatoMediciones = 'lineas' | 'go' | 'hyperfine' | 'pytest' | 'jmh' | 'criterion' | 'csv';
 
 export interface LecturaMediciones {
   formato: FormatoMediciones;
   series: Serie[];
 }
-
-/** Milisegundos por unidad. `µ` (U+00B5) y `μ` (U+03BC) se escriben igual. */
-const A_MS: Record<string, number> = { ns: 1e-6, us: 1e-3, µs: 1e-3, μs: 1e-3, ms: 1, s: 1000, min: 60_000 };
 
 /** Por encima de esto (en ms), si todos los valores lo pasan, la serie va en segundos. */
 const UMBRAL_SEGUNDOS_MS = 10_000;
@@ -119,48 +120,26 @@ const etiquetaDe = (l: string) => {
   return e || null;
 };
 
-interface SerieEnMs {
-  etiqueta: string | null;
-  ms: number[];
-}
-
 /**
  * Todas las series de un pegado en la misma unidad (para dibujarlas y compararlas juntas): en segundos si todos
  * sus valores pasan de 10 s; si no, en ms.
  */
 function enSuUnidad(series: SerieEnMs[]): Serie[] {
-  const segundos = series.length > 0 && series.every((s) => s.ms.every((v) => v > UMBRAL_SEGUNDOS_MS));
-  return series.map(({ etiqueta, ms }) => ({
+  const valoresEnMs = (s: SerieEnMs) => (s.resumen ? [s.resumen.mediana] : s.ms);
+  const segundos = series.length > 0 && series.every((s) => valoresEnMs(s).every((v) => v > UMBRAL_SEGUNDOS_MS));
+  const a = (v: number) => (segundos ? v / 1000 : v);
+  return series.map(({ etiqueta, ms, resumen }) => ({
     etiqueta,
     unidad: segundos ? 's' : 'ms',
-    valores: segundos ? ms.map((v) => v / 1000) : ms,
+    valores: ms.map(a),
+    ...(resumen
+      ? {
+          resumen: Object.fromEntries(
+            Object.entries(resumen).map(([k, v]) => [k, a(v as number)]),
+          ) as unknown as ResumenExterno,
+        }
+      : {}),
   }));
-}
-
-/** El JSON de hyperfine (`--export-json`): una serie por comando, con `times` en segundos. */
-function deHyperfine(texto: string): Serie[] | null {
-  const t = texto.trim();
-  if (!t.startsWith('{') || !t.includes('"results"')) return null;
-  let json: unknown;
-  try {
-    json = JSON.parse(t);
-  } catch {
-    return null;
-  }
-  const resultados = (json as { results?: unknown }).results;
-  if (!Array.isArray(resultados)) return null;
-  const series: SerieEnMs[] = [];
-  for (const r of resultados) {
-    if (!r || typeof r !== 'object') continue;
-    const { command, times } = r as { command?: unknown; times?: unknown };
-    if (!Array.isArray(times)) continue;
-    const ms = times
-      .filter((x): x is number => typeof x === 'number' && Number.isFinite(x) && x >= 0)
-      .map((x) => x * 1000)
-      .filter(Number.isFinite);
-    if (ms.length) series.push({ etiqueta: typeof command === 'string' ? command : null, ms });
-  }
-  return series.length ? enSuUnidad(series) : null;
 }
 
 /**
@@ -232,12 +211,14 @@ function pareceTabla(lineas: string[]): boolean {
 }
 
 export function leerSeries(texto: string): LecturaMediciones {
-  const hyperfine = deHyperfine(texto);
-  if (hyperfine) return { formato: 'hyperfine', series: hyperfine };
+  const json = deJsonDeBenchmark(texto);
+  if (json) return { formato: json.formato, series: enSuUnidad(json.series) };
   const lineas = texto.split(/\r?\n/);
   const go = deGo(lineas);
   if (go) return { formato: 'go', series: go };
-  // Una tabla (CSV) no es una serie: su coma separa columnas.
+  // Una tabla con una columna de tiempos por serie (con su unidad); otra tabla no es una serie: su coma separa.
+  const columnas = deColumnas(lineas);
+  if (columnas) return { formato: 'csv', series: enSuUnidad(columnas) };
   if (pareceTabla(lineas)) return { formato: 'lineas', series: [] };
   return { formato: 'lineas', series: deLineas(lineas) };
 }
@@ -258,7 +239,7 @@ const FRACCION_MEDIDAS = 0.7;
 /** Confianza de que un texto es una serie de mediciones. */
 export function confianzaMediciones(texto: string): number {
   // Por encima del JSON genérico (0,95): el formato concreto gana.
-  if (deHyperfine(texto)) return 0.97;
+  if (deJsonDeBenchmark(texto)) return 0.97;
   const lineas = texto
     .split(/\r?\n/)
     .filter((l) => l.trim())
@@ -267,6 +248,8 @@ export function confianzaMediciones(texto: string): number {
   const deGoTest = lineas.filter((l) => !GO_CONTEXTO.test(l.trim()));
   const bench = deGoTest.filter((l) => GO_BENCH.test(l.trim())).length;
   if (bench >= 1 && bench / deGoTest.length >= FRACCION_MEDIDAS) return 0.9;
+  // Columnas de tiempos con su unidad: por encima de una tabla de Datos con cabecera (0,9 también, y va antes).
+  if (deColumnas(lineas)) return 0.9;
   if (pareceTabla(lineas)) return 0;
   const datos = lineas.filter((l) => !comentario(l));
   const medidas = datos.map((l) => medidaDe(l, true)).filter((m): m is Medida => m !== null && m.ms >= 0);

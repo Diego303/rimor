@@ -47,3 +47,17 @@ export function elementoFalso(i: number, original = `original ${i}`, nombre = 'f
     original,
   };
 }
+
+/**
+ * Un elemento de texto con el resumen de verdad del lector Texto (el de `elementoFalso` es de mentira): así la puesta
+ * al día del resumen, en segundo plano, no escribe a destiempo en las pruebas que comprueban qué se escribe.
+ */
+export async function elementoDeTexto(i: number, original = `original ${i}`): Promise<Elemento> {
+  const { lectorTexto } = await import('../texto/lector');
+  const base = elementoFalso(i, original, 'texto');
+  const resumen = lectorTexto.resumen(await lectorTexto.derivar(base));
+  return {
+    ...base,
+    frontmatter: { ...base.frontmatter, lector: { nombre: 'texto', version: lectorTexto.version, resumen } },
+  };
+}

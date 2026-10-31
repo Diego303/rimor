@@ -5,6 +5,10 @@ import { configDefaults } from 'vitest/config';
 // y sus `.test.tsx`, en happy-dom (componentes). Cada paquete trae su propia configuración.
 export default getViteConfig({
   test: {
+    // 15 s por prueba (no los 5 s de Vitest): el entorno de desarrollo (WSL, el repositorio en una unidad de Windows)
+    // tiene pausas de varios segundos que agotaban pruebas de milisegundos. Un cuelgue de verdad se sigue cazando; las
+    // pruebas largas llevan su propio plazo.
+    testTimeout: 15_000,
     projects: [
       {
         extends: true,

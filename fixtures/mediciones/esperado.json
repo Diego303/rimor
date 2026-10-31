@@ -118,5 +118,73 @@
         "icAlto": 192.0
       }
     ]
+  },
+  "pytest-benchmark.json": {
+    "formato": "pytest",
+    "series": [
+      {
+        "etiqueta": "test_parsear_toml",
+        "unidad": "ms",
+        "n": 10,
+        "mediana": 0.3915,
+        "icBajo": 0.381,
+        "icAlto": 0.45199999999999996
+      },
+      {
+        "etiqueta": "test_parsear_yaml",
+        "unidad": "ms",
+        "n": 10,
+        "mediana": 1.2650000000000001,
+        "icBajo": 1.21,
+        "icAlto": 1.39
+      }
+    ]
+  },
+  "jmh.json": {
+    "formato": "jmh",
+    "series": [
+      {
+        "etiqueta": "ParserBench.parseJson (size=1000)",
+        "unidad": "ms",
+        "n": 10,
+        "mediana": 0.0417,
+        "icBajo": 0.041100000000000005,
+        "icAlto": 0.0424
+      }
+    ]
+  },
+  "criterion-sample.json": {
+    "formato": "criterion",
+    "series": [
+      {
+        "etiqueta": null,
+        "unidad": "ms",
+        "n": 10,
+        "mediana": 0.03845,
+        "icBajo": 0.0383875,
+        "icAlto": 0.038489999999999996
+      }
+    ]
+  },
+  "columnas.csv": {
+    "formato": "csv",
+    "series": [
+      {
+        "etiqueta": "reqwest",
+        "unidad": "ms",
+        "n": 8,
+        "mediana": 38.504999999999995,
+        "icBajo": 37.88,
+        "icAlto": 40.12
+      },
+      {
+        "etiqueta": "ureq",
+        "unidad": "ms",
+        "n": 8,
+        "mediana": 36.83,
+        "icBajo": 35.88,
+        "icAlto": 38.95
+      }
+    ]
   }
 }

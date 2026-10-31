@@ -413,3 +413,65 @@ describe('revisión: título', () => {
     expect((await lectorMediciones.leer({ texto: leer('hyperfine.json') })).titulo).toBe('Mediciones de rg TODO src');
   });
 });
+
+describe('formatos de v0.2 (IN-047)', () => {
+  it('un resumen de criterion (estimates.json): la mediana y el intervalo de criterion, sin mediciones sueltas', async () => {
+    const texto = leer('criterion-estimates.json');
+    expect(lectorMediciones.detectar({ texto })).toBe(0.97);
+    expect(detectar({ texto }, REGISTRO).lector).toBe('mediciones');
+    const d = await derivar(texto);
+    const [s] = d.series;
+    expect(d.formato).toBe('criterion');
+    expect(s?.valores).toEqual([]);
+    expect(s?.d.n).toBe(0);
+    expect(s?.d.mediana).toBeCloseTo(0.0384819, 9);
+    expect([s?.d.icBajo, s?.d.icAlto].map((x) => Number(x?.toFixed(7)))).toEqual([0.0383901, 0.0385754]);
+    expect(s?.avisos).toEqual([]);
+    const r = lectorMediciones.respuesta(elementoFalso(1, texto), d, ctx());
+    expect(textoRespuesta(r)).toBe(
+      'Mediana de 38,48 µs según criterion (IC 95 %: 38,39 – 38,58), sin las mediciones sueltas.',
+    );
+    expect(comprobarEstilo(r)).toEqual([]);
+    expect(lectorMediciones.resumenLegible?.(lectorMediciones.resumen(d), 'es')?.replaceAll(NBSP, ' ')).toBe(
+      'mediana 38,48 µs',
+    );
+    expect(lectorMediciones.cifras?.n?.(d, {} as never)).toEqual({ texto: '—' });
+  });
+
+  it('pytest-benchmark sin `data`: un resumen sin intervalo; con `data`, sus series', async () => {
+    const d = await derivar(leer('pytest-sin-data.json'));
+    expect(d.formato).toBe('pytest');
+    expect(textoRespuesta(lectorMediciones.respuesta(elementoFalso(1, ''), d, ctx()))).toBe(
+      'Mediana de 393,5 µs según pytest-benchmark, sin las mediciones sueltas.',
+    );
+    const conData = await derivar(leer('pytest-benchmark.json'));
+    expect(conData.series.map((s) => [s.etiqueta, s.valores.length])).toEqual([
+      ['test_parsear_toml', 10],
+      ['test_parsear_yaml', 10],
+    ]);
+  });
+
+  it('JMH: solo los modos de tiempo (el de rendimiento no es un tiempo)', async () => {
+    const d = await derivar(leer('jmh.json'));
+    expect(d.series.map((s) => s.etiqueta)).toEqual(['ParserBench.parseJson (size=1000)']);
+    const soloThrpt = JSON.stringify([JSON.parse(leer('jmh.json'))[1]]);
+    expect(confianzaMediciones(soloThrpt)).toBe(0);
+  });
+
+  it('columnas CSV: solo con su unidad; sin ella es una tabla de Datos', () => {
+    expect(leerSeries(leer('columnas.csv')).formato).toBe('csv');
+    expect(detectar({ texto: leer('columnas.csv') }, REGISTRO).lector).toBe('mediciones');
+    const sinUnidad = 'reqwest,ureq\n38.41,36.92\n39.02,37.40\n37.88,35.88\n38.76,36.51\n';
+    expect(confianzaMediciones(sinUnidad)).toBe(0);
+    expect(detectar({ texto: sinUnidad }, REGISTRO).lector).toBe('datos');
+    // Unidades en las celdas, y decimales con coma con `;`.
+    expect(leerSeries('a;b\n38,4 ms;36,9 ms\n39,0 ms;37,4 ms\n37,9 ms;35,9 ms\n').series.map((s) => s.valores)).toEqual(
+      [
+        [38.4, 39, 37.9],
+        [36.9, 37.4, 35.9],
+      ],
+    );
+    // Una columna que no es un número: no son mediciones.
+    expect(leerSeries('cliente,latencia_ms\nureq,31\nreqwest,30000\nureq,33\n').formato).not.toBe('csv');
+  });
+});

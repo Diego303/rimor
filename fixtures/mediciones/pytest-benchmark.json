@@ -1,0 +1,40 @@
+{
+  "machine_info": { "node": "portatil", "processor": "x86_64", "python_version": "3.12.3" },
+  "commit_info": { "id": "9b1c3e7", "branch": "main" },
+  "benchmarks": [
+    {
+      "group": null,
+      "name": "test_parsear_toml",
+      "fullname": "tests/test_rendimiento.py::test_parsear_toml",
+      "params": null,
+      "stats": {
+        "min": 0.000381,
+        "max": 0.000452,
+        "mean": 0.0003966,
+        "stddev": 0.0000203,
+        "rounds": 10,
+        "median": 0.0003935,
+        "iqr": 0.0000205,
+        "data": [0.000391, 0.000402, 0.000381, 0.000388, 0.000452, 0.000395, 0.000392, 0.000399, 0.000384, 0.000382]
+      }
+    },
+    {
+      "group": null,
+      "name": "test_parsear_yaml",
+      "fullname": "tests/test_rendimiento.py::test_parsear_yaml",
+      "params": null,
+      "stats": {
+        "min": 0.00121,
+        "max": 0.00139,
+        "mean": 0.001274,
+        "stddev": 0.0000536,
+        "rounds": 10,
+        "median": 0.001265,
+        "iqr": 0.00005,
+        "data": [0.00125, 0.00128, 0.00121, 0.00139, 0.00126, 0.00127, 0.00124, 0.00131, 0.00123, 0.0013]
+      }
+    }
+  ],
+  "datetime": "2026-10-17T17:40:00.000000",
+  "version": "4.0.0"
+}

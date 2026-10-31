@@ -32,11 +32,11 @@ Que las mediciones de las herramientas de benchmark más usadas se lean tal cual
 
 ## Tareas
 
-- [ ] JSON de pytest-benchmark.
-- [ ] JSON de JMH.
-- [ ] `estimates.json` de criterion (y su `sample.json`).
-- [ ] Columnas CSV.
-- [ ] Estimador de Hodges-Lehmann con intervalo, verificado contra referencias.
+- [x] JSON de pytest-benchmark.
+- [x] JSON de JMH.
+- [x] `estimates.json` de criterion (y su `sample.json`).
+- [x] Columnas CSV.
+- [x] Estimador de Hodges-Lehmann con intervalo, verificado contra referencias.
 
 ## Pruebas previstas
 
@@ -61,3 +61,21 @@ Que las mediciones de las herramientas de benchmark más usadas se lean tal cual
 ## Autorrevisión
 
 Cubre las cinco tareas. Reutiliza las series, la descriptiva, la comparación y su resultado guardado; lo nuevo del modelo (un resumen sin valores) se trata en la vista, la respuesta y la comparación, sin inventar valores.
+
+## Implementación
+
+- `@rimor/estadistica`: `hodgesLehmann` y `distribucionU` (`hodgesLehmann.ts`); `comparar` devuelve `hl`. Referencias: `generar.py` añade `hl` a cada caso (todas las diferencias con NumPy y la distribución exacta de U contando con enteros, o la normal de SciPy), regenerado con las mismas versiones que antes (NumPy 2.2.6, SciPy 1.15.3) sin que cambie ningún valor anterior; los 33 casos coinciden (15 exactos y 18 con la normal).
+- `lectores/mediciones/formatos.ts`: hyperfine (movido de `series.ts`), pytest-benchmark, JMH, criterion (`sample.json` y `estimates.json`) y columnas CSV; `series.ts` los usa y pasa los resúmenes a su unidad.
+- Lector: las series de resumen (`Serie.resumen`) tienen su descriptiva sin inventar nada (`n` = 0), su respuesta («Mediana de 38,48 µs según criterion (IC 95 %: …), sin las mediciones sueltas.»), su resumen del frontmatter sin `n` y su vista (mediana, intervalo y una nota de por qué no hay gráfico).
+- Comparación: «Diferencia según Hodges-Lehmann» en la vista; `hl`, `hl_bajo` y `hl_alto` en el resultado guardado y la cifra citable `hl`. Un resumen no se compara (no tiene mediciones).
+- Pruebas: `referencias.test.ts` (los 33 casos, la distribución de U, el ejemplo del plan, casos límite y propiedades), `mediciones.test.ts` (formatos, resúmenes, CSV sin unidad, JMH en `thrpt`), `comparaciones.test.ts`, `rutas/comparacion/VistaMediciones.test.tsx`; ejemplos en `fixtures/mediciones/` (sus valores esperados, calculados en Python por fuera) y en el corpus de detección.
+
+### Decisiones tomadas al implementar
+
+| Decisión | Por qué |
+|---|---|
+| La cifra `hl` sigue la regla de decimales del resto (unas cuatro cifras significativas: «−1,820 ms») | Así se cita igual que las medianas de la misma comparación. |
+| La distribución exacta de U, en coma flotante | Con m·n ≤ 400 los recuentos caben de sobra y la referencia con enteros exactos da lo mismo. |
+| `testTimeout` de Vitest a 15 s y la prueba de linealidad de `curl -u` en el proyecto `rendimiento` | El entorno tenía pausas de varios segundos que agotaban pruebas al azar (también en el commit anterior); ninguna aserción cambia. |
+| `elementoDeTexto` en `pruebas/falsos.ts` (un elemento con el resumen de verdad) para la prueba de exportar | Con el resumen de mentira, la puesta al día en segundo plano contaba un cambio a destiempo (la misma carrera que en Importar). |
+| Las columnas CSV con unidad puntúan 0,9, como una tabla de Datos con cabecera | Mediciones va antes en el orden (puesto 6), así que gana el empate; una tabla sin unidades sigue siendo de Datos. |

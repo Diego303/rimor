@@ -10,7 +10,7 @@ import { lectorLog } from '../lectores/log/lector';
 import { lectorMediciones } from '../lectores/mediciones/lector';
 import { elementoFalso } from '../lectores/pruebas/falsos';
 import { comparables } from './clases';
-import { calcular, crearComparacion } from './crear';
+import { calcular, crearComparacion, resultadoDe } from './crear';
 import { compararLogs } from './logs';
 import { compararMediciones } from './mediciones';
 import { cifrasDeResultado, desfasado, fuentesCambiadas, leerResultado, textoCambio } from './resultado';
@@ -199,5 +199,37 @@ describe('qué se compara y lo que se guarda', () => {
     expect(fuentesCambiadas(null, ['a', 'b'])).toEqual([0, 1]);
     expect(textoCambio(3.14, 'es').replace(' ', ' ')).toBe('+3,1 %');
     expect(textoCambio(null, 'es')).toBe('—');
+  });
+});
+
+describe('Hodges-Lehmann en la comparación (IN-047)', () => {
+  it('la comparación lo trae y el resultado guardado lo cita', async () => {
+    const a = await lectorMediciones.derivar(elemento(7, 'mediciones', reqwest));
+    const b = await lectorMediciones.derivar(elemento(8, 'mediciones', ureq));
+    const c = compararMediciones(a, b);
+    if (!c) throw new Error('sin comparación');
+    expect(c.resultado.hl.estimacion).toBeCloseTo(-1.82, 9);
+    const r = resultadoDe({ clase: 'mediciones', mediciones: c }, [
+      elemento(7, 'mediciones', reqwest),
+      elemento(8, 'mediciones', ureq),
+    ]);
+    expect(r).toMatchObject({ clase: 'mediciones', hl: expect.closeTo(-1.82, 9) });
+    expect(Object.fromEntries(cifrasDeResultado(r, 'es')).hl?.replaceAll(' ', ' ')).toBe('−1,820 ms');
+    // Un resultado de antes, sin `hl`, se sigue leyendo (y no cita lo que no tiene).
+    const viejo = { ...r, hl: undefined, hl_bajo: undefined, hl_alto: undefined } as unknown as Record<string, unknown>;
+    const leido = leerResultado(viejo);
+    expect(leido && Object.fromEntries(cifrasDeResultado(leido, 'es')).hl).toBeUndefined();
+  });
+
+  it('un resumen (sin mediciones sueltas) no se compara', async () => {
+    const resumen = await lectorMediciones.derivar(
+      elemento(
+        9,
+        'mediciones',
+        readFileSync(join(process.cwd(), 'fixtures/mediciones/criterion-estimates.json'), 'utf8'),
+      ),
+    );
+    const b = await lectorMediciones.derivar(elemento(8, 'mediciones', ureq));
+    expect(compararMediciones(resumen, b)).toBeNull();
   });
 });

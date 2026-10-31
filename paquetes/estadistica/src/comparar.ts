@@ -1,8 +1,10 @@
 /**
- * Comparación de dos series de mediciones (CMP-01): cambio porcentual de las medianas, Mann-Whitney y veredicto.
+ * Comparación de dos series de mediciones (CMP-01): cambio porcentual de las medianas, Mann-Whitney, Hodges-Lehmann
+ * (IN-047) y veredicto.
  * El veredicto no decide qué es «mejor»: dice si cambia y en qué sentido; el lector lo traduce («más rápido»).
  */
 import { type Descriptiva, describir } from './descriptiva';
+import { hodgesLehmann, type ResultadoHodgesLehmann } from './hodgesLehmann';
 import { mannWhitney } from './mannWhitney';
 
 export const UMBRAL_SIGNIFICACION = 0.05;
@@ -17,6 +19,8 @@ export interface Comparacion {
   significativo: boolean;
   /** Sentido del cambio de B respecto de A si es significativo; «igual» si no hay diferencia clara. */
   sentido: 'baja' | 'sube' | 'igual';
+  /** Cuánto cambia (B − A) según Hodges-Lehmann, con su intervalo del 95 % (IN-047). */
+  hl: ResultadoHodgesLehmann;
 }
 
 export function comparar(a: readonly number[], b: readonly number[]): Comparacion {
@@ -31,5 +35,5 @@ export function comparar(a: readonly number[], b: readonly number[]): Comparacio
   const porU = u - (a.length * b.length) / 2;
   const signo = diferencia !== 0 ? Math.sign(diferencia) : -Math.sign(porU);
   const sentido = !significativo || signo === 0 ? 'igual' : signo < 0 ? 'baja' : 'sube';
-  return { a: da, b: db, cambio, p, u, significativo, sentido };
+  return { a: da, b: db, cambio, p, u, significativo, sentido, hl: hodgesLehmann(a, b) };
 }
