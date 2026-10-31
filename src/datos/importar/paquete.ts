@@ -14,7 +14,9 @@ import {
   migrar,
   unir,
 } from '@rimor/formato';
-import { esquemaNuevoSesiones, leerSesiones, RUTA_SESIONES } from '../../espacio/sesiones';
+import { esEsquemaNuevo } from '../../espacio/registro';
+import { leerSesiones, RUTA_SESIONES } from '../../espacio/sesiones';
+import { leerVistas, RUTA_VISTAS } from '../../espacio/vistas';
 import { fueraDeLaExportacion, RUTA_MANIFEST_EXPORTADO, sha256 } from '../exportar';
 import { ErrorZip, entradasZip, LIMITES_ZIP, type LimitesZip, leerEntrada, rutaSegura, trozosDe } from '../leerZip';
 
@@ -169,8 +171,10 @@ function comprobarEsquemas(archivos: Map<string, Uint8Array>) {
     }
     if (ruta === 'colecciones.json' && leerColecciones(texto(datos)) === null)
       throw new ErrorImportar('importar.colecciones', ruta);
+    if (ruta === RUTA_VISTAS && leerVistas(texto(datos)) === null)
+      throw new ErrorImportar(esEsquemaNuevo(texto(datos)) ? 'importar.esquemaNuevo' : 'importar.vistas', ruta);
     if (ruta === RUTA_SESIONES && leerSesiones(texto(datos)) === null)
-      throw new ErrorImportar(esquemaNuevoSesiones(texto(datos)) ? 'importar.esquemaNuevo' : 'importar.sesiones', ruta);
+      throw new ErrorImportar(esEsquemaNuevo(texto(datos)) ? 'importar.esquemaNuevo' : 'importar.sesiones', ruta);
   }
 }
 

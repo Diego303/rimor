@@ -637,6 +637,28 @@
       "verTodos": "Ver los {n}",
       "verMenos": "Ver menos",
       "yMas": "y {n} más"
+    },
+    "vista": {
+      "etiqueta": "Vista",
+      "guardar": "Guardar como vista",
+      "guardarTitulo": "Guardar la búsqueda como vista",
+      "nombre": "Nombre",
+      "guardarBoton": "Guardar",
+      "guardada": "Vista «{nombre}» guardada",
+      "yaGuardada": "Guardada como",
+      "noGuardada": "No se pudo guardar la vista.",
+      "ilegible": "vistas.json no se entiende: no se toca. Arréglalo o bórralo para guardar vistas.",
+      "noEncontrada": "No encuentro esta vista",
+      "noEncontradaTexto": "Puede que se borrara, o que la dirección no sea la de ninguna.",
+      "editarBusqueda": "Editar la búsqueda",
+      "vaciaTitulo": "Nada casa con esta búsqueda ahora",
+      "vacia": "Se llena sola cuando captures algo que case.",
+      "organizar": "Borrar",
+      "borrar": "Borrar la vista",
+      "borrarTitulo": "¿Borrar la vista «{nombre}»?",
+      "borrarTexto": "Se borra la búsqueda guardada; los elementos se quedan.",
+      "borrada": "Vista «{nombre}» borrada",
+      "enRail": "{nombre}: {n} elementos"
     }
   },
   "espacio": {
@@ -910,7 +932,8 @@
         "refRepetida": "repite la ref de otro elemento del archivo",
         "rutaChoca": "choca con una carpeta o un archivo (está donde hace falta una carpeta, o al revés)",
         "rutaOcupada": "iría donde ya hay otro elemento",
-        "sesiones": "no se entiende"
+        "sesiones": "no se entiende",
+        "vistas": "no se entiende"
       }
     },
     "noRecargado": "Se importó, pero no se pudo releer el espacio: recarga la página.",

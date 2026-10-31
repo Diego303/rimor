@@ -20,6 +20,7 @@ import {
 import { reescribirRefs } from '../../almacen/menciones';
 import { CARPETA_PAPELERA } from '../../almacen/repositorio';
 import { juntarSesiones, RUTA_SESIONES } from '../../espacio/sesiones';
+import { juntarVistas, RUTA_VISTAS } from '../../espacio/vistas';
 import { ErrorImportar } from './paquete';
 
 export type Categoria = 'nuevo' | 'identico' | 'actualizado' | 'conflicto';
@@ -255,9 +256,10 @@ export async function planear(
       if (juntas) plan.escrituras.set(ruta, bytes(juntas));
       continue;
     }
-    // Los nombres de las sesiones (IN-051): se juntan; ante el mismo id, el de aquí.
-    if (ruta === RUTA_SESIONES) {
-      const juntos = juntarSesiones(suyo === null ? null : texto(suyo), texto(datos));
+    // Los nombres de las sesiones (IN-051) y las vistas guardadas (IN-054): se juntan; ante el mismo id, lo de aquí.
+    const juntar = ruta === RUTA_SESIONES ? juntarSesiones : ruta === RUTA_VISTAS ? juntarVistas : null;
+    if (juntar) {
+      const juntos = juntar(suyo === null ? null : texto(suyo), texto(datos));
       if (juntos && (suyo === null || juntos !== texto(suyo))) plan.escrituras.set(ruta, bytes(juntos));
       continue;
     }

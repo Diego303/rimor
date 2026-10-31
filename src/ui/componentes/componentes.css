@@ -1581,6 +1581,12 @@ pre.code.codigo .ln {
 .warn-texto {
   color: var(--warn);
 }
+/* La consulta de una vista guardada (IN-054), bajo su título. */
+.consulta-vista {
+  margin: -6px 0 4px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 /* Panel de grupo (IN-052), como `SC.coleccion`: barras por tipo con su icono, el gráfico de las dos semanas y las
    filas con su casilla para comparar. */
 .lista-que-hay {

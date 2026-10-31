@@ -6,7 +6,7 @@
 import { isoConZona } from '@rimor/formato';
 import { type PropuestaEnFeed, useCompositor } from '../../captura/compositor';
 import { aceptarPropuesta, descartarPropuesta } from '../../captura/reglas';
-import { ErrorReglasIlegibles } from '../../espacio/abrir';
+import { ErrorRegistroIlegible } from '../../espacio/abrir';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { fmtHora } from '../../i18n/formatos';
 import { useT } from '../../i18n/useT';
@@ -36,7 +36,7 @@ export function MensajePropuesta({ propuesta: p, soloLectura }: Props) {
         if (acepta) avisos?.avisar(t('pantallas.inicio.reglaGuardada'));
       })
       .catch((e) =>
-        avisos?.avisar(t(e instanceof ErrorReglasIlegibles ? 'ajustes.reglasNoGuardadas' : 'ajustes.noGuardado')),
+        avisos?.avisar(t(e instanceof ErrorRegistroIlegible ? 'ajustes.reglasNoGuardadas' : 'ajustes.noGuardado')),
       );
   }
 

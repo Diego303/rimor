@@ -75,16 +75,6 @@ export const SESIONES_INICIALES: DatosSesiones = Object.freeze({ esquema: 1, nom
 export const limpiarNombre = (nombre: string): string =>
   nombre.replace(/\s+/g, ' ').trim().slice(0, LARGO_NOMBRE).trim();
 
-/** ¿Es de un esquema más nuevo que el que se conoce? (Al importar, otro rechazo que «no se entiende».) */
-export function esquemaNuevoSesiones(texto: string): boolean {
-  try {
-    const d = JSON.parse(texto) as { esquema?: unknown };
-    return typeof d?.esquema === 'number' && d.esquema > 1;
-  } catch {
-    return false;
-  }
-}
-
 /** Lee el archivo; `null` si existe pero no se entiende o es de un esquema más nuevo (no se sobrescribe). */
 export function leerSesiones(texto: string | null): DatosSesiones | null {
   if (!texto) return { esquema: 1, nombres: {} };

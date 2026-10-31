@@ -161,6 +161,7 @@ describe('leer un paquete: lo malicioso se rechaza con su regla y su archivo', (
     );
     // Los nombres de las sesiones (IN-051): rotos, o de un esquema más nuevo.
     expect(await rechazo(await zipConManifest({ 'sesiones.json': enc('{') }))).toBe('importar.sesiones sesiones.json');
+    expect(await rechazo(await zipConManifest({ 'vistas.json': enc('{') }))).toBe('importar.vistas vistas.json');
     expect(await rechazo(await zipConManifest({ 'sesiones.json': enc('{"esquema":2,"nombres":{}}') }))).toBe(
       'importar.esquemaNuevo sesiones.json',
     );
@@ -295,6 +296,21 @@ describe('nombres de las sesiones (IN-051)', () => {
       b: 'Solo aquí',
       c: 'Nuevo',
     });
+    // Las vistas guardadas (IN-054), igual.
+    const vistas = (v: { id: string; nombre: string }[]) =>
+      JSON.stringify({ esquema: 1, vistas: v.map((x) => ({ ...x, consulta: 'x', creada: '' })) });
+    const conVistas = await espacio([el(1)], {
+      'vistas.json': vistas([
+        { id: 'a', nombre: 'Del paquete' },
+        { id: 'c', nombre: 'Nueva' },
+      ]),
+    });
+    const pv = await leerPaquete(await zipDe(conVistas), 'x.zip');
+    const aquiVistas = await espacio([el(1)], { 'vistas.json': vistas([{ id: 'a', nombre: 'Aquí' }]) });
+    await fusionar(aquiVistas, await planear(pv.archivos, pv.manifest, await localDe(aquiVistas)));
+    expect(
+      JSON.parse((await volcado(aquiVistas))['vistas.json'] ?? '{}').vistas.map((v: { nombre: string }) => v.nombre),
+    ).toEqual(['Aquí', 'Nueva']);
     const roto = await espacio([el(1)], { 'sesiones.json': '{roto' });
     await fusionar(roto, await planear(p.archivos, p.manifest, await localDe(roto)));
     expect((await volcado(roto))['sesiones.json']).toBe('{roto');

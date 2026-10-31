@@ -1,9 +1,9 @@
 import type { FrontmatterComun } from '@rimor/formato';
 import { describe, expect, it } from 'vitest';
 import { elementoFalso } from '../lectores/pruebas/falsos';
+import { esEsquemaNuevo } from './registro';
 import {
   escribirSesiones,
-  esquemaNuevoSesiones,
   franjaDe,
   franjaDeId,
   juntarSesiones,
@@ -114,7 +114,7 @@ describe('sesiones.json', () => {
     expect(juntarSesiones(aqui, '{roto')).toBeNull();
     // Uno de aquí que no se entiende no se sobrescribe.
     expect(juntarSesiones('{roto', paquete)).toBeNull();
-    expect(esquemaNuevoSesiones(JSON.stringify({ esquema: 2 }))).toBe(true);
-    expect(esquemaNuevoSesiones('{roto')).toBe(false);
+    expect(esEsquemaNuevo(JSON.stringify({ esquema: 2 }))).toBe(true);
+    expect(esEsquemaNuevo('{roto')).toBe(false);
   });
 });

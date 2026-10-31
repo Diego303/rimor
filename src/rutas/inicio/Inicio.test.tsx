@@ -182,7 +182,8 @@ describe('Inicio', () => {
     // Enter: abrir (con el foco en el mensaje seleccionado, como lo deja j/k).
     await tecla('j');
     expect(seleccionado()).toBe('TXT-0003');
-    expect(document.activeElement?.getAttribute('data-ref')).toBe('TXT-0003');
+    // El foco llega tras pintar la fila (la lista es virtual): bajo carga, un poco después.
+    await waitFor(() => expect(document.activeElement?.getAttribute('data-ref')).toBe('TXT-0003'), ESCRITURA);
     await tecla('Enter');
     await waitFor(() => expect(router.state.location.pathname).toBe('/e/TXT-0003'), ESCRITURA);
   }, 30_000);

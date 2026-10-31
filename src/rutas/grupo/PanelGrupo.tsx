@@ -37,7 +37,8 @@ export function ExportarGrupo({
 }: {
   elementos: readonly FrontmatterComun[];
   nombre: string;
-  grupo: { clase: ClaseGrupo; valor: string };
+  /** Qué grupo es (va al manifest: `parcial`): una clase de grupo, `vista`… */
+  grupo: { clase: ClaseGrupo | 'vista'; valor: string };
 }) {
   const { t } = useT();
   const espacio = useEspacioOpcional();

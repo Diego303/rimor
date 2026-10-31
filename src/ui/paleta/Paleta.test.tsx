@@ -32,13 +32,18 @@ describe('Paleta de comandos', () => {
     await import('../../rutas/coleccion/Coleccion');
     await import('../../rutas/elemento/Elemento');
     await import('../../rutas/buscar/Buscar');
+    // Las pantallas a las que lleva la paleta: cargadas antes, para que ninguna transición acabe tras desmontar.
+    await import('../../rutas/inicio/Inicio');
+    await import('../../rutas/papelera/Papelera');
+    await import('../../rutas/datos/Datos');
   }, 120_000);
 
   beforeEach(() => localStorage.clear());
 
   afterEach(async () => {
     cleanup();
-    await act(async () => new Promise((r) => setTimeout(r, 300)));
+    // Bajo carga, la carga diferida de una pantalla puede seguir en marcha un rato.
+    await act(async () => new Promise((r) => setTimeout(r, 600)));
   });
 
   it('Ctrl+K la abre con las acciones y las colecciones; flechas con vuelta, Enter ejecuta y Esc cierra', async () => {

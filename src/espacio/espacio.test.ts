@@ -7,7 +7,7 @@ import { AlmacenMemoria } from '../almacen/memoria';
 import type { Canal, Cerrojos } from '../almacen/pestanas';
 import { RUTA_DIARIO } from '../almacen/repositorio';
 import { RUTA_REGLAS } from '../captura/reglas';
-import { abrirEspacio, ErrorReglasIlegibles } from './abrir';
+import { abrirEspacio, ErrorRegistroIlegible } from './abrir';
 import { conCopia, conPersistencia, ESTADO_INICIAL, leerEstado, RUTA_ESTADO } from './estado';
 import { crearManifest, RUTA_MANIFEST } from './manifest';
 import {
@@ -474,7 +474,7 @@ describe('reglas de detección del espacio (IN-049)', () => {
     if (!a.ok) throw new Error('no abre');
     expect(a.valor.reglasLegibles()).toBe(false);
     expect(a.valor.reglas().reglas).toEqual([]);
-    await expect(a.valor.guardarReglas((d) => d)).rejects.toThrow(ErrorReglasIlegibles);
+    await expect(a.valor.guardarReglas((d) => d)).rejects.toThrow(ErrorRegistroIlegible);
     expect(await leerTexto(almacen, RUTA_REGLAS)).toBe(texto);
     await a.valor.cerrar();
   });
@@ -572,5 +572,36 @@ describe('nombres de las sesiones: lectura y pestañas (IN-051)', () => {
     expect(await leerTexto(almacen, 'sesiones.json')).toBe('{roto');
     await a.valor.cerrar();
     await b.valor.cerrar();
+  });
+});
+
+describe('vistas guardadas del espacio (IN-054)', () => {
+  it('se guardan en vistas.json (en la raíz) y se leen al volver a abrir; uno ilegible no se toca', async () => {
+    const almacen = new AlmacenMemoria();
+    const abrir = () =>
+      abrirEspacio({
+        espacioId: 'v1',
+        almacen,
+        fabricaIndexedDb: new IDBFactory(),
+        cerrojos: cerrojosFalsos(),
+        canal: canal(),
+      });
+    const a = await abrir();
+    if (!a.ok) throw new Error('no abre');
+    const vista = { id: 'errores', nombre: 'Errores', consulta: 'tipo:error', creada: '' };
+    await a.valor.guardarVistas((d) => ({ ...d, vistas: [vista] }));
+    expect(JSON.parse((await leerTexto(almacen, 'vistas.json')) ?? '{}').vistas).toEqual([vista]);
+    await a.valor.cerrar();
+    const b = await abrir();
+    if (!b.ok) throw new Error('no abre');
+    expect(b.valor.vistas().vistas).toEqual([vista]);
+    await b.valor.cerrar();
+    await escribirTexto(almacen, 'vistas.json', '{roto');
+    const c = await abrir();
+    if (!c.ok) throw new Error('no abre');
+    expect(c.valor.vistasLegibles()).toBe(false);
+    await expect(c.valor.guardarVistas((d) => d)).rejects.toThrow(ErrorRegistroIlegible);
+    expect(await leerTexto(almacen, 'vistas.json')).toBe('{roto');
+    await c.valor.cerrar();
   });
 });

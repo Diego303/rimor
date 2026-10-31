@@ -637,6 +637,28 @@
       "verTodos": "See all {n}",
       "verMenos": "See fewer",
       "yMas": "and {n} more"
+    },
+    "vista": {
+      "etiqueta": "View",
+      "guardar": "Save as view",
+      "guardarTitulo": "Save the search as a view",
+      "nombre": "Name",
+      "guardarBoton": "Save",
+      "guardada": "View “{nombre}” saved",
+      "yaGuardada": "Saved as",
+      "noGuardada": "The view could not be saved.",
+      "ilegible": "vistas.json cannot be read: it is not touched. Fix or delete it to save views.",
+      "noEncontrada": "I cannot find this view",
+      "noEncontradaTexto": "It may have been deleted, or the address is not that of any view.",
+      "editarBusqueda": "Edit the search",
+      "vaciaTitulo": "Nothing matches this search right now",
+      "vacia": "It fills itself when you capture something that matches.",
+      "organizar": "Delete",
+      "borrar": "Delete the view",
+      "borrarTitulo": "Delete the view “{nombre}”?",
+      "borrarTexto": "The saved search is deleted; the items stay.",
+      "borrada": "View “{nombre}” deleted",
+      "enRail": "{nombre}: {n} items"
     }
   },
   "espacio": {
@@ -910,7 +932,8 @@
         "refRepetida": "repeats the ref of another item in the file",
         "rutaChoca": "clashes with a folder or a file (it is where a folder is needed, or the other way round)",
         "rutaOcupada": "would go where another item already is",
-        "sesiones": "cannot be understood"
+        "sesiones": "cannot be understood",
+        "vistas": "cannot be understood"
       }
     },
     "noRecargado": "It was imported, but the space could not be reread: reload the page.",

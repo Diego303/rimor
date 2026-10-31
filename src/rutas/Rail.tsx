@@ -1,7 +1,10 @@
 /** Raíl de la carcasa (rimor-diseno.md §8.1): logotipo, secciones, colecciones y pie del espacio. */
 import { Link, useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
+import { useBuscar } from '../busqueda/Busqueda';
 import { SenalExportacion, useEsperaExportacion } from '../datos/useExportar';
+import { useVistas } from '../espacio/useVistas';
+import type { Vista } from '../espacio/vistas';
 import { useEspacio } from '../estado/espacio';
 import { diasDesde, type Idioma } from '../i18n/formatos';
 import { traducir } from '../i18n/i18n';
@@ -25,6 +28,16 @@ function ContenidoRb({ icono, texto, recuento }: { icono: NombreIcono; texto: st
 }
 
 const actual = (activo: boolean) => (activo ? ('page' as const) : undefined);
+
+/** Una vista guardada en el raíl (IN-054): su nombre y el recuento vivo de su búsqueda. */
+function VistaEnRail({ vista, activa }: { vista: Vista; activa: boolean }) {
+  const { busqueda } = useBuscar(vista.consulta);
+  return (
+    <Link to="/v/$vista" params={{ vista: vista.id }} className="rb sub" aria-current={actual(activa)}>
+      <ContenidoRb icono="buscar" texto={vista.nombre} {...(busqueda ? { recuento: busqueda.total } : {})} />
+    </Link>
+  );
+}
 
 /**
  * El piloto de la copia: verde al día, ámbar si toca copiar. Al pasar a verde (una copia completa), en su sitio se ve
@@ -88,6 +101,7 @@ export function Rail() {
   const espacio = useEspacio();
   const exportacion = useEsperaExportacion();
   const copia = textoUltimaCopia(espacio.ultimaCopia, idioma);
+  const vistas = useVistas();
   const enLinea = useEnLinea();
   return (
     <nav className="rail" aria-label={t('rail.etiqueta')}>
@@ -100,7 +114,9 @@ export function Rail() {
       <Link to="/buscar" className="rb" aria-current={actual(ruta === '/buscar')}>
         <ContenidoRb icono="buscar" texto={t('rail.buscar')} />
       </Link>
-      {espacio.colecciones.length > 0 && <span className="lbl sec">{t('rail.colecciones')}</span>}
+      {(espacio.colecciones.length > 0 || vistas.vistas.length > 0) && (
+        <span className="lbl sec">{t('rail.colecciones')}</span>
+      )}
       {espacio.colecciones.map((c) => (
         <Link
           key={c.id}
@@ -111,6 +127,9 @@ export function Rail() {
         >
           <ContenidoRb icono="coleccion" texto={c.nombre} recuento={c.recuento} />
         </Link>
+      ))}
+      {vistas.vistas.map((v) => (
+        <VistaEnRail key={v.id} vista={v} activa={ruta === `/v/${encodeURIComponent(v.id)}`} />
       ))}
       {/* No es «sub»: también va en la barra inferior del móvil, donde no hay pie del espacio. */}
       <Link to="/ajustes" className="rb" aria-current={actual(ruta === '/ajustes')}>

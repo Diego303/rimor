@@ -18,7 +18,9 @@ import { type Ajustes, leerAjustes, RUTA_AJUSTES } from './ajustes';
 import { GestorColecciones } from './colecciones';
 import { conCambios, type EstadoCuidado, leerEstado, RUTA_ESTADO } from './estado';
 import { crearManifest, NOMBRE_ESPACIO_INICIAL, RUTA_MANIFEST } from './manifest';
+import { abrirRegistro } from './registro';
 import { type DatosSesiones, escribirSesiones, leerSesiones, RUTA_SESIONES, SESIONES_INICIALES } from './sesiones';
+import { type DatosVistas, escribirVistas, leerVistas, RUTA_VISTAS, VISTAS_INICIALES } from './vistas';
 
 /** Los tipos de entidad que ya tienen funcionalidad (sus carpetas se leen al abrir). */
 const TIPOS_ENTIDAD_LEIDOS = ['comparacion', 'hilo'] as const;
@@ -70,7 +72,7 @@ export interface EspacioAbierto {
   guardarAjustes(cambio: (a: Ajustes) => Ajustes): Promise<void>;
   /** Reglas de detección aprendidas (IN-049, `.rimor/reglas-deteccion.json`). */
   reglas(): DatosReglas;
-  /** Si se entiende el archivo de reglas (si no, no se toca: `guardarReglas` falla con `ErrorReglasIlegibles`). */
+  /** Si se entiende el archivo de reglas (si no, no se toca: `guardarReglas` falla con `ErrorRegistroIlegible`). */
   reglasLegibles(): boolean;
   /**
    * Guarda un cambio de las reglas (en orden; solo escribe la pestaña que escribe) y avisa. Con las reglas leídas, el
@@ -81,19 +83,20 @@ export interface EspacioAbierto {
   sesiones(): DatosSesiones;
   /** Guarda un cambio de los nombres de las sesiones (en orden; solo escribe la pestaña que escribe) y avisa. */
   guardarSesiones(cambio: (s: DatosSesiones) => DatosSesiones): Promise<void>;
+  /** Las vistas guardadas (IN-054, `vistas.json`). */
+  vistas(): DatosVistas;
+  /** Si se entiende `vistas.json` (si no, no se toca). */
+  vistasLegibles(): boolean;
+  /** Guarda un cambio de las vistas (en orden; solo escribe la pestaña que escribe) y avisa. */
+  guardarVistas(cambio: (v: DatosVistas) => DatosVistas): Promise<void>;
   /** Contadores locales de lo ahorrado (IN-016). */
   contadores: Contadores;
   /** Escribe lo pendiente y suelta el cerrojo y la caché. */
   cerrar(): Promise<void>;
 }
 
-/** El archivo de reglas existe pero no se entiende (o es de una versión más nueva): no se sobrescribe. */
-export class ErrorReglasIlegibles extends Error {
-  constructor() {
-    super('.rimor/reglas-deteccion.json no se entiende: no se sobrescribe');
-    this.name = 'ErrorReglasIlegibles';
-  }
-}
+/** Un registro que no se entiende (las reglas, las sesiones, las vistas): no se sobrescribe. */
+export { ErrorRegistroIlegible } from './registro';
 
 export type FaseApertura = { fase: 'abriendo' } | { fase: 'indexando'; hechos: number; total: number };
 
@@ -181,80 +184,35 @@ export async function abrirEspacio(
         .then(() => coordinacion.avisarCambio([]));
       return ajustesPendientes;
     };
-    // Las reglas, igual, salvo dos cosas: un archivo que existe pero no se entiende no se sobrescribe (se perderían), y
-    // si no se pudo leer (E/S) se vuelve a leer antes de escribir nada: se escriben solas con cada corrección del tipo.
-    type EstadoReglas = { datos: DatosReglas; estado: 'leidas' | 'ilegibles' | 'sinLeer' };
-    const leerReglasSeguro = async (): Promise<EstadoReglas> => {
-      try {
-        const datos = leerReglas(await leerTexto(dep.almacen, RUTA_REGLAS));
-        return datos ? { datos, estado: 'leidas' } : { datos: REGLAS_INICIALES, estado: 'ilegibles' };
-      } catch {
-        return { datos: REGLAS_INICIALES, estado: 'sinLeer' };
-      }
+    // Los nombres de las sesiones y las vistas guardadas: registros en la raíz (son del espacio, viajan en el ZIP).
+    const comunRegistro = {
+      almacen: dep.almacen,
+      puedeEscribir: () => escribe() && !cerrado,
+      alCambiar: () => avisar(),
+      alEscribir: () => coordinacion.avisarCambio([]),
     };
-    let reglas = await leerReglasSeguro();
-    let reglasPendientes: Promise<void> = Promise.resolve();
-    const guardarReglas = (cambio: (r: DatosReglas) => DatosReglas): Promise<void> => {
-      const aplicar = () => {
-        if (reglas.estado !== 'leidas') throw new ErrorReglasIlegibles();
-        reglas = { datos: cambio(reglas.datos), estado: 'leidas' };
-        const copia = reglas.datos;
-        avisar();
-        return copia;
-      };
-      // Leídas: el cambio vale ya (quien llama lee el resultado al momento) y la escritura va en su turno.
-      const copia = reglas.estado === 'leidas' ? aplicar() : null;
-      reglasPendientes = reglasPendientes
-        .catch(() => undefined)
-        .then(async () => {
-          if (copia) return copia;
-          if (reglas.estado === 'sinLeer') {
-            const otra = await leerReglasSeguro();
-            if (reglas.estado === 'sinLeer') reglas = otra;
-          }
-          return aplicar();
-        })
-        .then((d) => (escribe() && !cerrado ? escribirTexto(dep.almacen, RUTA_REGLAS, escribirReglas(d)) : undefined))
-        .then(() => coordinacion.avisarCambio([]));
-      return reglasPendientes;
-    };
-    // Los nombres de las sesiones, como las reglas (pero en la raíz: son del espacio, viajan en el ZIP): un archivo que
-    // existe pero no se entiende no se sobrescribe; uno que no se pudo leer (E/S) se vuelve a leer antes de escribir.
-    type EstadoSesiones = { datos: DatosSesiones; estado: 'leidas' | 'ilegibles' | 'sinLeer' };
-    const leerSesionesSeguro = async (): Promise<EstadoSesiones> => {
-      try {
-        const datos = leerSesiones(await leerTexto(dep.almacen, RUTA_SESIONES));
-        return datos ? { datos, estado: 'leidas' } : { datos: SESIONES_INICIALES, estado: 'ilegibles' };
-      } catch {
-        return { datos: SESIONES_INICIALES, estado: 'sinLeer' };
-      }
-    };
-    let sesiones = await leerSesionesSeguro();
-    let sesionesPendientes: Promise<void> = Promise.resolve();
-    const guardarSesiones = (cambio: (s: DatosSesiones) => DatosSesiones): Promise<void> => {
-      const aplicar = () => {
-        if (sesiones.estado !== 'leidas') throw new Error('sesiones.json no se entiende: no se sobrescribe');
-        sesiones = { datos: cambio(sesiones.datos), estado: 'leidas' };
-        avisar();
-        return sesiones.datos;
-      };
-      const copia = sesiones.estado === 'leidas' ? aplicar() : null;
-      sesionesPendientes = sesionesPendientes
-        .catch(() => undefined)
-        .then(async () => {
-          if (copia) return copia;
-          if (sesiones.estado === 'sinLeer') {
-            const otra = await leerSesionesSeguro();
-            if (sesiones.estado === 'sinLeer') sesiones = otra;
-          }
-          return aplicar();
-        })
-        .then((d) =>
-          escribe() && !cerrado ? escribirTexto(dep.almacen, RUTA_SESIONES, escribirSesiones(d)) : undefined,
-        )
-        .then(() => coordinacion.avisarCambio([]));
-      return sesionesPendientes;
-    };
+    // Las reglas de detección (IN-049), igual, pero en `.rimor/` (son de este navegador).
+    const reglas = await abrirRegistro<DatosReglas>({
+      ...comunRegistro,
+      ruta: RUTA_REGLAS,
+      leer: leerReglas,
+      escribir: escribirReglas,
+      inicial: REGLAS_INICIALES,
+    });
+    const sesiones = await abrirRegistro<DatosSesiones>({
+      ...comunRegistro,
+      ruta: RUTA_SESIONES,
+      leer: leerSesiones,
+      escribir: escribirSesiones,
+      inicial: SESIONES_INICIALES,
+    });
+    const vistas = await abrirRegistro<DatosVistas>({
+      ...comunRegistro,
+      ruta: RUTA_VISTAS,
+      leer: leerVistas,
+      escribir: escribirVistas,
+      inicial: VISTAS_INICIALES,
+    });
     const contadores = await abrirContadores(dep.almacen, () => escribe() && alDia && !cerrado, reloj);
 
     const abierta = await abrirCache(dep);
@@ -319,12 +277,9 @@ export async function abrirEspacio(
         await gestor.cargar().catch(() => undefined);
         estado = leerEstado(await leerTexto(dep.almacen, RUTA_ESTADO));
         ajustes = (await leerAjustesSeguro()) ?? ajustes;
-        const sesionesReleidas = await leerSesionesSeguro();
-        // Una lectura que falla deja lo que había (si ya estaba leído); una que no se entiende, no se toca.
-        if (sesionesReleidas.estado !== 'sinLeer' || sesiones.estado === 'sinLeer') sesiones = sesionesReleidas;
-        const releidas = await leerReglasSeguro();
-        // Una lectura que falla deja lo que había (si ya estaba leído).
-        if (releidas.estado !== 'sinLeer' || reglas.estado === 'sinLeer') reglas = releidas;
+        await sesiones.releer();
+        await vistas.releer();
+        await reglas.releer();
         avisar();
         return true;
       });
@@ -365,8 +320,9 @@ export async function abrirEspacio(
       esperarEscrituras: async () => {
         await pendiente.catch(() => undefined);
         await ajustesPendientes.catch(() => undefined);
-        await reglasPendientes.catch(() => undefined);
-        await sesionesPendientes.catch(() => undefined);
+        await reglas.esperar();
+        await sesiones.esperar();
+        await vistas.esperar();
         await contadores.esperar().catch(() => undefined);
         await gestor.escrito();
         await dep.almacen.esperar?.().catch(() => undefined);
@@ -387,11 +343,14 @@ export async function abrirEspacio(
       guardarEstado,
       ajustes: () => ajustes,
       guardarAjustes,
-      reglas: () => reglas.datos,
-      reglasLegibles: () => reglas.estado !== 'ilegibles',
-      guardarReglas,
-      sesiones: () => sesiones.datos,
-      guardarSesiones,
+      reglas: () => reglas.datos(),
+      reglasLegibles: () => reglas.legible(),
+      guardarReglas: (cambio) => reglas.guardar(cambio),
+      sesiones: () => sesiones.datos(),
+      guardarSesiones: (cambio) => sesiones.guardar(cambio),
+      vistas: () => vistas.datos(),
+      vistasLegibles: () => vistas.legible(),
+      guardarVistas: (cambio) => vistas.guardar(cambio),
       contadores,
       alCambiar: (fn) => {
         oyentes.add(fn);
@@ -402,8 +361,9 @@ export async function abrirEspacio(
         // Primero lo que ya estaba pedido; después nada más se escribe y se sueltan cerrojo y caché.
         await pendiente.catch(() => undefined);
         await ajustesPendientes.catch(() => undefined);
-        await reglasPendientes.catch(() => undefined);
-        await sesionesPendientes.catch(() => undefined);
+        await reglas.esperar();
+        await sesiones.esperar();
+        await vistas.esperar();
         await contadores.esperar();
         await dep.almacen.esperar?.().catch(() => undefined);
         cerrado = true;

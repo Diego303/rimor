@@ -49,8 +49,8 @@ Guardar una búsqueda con nombre para volver a ella como a una colección que se
 
 ## Tareas
 
-- [ ] Guardar una búsqueda con nombre en `vistas.json`.
-- [ ] Aparece en el raíl bajo Colecciones con su recuento vivo.
+- [x] Guardar una búsqueda con nombre en `vistas.json`.
+- [x] Aparece en el raíl bajo Colecciones con su recuento vivo.
 
 ## Pruebas previstas
 
@@ -76,3 +76,14 @@ Guardar una búsqueda con nombre para volver a ella como a una colección que se
 ## Autorrevisión
 
 Cubre las dos tareas. Reutiliza `useBuscar`, el panel común de grupo, el título en el sitio de la colección, el patrón de los registros del espacio (IN-051) y la importación por juntado.
+
+## Implementación
+
+- `src/espacio/vistas.ts`: `idDeNombre`, `leerVistas`, `escribirVistas`, `crearVista`, `editarVista`, `borrarVista`, `vistaConConsulta` y `juntarVistas`.
+- **`src/espacio/registro.ts`** (`abrirRegistro`): el patrón de los registros del espacio (leídos, ilegibles o sin leer; en orden; solo desde la pestaña que escribe), que ahora comparten las reglas (IN-049), los nombres de las sesiones (IN-051) y las vistas. Con él, `ErrorRegistroIlegible` (antes `ErrorReglasIlegibles`) y `esEsquemaNuevo`.
+- `EspacioAbierto`: `vistas()`, `vistasLegibles()` y `guardarVistas()`.
+- `src/espacio/useVistas.ts` (ligero, para el raíl).
+- `rutas/vista/GuardarVista.tsx` (en Buscar) y `rutas/vista/VistaGuardada.tsx` (`/v/$vista`).
+- `Rail.tsx`: `VistaEnRail`, con el recuento de `useBuscar`.
+- Importar: `vistas.json` se junta en `plan.ts` y se valida en `paquete.ts` (`importar.vistas`).
+- Pruebas: `vistas.test.ts`, el espacio, la importación y `Vista.test.tsx` (Buscar, raíl con recuento vivo, pantalla, renombrar, borrar y la que no existe).

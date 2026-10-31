@@ -13,7 +13,7 @@ import {
   prefijoValido,
   REGLAS_INICIALES,
 } from '../../captura/reglas';
-import { ErrorReglasIlegibles } from '../../espacio/abrir';
+import { ErrorRegistroIlegible } from '../../espacio/abrir';
 import { useEspacioOpcional } from '../../espacio/Espacio';
 import { useT } from '../../i18n/useT';
 import { useLectoresOpcional } from '../../lectores/Lectores';
@@ -57,7 +57,7 @@ export function ReglasAprendidas({ editable }: { editable: boolean }) {
     void espacio
       .guardarReglas(cambio)
       .catch((e) =>
-        avisos?.avisar(t(e instanceof ErrorReglasIlegibles ? 'ajustes.reglasNoGuardadas' : 'ajustes.noGuardado')),
+        avisos?.avisar(t(e instanceof ErrorRegistroIlegible ? 'ajustes.reglasNoGuardadas' : 'ajustes.noGuardado')),
       );
     setDatos(espacio.reglas());
   };

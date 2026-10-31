@@ -18,6 +18,7 @@ import { Icono } from '../../ui/iconos/Icono';
 import { Senal } from '../../ui/marca/Senal';
 import { useEsperaVisible } from '../../ui/marca/useEsperaVisible';
 import { Pantalla } from '../Pantalla';
+import { GuardarVista } from '../vista/GuardarVista';
 import { type Vista, vistaDe } from '../vistas/orden';
 import { ListaDensa, Mosaico, SelectorVista } from '../vistas/Vistas';
 
@@ -204,6 +205,8 @@ export function Buscar() {
         <Boton variante="fantasma" pequeno onClick={() => cambiar('')}>
           {t('pantallas.buscar.limpiar')}
         </Boton>
+        <span className="sp" />
+        <GuardarVista consulta={consulta} />
       </div>
       {preparando && (
         <Senal

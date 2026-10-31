@@ -56,6 +56,12 @@ const grupo = createRoute({
   validateSearch: (s: Record<string, unknown>): { vista?: Vista } => conVista(s),
   component: lazyRouteComponent(() => import('./grupo/Grupo'), 'Grupo'),
 });
+const vistaGuardada = createRoute({
+  getParentRoute: () => raiz,
+  path: '/v/$vista',
+  validateSearch: (s: Record<string, unknown>): { vista?: Vista } => conVista(s),
+  component: lazyRouteComponent(() => import('./vista/VistaGuardada'), 'VistaGuardada'),
+});
 const datos = createRoute({
   getParentRoute: () => raiz,
   path: '/datos',
@@ -84,6 +90,7 @@ const arbol = raiz.addChildren([
   buscar,
   coleccion,
   grupo,
+  vistaGuardada,
   datos,
   importarRuta,
   papelera,
